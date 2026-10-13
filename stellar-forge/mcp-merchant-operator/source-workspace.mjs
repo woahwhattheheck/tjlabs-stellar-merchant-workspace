@@ -5,6 +5,8 @@ import { IATI_AMP_TOOL_PREFIX } from './catalog/source-iati-amp.mjs';
 import { executeIatiAmp, IATI_AMP_ROUTE } from './source-iati-amp.mjs';
 import { IATI_ORGANISATION_TOOL_PREFIX } from './catalog/source-iati-organisation.mjs';
 import { executeIatiOrganisation, IATI_ORGANISATION_ROUTE } from './source-iati-organisation.mjs';
+import { IATI_GEOGRAPHY_TOOL_PREFIX } from './catalog/source-iati-geography.mjs';
+import { executeIatiGeography, IATI_GEOGRAPHY_ROUTE } from './source-iati-geography.mjs';
 import { IATI_DOCUMENT_EVIDENCE_TOOL_PREFIX } from './catalog/source-iati-document-evidence.mjs';
 import { executeIatiDocumentEvidence, IATI_DOCUMENT_EVIDENCE_ROUTE } from './source-iati-document-evidence.mjs';
 // MIT. Agent access to the original XML/NDJSON/IATI console and its retained workspace.
@@ -22,9 +24,9 @@ const EXPORT_SCHEMA = 'stellar-forge.source-console-export.v1';
 
 const MAX_EXPORT = 256000000;
 const MAX_IATI_PACKET = 4 * 1024 * 1024 * 1024;
-const exportLimit = (format, kind) => format === 'iati' && ['portfolio', 'report', 'dqa', 'publishing', 'refresh', 'organisation', 'results', 'results-report', 'reconciliation', 'amp', 'document-evidence'].includes(kind) ? MAX_IATI_PACKET : ['dqa-file', 'organisation-file', 'reconciliation-file', 'amp-file', 'document-evidence-file', 'document-evidence-body'].includes(kind) ? 64 * 1024 * 1024 : MAX_EXPORT;
-const packetRoute = route => route === '/api/import' || route === IATI_ORGANISATION_ROUTE + 'receive' || route === '/api/iati/reconciliation/receive' || route === IATI_AMP_ROUTE + 'receive' || route === IATI_DOCUMENT_EVIDENCE_ROUTE + 'receive';
-const extendedIatiRoute = route => route.startsWith('/api/iati/dqa/') || route.startsWith('/api/iati/publishing/') || route.startsWith('/api/iati/refresh/') || route.startsWith(IATI_ORGANISATION_ROUTE) || route.startsWith('/api/iati/results') || route.startsWith('/api/iati/reconciliation/') || route.startsWith(IATI_AMP_ROUTE) || route.startsWith(IATI_DOCUMENT_EVIDENCE_ROUTE);
+const exportLimit = (format, kind) => format === 'iati' && ['portfolio', 'report', 'dqa', 'publishing', 'refresh', 'organisation', 'results', 'results-report', 'reconciliation', 'amp', 'document-evidence', 'geography', 'geography-file'].includes(kind) ? MAX_IATI_PACKET : ['dqa-file', 'organisation-file', 'reconciliation-file', 'amp-file', 'document-evidence-file', 'document-evidence-body'].includes(kind) ? 64 * 1024 * 1024 : MAX_EXPORT;
+const packetRoute = route => route === '/api/import' || route === IATI_ORGANISATION_ROUTE + 'receive' || route === '/api/iati/reconciliation/receive' || route === IATI_AMP_ROUTE + 'receive' || route === IATI_DOCUMENT_EVIDENCE_ROUTE + 'receive' || route === IATI_GEOGRAPHY_ROUTE + 'receive';
+const extendedIatiRoute = route => route.startsWith('/api/iati/dqa/') || route.startsWith('/api/iati/publishing/') || route.startsWith('/api/iati/refresh/') || route.startsWith(IATI_ORGANISATION_ROUTE) || route.startsWith('/api/iati/results') || route.startsWith('/api/iati/reconciliation/') || route.startsWith(IATI_AMP_ROUTE) || route.startsWith(IATI_DOCUMENT_EVIDENCE_ROUTE) || route.startsWith(IATI_GEOGRAPHY_ROUTE);
 const MAX_SOURCE = 256 * 1024 * 1024;
 const MAX_JSON = 16 * 1024 * 1024;
 const fail = (code, message) => Object.assign(new Error(message), { code });
@@ -218,8 +220,8 @@ export class MerchantSourceWorkspaces {
   }
   #json(definition, route, body) {
     const payload = body === undefined ? undefined : JSON.stringify(body);
-    const maximum = extendedIatiRoute(route) ? 64 * 1024 * 1024 : MAX_JSON;
-    if (payload !== undefined && Buffer.byteLength(payload) > (extendedIatiRoute(route) ? maximum : 131072)) throw fail('INVALID_PARAMS', 'Native JSON request exceeds its complete selection limit.');
+    const maximum = route.startsWith(IATI_GEOGRAPHY_ROUTE + 'requests/') ? 129 * 1024 * 1024 : extendedIatiRoute(route) ? 64 * 1024 * 1024 : MAX_JSON;
+    if (payload !== undefined && Buffer.byteLength(payload) > (extendedIatiRoute(route) ? 64 * 1024 * 1024 : 131072)) throw fail('INVALID_PARAMS', 'Native JSON request exceeds its complete selection limit.');
     return this.#request(definition, route, { body: payload, headers: payload === undefined ? {} : { 'Content-Type': 'application/json' } },
       async response => JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(await responseBytes(response, maximum))));
   }
@@ -237,8 +239,8 @@ export class MerchantSourceWorkspaces {
     const directory = await this.#directory(workspace);
     const metadata = JSON.parse((await bytes(join(directory, id + '.json'), 65536, true)).toString('utf8'));
     if (metadata.schema !== EXPORT_SCHEMA || metadata.workspace !== workspace || metadata.exportId !== id ||
-        !['project','dataset','changes','merchant','portfolio','report','dqa','dqa-file','publishing','refresh','organisation','organisation-file','results','results-report','reconciliation','reconciliation-file','amp','amp-file','document-evidence','document-evidence-file','document-evidence-body'].includes(metadata.kind) ||
-        ['portfolio','report','dqa','dqa-file','publishing','refresh','organisation','organisation-file','results','results-report','reconciliation','reconciliation-file','amp','amp-file','document-evidence','document-evidence-file','document-evidence-body'].includes(metadata.kind) && metadata.format !== 'iati' ||
+        !['project','dataset','changes','merchant','portfolio','report','dqa','dqa-file','publishing','refresh','organisation','organisation-file','results','results-report','reconciliation','reconciliation-file','amp','amp-file','document-evidence','document-evidence-file','document-evidence-body','geography','geography-file'].includes(metadata.kind) ||
+        ['portfolio','report','dqa','dqa-file','publishing','refresh','organisation','organisation-file','results','results-report','reconciliation','reconciliation-file','amp','amp-file','document-evidence','document-evidence-file','document-evidence-body','geography','geography-file'].includes(metadata.kind) && metadata.format !== 'iati' ||
         !Number.isSafeInteger(metadata.bytes) || metadata.bytes < 0 || metadata.bytes > exportLimit(metadata.format, metadata.kind))
       throw fail('SOURCE_EXPORT_INVALID', 'Retained export metadata changed.');
     return { directory, metadata };
@@ -262,6 +264,9 @@ export class MerchantSourceWorkspaces {
             !Number.isSafeInteger(Number(length)) || Number(length) > exportLimit(definition.format, kind))
           throw fail('SOURCE_EXPORT_DESCRIPTOR_REQUIRED', 'Original organisation export must declare its complete SHA256 and byte count.');
         nativeBytes = Number(length);
+        if (fileInfo.expectedSha256 !== undefined && nativeSha256 !== fileInfo.expectedSha256 ||
+            fileInfo.expectedBytes !== undefined && nativeBytes !== fileInfo.expectedBytes)
+          throw fail('SOURCE_EXPORT_CHANGED', 'The returned file differs from the selected original complete-file descriptor.');
       }
       const temporary = join(directory, '.partial-' + randomUUID()), handle = await open(temporary, 'wx', 0o600);
       const digest = createHash('sha256'); let length = 0;
@@ -341,6 +346,12 @@ export class MerchantSourceWorkspaces {
     const result = native => ({ workspace, native });
     if (name.startsWith('merchant_source_iati_') && definition.format !== 'iati')
       throw fail('SOURCE_FORMAT_REQUIRED', 'Select an original IATI console for its portfolio operation.');
+    if (name.startsWith(IATI_GEOGRAPHY_TOOL_PREFIX)) return executeIatiGeography(name, input, {
+      workspace, page: paged,
+      json: (route, body) => this.#json(definition, route, body),
+      retain: (route, kind, selected, fileInfo) => this.#retain(workspace, definition, route, kind, selected, undefined, fileInfo),
+      receive: (selected, route, kinds) => this.#receivePackage(workspace, definition, selected, route, kinds)
+    });
     if (name.startsWith(IATI_DOCUMENT_EVIDENCE_TOOL_PREFIX)) return executeIatiDocumentEvidence(name, input, {
       workspace, page: paged,
       json: (route, body) => this.#json(definition, route, body),
@@ -443,7 +454,7 @@ export class MerchantSourceWorkspaces {
         await this.#reads.release(workspace, checked(input.readId, UUID, 'original file read'));
         return { workspace, readId: input.readId, state: 'RELEASED' };
       case 'merchant_source_import':
-        return result(await this.#receivePackage(workspace, definition, input, '/api/import', ['project','portfolio','dqa','publishing','refresh','organisation','results','reconciliation']));
+        return result(await this.#receivePackage(workspace, definition, input, '/api/import', ['project','portfolio','dqa','publishing','refresh','organisation','results','reconciliation','geography']));
       case 'merchant_source_iati_presets': return result(await this.#json(definition, '/api/iati/presets'));
       case 'merchant_source_iati_profile': return result(await this.#json(definition, '/api/iati/profile?source=' + input.source));
       case 'merchant_source_iati_portfolios':

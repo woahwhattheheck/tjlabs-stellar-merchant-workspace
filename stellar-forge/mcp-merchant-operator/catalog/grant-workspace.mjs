@@ -1,4 +1,6 @@
 // MIT. Original SF47 tool schemas without provider runtime imports.
+import {grantCohortAdoptionTools} from './grant-cohort-adoption.mjs';
+import {grantPlanningSourceTools} from './grant-planning-sources.mjs';
 import {GRANT_CASE_ACTIONS,GRANT_MAX_BUNDLE_BYTES,GRANT_TRANSFER_CHUNK_BYTES as CHUNK} from '../../../stellar/scf_2026/sf47_budget_model/workspace/agent-contracts.mjs';
 
 const str = (maximum = 12000) => ({type:'string', maxLength:maximum});
@@ -321,6 +323,7 @@ export const grantWorkspaceTools = [
     {...ws, ...originalInput, kind:{enum:['scenario','plan']}, name:nonempty(300), requestId:requestIdentifier,
       note:str(12000), planning:object, filename:nonempty(240)},
     ['workspace','input','expectedInputSha256','kind','name','requestId']),
+  ...grantPlanningSourceTools,
   tool('cases', 'Read original operating case summaries, optionally for a selected saved plan.',
     {...ws, planId:id('plan')}, ['workspace'], true),
   tool('case', 'Read the entire original operating case, pinned plan, eight record collections, source metadata, reviews, forecasts and portfolios.',
@@ -357,6 +360,19 @@ export const grantWorkspaceTools = [
   tool('intake', 'Adopt a complete original source-intake packet through the existing SF47 intake authority, preserving source purchase and deployment identity.',
     {...ws, ...originalInput, ...Object.fromEntries(Object.entries(createCase).filter(([key]) => key !== 'mode'))},
     ['workspace','input','expectedInputSha256','planId','selectedRevision','expectedContentSha256','name','actor','requestId']),
+  tool('cost_funding', 'Read every original Work row and supplier invoice line, exact current source identities and the one funding book history. Funding assignments are separate from work acceptance, cost, cash and issuer decisions.',
+    {...ws,caseId:id('operation')},['workspace','caseId'],true),
+  tool('funding_edition', 'Open the complete original funding edition, all source revisions, exact period report and later source differences. Omit revision only to select the current saved head.',
+    {...ws,caseId:id('operation'),revision:integer},['workspace','caseId'],true),
+  tool('funding_request', 'Read the original funding-save request fingerprint, complete committed result and source/event join without a mutation.',
+    {...ws,caseId:id('operation'),requestId:requestIdentifier},['workspace','caseId','requestId'],true),
+  tool('funding_seed', 'Prepare complete editable funding inputs from current or selected historical edition. Keeps all assignments and selects the current head as successor base; no cost or grant decision is inferred.',
+    {...ws,...caseSelection,revision:integer},['workspace','caseId','expectedVersion'],true),
+  tool('funding_preview', 'Calculate exact invoice-cent and work-hour splits, genuine unassigned remainders, source-condition observations and full opening/period/closing balances. Complete inputs are inline or an original retained file.',
+    {...ws,...caseSelection,...modelInput},['workspace','caseId','expectedVersion'],true),
+  tool('funding_save', 'Save a complete reviewed funding successor through the original case transaction. The existing MCP owner retains the complete request and native response; a surviving accepted response cannot replay into an older restored journal. Keeps all original costs, payments and acceptance records.',
+    {...ws,...caseSelection,...modelInput,...originalRequest,expectedPreviewSha256:digest,acceptedResult:object},
+    ['workspace','caseId','expectedVersion','requestId','actor','note','expectedPreviewSha256']),
   tool('task_outcomes', 'List complete customer task comparisons and their current saved editions in the original case.',
     {...ws,caseId:id('operation')},['workspace','caseId'],true),
   tool('task_outcome', 'Read the complete original task comparison, both method inputs, exact calculation, source selection and full revision history.',
@@ -555,6 +571,7 @@ export const grantWorkspaceTools = [
     ['workspace','caseId','billingId','milestoneId','actor','expectedIssuePreviewSha256']),
   tool('commercial_refresh', 'Refresh retained invoice, payment, allocation and credit observations from the original accounting workspace, then read the complete updated billing record.',
     {...ws,caseId:id('operation'),billingId:commercialIdentifier}, ['workspace','caseId','billingId']),
+  ...grantCohortAdoptionTools,
   tool('cohort_seed', 'Open the original case proposal, actual purchase and deployment inventory, and explicit review inputs for tranche 2 or 3. This creates no purchase, participant, award or saved evaluation.',
     {...ws,...caseSelection,tranche:{type:'integer',minimum:2,maximum:3}},['workspace','caseId','expectedVersion','tranche'],true),
   tool('cohort_preview', 'Evaluate the explicitly selected original cohort as of its retained cutoff. Preserve exact purchase windows, historical denominators, accountable operators, transaction proof, recovery timing and source findings. Inputs may be inline or selected from one retained original input.',
@@ -619,11 +636,11 @@ export const grantWorkspaceTools = [
     {...ws, ...caseSelection, ...originalInput, ...originalRequest, filename:nonempty(240), kind:nonempty(80),
       mediaType:nonempty(200), sourceUrl:str(2000), observedAt:str(100)},
     ['workspace','caseId','expectedVersion','input','expectedInputSha256','requestId','actor','filename','kind','mediaType']),
-  tool('export', 'Task-outcomes exports retain the complete operating case, all comparison revisions, offline HTML and complete effort/cost CSVs; select caseId, comparisonId, revision and current expectedVersion. For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar and saved customer-use calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, full account reconciliation with saved original editions and native case, source, scenario or dated CSV export for verified byte paging and host download.',
-    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','delivery-calendar','customer-use-calendar','performance','supplier-account','cash-account','account-reconciliation','commercial','engagement','task-outcomes']},
+  tool('export', 'Plan ZIPs accept an exact saved revision; omission selects the current original plan. Cost-funding exports select caseId, revision, expectedVersion and expectedReportSha256; they include the full period report, every allocation and remainder, source/assignment changes, original native case and all funding history. Task-outcomes exports retain the complete operating case, all comparison revisions, offline HTML and complete effort/cost CSVs; select caseId, comparisonId, revision and current expectedVersion. For plan-comparison and its report/changes/impact/daily variants, select planId, fromRevision, toRevision, optional toPlanId and the returned expectedComparisonSha256. Retain the complete original plan, case, forecast, portfolio, cohort, implementation review and its exact original file, Contributor Engagements review with complete case and source handover, completion preparation, selected installation handover, complete returned receiving case selected by reviewId, complete dated delivery queue, grant delivery calendar and saved customer-use calendar in ICS/CSV/JSON, commercial customer account, selected budget performance report, complete supplier account, complete dated cash account with correction sources and whole case, full account reconciliation with saved original editions and native case, source, scenario or dated CSV export for verified byte paging and host download.',
+    {...ws, kind:{enum:['plan','plan-comparison','plan-comparison-report','plan-comparison-changes','plan-comparison-impact','plan-comparison-daily','case','forecast','portfolio','source','scenario','daily-csv','costs-csv','completion','cohort','installation','installation-return','implementation','implementation-original','delivery-queue','delivery-calendar','customer-use-calendar','performance','supplier-account','cash-account','account-reconciliation','commercial','engagement','task-outcomes','cost-funding']},
       planId:id('plan'), caseId:id('operation'), forecastId:id('forecast'), portfolioId:id('portfolio'), sourceId:id('source'), reviewId:id('review'),
       fromRevision:planComparisonRevision,toRevision:planComparisonRevision,toPlanId:id('plan'),expectedComparisonSha256:digest,
-      installationId:id('installation'),comparisonId:id('task-outcomes'),billingId:commercialIdentifier,revision:installationRevision,sha256:digest,asOfDate:supportDate,
+      installationId:id('installation'),comparisonId:id('task-outcomes'),billingId:commercialIdentifier,revision:planComparisonRevision,sha256:digest,asOfDate:supportDate,
       installationRefs:customerUseInstallationRefs,
       format:{enum:['ics','csv','json'],description:'Grant delivery calendar defaults to ICS; customer-use calendar defaults to JSON.'},
       reconciliationId:id('reconciliation'),contributorId:id('person'),network:str(200),currency:str(40),asset:str(500),startDate:supportDate,endDate:supportDate,expectedVersion:{type:'integer',minimum:1,maximum:10000000},expectedReportSha256:digest},

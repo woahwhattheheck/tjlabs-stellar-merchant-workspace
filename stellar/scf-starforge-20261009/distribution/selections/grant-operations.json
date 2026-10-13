@@ -2,7 +2,7 @@
   "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "grant-operations",
   "title": "Grant Operations",
-  "description": "Original grant planning and delivery calendars with complete XLSX and source-table authoring with editable saved-plan workbook handover and returned-workbook receiving, reviewed native baseline amendments with full historical receiving, contributor delivery and cash, complete timesheet and supplier invoice source intake, original CSV, OFX / QFX and MT940 statement receiving and account reconciliation, complete native-currency forecasts with retained exchange rates, resource portfolios, buyer and merchant support receiving, customer installation commissioning and complete receiver-to-owner return review, milestone customer billing and handover, implementation evidence, measured cohorts and portable operating cases. Sourced contributor agreement editions retain actual acceptance and availability, complete native Forecast/Portfolio allocations, and original case receiving.",
+  "description": "Original grant planning and delivery calendars with complete XLSX and source-table authoring with editable saved-plan workbook handover and returned-workbook receiving through browser, CLI and complete retained Merchant MCP operations, reviewed native baseline amendments with full historical receiving, contributor delivery and cash, complete timesheet and supplier invoice source intake, original CSV, OFX / QFX and MT940 statement receiving and account reconciliation, complete native-currency forecasts with retained exchange rates, resource portfolios, buyer and merchant support receiving, customer installation commissioning and complete receiver-to-owner return review, milestone customer billing and handover, implementation evidence, measured cohorts and portable operating cases. Sourced contributor agreement editions retain actual acceptance and availability, complete native Forecast/Portfolio allocations, and original case receiving.",
   "base": {
     "commands": [
       "installation",
@@ -46,7 +46,8 @@
     "merchant-provider-grant-workspaces",
     "grant-source-tables",
     "grant-application-handoff",
-    "grant-cohort-planning"
+    "grant-cohort-planning",
+    "grant-issuer-terms"
   ],
   "components": [
     "stellar/scf_2026/sf47_budget_model",
@@ -225,7 +226,24 @@
     "stellar/scf_2026/sf47_budget_model/workspace/statement_parsers/__init__.py",
     "stellar/scf_2026/sf47_budget_model/workspace/statement_parsers/ofx_intake.py",
     "stellar/scf_2026/sf47_budget_model/workspace/statement_parsers/mt940_engine.py",
-    "stellar/scf_2026/sf47_budget_model/workspace/statement_parsers/README.md"
+    "stellar/scf_2026/sf47_budget_model/workspace/statement_parsers/README.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/issuer_correspondence.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/operate_correspondence_intake.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/ISSUER_CORRESPONDENCE.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/issuer_receiving.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/award_terms.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/award_terms_http.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/award_terms_cli.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/award-terms.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/award-terms.css",
+    "stellar/scf_2026/sf47_budget_model/workspace/AWARD_TERMS.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/examples/issuer-terms/receive-issuer-award-terms.py",
+    "stellar/scf_2026/sf47_budget_model/workspace/examples/issuer-terms/receive-issuer-award-terms.mjs",
+    "stellar-forge/mcp-merchant-operator/grant-planning-sources.mjs",
+    "stellar-forge/mcp-merchant-operator/catalog/grant-planning-sources.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/source-tables-agent.mjs",
+    "stellar/scf_2026/sf47_budget_model/workspace/SOURCE_TABLES_AGENT.md",
+    "stellar/scf_2026/sf47_budget_model/workspace/examples/source-tables/receive-current-budget-workbook-mcp.mjs"
   ],
   "excludeFiles": [
     "stellar/scf-starforge-20261009/distribution/index.mjs"

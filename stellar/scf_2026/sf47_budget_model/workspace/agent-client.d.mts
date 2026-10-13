@@ -4,6 +4,7 @@ import type { Buffer } from 'node:buffer';
 export const GRANT_AGENT_SCHEMA: 'stellar-forge.sf47-agent.v1';
 export const GRANT_MAX_BUNDLE_BYTES: number;
 export const GRANT_MAX_SOURCE_BYTES: number;
+export const GRANT_MAX_WORKBOOK_HANDOVER_BYTES: number;
 export const GRANT_CASE_ACTIONS: readonly GrantCaseAction[];
 
 /** Full native JSON objects retain their original fields and decimal strings. */
@@ -15,7 +16,7 @@ export type GrantCheckState = 'OPEN' | 'IN_PROGRESS' | 'ACCEPTED' | 'CHANGES_REQ
 export type GrantDeliveryPriority = 'URGENT' | 'HIGH' | 'NORMAL' | 'LOW';
 export type GrantDeliveryDueStatus = 'COMPLETE' | 'INACTIVE' | 'UNDATED' | 'OVERDUE' | 'TODAY' | 'UPCOMING';
 export type GrantCaseAction =
-  | 'work-intake.upload' | 'work-intake.save' | 'work-intake.apply' | 'task-outcomes.save'
+  | 'work-intake.upload' | 'work-intake.save' | 'work-intake.apply' | 'task-outcomes.save' | 'funding.save'
   | 'contributor.save' | 'work.save' | 'work.submit' | 'work.accept' | 'work.reopen' | 'work.void'
   | 'invoice.save' | 'invoice.review' | 'invoice.dispute' | 'invoice.reopen' | 'invoice.void'
   | 'cash.record' | 'cash.void' | 'statement.receive' | 'award.save' | 'deployment.save'
@@ -1620,6 +1621,8 @@ export interface GrantCaseImportReceipt extends GrantObject {
   accountReconciliation?: GrantAccountReconciliationReceived;
   selectedInstallation?: GrantInstallationRef;
   selectedInstallationReturn?: GrantInstallationReturnSummary;
+  /** Exact selected allocation edition carried by a complete cost-funding handover. */
+  selectedFunding?: GrantFundingLink & {reportSha256: string; period: GrantFundingPeriod};
 }
 /** Original accepted customer quotation, its complete source and task identities. */
 export interface GrantCommercialInstallationBinding {
@@ -2187,6 +2190,118 @@ export interface GrantTaskMethod {
   attemptedTasks: string | null; completedTasks: string | null; elapsedMinutes: string | null;
   sourceIds: string[]; notes: string; effort: GrantTaskEffort[]; costs: GrantTaskCost[];
 }
+
+/** Internal funding assignment; does not change original work, invoice, cash or issuer state. */
+export type GrantFundingKind = 'PREAWARD' | 'GRANT' | 'CUSTOMER' | 'INTERNAL' | 'OTHER';
+export type GrantFundingEligibility = 'UNASSESSED' | 'SUPPORTED' | 'EXCLUDED';
+export interface GrantFundingSource {
+  id: string; name: string; kind: GrantFundingKind; reference: string;
+  decision: 'PROPOSED' | 'RECORDED'; sourceIds: string[]; conditions: string;
+  costWindowStart: GrantCivilDate | null; costWindowEnd: GrantCivilDate | null;
+  receiptTiming: string; limitUsd: string | null; note: string;
+}
+export interface GrantFundingAllocation {
+  fundId: string; quantity: string; eligibility: GrantFundingEligibility;
+  sourceIds: string[]; basis: string;
+}
+export interface GrantFundingAssignment {
+  kind: 'WORK' | 'INVOICE'; recordId: string; lineId: string | null; note: string;
+  allocations: GrantFundingAllocation[];
+}
+export interface GrantFundingDocument {
+  title: string; status: 'DRAFT' | 'REVIEWED'; asOfDate: GrantCivilDate;
+  periodStart: GrantCivilDate | null; periodEnd: GrantCivilDate; note: string;
+  funds: GrantFundingSource[]; assignments: GrantFundingAssignment[];
+}
+export interface GrantFundingInputs { expectedRevision: number; document: GrantFundingDocument }
+export interface GrantFundingTarget {
+  key: string; kind: 'WORK' | 'INVOICE'; recordId: string; lineId: string | null;
+  recordVersion: number; recordSha256: string; state: string; date: GrantCivilDate; startDate: GrantCivilDate;
+  costId: string | null; contributorId: string; contributor: string; description: string; invoiceNumber: string | null;
+  unit: 'HOURS' | 'USD'; quantity: string; originalQuantity: string; originalFundingBasis: GrantFundingKind | null;
+  workIds: string[]; sourceIds: string[];
+}
+export interface GrantFundingCase extends GrantObject {
+  id: string; name: string; version: number; mode: 'OPERATIONS' | 'WALKTHROUGH'; createdAt: string;
+}
+export interface GrantFundingSnapshot {
+  case: GrantFundingCase; plan: GrantObject;
+  records: {contributors: GrantObject[]; work: GrantObject[]; invoices: GrantObject[]};
+  sources: GrantObject[];
+}
+export interface GrantFundingLink {
+  sourceId: string; sourceSha256: string; revision: number; editionSha256: string;
+}
+export interface GrantFundingPeriod {startDate: GrantCivilDate | null; endDate: GrantCivilDate; asOfDate: GrantCivilDate}
+export interface GrantFundingTotals {
+  invoiceUsd: string; workHours: string; acceptedHours: string; reviewedInvoiceUsd: string;
+  supportedInvoiceUsd: string; excludedInvoiceUsd: string;
+}
+export interface GrantFundingFundBalance {
+  id: string; name: string; kind: GrantFundingKind | 'UNASSIGNED';
+  decision: 'PROPOSED' | 'RECORDED' | 'UNASSIGNED'; limitUsd: string | null; limitExcessUsd: string | null;
+  opening: GrantFundingTotals; period: GrantFundingTotals; closing: GrantFundingTotals; afterEnd: GrantFundingTotals;
+}
+export interface GrantFundingBalance extends GrantFundingTarget {
+  interval: 'OPENING' | 'PERIOD' | 'AFTER_END'; assigned: string; unassigned: string;
+  allocationNote: string; spansPeriodStart: boolean;
+}
+export interface GrantFundingAllocationRow extends GrantFundingTarget {
+  fundId: string | null; fundName: string; fundKind: GrantFundingKind | 'UNASSIGNED';
+  fundDecision: 'PROPOSED' | 'RECORDED' | 'UNASSIGNED'; eligibility: GrantFundingEligibility;
+  basis: string; fundSourceIds: string[]; fundReference: string; allocationNote: string;
+  interval: 'OPENING' | 'PERIOD' | 'AFTER_END'; windowObservation: 'UNSTATED' | 'OUTSIDE_SOURCE_WINDOW' | 'WITHIN_SOURCE_WINDOW';
+}
+export interface GrantFundingChange {key: string; change: string; before: GrantObject | null; after: GrantObject | null}
+export interface GrantFundingChanges {
+  previous: GrantFundingLink | null; originalRows: GrantFundingChange[];
+  assignments: GrantFundingChange[]; funds: GrantFundingChange[];
+}
+export interface GrantFundingReport {
+  schema: 'stellar-forge.sf47-cost-funding.v1.report'; period: GrantFundingPeriod; basis: string; dateBasis: string;
+  sourceCounts: {work: number; invoices: number; targets: number; allocationParts: number};
+  totals: Record<'opening' | 'period' | 'closing' | 'afterEnd', GrantFundingTotals>;
+  funds: GrantFundingFundBalance[];
+  packages: Array<{costId: string | null; plannedUsd: string | number | null; plannedHours: string | number | null;
+    invoiceUsd: string; assignedInvoiceUsd: string; unassignedInvoiceUsd: string; workHours: string; assignedWorkHours: string; unassignedWorkHours: string}>;
+  balances: GrantFundingBalance[]; allocations: GrantFundingAllocationRow[];
+  findings: Array<{code: string; key: string; fundId: string | null; message: string}>; changes: GrantFundingChanges;
+}
+export interface GrantFundingSummary extends GrantFundingLink {
+  title: string; status: 'DRAFT' | 'REVIEWED'; savedAt: string; actor: string; caseVersion: number;
+  period: GrantFundingPeriod; reportSha256: string;
+}
+export interface GrantFundingCatalog {
+  case: GrantFundingCase; plan: {id: string; revision: number; contentSha256: string};
+  targets: GrantFundingTarget[]; sources: GrantObject[]; packages: GrantObject[];
+}
+export interface GrantFundingPreview {
+  schema: 'stellar-forge.sf47-cost-funding.v1.preview'; inputs: GrantFundingInputs; previous: GrantFundingLink | null;
+  source: GrantFundingSnapshot; report: GrantFundingReport; reportSha256: string; previewSha256: string;
+}
+export interface GrantFundingEdition {
+  schema: 'stellar-forge.sf47-cost-funding.v1'; id: 'cost-funding'; revision: number; caseVersion: number;
+  previous: GrantFundingLink | null; savedAt: string; actor: string; note: string;
+  document: GrantFundingDocument; source: GrantFundingSnapshot; report: GrantFundingReport;
+  reportSha256: string; previewSha256: string; sha256: string;
+}
+export interface GrantFundingView {
+  source: GrantObject; edition: GrantFundingEdition; catalog: GrantFundingCatalog;
+  history: GrantFundingSummary[]; currentSourceChanges: GrantFundingChange[]; inputs: GrantFundingInputs;
+}
+export interface GrantFundingSeed {inputs: GrantFundingInputs; catalog: GrantFundingCatalog; selectedEdition: GrantFundingSummary | null; history: GrantFundingSummary[]}
+export interface GrantFundingSaveInput {
+  expectedVersion: number; requestId: string; actor: string; note: string;
+  inputs: GrantFundingInputs; expectedPreviewSha256: string;
+  /** Full original result, when already accepted; prevents resubmission into an older restored journal. */
+  acceptedResult?: GrantFundingReceipt;
+}
+export interface GrantFundingReceipt {
+  id: string; version: number; action: 'funding.save'; kind: 'source'; recordId: string; funding: GrantFundingSummary;
+}
+export type GrantFundingRequest = {caseId: string; caseCreatedAt: string; requestId: string} &
+  ({found: false} | {found: true; fingerprint: string; result: GrantFundingReceipt; resultSha256: string});
+
 export interface GrantTaskOutcomeDocument {
   title: string; customer: string; task: string; unit: string; currency: string;
   installation: { id: string; revision: number } | null;
@@ -2457,6 +2572,138 @@ export interface GrantEngagementReceivingReceipt extends GrantObject {
   sha256: string;
 }
 
+export const GRANT_PLANNING_SOURCE_SCHEMA: 'stellar-forge.sf47-planning-source-agent.v1';
+export const GRANT_PLANNING_SOURCE_ACTIONS: readonly (keyof GrantPlanningSourceInputs)[];
+export type GrantPlanningRole = 'packages' | 'milestones' | 'contributors' | 'assignments';
+export interface GrantWorkbookUpload {
+  filename: string; bytes: number; sha256: string; dataBase64: string;
+}
+export interface GrantWorkbookSource extends GrantWorkbookUpload {
+  schema: 'stellar-forge.planning-workbook-source.v1'; id: string;
+  description: GrantObject;
+  decoder: {path: string; sha256: string; parser: 'stellar-forge.xlsx-reader.v1'};
+}
+export interface GrantWorkbookMapping {
+  schema: 'stellar-forge.planning-workbook-mapping.v1';
+  plan: GrantObject & {
+    name: string; notes: string; sheet: string; range: string; headerRow: number | null;
+    hiddenRows: string; blankRows: string; mergedCells: string;
+    columns: Array<GrantObject & {name: string; source: string; formula: string; date: string}>;
+  };
+  numericText: Record<string, 'source' | 'decimal'>;
+}
+export interface GrantWorkbookProjection {text: string; bytes?: number; sha256: string;}
+export interface GrantWorkbookSelection {source: GrantWorkbookSource; projection: GrantWorkbookProjection;}
+export interface GrantWorkbookInspectionInput {
+  source: GrantWorkbookUpload | GrantWorkbookSource;
+  preview?: {sheet?: string; range?: string; offset?: number; limit?: number};
+  headerRow?: number | null;
+}
+export interface GrantWorkbookProjectionInput {
+  source: GrantWorkbookUpload | GrantWorkbookSource; mapping: GrantWorkbookMapping;
+}
+export interface GrantWorkbookInspection {
+  source: GrantWorkbookSource; preview: GrantObject; headerCells: GrantObject[];
+}
+export interface GrantPlanningWorkbookProfile {
+  schema: 'stellar-forge.planning-workbook-export-profile.v1';
+  numberMode: 'exact-text' | 'spreadsheet-numbers'; precisionPolicy: 'text' | 'reject';
+  amountMode: 'native-values' | 'formulas'; note: string;
+}
+export interface GrantPlanningWorkbookReturnProfile {
+  schema: 'stellar-forge.planning-workbook-return-profile.v1';
+  modeByRole: Record<GrantPlanningRole, 'merge' | 'replace'>;
+  orphanPolicy: 'preserve' | 'remove-unreferenced'; includeHiddenRows: boolean; note: string;
+}
+export type GrantPlanningField =
+  | {source: 'column'; column: string; members?: Record<string,string>}
+  | {source: 'constant'; value: string | number | null; members?: Record<string,string>}
+  | {source: 'existing'; members?: Record<string,string>};
+export interface GrantPlanningSourceBinding {
+  role: GrantPlanningRole; documentId: string; mode: 'merge' | 'replace';
+  fields: Record<string, GrantPlanningField>;
+  excludedRows: Array<{editionId: string; record: number; note: string}>;
+}
+export interface GrantPlanningSourceBaseline {
+  id: string; name: string; revision: number; contentSha256: string;
+  source: GrantObject; scenario: GrantObject; planning: GrantObject;
+}
+export interface GrantPlanningSourceBook extends GrantObject {
+  schema: 'stellar-forge.planning-source-tables.v1';
+  id: string; name: string; createdAt: string; baseline: GrantPlanningSourceBaseline;
+  project: GrantObject; bindings: GrantPlanningSourceBinding[];
+  settings: {scenarioName: string; awardRequestUsd: string; projectEndDay: number};
+  orphanPolicy: 'preserve' | 'remove-unreferenced'; reviews: GrantObject[]; appliedReviewId: string | null;
+  workbookSources?: GrantWorkbookSource[]; workbookSelections?: GrantObject[];
+  selectedWorkbooks?: Record<string,string | null>;
+}
+export type GrantPlanningSourceBookInput = GrantPlanningSourceBook | string | {
+  schema: 'stellar-forge.planning-source-tables.v1.retained'; text: string;
+};
+export interface GrantPlanningSourceView extends GrantObject {
+  schema: typeof GRANT_PLANNING_SOURCE_SCHEMA; operation: string; book: GrantPlanningSourceBook;
+  baseline: {id: string; revision: number; contentSha256: string}; collections: GrantObject[];
+}
+export interface GrantPlanningSourcePreview extends GrantObject {
+  schema: 'stellar-forge.planning-source-tables.preview.v1'; id: string;
+  book: GrantPlanningSourceBook; planId: string; expectedRevision: number;
+  scenarioPatch: GrantObject; planning: GrantObject; native: GrantObject; nativeSha256: string;
+  review: GrantObject & {preparedAt: string; sourceRows: GrantObject[]; changes: GrantObject[]};
+}
+export interface GrantPlanningSourceFile {
+  filename: string; bytes: Uint8Array; delimiter?: ',' | ';' | '\t' | '|'; header?: boolean;
+}
+export interface GrantPlanningSourceInputs {
+  snapshot: {planId: string; revision?: number; expectedContentSha256?: string};
+  read: {book: GrantPlanningSourceBookInput; role?: GrantPlanningRole};
+  receive: {book: GrantPlanningSourceBookInput; role: GrantPlanningRole; file: GrantPlanningSourceFile};
+  'receive-workbook': {book: GrantPlanningSourceBookInput; role: GrantPlanningRole; selection: GrantWorkbookSelection};
+  'receive-returned-workbook': {book: GrantPlanningSourceBookInput; file: GrantPlanningSourceFile; profile: GrantPlanningWorkbookReturnProfile};
+  configure: {
+    book: GrantPlanningSourceBookInput; role?: GrantPlanningRole;
+    binding?: Partial<Pick<GrantPlanningSourceBinding,'fields' | 'mode' | 'excludedRows'>>;
+    tableMapping?: GrantObject; settings?: Partial<GrantPlanningSourceBook['settings']>;
+    orphanPolicy?: GrantPlanningSourceBook['orphanPolicy'];
+    exclusions?: Array<{record: number; excluded: boolean; note?: string}>;
+  };
+  select: {book: GrantPlanningSourceBookInput} & (
+    {role: GrantPlanningRole; editionId: string; workbookSelectionId?: never}
+    | {workbookSelectionId: string; role?: never; editionId?: never}
+  );
+  review: {book: GrantPlanningSourceBookInput; roles: GrantPlanningRole[]};
+  rebase: {book: GrantPlanningSourceBookInput; planId: string; revision?: number; expectedContentSha256?: string};
+  preview: {book: GrantPlanningSourceBookInput};
+  save: {preview: GrantPlanningSourcePreview; note: string; requestId: string};
+  handover: {planId: string; revision: number; expectedContentSha256: string; profile: GrantPlanningWorkbookProfile};
+}
+export interface GrantPlanningWorkbookHandover extends GrantNativeResponse<undefined> {
+  handover: {
+    schema: typeof GRANT_PLANNING_SOURCE_SCHEMA; plan: {id: string; revision: number; contentSha256: string};
+    sourceProjectId: string; manifest: GrantObject;
+  };
+  /** Exact original source project, planning ZIP, XLSX and manifest members. */
+  companions: GrantNativeResponse[];
+}
+export interface GrantPlanningSourceResponses {
+  snapshot: GrantJsonResponse<GrantPlanningSourceView>;
+  read: GrantJsonResponse<GrantPlanningSourceView>;
+  receive: GrantJsonResponse<GrantPlanningSourceView>;
+  'receive-workbook': GrantJsonResponse<GrantPlanningSourceView>;
+  'receive-returned-workbook': GrantJsonResponse<GrantPlanningSourceView>;
+  configure: GrantJsonResponse<GrantPlanningSourceView>;
+  select: GrantJsonResponse<GrantPlanningSourceView>;
+  review: GrantJsonResponse<GrantPlanningSourceView>;
+  rebase: GrantJsonResponse<GrantPlanningSourceView>;
+  preview: GrantJsonResponse<GrantPlanningSourcePreview>;
+  save: GrantJsonResponse<GrantObject>;
+  handover: GrantPlanningWorkbookHandover;
+}
+export function grantPlanningSourceProfiles(): {
+  schema: typeof GRANT_PLANNING_SOURCE_SCHEMA; roles: Record<GrantPlanningRole,GrantObject>;
+  workbookExport: GrantPlanningWorkbookProfile; workbookReturn: GrantPlanningWorkbookReturnProfile;
+  sourceProjectSchema: string; workbookMappingSchema: string; guides: string[];
+};
+
 export interface GrantReadSelection {
   intakeId?: string;
   planId?: string;
@@ -2473,7 +2720,7 @@ export type GrantOtherReadView =
   | 'plans' | 'plan' | 'plan-history' | 'cases' | 'case-report' | 'case-history'
   | 'forecasts' | 'forecast' | 'portfolios' | 'portfolio' | 'review' | 'completion';
 export interface GrantDownloadSelections {
-  plan: { planId: string };
+  plan: { planId: string; revision?: number };
   'plan-comparison': GrantPlanComparisonExportSelection;
   'plan-comparison-report': GrantPlanComparisonExportSelection;
   'plan-comparison-changes': GrantPlanComparisonExportSelection;
@@ -2484,6 +2731,7 @@ export interface GrantDownloadSelections {
   'costs-csv': { planId: string };
   case: { caseId: string };
   'task-outcomes': {caseId: string; comparisonId: string; revision: number; expectedVersion: number};
+  'cost-funding': {caseId: string; revision: number; expectedVersion: number; expectedReportSha256: string};
   forecast: { caseId: string; forecastId: string };
   portfolio: { caseId: string; portfolioId: string };
   'delivery-queue': GrantDeliveryQueueSelection;
@@ -2509,6 +2757,9 @@ export function readGrantAgentFile(filename: string, maximum?: number, privateOn
 
 export class GrantWorkspaceClient {
   constructor(binding: GrantBinding);
+  workbook(action: 'inspect', input: GrantWorkbookInspectionInput): Promise<GrantJsonResponse<GrantWorkbookInspection>>;
+  workbook(action: 'project', input: GrantWorkbookProjectionInput): Promise<GrantJsonResponse<GrantWorkbookSelection>>;
+  planningSources<K extends keyof GrantPlanningSourceInputs>(action: K, input: GrantPlanningSourceInputs[K]): Promise<GrantPlanningSourceResponses[K]>;
   readonly summary: GrantClientSummary;
   inspect(): Promise<GrantInspection>;
   open(selection?: { expectedSelectionSha256?: string }): Promise<GrantInspection>;
@@ -2563,6 +2814,12 @@ export class GrantWorkspaceClient {
   portfolioPreview<T = GrantPortfolioPreview>(caseId: string, expectedVersion: number, inputs: GrantObject): Promise<GrantJsonResponse<T>>;
   portfolioSave<T = GrantPortfolioSaveReceipt>(caseId: string, body: GrantModelSaveInput): Promise<GrantJsonResponse<T>>;
   portfolioSelection<T = GrantPortfolioSelection>(caseId: string, expectedVersion: number, portfolioId: string, alternativeId: string): Promise<GrantJsonResponse<T>>;
+  read(view: 'cost-funding', selection: {caseId: string}): Promise<GrantJsonResponse<{catalog: GrantFundingCatalog; history: GrantFundingSummary[]}>>;
+  read(view: 'funding-edition', selection: {caseId: string; revision?: number}): Promise<GrantJsonResponse<GrantFundingView>>;
+  read(view: 'funding-request', selection: {caseId: string; requestId: string}): Promise<GrantJsonResponse<GrantFundingRequest>>;
+  fundingSeed(caseId: string, body: {expectedVersion: number; revision?: number}): Promise<GrantJsonResponse<GrantFundingSeed>>;
+  fundingPreview(caseId: string, body: {expectedVersion: number; inputs: GrantFundingInputs}): Promise<GrantJsonResponse<GrantFundingPreview>>;
+  fundingSave(caseId: string, body: GrantFundingSaveInput): Promise<GrantJsonResponse<GrantFundingReceipt>>;
   taskOutcomesSeed(caseId: string, expectedVersion: number): Promise<GrantJsonResponse<{inputs: GrantTaskOutcomeInputs; case: {id: string; version: number}}>>;
   taskOutcomesPreview(caseId: string, body: {expectedVersion: number; inputs: GrantTaskOutcomeInputs}): Promise<GrantJsonResponse<GrantTaskOutcomePreview>>;
   taskOutcomesSave(caseId: string, body: GrantTaskOutcomeSaveInput): Promise<GrantJsonResponse<GrantTaskOutcomeReceipt>>;

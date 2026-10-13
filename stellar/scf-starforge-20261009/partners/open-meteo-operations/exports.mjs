@@ -43,6 +43,27 @@ export function chartSvg(capture,variable,{unit,width=880,height=230}={}){
   '<g font-family="system-ui,sans-serif" font-size="12" fill="#333"><text x="5" y="25">'+escape(number(high))+'</text><text x="5" y="'+(height-37)+'">'+escape(number(low))+'</text>'+
   '<text x="52" y="'+(height-10)+'">'+escape(data.rows[0].utc)+'</text><text x="'+(width-20)+'" y="'+(height-10)+'" text-anchor="end">'+escape(data.rows.at(-1).utc)+'</text></g></svg>';
 }
+function renewalHtml(report){
+ if(!report.renewal)return '';
+ const selected=new Map(report.decisions.map(decision=>[decision.id+':'+decision.revision,decision]));
+ const rows=report.renewal.entries.map(entry=>{
+  const before=entry.baseline,working=entry.ruleSource,after=selected.get(entry.updated.id+':'+entry.updated.revision);
+  need(after,'RENEWAL_UPDATED_DECISION_CHANGED');
+  const a=before.rule,b=after.rule;
+  const context=a.startUtc===b.startUtc&&a.endUtc===b.endUtc?'Same UTC operating window':'Different operating windows';
+  const ruleChanged=['variable','unit','aggregation','operator','threshold','minimumCoverage'].filter(field=>a[field]!==b[field]);
+  const rule=decision=>escape(decision.rule.aggregation)+' '+escape(decision.rule.operator==='gte'?'≥':'≤')+' '+escape(number(decision.rule.threshold))+' '+escape(decision.rule.unit);
+  return '<tr><td>'+escape(after.title)+'<br><small>'+escape(after.owner)+'</small></td>'+
+   '<td>'+escape(before.result.outcome)+'<br>'+number(before.result.aggregate.median)+' '+escape(a.unit)+'<br><small>'+rule(before)+'<br>'+escape(a.startUtc)+'<br>'+escape(a.endUtc)+'</small></td>'+
+   '<td>'+escape(after.result.outcome)+'<br>'+number(after.result.aggregate.median)+' '+escape(b.unit)+'<br><small>'+rule(after)+'<br>'+escape(b.startUtc)+'<br>'+escape(b.endUtc)+'</small></td>'+
+   '<td>'+before.result.eligibleMembers+' → '+after.result.eligibleMembers+' eligible members<br>'+escape(after.disposition)+'<br><small>'+escape(context)+(ruleChanged.length?'<br>Changed rule fields: '+escape(ruleChanged.join(', ')):'')+'<br>Rules taken from revision '+working.revision+'</small></td></tr>';
+ }).join('');
+ const source=report.renewal.sourceReport;
+ return '<section><h2>Changes from the prior customer edition</h2><p>'+escape(source.title)+' · '+escape(source.createdAt)+'</p>'+
+  '<p class="digest">Prior frozen report '+escape(source.id)+'<br>SHA-256 '+escape(source.sha256)+'</p>'+
+  '<table><thead><tr><th>Operating decision</th><th>Prior edition</th><th>This edition</th><th>Coverage and review</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+  '<p>Each value is the median of the eligible member aggregates for that edition’s displayed rule and window. This compares selected editions; it does not measure forecast skill. The editable package and complete ZIP preserve prior decision revisions and their original source bytes.</p></section>';
+}
 export function reportHtml(report,captures){
  const byId=new Map(captures.map(c=>[c.id,c]));
  const content=report.decisions.map(d=>{
@@ -64,7 +85,7 @@ export function reportHtml(report,captures){
  return '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escape(report.title)+'</title>'+
   '<style>body{font:15px/1.55 system-ui,sans-serif;color:#202020;background:#eee;margin:0}main{max-width:1040px;margin:24px auto;padding:36px;background:white}h1{font-size:30px;margin:0}h2{font-size:21px}.sub,small{color:#555}.digest{font:11px/1.4 ui-monospace,monospace;overflow-wrap:anywhere}.metric{border:1px solid #aaa;padding:16px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}section{margin:32px 0;border-top:1px solid #aaa;padding-top:18px}dl{display:grid;grid-template-columns:200px 1fr;gap:8px}dt{font-weight:600}dd{margin:0;overflow-wrap:anywhere}table{border-collapse:collapse;width:100%;font-size:13px}td,th{text-align:left;vertical-align:top;padding:9px;border-bottom:1px solid #ddd;overflow-wrap:anywhere}th{background:#eee}svg{width:100%;height:auto}summary{cursor:pointer}a{color:#222}footer{border-top:1px solid #aaa;padding-top:18px;font-size:13px}@media(max-width:600px){main{margin:0;padding:18px}dl{grid-template-columns:1fr}table{display:block;overflow:auto}}@media print{body{background:white}main{margin:0;padding:0;max-width:none}details{display:block}section{break-inside:avoid}a{color:black}}</style></head><body><main>'+
   '<header><p class="sub">WEATHER OPERATIONS · FROZEN REPORT</p><h1>'+escape(report.title)+'</h1><p>'+escape(report.owner)+' · '+escape(report.createdAt)+'</p><p>'+escape(report.notes)+'</p>'+
-  '<p class="digest">Report '+escape(report.id)+'<br>SHA-256 '+escape(report.sha256)+'</p></header>'+content+
+  '<p class="digest">Report '+escape(report.id)+'<br>SHA-256 '+escape(report.sha256)+ '</p></header>'+renewalHtml(report)+content+
   '<section><h2>Retained source selections</h2><table><thead><tr><th>Site</th><th>Product / model</th><th>Requested / selected grid</th><th>Time</th><th>Acquisition</th><th>Original response SHA-256</th></tr></thead><tbody>'+sources+'</tbody></table>'+
   '<p>Hourly timestamps are UTC epoch seconds. Local display uses each returned IANA time zone. The API fixed UTC offset is retained as source metadata; this report does not recast an API daily aggregation as a local calendar day.</p>'+
   '<p>Missing values remain missing. Historical reanalysis is model data. Forecast ensemble summaries describe returned members and do not assert calibrated probabilities. generationtime_ms describes API computation time, not forecast initialization.</p></section>'+
@@ -104,12 +125,13 @@ async function zip(entries,{python='python3',signal}={}){
  try{const [,result]=await Promise.all([feed,output,completion]);return result;}
  catch(error){child.kill('SIGKILL');await completion.catch(()=>{});await Promise.allSettled([feed,output]);throw error;}
 }
-async function* reportEntries(report,captures){
+async function* reportEntries(report,captures,handover){
  const manifest=[],seen=new Set();
  const entry=(name,bytes)=>{need(!seen.has(name),'DUPLICATE_REPORT_FILE');seen.add(name);need(bytes.length<=32*1024*1024,'REPORT_ENTRY_TOO_LARGE');manifest.push({name,bytes:bytes.length,sha256:sha(bytes)});return {name,bytes};};
  yield entry('report.json',encoded(report));
  yield entry('report.html',Buffer.from(reportHtml(report,captures)));
  yield entry('decisions.json',encoded(report.decisions));
+ if(handover)yield entry('editable.weather.json',encoded(handover));
  for(const capture of captures){yield entry('sources/'+capture.id+'.json',capture.raw);yield entry('series/'+capture.id+'.csv',seriesCsv(capture));}
  yield {name:'manifest.json',bytes:encoded({schema:'stellar-forge.weather-report-files.v1',reportId:report.id,reportSha256:report.sha256,
   files:manifest,attribution:ATTRIBUTION})};
@@ -123,7 +145,8 @@ export async function frozenReportBytes(report,captures,{format='zip',python,sig
  need(expected.size===0,'REPORT_SOURCE_SELECTION_CHANGED');
  if(format==='json')return encoded(report);
  if(format==='html')return Buffer.from(reportHtml(report,captures));
- return zip(reportEntries(report,captures),{python,signal});
+ if(report.renewal)need(handover?.report?.id===report.id&&handover.report.sha256===report.sha256,'RENEWAL_HANDOVER_REQUIRED');
+ return zip(reportEntries(report,captures,report.renewal?handover:undefined),{python,signal});
 }
 export async function exportFrozenReport(report,captures,{output,...options}){
  const bytes=await frozenReportBytes(report,captures,options);

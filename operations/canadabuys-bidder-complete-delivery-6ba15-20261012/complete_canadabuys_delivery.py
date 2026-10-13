@@ -32,8 +32,8 @@ def encoded(value):
 def digest(raw):
     return hashlib.sha256(raw).hexdigest()
 
-def event(name, **values):
-    print(json.dumps({"event": name, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **values}, ensure_ascii=False), flush=True)
+def event(event_name, **values):
+    print(json.dumps({"event": event_name, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), **values}, ensure_ascii=False), flush=True)
 
 def runtime_resources(stage, child_pid=None):
     """Retain this operation's actual process and cgroup memory readings."""
