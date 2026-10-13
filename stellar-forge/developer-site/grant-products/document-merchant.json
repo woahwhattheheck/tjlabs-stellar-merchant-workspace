@@ -129,6 +129,38 @@
           "git_blob": "70a3d17c3ca12e9c89853a0675e45b0c09794f26"
         }
       ]
+    },
+    {
+      "id": "document-merchant-commissioning-guide",
+      "label": "Commission an existing native commerce account for complete document customer delivery",
+      "path": "products/document-merchant/COMMISSIONING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "editions": [
+        {
+          "commit": "58653a479f4a87f58f4fef26cfab3dc387ffcd08",
+          "bytes": 15333,
+          "sha256": "8e30312a45a6a76caed476152cd40d09d7b7e76047661445ea37ae1854fe0fa4",
+          "git_blob": "c9c7e5e7c56c1ebe5f34c104b85c2afaf9049691"
+        }
+      ]
+    },
+    {
+      "id": "document-merchant-commissioning-core",
+      "label": "Retained native terms, original buyer/operator setup and document service commissioning",
+      "path": "products/document-merchant/commissioning.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "required": false,
+      "editions": [
+        {
+          "commit": "58653a479f4a87f58f4fef26cfab3dc387ffcd08",
+          "bytes": 16795,
+          "sha256": "f7157fe2c0763b4c015ac1c0d541b658e652adfc0f0bbabe10285172f091d361",
+          "git_blob": "94b8cfe01865fd8c2c7dace4a048d8b09559e294"
+        }
+      ]
     }
   ]
 }

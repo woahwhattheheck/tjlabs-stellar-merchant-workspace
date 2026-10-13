@@ -38,7 +38,9 @@
     "products/document-merchant/GRANT.md",
     "products/document-merchant/ASSEMBLY.md",
     "products/document-merchant/assembly.d.mts",
-    "products/document-merchant/examples/ordered-pdfs.json"
+    "products/document-merchant/examples/ordered-pdfs.json",
+    "products/document-merchant/COMMISSIONING.md",
+    "products/document-merchant/commissioning.d.mts"
   ],
   "commands": {
     "document-merchant": "products/document-merchant/cli.mjs"
@@ -77,7 +79,12 @@
       "types": "./source/products/document-merchant/assembly.d.mts",
       "import": "./source/products/document-merchant/assembly.mjs"
     },
-    "./document-merchant/assembly/cli": "./source/products/document-merchant/assembly-cli.mjs"
+    "./document-merchant/assembly/cli": "./source/products/document-merchant/assembly-cli.mjs",
+    "./document-merchant/commissioning": {
+      "types": "./source/products/document-merchant/commissioning.d.mts",
+      "import": "./source/products/document-merchant/commissioning.mjs"
+    },
+    "./document-merchant/commissioning/cli": "./source/products/document-merchant/commissioning-cli.mjs"
   },
   "applicationProviders": {
     "document-merchant": "products/document-merchant/application-provider.mjs",

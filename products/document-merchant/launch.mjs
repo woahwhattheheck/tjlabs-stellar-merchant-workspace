@@ -26,6 +26,7 @@ import {
 export const DOCUMENT_SERVICE_SELECTION_SCHEMA = 'stellar-forge.document-service-selection.v1';
 export const DOCUMENT_SERVICE_SOURCE = 'products/document-merchant';
 export const DOCUMENT_SERVICE_SOURCE_FILES = Object.freeze([
+  'commissioning.mjs','commissioning-facilitator.mjs','commissioning-cli.mjs',
   'assembly.mjs','assembly-archive.mjs','assembly-cli.mjs','examples/ordered-pdfs.json','cli.mjs', 'launch.mjs', 'setup.mjs', 'contracts.mjs', 'renderer.mjs',
   'batch.mjs', 'batch-cli.mjs', 'batch-render.mjs', 'composition.mjs', 'composition-cli.mjs',
   'composition-service.mjs',
