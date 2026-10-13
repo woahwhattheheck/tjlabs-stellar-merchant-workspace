@@ -93,6 +93,12 @@
           "commit": "1bdffb2b2e36d944f2bf7fb94416cfa22100fbf3",
           "bytes": 3405,
           "sha256": "e7b7154a4641b66fe30101be70c21fceaa745c0755dad437a33779c908e6c45e"
+        },
+        {
+          "commit": "e52e2497ca807a2fa92ef8e67434e888312512a3",
+          "bytes": 3405,
+          "sha256": "e7b7154a4641b66fe30101be70c21fceaa745c0755dad437a33779c908e6c45e",
+          "git_blob": "5deb6c447c604b6734917bde05da889487a6c05c"
         }
       ]
     },
@@ -168,6 +174,198 @@
           "commit": "1bdffb2b2e36d944f2bf7fb94416cfa22100fbf3",
           "bytes": 16948,
           "sha256": "3bbc4ac03ee4d923adc59e1a95f80d52ac1ff1a4a1143396572384438bad081b"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-source-desk-engine",
+      "label": "Original source package and Installation engine bridge",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_gravitee_engine.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "e52e2497ca807a2fa92ef8e67434e888312512a3",
+          "bytes": 2654,
+          "sha256": "e79a60268488f823fefaf06286d7375f30880f0638121c822173560500225050",
+          "git_blob": "99ad06a3e4a060e42b07a9ccc32d63f50b1e3039"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-source-desk-adapter",
+      "label": "Authorized original Operations snapshot and Workshare preparation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_gravitee.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "e52e2497ca807a2fa92ef8e67434e888312512a3",
+          "bytes": 6352,
+          "sha256": "b20d38fe739f34e2bb396eff6f38247871a6e9b5cc7d6fb546dbeb674d3684b1",
+          "git_blob": "7dcfbd243eda861c04f76928ccfd2b7c664c2361"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-source-desk-working-copies",
+      "label": "Complete source decisions, histories, comparison and conflict receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_gravitee_model.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "e52e2497ca807a2fa92ef8e67434e888312512a3",
+          "bytes": 12258,
+          "sha256": "1e4d297067fcc38629a7ea4bf01483a5d866c1446919ee9758acd73dc4c44094",
+          "git_blob": "254cab5ccaddda215c0936f84b6f6cdc747c3b8e"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-source-desk-interface",
+      "label": "Full original source-to-Installation operating interface",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_gravitee.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "e52e2497ca807a2fa92ef8e67434e888312512a3",
+          "bytes": 26578,
+          "sha256": "8172e2f210dcd2be4a6b917c89acf195b89fe18ba50027408267724ea244c7d8",
+          "git_blob": "1a2781c831a206f55bbe01cc2a6bdfb3ad5422d4"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-source-desk-layout",
+      "label": "Scoped desktop and narrow source desk layout",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_gravitee.css",
+      "required": true,
+      "editions": [
+        {
+          "commit": "e52e2497ca807a2fa92ef8e67434e888312512a3",
+          "bytes": 3443,
+          "sha256": "aefaa2331d957333e4a25df0d555b41d3c40a5d8f78d7278bd6ea7ad6b618891",
+          "git_blob": "1cf1e12db89e6f94f2fb33fb208e32130e1e19c9"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-source-desk-installation-host",
+      "label": "Existing Installation editor receiving and full draft preservation",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_installations.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "e52e2497ca807a2fa92ef8e67434e888312512a3",
+          "bytes": 94975,
+          "sha256": "cb7a6137dd7b5e2e09624e851e00584e68e74336e2d64c883591f38373ba9576",
+          "git_blob": "7340619172ee2b1b188a7a9c52e4128bd0710af8"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-source-desk-operations-routes",
+      "label": "Original case-scoped source preparation and native command routes",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/operations_http.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "e52e2497ca807a2fa92ef8e67434e888312512a3",
+          "bytes": 45348,
+          "sha256": "6b1ccd173fe2bf3ef15a2ca2b132aaeb692d3962e353f807f77d8f1968436d53",
+          "git_blob": "ca7f642bace6d397843091bd8b661a72d1d078cc"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-source-desk-staff-host",
+      "label": "Existing staff-session authorization and source desk serving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/staff_http.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "e52e2497ca807a2fa92ef8e67434e888312512a3",
+          "bytes": 19497,
+          "sha256": "2137b3495285574001433fe426ae9fe54b98b8799d2ac1f9aca7f011a4ae52ae",
+          "git_blob": "5f6bd04773160ed2074e1ecdb5cf8abe06ca8c1b"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-source-desk-managed-source",
+      "label": "Complete original runtime and editable source manifest",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/managed-source.json",
+      "required": true,
+      "editions": [
+        {
+          "commit": "e52e2497ca807a2fa92ef8e67434e888312512a3",
+          "bytes": 35920,
+          "sha256": "fb045d7c2193e6ae14a78a326855f65bcf239d8fce8903f9f4eb0a2ab7e51538",
+          "git_blob": "05f677f8b6190636bca394a550e9ef22e8002fe4"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-source-desk-guide",
+      "label": "Whole source, agreement, Installation and independent receiving instructions",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/GRAVITEE_SOURCE_DESK.md",
+      "required": true,
+      "editions": [
+        {
+          "commit": "e52e2497ca807a2fa92ef8e67434e888312512a3",
+          "bytes": 15289,
+          "sha256": "ec1e2e70c17ecd76f282d10d9e1d460f897ecbcf3fb9187e6f37f9a3f9eb34a6",
+          "git_blob": "509078b92430fdf5df1c19111461a1fd53a28d57"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-source-desk-native-receiving",
+      "label": "Original complete case, source, Installation and artifact receiving",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/gravitee-source-desk-receiving.py",
+      "required": true,
+      "editions": [
+        {
+          "commit": "e52e2497ca807a2fa92ef8e67434e888312512a3",
+          "bytes": 15150,
+          "sha256": "f8fc3b0d5564c6525e259664d43474b81d6ca8eb9ba1d8d0ece5d5a9a1e8b72b",
+          "git_blob": "8bae05b0316b8e0b527a2f4b6cb38feed596fbe8"
+        }
+      ]
+    },
+    {
+      "id": "gravitee-source-desk-browser-receiving",
+      "label": "Complete desktop, narrow, working-file and cold receiving course",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf_2026/sf47_budget_model/workspace/gravitee-source-desk-browser.mjs",
+      "required": true,
+      "editions": [
+        {
+          "commit": "e52e2497ca807a2fa92ef8e67434e888312512a3",
+          "bytes": 15529,
+          "sha256": "49e621e6cef80616614fb259ea2c7ee6e31eec5186f15d3865ccd340c671799a",
+          "git_blob": "dca44cbe04de857e1c3db3a9c2f0c800845e2dfb"
         }
       ]
     }
