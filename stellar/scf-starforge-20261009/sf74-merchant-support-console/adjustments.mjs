@@ -1,7 +1,7 @@
 import {buyerWorkflowActions,createBuyerWorkbench} from './service-buyer-workbench.mjs';
 // MIT. Complete saved-case Service adjustments and original buyer/accountant operation.
 const $=id=>document.getElementById(id),uuid=()=>crypto.randomUUID(),copy=value=>structuredClone(value);
-const state={caseId:null,view:null,buyerView:null,buyer:null,prepared:null,pending:null,busy:false,cases:[],caseOffset:null,runs:[],runOffset:null,events:[],eventOffset:null,buyerInstance:null,labelBasis:null,centerBasis:null,periodBasis:null,accountantReturn:null,buyerScope:null};
+const state={caseId:null,view:null,buyerView:null,buyer:null,prepared:null,pending:null,busy:false,cases:[],caseOffset:null,runs:[],runOffset:null,events:[],eventOffset:null,buyerInstance:null,labelBasis:null,centerBasis:null,periodBasis:null,accountantReturn:null,buyerScope:null,buyerDraftDirty:false};
 const text=(id,value)=>{$(id).textContent=String(value??'');};
 const message=(value,error=false)=>{text('message',value);$('message').dataset.error=String(error);};
 const value=id=>$(id).value.trim();
@@ -381,7 +381,7 @@ function draftFields(){
 async function saveBuyerDraft(scope=currentDraftScope()){
   const draft={schema:'stellar-forge.service-buyer-browser-draft.v1',scope,savedAt:new Date().toISOString(),
     caseRevision:state.view?.case.revision??null,...draftFields()};
-  await storage('set',draftKey(scope),draft);
+  await storage('set',draftKey(scope),draft);state.buyerDraftDirty=false;
   text('buyer-draft-status','Draft saved '+draft.savedAt+' for '+scope.buyerWorkspace+'.');
   return draft;
 }
@@ -413,18 +413,18 @@ async function restoreBuyerDraft(){
     element.querySelector('.allocation-project').value=row.project;element.querySelector('.allocation-account').value=row.account;}
   $('asset-labels').replaceChildren();for(const row of draft.labels)addLabel(row);
   state.labelBasis=copy(draft.labelBasis);state.centerBasis=copy(draft.centerBasis);state.periodBasis=copy(draft.periodBasis);
-  $('return-file').value='';clearReturnPreview();buyerFields();renderBuyerWork();
+  $('return-file').value='';clearReturnPreview();buyerFields();renderBuyerWork();state.buyerDraftDirty=false;
   text('buyer-draft-status','Restored draft saved '+draft.savedAt+'. Review the current source and rechoose any accountant return file.');
 }
 function resetBuyerFields(){
   $('buyer-form').reset();$('allocations').replaceChildren();$('asset-labels').replaceChildren();
   for(const id of ['buyer-packet','buyer-credit','buyer-period','center-picker','period-edit','period-issue','issue-kind'])options(id,[],row=>row.id,row=>row.id);
-  state.buyer=null;state.buyerScope=null;state.labelBasis=null;state.centerBasis=null;state.periodBasis=null;
+  state.buyer=null;state.buyerScope=null;state.buyerDraftDirty=false;state.labelBasis=null;state.centerBasis=null;state.periodBasis=null;
   $('buyer-item-id').value='';$('period-review-id').value='';$('delivery-close-id').value='';$('return-close-id').value='';
   for(const id of ['buyer-packet-summary','coding-basis','buyer-summary'])text(id,'');
   $('period-summary').replaceChildren();addAllocation();clearReturnPreview();buyerFields();buyerWorkbench.clearRecord();
 }
-async function preserveBuyerDraft(){if(state.buyerScope?.caseId===state.caseId)await saveBuyerDraft(copy(state.buyerScope));}
+async function preserveBuyerDraft(){if(state.buyerDraftDirty&&state.buyerScope?.caseId===state.caseId)await saveBuyerDraft(copy(state.buyerScope));}
 async function selectBuyerWorkflow(group){
   await preserveBuyerDraft();
   for(const [id,selection] of [['buyer-capture',group.capture.id],['buyer-workspace',group.buyer.alias]]){
@@ -455,7 +455,7 @@ async function useBuyerReferences(row){
   fill('buyer-period',r.periodId);fill('period-review-id',r.reviewId);
   fill('delivery-close-id',r.closeId);fill('return-close-id',r.closeId);
   fill('accountant-delivery',r.deliveryOutcomeId);fill('accountant-workspace',r.accountantWorkspace);
-  fill('buyer-intent-picker',row.id);clearReturnPreview();renderBuyerWork();
+  fill('buyer-intent-picker',row.id);clearReturnPreview();renderBuyerWork();state.buyerDraftDirty=true;
   message('Loaded the exact saved references. Select and review the intended operation, or recover this original saved action.');
 }
 const buyerWorkbench=createBuyerWorkbench($('buyer-workbench'),{
@@ -637,6 +637,9 @@ change('center-picker',async()=>loadCenter());change('period-edit',async()=>load
 click('read-labels',readLabels);click('add-label',async()=>addLabel());click('preview-return',previewReturn);
 $('return-file').addEventListener('change',clearReturnPreview);$('return-close-id').addEventListener('input',clearReturnPreview);
 for(const id of ['buyer-workspace','buyer-capture'])change(id,async()=>{await preserveBuyerDraft();resetBuyerFields();renderBuyerWork();renderDownloads();text('buyer-draft-status','Read this buyer selection to open its draft.');});
+const markBuyerDraftChanged=()=>{if(state.buyerScope)state.buyerDraftDirty=true;};
+for(const event of ['input','change'])$('buyer-form').addEventListener(event,markBuyerDraftChanged);
+$('buyer-form').addEventListener('click',event=>{if(event.target.closest('button'))markBuyerDraftChanged();});
 $('buyer-form').addEventListener('submit',event=>{event.preventDefault();void work(prepareBuyer);});
 click('execute-buyer-intent',()=>{const intentId=required('buyer-intent-picker');if(!buyerRows().some(row=>row.id===intentId))throw new Error('Select a saved action from this exact capture and buyer workflow.');return effect('buyer-execute',{intentId,requestId:uuid()},'Execute saved buyer action');});
 click('buyer-draft-save',()=>saveBuyerDraft());click('buyer-draft-restore',restoreBuyerDraft);
