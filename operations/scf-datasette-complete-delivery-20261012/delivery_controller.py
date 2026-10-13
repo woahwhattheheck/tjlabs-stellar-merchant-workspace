@@ -235,6 +235,99 @@ def persist_complete_phase(original_outcome,phase):
                 emit("datasette_save_retry_required",root=str(root),archive=archive_identity,saved=[public_save(row) for row in saved])
     return delivery_result
 
+
+def compact_original_checkout(repository,source_commit):
+    # The restored checkout is a reproducible copy of this receiver's retained
+    # Git objects. Keep the entire immutable object database and original commit.
+    expected=root/"canonical-repository"
+    if repository!=expected or repository.resolve()!=repository or not (repository/".git").is_dir() or (repository/".git").is_symlink():
+        raise RuntimeError("The original private Git checkout identity differs.")
+    git=["git","-C",str(repository)]
+    def query(args):
+        return subprocess.check_output(git+args,text=True).strip()
+    if query(["rev-parse","--show-toplevel"])!=str(repository) or query(["rev-parse","HEAD"])!=source_commit:
+        raise RuntimeError("The selected original Git checkout differs.")
+    # Git can remove ignored files when applying a cone. Preserve the complete
+    # checkout if any original tracked, untracked or ignored work is present.
+    status=subprocess.run(git+["status","--porcelain=v1","--untracked-files=all","--ignored=matching"],capture_output=True,text=True)
+    if status.returncode or status.stdout:
+        emit("datasette_original_checkout_retained",reason="working-copy-state-present",status_returncode=status.returncode)
+        return {"state":"FULL_CHECKOUT_RETAINED","reason":"working-copy-state-present"}
+    previous_sparse=subprocess.run(git+["config","--bool","core.sparseCheckout"],capture_output=True,text=True)
+    if previous_sparse.returncode not in (0,1) or previous_sparse.stdout.strip()=="true":
+        emit("datasette_original_checkout_retained",reason="existing-sparse-configuration",configuration_returncode=previous_sparse.returncode)
+        return {"state":"EXISTING_CHECKOUT_SCOPE_RETAINED","reason":"existing-sparse-configuration","configuration_returncode":previous_sparse.returncode}
+    parser=r'''
+const fs=require("node:fs"),path=require("node:path"),vm=require("node:vm");
+const {createHash}=require("node:crypto"),{builtinModules}=require("node:module");
+const root=fs.realpathSync(process.argv[1]),base="stellar/scf-starforge-20261009/distribution/";
+const builtins=new Set([...builtinModules,...builtinModules.map(name=>"node:"+name)]);
+const queued=[base+"build.mjs",base+"runtime-install.mjs"],seen=new Set(),directories=new Set([base.slice(0,-1)]),modules=[];
+const context=vm.createContext();
+while(queued.length){
+ const relative=queued.shift();if(seen.has(relative))continue;seen.add(relative);
+ const file=path.resolve(root,relative),inside=path.relative(root,file);
+ if(!inside||inside.startsWith(".."+path.sep)||inside===".."||path.isAbsolute(inside)||fs.realpathSync(file)!==file)
+  throw new Error("Build-tool source must remain a regular original repository member");
+ const info=fs.lstatSync(file);if(!info.isFile()||info.size>2*1024*1024)throw new Error("Build-tool source size/type differs");
+ const bytes=fs.readFileSync(file);
+ directories.add(path.dirname(relative).split(path.sep).join("/"));
+ modules.push({path:relative,bytes:bytes.length,sha256:createHash("sha256").update(bytes).digest("hex")});
+ if(relative.endsWith(".json"))continue;
+ if(!/\.(mjs|js)$/.test(relative))throw new Error("Keep full checkout for this original module format");
+ const parsed=new vm.SourceTextModule(bytes.toString("utf8"),{identifier:file,context});
+ for(const request of parsed.dependencySpecifiers){
+  if(builtins.has(request))continue;
+  if(!request.startsWith(".")||request.includes("?")||request.includes("#"))
+   throw new Error("Keep full checkout for this original module dependency");
+  queued.push(path.relative(root,path.resolve(path.dirname(file),request)).split(path.sep).join("/"));
+ }
+}
+process.stdout.write(JSON.stringify({directories:[...directories].sort(),modules}));
+'''
+    try:
+        parsed=subprocess.run([node,"--max-old-space-size=64","--no-warnings","--experimental-vm-modules","--input-type=commonjs","--eval",parser,str(repository)],capture_output=True,text=True,timeout=60)
+    except (OSError,subprocess.TimeoutExpired) as error:
+        emit("datasette_original_checkout_retained",reason="native-build-tool-closure-unavailable",error_type=type(error).__name__)
+        return {"state":"FULL_CHECKOUT_RETAINED","reason":"native-build-tool-closure-unavailable","error_type":type(error).__name__}
+    if parsed.returncode:
+        emit("datasette_original_checkout_retained",reason="native-build-tool-closure-returned",returncode=parsed.returncode)
+        return {"state":"FULL_CHECKOUT_RETAINED","reason":"native-build-tool-closure-returned","returncode":parsed.returncode}
+    closure=json.loads(parsed.stdout)
+    directories=closure["directories"]
+    if not directories or any(not value or value=="." or P(value).is_absolute() or ".." in P(value).parts for value in directories):
+        emit("datasette_original_checkout_retained",reason="whole-root-build-tool-dependency")
+        return {"state":"FULL_CHECKOUT_RETAINED","reason":"whole-root-build-tool-dependency"}
+    def allocation():
+        total=0;members=0
+        for folder,dirs,files in os.walk(repository,followlinks=False):
+            if P(folder)==repository:dirs[:]=[name for name in dirs if name!=".git"]
+            for name in files:
+                info=(P(folder)/name).lstat();total+=getattr(info,"st_blocks",0)*512;members+=1
+        return {"allocated_bytes":total,"files":members}
+    before=allocation()
+    try:
+        run(git+["sparse-checkout","set","--cone","--no-sparse-index","--",*directories],"canonical-git-working-copy-scope")
+        if query(["rev-parse","HEAD"])!=source_commit:
+            raise RuntimeError("The original immutable Git source changed.")
+        for member in closure["modules"]:
+            source=repository/member["path"]
+            if source.resolve()!=source or not source.is_file() or source.stat().st_size!=member["bytes"] or digest(source)!=member["sha256"]:
+                raise RuntimeError("An original build-tool member changed during sparse checkout.")
+    except Exception:
+        # Use Git's own reversible recovery; never remove or reconstruct source.
+        run(git+["sparse-checkout","disable"],"canonical-git-working-copy-full-recovery")
+        raise
+    after=allocation()
+    value={"state":"ORIGINAL_GIT_CHECKOUT_SCOPED","source_commit":source_commit,"directories":directories,"build_tool_modules":closure["modules"],
+        "before":before,"after":after,"released_allocated_bytes":max(0,before["allocated_bytes"]-after["allocated_bytes"]),
+        "restore_command":["git","-C",str(repository),"sparse-checkout","disable"],
+        "original_objects_retained":True}
+    save_json(root/"canonical-working-copy.json",value)
+    emit("datasette_original_checkout_scoped",source_commit=source_commit,directories=directories,before=before,after=after,released_allocated_bytes=value["released_allocated_bytes"])
+    return value
+
+
 native_error=None
 try:
     raw=payload["capsule_raw"].encode("utf-8")
@@ -321,6 +414,7 @@ try:
     got=subprocess.check_output(["git","-C",repository,"rev-parse","HEAD"],text=True).strip()
     if got!=payload["installed_source_ref"]:raise RuntimeError("The canonical installed Git source differs.")
     outcome["installed_git"]={"commit":got,"repository":payload["repository_url"],"directory":str(repository)}
+    outcome["installed_git"]["working_copy"]=compact_original_checkout(repository,got)
     continuation=root/"installed-continuation";continuation.mkdir(mode=0o700,exist_ok=True)
     for file in payload["installed_files"]:
         data=file["content"].encode()
