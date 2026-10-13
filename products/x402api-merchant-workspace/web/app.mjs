@@ -30,7 +30,9 @@ async function api(path, { method = 'GET', body, download = false } = {}) {
     let code = 'Request failed (' + response.status + ').';
     try { code = (await response.json()).error ?? code; } catch {}
     if (response.status === 401) disconnect();
-    throw new Error(code.replaceAll('_', ' '));
+    throw new Error(code === 'MERCHANT_PROJECT_SNAPSHOT_IN_PROGRESS' ?
+      'The project package is being captured. Your entered details are kept; retry when the package is ready.' :
+      code.replaceAll('_', ' '));
   }
   return download ? response : response.json();
 }
@@ -49,6 +51,7 @@ async function action(work) {
     busy = false;
     for (const button of document.querySelectorAll('button')) button.disabled = false;
     if (token && selectedId) await loadDetail().catch(error => notice(error.message));
+    applyCaptureControls();
   }
 }
 function disconnect() {
@@ -168,10 +171,10 @@ async function loadDetail() {
   $('detail-guidance').textContent = review ? (order.state === 'COMPLETE' ?
     'The original completed file is available from this saved project.' :
     'The invoice and its activity show the saved project at the time of export.') : (guidance[order.state] ?? '');
-  $('create-charge').hidden = review || !!order.chargeId; $('create-charge').disabled = busy || order.state === 'CHARGE_REJECTED';
+  $('create-charge').hidden = review || !!order.chargeId; $('create-charge').disabled = busy || projectState?.capturing === true || order.state === 'CHARGE_REJECTED';
   $('download-envelope').hidden = !order.chargeId; $('download-envelope').disabled = busy;
   $('download-result').hidden = order.state !== 'COMPLETE'; $('download-result').disabled = busy;
-  $('reconcile').hidden = review || !order.chargeId && order.state === 'CREATED'; $('reconcile').disabled = busy;
+  $('reconcile').hidden = review || !order.chargeId && order.state === 'CREATED'; $('reconcile').disabled = busy || projectState?.capturing === true;
   $('signature-form').hidden = review || !order.chargeId || ['COMPLETE', 'PAYMENT_FAILED'].includes(order.state) || order.signatureRetained;
   $('history').replaceChildren();
   for (const item of [...received.history].reverse()) {
@@ -205,6 +208,15 @@ async function startProjectExport(id) {
   notice(selected.state === 'COMPLETE' ? 'The complete project package is ready.' :
     'Project export is running. The package will appear in Project handover.');
 }
+function applyCaptureControls() {
+  const paused = busy || projectState?.capturing === true;
+  for (const button of document.querySelectorAll('#create-form button, #signature-form button'))
+    button.disabled = paused;
+  $('export-project').disabled = paused;
+  $('reconcile').disabled = paused;
+  const order = state?.orders?.find(item => item.id === selectedId);
+  $('create-charge').disabled = paused || order?.state === 'CHARGE_REJECTED';
+}
 function renderProject() {
   const rows = $('project-export-rows'); rows.replaceChildren();
   const review = state?.mode === 'review', available = projectState?.available === true;
@@ -212,7 +224,9 @@ function renderProject() {
   $('project-guidance').textContent = review ?
     'Invoices, original payment activity and completed files are available in this received project.' :
     'Package the invoices, saved results, fulfillment files and application source for another operator.';
-  $('project-state').textContent = review ? 'Saved project review' : available ?
+  $('project-state').textContent = projectState?.capturing ?
+    'Capturing the project. Current work is finishing; updates resume when the package is ready. You can keep reviewing invoices and saved files.' :
+    review ? 'Saved project review' : available ?
     'Each export keeps a complete database snapshot and the files it references.' :
     'Project export is available from the installed merchant application or with its configured source package.';
   const exports = projectState?.exports ?? [];
@@ -259,10 +273,10 @@ async function downloadManifest(id) {
 async function refreshProject() {
   const requestedToken = token, received = await api('/api/project');
   if (!requestedToken || token !== requestedToken || !state) return;
-  projectState = received; renderProject();
+  projectState = received; renderProject(); applyCaptureControls();
 }
 $('export-project').addEventListener('click', () => action(async () => {
-  if (!projectState?.available || state.mode === 'review') return;
+  if (!projectState?.available || projectState.capturing || state.mode === 'review') return;
   const id = sessionStorage.getItem(exportPendingKey()) || crypto.randomUUID();
   await startProjectExport(id);
 }));
