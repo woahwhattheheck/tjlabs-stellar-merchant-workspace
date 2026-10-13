@@ -447,7 +447,8 @@ async function main(){
         '--cases-dir',paths.freshCases,'--source-dir',paths.freshSources,'--request-id',request.requestId,'--actor',request.actor,'--python',python]);
       assert.equal(reopened.case.id,received.case.id);assert.equal((await freshStore.read(received.case.id)).revision,later.revision,'Original receiving replay preserves later receiver edits');
       const completeHistory=await allHistory(freshStore,received.case.id);for(const version of completeHistory)await freshStore.read(received.case.id,version.revision);
-      await retainResult('FINAL_PORTFOLIO_CASE_RECEIVING.json',{exported,received,receiverEdit,laterRevision:later.revision,reopened,history:completeHistory});
+      journal.finalReceivingDelivery??={exported,received,receiverEdit,laterRevision:later.revision,reopened,history:completeHistory};await save();
+      await retainResult('FINAL_PORTFOLIO_CASE_RECEIVING.json',journal.finalReceivingDelivery);
       journal.receivedCase={id:received.case.id,revision:later.revision,directory:paths.freshCases};
       const {createCaseSourceDelivery}=await loadModule('case-source-delivery.mjs'),members=new Map();
       for(const [selectedStore,directory,result]of [[store,paths.sources,packageResult.primary],[freshStore,paths.freshSources,received]]){
