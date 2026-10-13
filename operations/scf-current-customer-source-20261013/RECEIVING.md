@@ -1,5 +1,75 @@
 # Receive the complete current SCF application
 
+## Current selected edition: fourteen complete product contributions
+
+This edition receives the authors' complete current chapter and declaration pairs into the same original grant application. The source union contains **1,953 source records, 95 product declarations and 112 companion chapters**. All 1,843 previous source IDs remain, with 110 newly selected records and 21 deliberately advanced existing source editions. All 99 unrelated chapters and 1,392 unrelated source rows remain byte-identical. The complete application, reviewer HTML, reviewed concise answers and original 597-byte budget remain unchanged.
+
+The application continues to request **USD 38,000 for 400 prospective hours over 150 days in six funded packages**. The companion carries each author's actual product workflow, paid unit, commercial assumptions, source history and receiving status. The original application remains the concise decision path into these complete materials.
+
+### Complete author selections
+
+| Author declaration | Selected sources | Complete declaration Git blob |
+| --- | ---: | --- |
+| canadabuys-bidder-desk | 12 | 147abf0159f90f02ac26d681142323e268b41e9f |
+| catalogue-delivery-workbench | 5 | 9e06b7a8831cfa1d026c40575696882e5b8dfb21 |
+| dcat-catalogs | 32 | c934f423d126f12e34a6476c16ad245376f4d085 |
+| geoapify | 17 | c39b80477474dfd11025d68298ba1e0931cc2fb7 |
+| grant-accounts-operating-desk | 38 | 08b01fcec4ee182ebee2bc7a840271f102afbd86 |
+| grant-submission-review | 9 | 945a0b3b69db3417595880f819f6e4cd1088e0a4 |
+| highway-field-operations | 13 | 5f0744ab58f6936a25b88ae3ef80ad98d23b83e1 |
+| merchant-bank-statements | 116 | e1040845d8014411ece9c167cee817ea1e0c95a4 |
+| merchant-installment-collection | 25 | b454a5e7819caa8368377d5af22a9fbacb05fb45 |
+| openlineage-prepared-package | 70 | 7a0cffe270cfadf32c82477fca3e7073d1df7e60 |
+| recovery-commissioning | 105 | 0b4282e3c2065bad29a085744258cbffa823c7f5 |
+| research-dossier-returns | 66 | 21f6439b724081bb40670aac8118dea54f26b5b7 |
+| source-monitoring | 12 | d3b64fc026d168fe7b730ad0d6901f7671c68095 |
+| webhook-customer-analysis | 41 | a2d6fb011f5c20845385173e2b35b11a0760e8b8 |
+
+The Bank and Installment declarations share one complete Merchant settlement chapter, received once. Webhook's 42-item declaration selects 41 current linked sources; its original optional, unlinked typed workbook interface remains optional. The original receiver's selection rules are unchanged.
+
+The Highway continuation retains the entire previously received operating chapter, including all four original step-by-step sections, before the author's full offline field-work appendix. Geoapify retains its existing source-selection appendix and adds the two exact UI/operator links required by the author's following 17-source declaration. Every other complete chapter comes from its measured author body, through the original public projection and chapter receiver. The full author identities and precise link supplements are retained in source-selection.json.
+
+## Open the complete current edition
+
+The immutable four-output source commit is **2b52239a2aa51210139f55136722ad44689d1742**. Continue through the existing reviewer application and its complete companion. The explicit concise choice remains `grant-submission.html?source=concise`.
+
+| Complete selected file | Bytes | SHA-256 |
+| --- | ---: | --- |
+| grant.html | 120006 | 7531bd602fafeacec3d3bbbc3fb9f13fc9a0da9c97accd9e3097e65f5c5e0248 |
+| application.md | 66962 | d426ab4fcdf77bc0802e1d65d845ba373e9e41ac1ea637e21cc0d5174c11ca55 |
+| product-and-finance.md | 2395568 | c8023e9b087719d2a99cf522faa9345dd67bb8dd1b1673aab351c069f939eb3a |
+| source-index.json | 2598257 | 173a5682447c4259d59e789f8f73429d502fa6c246ae3b9a955cf5c97bd10680 |
+| budget.csv | 597 | 4ce056f1c388f9910e088ad763a4cdf55ed8ebf06e32dee1734b3e2f355c6c00 |
+| application-reviewer.md | 20167 | 773c26c2f3b221f43fce2a730dcbae6e2a9416fe28ecea41234dbcdbdac663b6 |
+| reviewer-working-index.json | 2674318 | 43433bd57a7a66186ee55e82d2225bb7a74964ec53729174b404dcee85964085 |
+| reviewer-working-source.json | 6811078 | ba9ec8c364d6040c1e50c69ab95812fa9f024a9ea7c21d54580818106cb56983 |
+
+The complete full source package at [current-source-package.json](./current-source-package.json) contains **6819076 bytes**, SHA-256 **21e955261c46c8db474cb72ffa1dc9dc2eca1622f3691a70eecf45b8b40eb8b0**, bundle **d10b9cb0831cae985c5e211ddb05128a1de447e85277e08a289a8d528894fe5d**. It carries the entire application, source index, unchanged budget and complete companion.
+
+The complete concise package `stellar-forge/developer-site/dist/grant-data/reviewer-working-source.json` contains **6811078 bytes**, SHA-256 **ba9ec8c364d6040c1e50c69ab95812fa9f024a9ea7c21d54580818106cb56983**, bundle **e182c295c89c7de96a415ee150c717116b054715331af3dcc189398cf9f1634c**. Its reviewed 20,167-byte application is unchanged, and the full original application remains embedded in the complete source index. Both packages reopened through the original package reader; all four embedded role byte sequences matched their complete selected files.
+
+## Receive through the original saved application
+
+Continue **SCF-CURRENT-CUSTOMER-SOURCE-05C7-20261013** with the existing 22B7/81CF saved-v7/Page/profile course. Preserve the current 1,259-source phase's actual case, directory, saved version, source identity and request journal through its existing completed/save boundary. At the next explicit source-change boundary, choose this complete following package and use:
+
+`--expected-source-sha256 21e955261c46c8db474cb72ffa1dc9dc2eca1622f3691a70eecf45b8b40eb8b0`
+
+Compare the full source edition before receiving it. Preserve manually edited answers, issuer fields, requirements, planning selections, decisions, correspondence, original attachments, review rounds and all preceding source editions. Full and concise remain deliberate choices in the same saved application. Actual issuer invitation fields and limits continue through the original form intake.
+
+Before presenting this outgoing edition, the existing equipped receiver personally opens and operates its actual desktop and narrow application, compares and receives the selected source at that saved-case boundary, reads the full and concise answers and complete companion, downloads and reopens every outgoing attachment, and saves the complete continuing workspace through its unchanged original receiving course. Preserve the original producing peer's direct screen and attachment inspection requirement reproduced in the historical operating instructions below.
+
+## Original composition and complete receiving
+
+All forty original dependency bodies retain their published identities; the fresh current-main comparison confirms no changed dependency. The unchanged original composition and package functions loaded 24 modules to receive all fourteen author pairs, compose the full generated outputs and generate both complete portable packages. The original package receiver cold-opened each package and all four embedded roles matched their selected full content.
+
+Source selection records every original author body, its complete declaration, selected source editions, module closure and both complete package identities. The preceding published edition remains in immutable PR1932 and in the retained source-selection lineage. Current author files remain their authors' maintained source; this publication changes the same seven generated output and continuation files.
+
+## Earlier selected edition and original operating instructions
+
+The following complete prior guide is retained for its original operation, source editions, detailed receiving course and full owner instructions. Its earlier file hashes describe that earlier edition; the current selection and package identities are above.
+
+# Receive the complete current SCF application
+
 ## Current selected edition: installed OpenLineage sources in the complete application
 
 This following edition adopts the complete already published OpenLineage chapter and its 49-source declaration into the same grant application. The selected union now contains **1,843 source records, 92 product registrations and 111 companion chapters**. Every earlier source ID remains. All **1,794 source rows outside this declaration and all 110 unrelated chapters remain exact**. The complete full application, reviewer HTML, reviewed concise answers, Bank's 116 records and original 597-byte budget are unchanged.
@@ -382,3 +452,4 @@ Return the actual selected record/source identity, running host and observed res
 The entry remains `stellar-forge/developer-site/grant-compose.mjs`; product ownership stays in the existing `grant-products` declarations and canonical H2 chapters. This reconciliation executed the original pure composer and complete-source package functions with the retained full inputs and standard UTF-8/digest adapters. Both complete packages reopened through the maintained receiving functions; the full reopened value equals its original four-role input.
 
 For a following edition, select its full current canonical and complete current declarations, start with this complete published source union, and run the maintained composer. Preserve any concurrent valid generated successor through fresh-main comparison. Keep a single coherent set of four reviewer outputs and one complete portable package. The source selection retains the preceding publisher's module inventory and separately records the 24 exact modules executed for this reconciliation. Its sourcePins map names every changed full and concise browser artifact. Continue the original saved application through its reviewed incoming source and retained handover.
+
