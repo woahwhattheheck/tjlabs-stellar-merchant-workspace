@@ -35,6 +35,16 @@ export function createInstallationView({api,esc,detail,badge,when,size,option,in
     return '<div class="actions">'+button('Previous page','installation-page','data-kind="'+kind+'" data-offset="'+Math.max(0,page.offset-page.limit)+'"'+(page.offset===0?' disabled':''))+
       button('Next page','installation-page','data-kind="'+kind+'" data-offset="'+esc(page.next_offset??0)+'"'+(page.next_offset===null?' disabled':''))+'</div>';
   }
+  function documentReview(document){
+    if(!document||typeof document!=='object')return detail('Complete native document',document);
+    const titles={task:'Customer task',source:'Original source',payment:'Payment and facilitator authority',receiving:'Independent receiving',workorder:'Original workorder',workshare:'Funded Workshare',assignments:'Original assignments',checks:'Original acceptance checks',workflowPeriods:'Workflow periods',coordination:'Coordination'};
+    const label=k=>k.replace(/([a-z0-9])([A-Z])/g,'$1 $2').replace(/^./,c=>c.toUpperCase());
+    const value=v=>v===null?'<span class="muted">Not selected</span>':Array.isArray(v)?(v.length?'<ol>'+v.map(x=>'<li>'+(x&&typeof x==='object'?detail('Complete original item',x):esc(x))+'</li>').join('')+'</ol>':'<span class="muted">None recorded</span>'):v&&typeof v==='object'?detail('Complete original value',v):esc(v===true?'Yes':v===false?'No':v===''?'Not selected':v);
+    return Object.entries(document).map(([key,section])=>{
+      const body=section&&typeof section==='object'&&!Array.isArray(section)?table(['Field','Original native value'],Object.entries(section).map(([name,v])=>[esc(labels[key]?.[name]??label(name)),value(v)])):value(section);
+      return '<section class="native-section"><h3>'+esc(titles[key]??label(key))+'</h3>'+body+'</section>';
+    }).join('');
+  }
   async function nativeWorkspace(preparation){
     const q=desk(),catalog=await api.installationReceivings();q.nativeCatalog=catalog;
     const matching=catalog.items.filter(x=>x.preparationOperationId===preparation.operationId);
@@ -67,7 +77,7 @@ export function createInstallationView({api,esc,detail,badge,when,size,option,in
       const preview=await api.installationReceiving({id:q.receivingId,kind:'preview',snapshotSha256:observed.snapshotSha256});q.nativePreview=preview.value;
       html+=panel('Review the original native preview',
         '<p>This is the complete native preview returned for the selected original case, plan and Installation revision. Review the document and its native findings before Save.</p>'+
-        detail('Complete native document',preview.value.document??preview.value)+detail('Full native preview, validation and source',preview.value)+linkNative('native-preview.json','Download complete native preview'));
+        documentReview(preview.value.document??preview.value)+detail('Full native preview, validation and source',preview.value)+linkNative('native-preview.json','Download complete native preview'));
     }
     const phase=(action,label,prerequisite,description)=>{
       if(!observed.responses[prerequisite]?.validated)return '';
