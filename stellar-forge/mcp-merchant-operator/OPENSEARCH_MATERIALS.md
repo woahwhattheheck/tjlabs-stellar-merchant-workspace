@@ -236,3 +236,9 @@ The [2BA upload guide](../../stellar/scf-starforge-20261009/sf30-seller-sdk/open
 The [native receiving guide](receiving/OPENSEARCH_MATERIALS_NATIVE.md) runs the complete published ETIM source through its original supplier delivery, this merchant MCP, the typed client and CLI, full exports, interrupted download, bundle receiving and closed/reopened records. It uses the original public supplier source and original request IDs across continuation. Read the guide for the original directory, operation and final receipt.
 
 The [xChange receiving operation](../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/receiving/XCHANGE_NATIVE.md) adds the complete original xChange publisher example, precise numeric corrections, cross-plan FULL/CHANGE, recipient pages and the same host-restart/full-bundle receiving lifecycle.
+
+## Named recipient returns and original request files
+
+Use `material_recipient_preview` with a host-declared complete return file, its exact SHA-256 and paged full rows; keep `expectedComparisonSha256` on subsequent pages. The typed client provides `materialRecipientPreview` and pins that identity in `pages()`. Use `material_recipient_receive` / `materialRecipientReceive` with the original downloaded request ID, file alias and SHA-256. Completed requests reopen from their original Journal even after a transient copy is retired.
+
+The full [installed return guide](../../products/material-catalog/recipient/INSTALLED_RETURN.md) documents every field, file boundary, recovery step, decision and same-case receiving continuation. Ordinary MCP JSON and reply limits are unchanged. Full requests use existing host input files; full results remain in the original Journal.

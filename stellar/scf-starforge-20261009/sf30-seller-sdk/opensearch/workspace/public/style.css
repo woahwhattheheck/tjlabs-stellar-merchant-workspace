@@ -60,3 +60,9 @@
 
 /* Supplier delivery retains the catalog's neutral industrial controls. */
 #cat-panel-supplier fieldset{border:1px solid #bdbdbd;padding:12px;margin:0}#cat-panel-supplier legend{font-weight:600;padding:0 6px}#sup-bindings table{min-width:640px}#sup-bindings td:first-child{width:32%}#sup-bindings td:nth-child(2){width:56%}.sup-finding{padding:12px 0;border-bottom:1px solid #d0d0d0}.sup-finding p{margin:5px 0}.sup-finding a{margin-left:12px}#sup-patches td{max-width:420px;overflow-wrap:anywhere}#sup-product{border-top:1px solid #bdbdbd;margin-top:20px;padding-top:12px}#sup-product pre{max-height:360px;overflow:auto}
+
+/* Complete returned records remain readable at phone and desktop widths. */
+#cat-panel-recipient article { margin:1.2rem 0; padding:1rem 0; border-bottom:1px solid #bababa; }
+#cat-panel-recipient h4, #cat-panel-recipient p, #cat-panel-recipient summary { overflow-wrap:anywhere; }
+#cat-panel-recipient .table-wrap td:last-child { white-space:normal; }
+#cat-panel-recipient pre { white-space:pre-wrap; overflow-wrap:anywhere; }

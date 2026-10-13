@@ -1,6 +1,7 @@
 // MIT. Material operations inside the original OpenSearch operator workspace.
 import { sha256File } from '/file-sha256.mjs';
 import { createSupplierController } from '/supplier.mjs';
+import { createCatalogRecipientController } from '/catalog-recipient.mjs';
 const MAPPING_SCHEMA = 'stellar-forge.material-catalog-mapping.v1';
 const FIELDS = [
   ['materialId', 'Material identifier', 'PRODUCTID'],
@@ -30,7 +31,7 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
   let decisionOffset = 0, decisionNext = null, selectedPanel = 'setup', fileNotice = '', quantityUrl = null;
   let storageOffset = 0, storageNext = null, storageRows = [], storageSelection = null, storageReceipt = null;
   const hashes = new WeakMap();
-  let supplier = null;
+  let supplier = null, recipient = null;
   const nav = element('button', 'Material catalogs', { 'data-view': 'catalog', type: 'button' });
   document.querySelector('nav[aria-label="Workspace views"]').append(nav);
   const section = element('section', undefined, { id: 'view-catalog', hidden: '' });
@@ -39,7 +40,7 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
     '<div class="cat-selector"><label>Saved catalog<select id="cat-catalog"></select></label><div class="actions"><button id="cat-new" type="button">New catalog</button><button id="cat-reload" type="button">Reload saved catalog</button></div></div>',
     '<p id="cat-identity" class="summary">Create a catalog and choose its source mapping.</p>',
     '<div id="cat-pending" class="cat-banner" hidden><p id="cat-pending-description"></p><div class="actions"><button id="cat-pending-read" type="button">Read saved outcome</button><button id="cat-pending-retry" type="button">Retry original request</button></div></div>',
-    '<div class="cat-tabs" role="tablist" aria-label="Material catalog work"><button type="button" role="tab" data-catalog-view="setup" aria-selected="true">Sources and mapping</button><button type="button" role="tab" data-catalog-view="review" aria-selected="false">Edition review</button><button type="button" role="tab" data-catalog-view="matches" aria-selected="false">Customer matches</button><button type="button" role="tab" data-catalog-view="handover" aria-selected="false">Search and handover</button><button type="button" role="tab" data-catalog-view="supplier" aria-selected="false">Supplier delivery</button></div>',
+    '<div class="cat-tabs" role="tablist" aria-label="Material catalog work"><button type="button" role="tab" data-catalog-view="setup" aria-selected="true">Sources and mapping</button><button type="button" role="tab" data-catalog-view="review" aria-selected="false">Edition review</button><button type="button" role="tab" data-catalog-view="matches" aria-selected="false">Customer matches</button><button type="button" role="tab" data-catalog-view="handover" aria-selected="false">Search and handover</button><button type="button" role="tab" data-catalog-view="recipient" aria-selected="false">Returned customer reviews</button><button type="button" role="tab" data-catalog-view="supplier" aria-selected="false">Supplier delivery</button></div>',
     '<section id="cat-panel-setup" aria-label="Catalog sources and mapping">',
     '<div class="two-column"><label>Catalog title<input id="cat-title" maxlength="120" autocomplete="off"></label><label>Tenant identifier<input id="cat-tenant" maxlength="256" autocomplete="off"><span class="help">Use the retained organization identifier for this catalog.</span></label></div>',
     '<h3>Map original material fields</h3><p class="help">Enter a CSV header or JSON Pointer. Complex fields also accept a declared constant, text join or retained lookup as JSON. Identifier values keep their original text.</p>',
@@ -102,8 +103,12 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
   ].join('');
   const supplierPanel = element('section', undefined, { id: 'cat-panel-supplier', 'aria-label': 'Supplier delivery', hidden: '' });
   section.append(supplierPanel);
+  const recipientPanel = element('section', undefined, { id: 'cat-panel-recipient', 'aria-label': 'Returned customer reviews', hidden: '' });
+  section.append(recipientPanel);
   document.querySelector('main').append(section);
   supplier = createSupplierController({ container: supplierPanel, api, perform, host, notice, element, attempt });
+  recipient = createCatalogRecipientController({ container: recipientPanel, api, perform, host, notice, element, attempt, read,
+    getCatalog: () => catalog, isBusy: () => reading });
   for (const [key, label, placeholder] of FIELDS) {
     const field = element('label', label);
     const input = element('input', undefined, { id: 'cat-field-' + key, placeholder, autocomplete: 'off', spellcheck: 'false' });
@@ -119,7 +124,7 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
   }
   function panel(name) {
     selectedPanel = name;
-    for (const id of ['setup', 'review', 'matches', 'handover', 'supplier']) $('cat-panel-' + id).hidden = id !== name;
+    for (const id of ['setup', 'review', 'matches', 'handover', 'recipient', 'supplier']) $('cat-panel-' + id).hidden = id !== name;
     for (const button of section.querySelectorAll('[data-catalog-view]')) button.setAttribute('aria-selected', String(button.dataset.catalogView === name));
   }
   function changed() { dirty = true; buttons(); }
@@ -150,6 +155,7 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
   function fillCatalog(value) {
     catalog = value;
     supplier?.setCatalog(value, catalogEditions());
+    recipient?.setCatalog(value);
     $('cat-title').value = value?.title ?? '';
     $('cat-tenant').value = value?.tenantId ?? '';
     fillMapping(value?.mapping ?? emptyMapping());
@@ -489,6 +495,7 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
     renderFileState(); await perform(kind, values);
   }
   async function transmitFile(pending) {
+    if (pending.kind === 'catalog-recipient-receive') return recipient.transmitFile(pending);
     const file = fileFor(pending.kind);
     if (!file) { panel(pending.kind === 'catalog-import' ? 'handover' : 'setup'); view('catalog');
       throw new Error('Reselect the original file ' + pending.payload.name + ' to retry this retained request. Its metadata and request ID are unchanged.'); }
@@ -548,6 +555,7 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
     $('cat-use-lookup').disabled = held || !$('cat-lookup-source').value;
     renderFileState();
     supplier?.buttons();
+    recipient?.buttons();
   }
   function formatControls() {
     const kind = $('cat-format').value, tabular = ['csv', 'tsv'].includes(kind);
@@ -565,18 +573,18 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
   for (const id of ['cat-title', 'cat-tenant', 'cat-policy', 'cat-references', 'cat-attributes', 'cat-aliases', 'cat-delta'])
     $(id).addEventListener('input', changed);
   $('cat-new').addEventListener('click', () => {
-    if ((dirty || supplier.hasUnsaved()) && !window.confirm('Create a new catalog and discard these unsaved mapping edits?')) return;
+    if ((dirty || supplier.hasUnsaved() || recipient.hasUnsaved()) && !window.confirm('Create a new catalog and discard these unsaved mapping edits?')) return;
     fillCatalog(null); edition = null; clearMatches(); renderSelections(); renderEdition(null); panel('setup'); notice('Enter the new catalog and its original source mapping.');
   });
   $('cat-catalog').addEventListener('change', () => attempt(() => read(async () => {
     const id = $('cat-catalog').value;
     if (!id) { $('cat-catalog').value = catalog?.id ?? ''; return; }
-    if ((dirty || supplier.hasUnsaved()) && !window.confirm('Open another catalog and discard these unsaved mapping edits?')) { $('cat-catalog').value = catalog?.id ?? ''; return; }
+    if ((dirty || supplier.hasUnsaved() || recipient.hasUnsaved()) && !window.confirm('Open another catalog and discard these unsaved mapping edits?')) { $('cat-catalog').value = catalog?.id ?? ''; return; }
     try { await openCatalog(id); } catch (error) { $('cat-catalog').value = catalog?.id ?? ''; throw error; }
   })));
   $('cat-reload').addEventListener('click', () => attempt(() => read(async () => {
     if (!catalog) return;
-    if ((dirty || supplier.hasUnsaved()) && !window.confirm('Reload the saved catalog and discard these unsaved mapping edits?')) return;
+    if ((dirty || supplier.hasUnsaved() || recipient.hasUnsaved()) && !window.confirm('Reload the saved catalog and discard these unsaved mapping edits?')) return;
     await openCatalog(catalog.id); notice('Reopened the current saved catalog revision.');
   })));
   $('cat-save').addEventListener('click', () => attempt(() => perform('catalog', { action: 'save',
@@ -659,9 +667,10 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
   })));
   $('cat-storage-retire').addEventListener('click', () => attempt(() => read(releaseImportStage)));
   formatControls();
-  return { sync, buttons, transmitFile, hasUnsaved: () => dirty || supplier.hasUnsaved(),
+  return { sync, buttons, transmitFile, hasUnsaved: () => dirty || supplier.hasUnsaved() || recipient.hasUnsaved(),
     restorePending(pending) {
       supplier.restorePending(pending);
+      recipient.restorePending(pending);
       if (pending?.kind === 'catalog' && pending.payload.action === 'save') {
         const input = pending.payload;
         const selected = input.catalogId ? snapshot.catalogs.find(item => item.id === input.catalogId) : null;
@@ -675,6 +684,11 @@ export function createCatalogController({ host, api, perform, refresh, recover, 
     async acceptOperation(operation) {
       if (!operation.kind?.startsWith('catalog-')) return false;
       const result = operation.result ?? {};
+      if (operation.kind === 'catalog-recipient-review') {
+        const originalCatalog = JSON.parse(operation.request.reviewText).base.catalog.id;
+        if (catalog?.id !== originalCatalog) await openCatalog(originalCatalog);
+        recipient.acceptOperation(operation); await loadDecisions(); panel('recipient'); view('catalog'); notice('The original reviewed return outcome is retained in this catalogue Journal.'); return true;
+      }
       if (operation.kind.startsWith('catalog-supplier-')) {
         const owner = result.supplierPlan ?? result.supplierCorrection ?? result.supplierReview;
         if (owner?.catalogId && owner.catalogId !== catalog?.id) await openCatalog(owner.catalogId);

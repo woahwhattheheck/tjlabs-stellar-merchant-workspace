@@ -17,6 +17,7 @@ for(const [name,properties,required]of [
 ])specs.set('merchant_opensearch_'+name,{name:'merchant_opensearch_'+name,
   properties:{workspace:{type:'string',pattern:aliasPattern.source},...properties},required:['workspace',...required]});
 const pageMethods=Object.freeze({
+  materialRecipientPreview:['offset','nextOffset'],
   materialList:['cursor','nextCursor'],materialHistory:['beforeRevision','nextRevision'],
   materialRows:['offset','nextOffset'],materialChanges:['offset','nextOffset'],
   materialFacets:['offset','nextOffset'],materialSuggest:['offset','nextOffset'],
@@ -30,6 +31,7 @@ export const OPENSEARCH_MATERIAL_CLIENT_METHODS=Object.freeze({
   materialBMEcatProfile:'material_bmecat_profile',
   materialEdition:'material_edition',materialRows:'material_rows',materialChanges:'material_changes',
   materialGet:'material_get',materialFacets:'material_facets',materialSuggest:'material_suggest',
+  materialRecipientPreview:'material_recipient_preview',materialRecipientReceive:'material_recipient_receive',
   materialQuantity:'material_quantity',materialSave:'material_save',materialUpload:'material_upload',
   materialPreview:'material_preview',materialSelect:'material_select',materialDecision:'material_decision',
   materialDraft:'material_draft',materialReceive:'material_receive',materialExport:'material_export',
@@ -142,6 +144,12 @@ export class OpenSearchMaterialClient {
     while(true){
       const page=await this[method](selected,options);
       if(!Object.hasOwn(page,output))fail('OPENSEARCH_CLIENT_PAGINATION','The original page omitted its continuation field.');
+      if(method==='materialRecipientPreview'){
+        if(typeof page.comparisonSha256!=='string'||!/^[a-f0-9]{64}$/.test(page.comparisonSha256)||
+            selected.expectedComparisonSha256!==undefined&&selected.expectedComparisonSha256!==page.comparisonSha256)
+          fail('OPENSEARCH_CLIENT_PAGINATION','The original reviewed comparison changed between pages.');
+        selected.expectedComparisonSha256=page.comparisonSha256;
+      }
       yield page;
       const next=page[output];
       if(next===null)return;

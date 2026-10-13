@@ -16,6 +16,8 @@ import { catalogIndex } from
   '../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/exports.mjs';
 import { openCatalogReadSnapshot, fingerprintCatalogExportSnapshot } from
   '../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/read-snapshot.mjs';
+import { previewRecipientReview } from
+  '../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/recipient-return.mjs';
 
 const SHA256 = /^[a-f0-9]{64}$/;
 const CHUNK_BYTES = 262144;
@@ -109,6 +111,31 @@ async function* inputBytes(input, owner) {
   } finally { if (handle) await owner.close(handle); }
 }
 
+async function recipientInputText(input, owner, maximum, expectedSha256) {
+  hash(expectedSha256, 'selected input SHA-256');
+  if(input.sha256!==expectedSha256 || input.bytes>maximum)
+    fail('OPENSEARCH_MATERIAL_REVIEW_INPUT_CHANGED','Select the exact bounded original recipient file and host alias.',409);
+  const parts=[];let length=0;const sum=createHash('sha256');
+  for await(const chunk of inputBytes(input,owner)){const saved=Buffer.from(chunk);length+=saved.length;parts.push(saved);sum.update(saved);}
+  if(length!==input.bytes||sum.digest('hex')!==expectedSha256)
+    fail('OPENSEARCH_MATERIAL_INPUT_CHANGED','The original recipient file differs from its complete SHA-256.',409);
+  try{return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(Buffer.concat(parts,length));}
+  catch{fail('OPENSEARCH_MATERIAL_REVIEW_INPUT_INVALID','Select a complete UTF-8 recipient JSON file.');}
+}
+function recipientComparisonPage(comparison,args) {
+  if(args.expectedComparisonSha256!==undefined&&comparison.sha256!==hash(args.expectedComparisonSha256,'comparison SHA-256'))
+    fail('CATALOG_RECIPIENT_COMPARISON_CHANGED','The original author selection changed between comparison pages. Review a new complete comparison.',409);
+  const paging=page(args),{rows,...identity}=comparison,items=[];
+  const result={...identity,comparisonSha256:comparison.sha256,inputId:args.inputId,inputSha256:args.expectedInputSha256,
+    ...paging,total:rows.length,rows:items,nextOffset:null};
+  let used=Buffer.byteLength(JSON.stringify(result)),limited=false;
+  if(used>PAGE_PAYLOAD_BYTES)originalTooLarge();
+  for(const row of rows.slice(paging.offset,paging.offset+paging.limit)){
+    const next=addPageItem(items,row,used);if(next===null){limited=true;break;}used=next;
+  }
+  result.nextOffset=paging.offset+items.length<rows.length?paging.offset+items.length:null;
+  return {...result,...(limited?{byteLimited:true,replyByteLimit:REPLY_BYTES}:{})};
+}
 function summary(kind, value) {
   if (kind === 'catalogs' || kind === 'catalog') return omit(value, ['mapping']);
   if (kind === 'sources') return { ...omit(value,['sample','columns']), columnCount:value.columns?.length ?? 0 };
@@ -556,6 +583,12 @@ export function projectOpenSearchMaterialOperation(operation,includeRequest=fals
     const item=operation.result?.[key];
     if(item===null||Number.isSafeInteger(item)||typeof item==='string'&&Buffer.byteLength(item)<=4096)other[key]=item;
   }
+  if(operation.kind==='catalog-recipient-review'&&operation.result) {
+    resultSummary.recipientReview={...Object.fromEntries(['schema','reviewId','reviewSha256','comparisonSha256','receiptSha256','retainedIn']
+      .filter(key=>operation.result[key]!==undefined).map(key=>[key,operation.result[key]])),
+      anchor:operation.result.anchor??null,contexts:operation.result.results?.length??0,
+      adopted:operation.result.results?.filter(row=>row.choice==='adopt').length??0};
+  }
   const projected={...operation,...(operation.result?{result:{...other,resultSummary,fullResultRetained:true,
     fullResultHint:'The full original result remains in this request journal and its complete catalog/supplier exports. Use the original operation read or retained files to read records exceeding the tool reply limit.'}}:{})};
   if(Buffer.byteLength(JSON.stringify(operationEnvelope(projected,includeRequest)))>PAGE_PAYLOAD_BYTES)
@@ -836,6 +869,27 @@ export class MerchantOpenSearchMaterials {
         case 'merchant_opensearch_material_select':return model.catalog.select(request);
         case 'merchant_opensearch_material_decision':return model.catalog.saveDecision(request);
         case 'merchant_opensearch_material_draft':return model.catalog.createDraft(request);
+        case 'merchant_opensearch_material_recipient_preview': {
+          const input=selectedInput(entry,args.inputId);
+          const raw=await recipientInputText(input,this.#owner(scope),4*1024*1024,args.expectedInputSha256);
+          return await readSnapshot(catalog=>recipientComparisonPage(previewRecipientReview(catalog,raw),args));
+        }
+        case 'merchant_opensearch_material_recipient_receive': {
+          identifier(args.requestId,'original receiving request ID');hash(args.expectedInputSha256,'request file SHA-256');
+          let saved;
+          try{saved=model.store.operation(args.requestId);}catch(error){if(error.code!=='WORKSPACE_OPERATION_NOT_FOUND')throw error;}
+          if(saved){
+            if(saved.kind!=='catalog-recipient-review'||sha(jsonBytes(saved.request))!==args.expectedInputSha256)
+              fail('WORKSPACE_REQUEST_REUSED','This request ID belongs to a different original reviewed request file.',409);
+            return model.catalog.receiveRecipientReview(saved.request);
+          }
+          const input=selectedInput(entry,args.inputId);
+          const raw=await recipientInputText(input,this.#owner(scope),8*1024*1024,args.expectedInputSha256);
+          let request;try{request=JSON.parse(raw);}catch{fail('OPENSEARCH_MATERIAL_REVIEW_INPUT_INVALID','Choose the exact complete request JSON.');}
+          if(!plain(request)||request.requestId!==args.requestId||raw!==jsonBytes(request).toString('utf8'))
+            fail('CATALOG_RECIPIENT_REQUEST_CHANGED','Keep the exact original downloaded request, its ID and pretty JSON bytes.',409);
+          return model.catalog.receiveRecipientReview(request);
+        }
         case 'merchant_opensearch_material_receive': {
           const input=selectedInput(entry,args.inputId);
           return model.catalog.importBundle({requestId:args.requestId,name:input.name,bytes:input.bytes,sha256:input.sha256},

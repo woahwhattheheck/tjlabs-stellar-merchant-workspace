@@ -20,6 +20,8 @@ const HELP=[
   '  opensearch-materials-client tools',
   '  opensearch-materials-client open --url MCP_URL --workspace ALIAS',
   '  opensearch-materials-client material-list --url MCP_URL --workspace ALIAS --input request.json --all-pages',
+  '  opensearch-materials-client material-recipient-preview --url MCP_URL --workspace ALIAS --input return-alias.json --all-pages',
+  '  opensearch-materials-client material-recipient-receive --url MCP_URL --workspace ALIAS --input original-request-alias.json',
   '  opensearch-materials-client supplier-review --url MCP_URL --workspace ALIAS --input original-request.json',
   '  opensearch-materials-client supplier-templates --url MCP_URL --workspace ALIAS --input xchange-target.json',
   '  opensearch-materials-client supplier-recipient-rows --url MCP_URL --workspace ALIAS --input retained-review.json --all-pages',
