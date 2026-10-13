@@ -2,15 +2,16 @@
 // Continue a complete reviewed preparation through the original SF47 writer.
 // Clients are borrowed; this module owns no application, database or financial authority.
 import {resolve,join,dirname} from 'node:path';
-import {readdir} from 'node:fs/promises';
+import {readdir,lstat} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {readWorkflowSeriesPrivateFile,workflowSeriesPrivateDirectory} from '../../stellar-forge/mcp-merchant-operator/workflow-series-connection.mjs';
 import {writeConsoleWorkflowFile} from '../../stellar-forge/mcp-merchant-operator/console/client-files.mjs';
 import {lockPrivateDirectory} from '../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/private-directory-lock.mjs';
-import {readPreparedInstallation,copyPreparedInstallation} from './installation-receiving-source.mjs';
+import {readPreparedInstallation,copyPreparedInstallation,validatePreparedInstallationMembers} from './installation-receiving-source.mjs';
 
 export const RECEIVING_SCHEMA='stellar-forge.facilitator-installation-receiving.v1';
 const HASH=/^[a-f0-9]{64}$/,UUID=/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
+export const MAX_SNAPSHOT_BYTES=512*1024*1024;
 const MAX_FILE=128*1024*1024,MAX_ARCHIVE=32*1024*1024;
 const object=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const ordered=x=>Array.isArray(x)?x.map(ordered):object(x)?Object.fromEntries(Object.keys(x).sort().map(k=>[k,ordered(x[k])])):x;
@@ -74,6 +75,7 @@ export async function openInstallationReceiving({directory,sourceClient,receivin
   const folder=id=>join(root,operationId(id));
   async function publish(dir,name,value){return writeConsoleWorkflowFile(join(dir,name),Buffer.isBuffer(value)?value:encode(value));}
   async function input(id){
+    await restored(id);
     const dir=folder(id),value=await json(join(dir,'intent.json'));
     need(value.schema===RECEIVING_SCHEMA+'.intent'&&value.operationId===id&&same(value.owner,owner),'The original receiving selection belongs to another host binding.');
     const prepared=await readPreparedInstallation(join(dir,'preparation'),value.preparation.sha256);
@@ -94,9 +96,9 @@ export async function openInstallationReceiving({directory,sourceClient,receivin
   }
   async function phase(dir,name,perform,validate,request){
     const path=join(dir,name+'.response.json'),key=path;
-    let value=returned.get(key),disk=await json(path,true);
-    if(value&&disk)need(same(value,disk),'The returned native response differs from its retained complete file.');
-    value=disk??value;
+    let value=returned.get(key),disk=await json(path,true),observed=await json(join(dir,name+'.observed-response.json'),true);
+    for(const prior of [disk,observed])if(value&&prior)need(same(value,prior),'The returned native response differs from its retained complete file.');else if(prior)value=prior;
+    if(disk&&observed)need(same(disk,observed),'The observed response differs from its validated receipt.');
     if(!value){
       let result;try{result=await perform();}catch(error){await failure(dir,name,error,request);throw error;}
       value=envelope(result);
@@ -140,7 +142,7 @@ export async function openInstallationReceiving({directory,sourceClient,receivin
     const id=operationId(args.operationId);
     need(HASH.test(args.expectedPreparationSha256),'Select the actual completed preparation SHA256.');
     text(args.actor,'Recording operator',300);text(args.note,'Installation reason',12000);text(args.receivingName,'Receiving case name',300);
-    const dir=folder(id);await workflowSeriesPrivateDirectory(dir,true);
+    const dir=folder(id);await workflowSeriesPrivateDirectory(dir,true);await restored(id);
     const prior=await json(join(dir,'intent.json'),true);
     if(prior){
       need(prior.operationId===id&&prior.preparation.sha256===args.expectedPreparationSha256&&prior.actor===args.actor&&
@@ -247,7 +249,7 @@ export async function openInstallationReceiving({directory,sourceClient,receivin
   async function read(id){
     const ctx=await input(id),responses={};
     for(const name of ['preview','save','export','receive']){
-      const path=join(ctx.dir,name+'.response.json'),disk=await json(path,true),stored=disk??returned.get(path);
+      const path=join(ctx.dir,name+'.response.json'),disk=await json(path,true),stored=disk??returned.get(path)??await json(join(ctx.dir,name+'.observed-response.json'),true);
       if(stored){const r=responseValue(stored);responses[name]={validated:!!disk||validatedReturns.has(path),sha256:r.sha256,bytes:r.bytes.length,mediaType:r.mediaType,
         ...(r.value===undefined?{}:{value:r.value})};}
     }
@@ -271,7 +273,7 @@ export async function openInstallationReceiving({directory,sourceClient,receivin
     const formats={'native-preview.json':'preview','native-save.json':'save','complete-case.zip':'export','native-receive.json':'receive',
       'original-saved-edition.json':'saved-edition','independently-received-edition.json':'received-edition'};
     if(Object.hasOwn(formats,name)){
-      const path=join(ctx.dir,formats[name]+'.response.json'),saved=await json(path,true)??returned.get(path);
+      const path=join(ctx.dir,formats[name]+'.response.json'),saved=await json(path,true)??returned.get(path)??await json(join(ctx.dir,formats[name]+'.observed-response.json'),true);
       need(saved,'The original response has not returned for this phase.');
       const response=responseValue(saved);
       return {body:response.bytes,bytes:response.bytes.length,sha256:response.sha256,filename:name,contentType:response.mediaType};
@@ -289,7 +291,290 @@ export async function openInstallationReceiving({directory,sourceClient,receivin
     }
     throw fail('INSTALLATION_RECEIVING_FILE','Choose a declared original operation or preparation file.');
   }
+
+  function validatePreview(ctx,result){
+    const v=result.value,expected=ctx.prepared.previewInput;
+    need(v?.schema==='stellar-forge.sf47-installation.v1'&&v.installationId===expected.installationId&&v.expectedRevision===expected.expectedRevision&&
+      same(v.source,ctx.prepared.seed.source)&&HASH.test(v.previewSha256||''),'The native preview identifies another original case, plan or Installation.');
+    for(const key of ['workorder','assignments','checks','workshare','workflowPeriods','coordination'])
+      need(same(v.document[key],ctx.prepared.document[key]),'The native preview changed the original funded, commercial or acceptance assignment.');
+    for(const expectedProvider of ctx.prepared.document.payment.facilitators){
+      const actual=v.document.payment.facilitators.find(x=>x.operatorId===expectedProvider.operatorId&&x.endpoint===expectedProvider.endpoint);
+      need(actual&&same(actual.sourceIds,expectedProvider.sourceIds),'The native preview changed an original provider/source selection.');
+    }
+  }
+  function saveCommand(ctx,preview){return {...ctx.prepared.previewInput,document:preview.value.document,
+    expectedPreviewSha256:preview.value.previewSha256,requestId:'facilitator-installation-save-'+ctx.intent.operationId,
+    actor:ctx.intent.actor,note:ctx.intent.note};}
+  function validateSave(ctx,preview,response){
+    const v=response.value;
+    need(v?.id===ctx.caseId&&v.action==='installation.save'&&v.kind==='installation'&&
+      v.version===preview.value.source.version+1&&v.revision===preview.value.expectedRevision+1&&HASH.test(v.sha256||'')&&
+      (preview.value.installationId===null||v.recordId===preview.value.installationId),'The native saved result differs from the retained original request.');
+    need(typeof v.recordId==='string','The original saved Installation identity is missing.');
+  }
+  function validateSavedEdition(ctx,receipt,actual,preview){
+    const selected=receipt.value;
+    need(selected.id===ctx.caseId&&selected.action==='installation.save'&&selected.kind==='installation'&&
+      typeof selected.recordId==='string'&&Number.isInteger(selected.revision)&&HASH.test(selected.sha256||''),
+      'The original save response identifies another Installation.');
+    need(actual.value?.sha256===selected.sha256&&actual.value.revision===selected.revision&&actual.value.id===selected.recordId,
+      'The original saved Installation is absent or changed. Reopen its complete original workspace; do not resubmit known acceptance.');
+    need(same(actual.value.preview,preview.value),'The original saved Installation differs from its exact retained preview.');
+  }
+  function validateExport(response){
+    need(response.bytes.length>0&&response.bytes.length<=MAX_ARCHIVE&&/^(application\/zip|application\/octet-stream)\b/i.test(response.mediaType),
+      'Retain the entire native operating-case ZIP within the original 32 MiB receiving bound.');
+  }
+  function importRequest(ctx,exported){return {schema:RECEIVING_SCHEMA+'.import',archive:{bytes:exported.bytes.length,sha256:exported.sha256},
+    body:{name:ctx.intent.receivingName,actor:ctx.intent.actor,requestId:'facilitator-installation-receive-'+ctx.intent.operationId}};}
+  function validateReceive(saved,response){
+    const v=response.value,selection=v?.selectedInstallation;
+    need(v?.action==='import'&&typeof v.id==='string'&&selection?.id===saved.value.recordId&&
+      selection.revision===saved.value.revision&&selection.sha256===saved.value.sha256,
+      'The native receiving result selected a different complete Installation edition.');
+  }
+  function validateReceivedCase(ctx,imported,exported,state){
+    need(state.value?.program?.id===imported.value.id&&state.value.program.origin?.archiveSha256===exported.sha256&&
+      state.value.program.origin.programId===ctx.caseId,'The receiving case does not retain this exact original whole-case archive.');
+    for(const source of ctx.prepared.binding.sourceBindings){
+      const actual=state.value.sources.find(x=>x.id===source.sourceId);
+      need(actual&&actual.bytes===source.bytes&&actual.sha256===source.sha256,'A complete original commissioning source is missing from the received case.');
+    }
+  }
+  function completeRecord(ctx,saved,exported,imported){return {schema:RECEIVING_SCHEMA+'.complete',operationId:ctx.intent.operationId,preparation:ctx.intent.preparation,
+    original:{caseId:ctx.caseId,installationId:saved.value.recordId,revision:saved.value.revision,sha256:saved.value.sha256},
+    receiving:{caseId:imported.value.id,planId:imported.value.planId,workspace:receiving,importedVersion:imported.value.version},
+    archive:{bytes:exported.bytes.length,sha256:exported.sha256},saveRequestId:'facilitator-installation-save-'+ctx.intent.operationId,
+    receiveRequestId:'facilitator-installation-receive-'+ctx.intent.operationId};}
+
+
+  function snapshotPath(name,id){
+    need(typeof name==='string'&&name.length<=1200&&!name.includes('\\')&&
+      name.split('/').every(part=>part&&part!=='.'&&part!=='..'&&!/[:\x00-\x1f\x7f]/.test(part)),
+      'Keep every ordinary original receiving snapshot path.');
+    need(name==='OWNER.json'||name.startsWith(id+'/'),'The snapshot contains another operation or owner path.');
+    return name;
+  }
+  function fileRow(path,body){return {path,bytes:body.length,sha256:sha(body),encoding:'base64',content_base64:body.toString('base64')};}
+  const metadata=packet=>({schema:packet.schema,operationId:packet.operationId,owner:packet.owner,preparation:packet.preparation,
+    files:packet.files.map(({path,bytes,sha256})=>({path,bytes,sha256}))});
+  function checkedSnapshot(selected){
+    exact(selected,['schema','operationId','owner','preparation','files','contentSha256']);
+    need(selected.schema===RECEIVING_SCHEMA+'.snapshot'&&same(selected.owner,owner),'Keep this original receiving owner and both exact inspected host bindings.');
+    const id=operationId(selected.operationId);
+    need(HASH.test(selected.contentSha256)&&Array.isArray(selected.files)&&selected.files.length>0&&selected.files.length<=20000,
+      'Select the complete bounded receiving snapshot.');
+    need(encode(selected).length<=MAX_SNAPSHOT_BYTES,'The complete receiving snapshot exceeds 512 MiB; no source or history is truncated.');
+    need(sha(encode(metadata(selected)))===selected.contentSha256,'The original snapshot content identity changed.');
+    const files=new Map();let total=0;
+    for(const item of selected.files){
+      exact(item,['path','bytes','sha256','encoding','content_base64']);snapshotPath(item.path,id);
+      need(item.encoding==='base64'&&typeof item.content_base64==='string'&&Number.isSafeInteger(item.bytes)&&item.bytes>=0&&item.bytes<=MAX_FILE&&HASH.test(item.sha256)&&!files.has(item.path),'The complete snapshot repeats or changes an original file identity.');
+      const body=Buffer.from(item.content_base64,'base64');total+=body.length;
+      need(body.toString('base64')===item.content_base64&&body.length===item.bytes&&sha(body)===item.sha256&&total<=MAX_SNAPSHOT_BYTES,
+        'A complete original snapshot file differs from its retained bytes.');
+      files.set(item.path,{path:item.path,bytes:item.bytes,sha256:item.sha256,raw:body});
+    }
+    const get=name=>{const row=files.get(name==='OWNER.json'?name:id+'/'+name);need(row,'The full original snapshot is missing '+name+'.');return parse(row.raw);};
+    const optional=name=>files.has(id+'/'+name)?get(name):null;
+    need(same(get('OWNER.json'),owner),'The full original OWNER.json does not match this receiving selection.');
+    const intent=get('intent.json');
+    need(intent.schema===RECEIVING_SCHEMA+'.intent'&&intent.operationId===id&&same(intent.owner,owner)&&same(intent.preparation,selected.preparation),
+      'Keep the complete original operation intention and preparation identity.');
+    text(intent.actor,'Recording operator',300);text(intent.note,'Installation reason',12000);text(intent.receivingName,'Receiving case name',300);
+    const preparationFiles=[...files.values()].filter(row=>row.path.startsWith(id+'/preparation/'))
+      .map(row=>({...row,path:row.path.slice((id+'/preparation/').length)}));
+    const prepared=validatePreparedInstallationMembers(preparationFiles,intent.preparation.sha256);
+    need(same(prepared.identity,intent.preparation),'The portable original preparation changed.');
+    const ctx={dir:folder(id),intent,prepared,caseId:prepared.seed.source.caseId};
+    const responses={},observed={};
+    for(const phaseName of ['preview','save','export','receive']){
+      const value=optional(phaseName+'.response.json'),observation=optional(phaseName+'.observed-response.json');
+      if(value)responses[phaseName]=responseValue(value);
+      if(observation)observed[phaseName]=responseValue(observation);
+      if(value&&observation)need(same(value,observation),'The complete observed return differs from its validated original receipt.');
+    }
+    const before=optional('case-before-preview.response.json');
+    if(before)need(same(sourceOf(responseValue(before).value),prepared.seed.source),'The retained original case observation differs.');
+    if(responses.preview){need(before,'The original preview is missing its case observation.');validatePreview(ctx,responses.preview);}
+    const saveRequest=optional('save-request.json');
+    if(saveRequest){need(responses.preview,'The original save request is missing its validated preview.');need(same(saveRequest,saveCommand(ctx,responses.preview)),'The original save request differs from its complete source selection.');}
+    if(responses.save){need(saveRequest,'The original accepted save is missing its request.');validateSave(ctx,responses.preview,responses.save);}
+    const saved=optional('saved-edition.response.json');
+    if(saved){need(responses.save,'The saved original edition is missing its acceptance.');validateSavedEdition(ctx,responses.save,responseValue(saved),responses.preview);}
+    if(responses.export){need(saved,'The complete native archive is missing its saved original edition.');validateExport(responses.export);}
+    const receiveRequest=optional('receive-request.json');
+    if(receiveRequest){need(responses.export&&responses.save,'The original receiving request is missing the full export or save receipt.');need(same(receiveRequest,importRequest(ctx,responses.export)),'The original receiving request differs from its retained archive.');}
+    if(responses.receive){need(receiveRequest,'The native receiving acceptance is missing its original request.');validateReceive(responses.save,responses.receive);}
+    const received=optional('received-edition.response.json');
+    if(received){need(responses.receive&&saved,'The independently received edition is missing its original acceptance.');need(same(originalEdition(responseValue(received).value),originalEdition(responseValue(saved).value)),'The independent original edition differs from its saved source.');}
+    const caseReturns=[];
+    for(const row of files.values()){
+      if(row.path==='OWNER.json'||row.path.startsWith(id+'/preparation/'))continue;
+      const name=row.path.slice(id.length+1);
+      if(['intent.json','case-before-preview.response.json','save-request.json','receive-request.json','saved-edition.response.json','received-edition.response.json','RECEIVED.json'].includes(name)||
+        /^(preview|save|export|receive)\.(response|observed-response)\.json$/.test(name))continue;
+      const error=/^(preview|save|export|receive)\.error\.([a-f0-9]{64})\.json$/.exec(name);
+      if(error){
+        const value=parse(row.raw);need(error[2]===row.sha256&&value.schema===RECEIVING_SCHEMA+'.error'&&value.operationId===id&&value.phase===error[1]&&object(value.error),'A complete original native error observation changed.');
+        const requests={preview:{caseId:ctx.caseId,body:prepared.previewInput},save:saveRequest?{caseId:ctx.caseId,body:saveRequest}:null,
+          export:responses.save?{kind:'installation',caseId:ctx.caseId,installationId:responses.save.value.recordId,revision:responses.save.value.revision}:null,
+          receive:receiveRequest?{kind:'case',archive:receiveRequest.archive,body:receiveRequest.body}:null};
+        need(requests[error[1]]&&same(value.request,requests[error[1]]),'The retained native error belongs to a different original request.');continue;
+      }
+      const caseReturn=/^received-case-([a-f0-9]{64})\.response\.json$/.exec(name);
+      if(caseReturn){const response=responseValue(parse(row.raw));need(response.sha256===caseReturn[1]&&responses.receive&&responses.export,'The returned case observation is missing its original receiving receipt.');validateReceivedCase(ctx,responses.receive,responses.export,response);caseReturns.push(response);continue;}
+      if(/^restore-(intent|complete)\.[a-f0-9]{64}\.json$/.test(name))continue;
+      need(false,'The complete receiving snapshot includes an undeclared member: '+name+'.');
+    }
+    for(const phaseName of ['preview','save','export','receive']){
+      if(!observed[phaseName])continue;
+      if(phaseName==='save')need(saveRequest,'The observed save return is missing its original request.');
+      if(phaseName==='export')need(saved,'The observed export is missing its original saved edition.');
+      if(phaseName==='receive')need(receiveRequest,'The observed receiving return is missing its original request.');
+    }
+    const completion=optional('RECEIVED.json');
+    if(completion){need(responses.receive&&responses.export&&responses.save&&received&&caseReturns.length,'The completed receiving record is missing a full original phase.');need(same(completion,completeRecord(ctx,responses.save,responses.export,responses.receive)),'The complete receiving record differs from its original receipts.');}
+    checkRestoreRecords(id,files,true);
+    return {id,files,ctx,packet:clone(selected)};
+  }
+  function restoreIntent(value,id,digest){
+    exact(value,['schema','operationId','owner','preparation','contentSha256','files']);
+    need(value.schema===RECEIVING_SCHEMA+'.restore'&&value.operationId===id&&value.contentSha256===digest&&same(value.owner,owner)&&
+      Array.isArray(value.files)&&value.files.length>0&&value.files.length<=20000,'The original restore intention changed.');
+    const names=new Set();for(const row of value.files){
+      exact(row,['path','bytes','sha256']);snapshotPath(row.path,id);
+      need(!names.has(row.path)&&Number.isSafeInteger(row.bytes)&&row.bytes>=0&&row.bytes<=MAX_FILE&&HASH.test(row.sha256),'The original restore member identity changed.');names.add(row.path);
+    }
+    const meta={schema:RECEIVING_SCHEMA+'.snapshot',operationId:id,owner:value.owner,preparation:value.preparation,files:value.files};
+    need(sha(encode(meta))===digest,'The original restore file roster changed.');return value;
+  }
+  function checkRestoreRecords(id,files,requireComplete){
+    for(const [path,row]of files){
+      const name=path.slice(id.length+1),match=/^restore-intent\.([a-f0-9]{64})\.json$/.exec(name);
+      if(!match)continue;
+      const intent=parse(row.raw),complete=files.get(id+'/restore-complete.'+match[1]+'.json');
+      restoreIntent(intent,id,match[1]);
+      if(requireComplete)need(complete,'The original restore is incomplete. Continue with its exact full snapshot before any native work.','INSTALLATION_RESTORE_PENDING');
+      if(complete){
+        need(same(parse(complete.raw),{...intent,schema:RECEIVING_SCHEMA+'.restored'}),'The completed restore differs from its original intention.');
+        for(const expected of intent.files){const actual=files.get(snapshotPath(expected.path,id));need(actual&&actual.bytes===expected.bytes&&actual.sha256===expected.sha256,'A complete restored original member is missing or changed.');}
+      }
+    }
+    for(const path of files.keys())if(path.startsWith(id+'/restore-complete.'))need(files.has(path.replace('/restore-complete.','/restore-intent.')),'The restored record is missing its original intention.');
+  }
+  async function restored(id){
+    const dir=folder(id),required=new Map(),names=await readdir(dir);
+    for(const name of names){
+      const match=/^restore-intent\.([a-f0-9]{64})\.json$/.exec(name);
+      if(!match)continue;
+      const value=restoreIntent(await json(join(dir,name)),id,match[1]),complete=await json(join(dir,'restore-complete.'+match[1]+'.json'),true);
+      need(complete&&same(complete,{...value,schema:RECEIVING_SCHEMA+'.restored'}),'The original restore is incomplete. Retry its exact full snapshot; do not dispatch native work.','INSTALLATION_RESTORE_PENDING');
+      for(const row of value.files){const old=required.get(row.path);need(!old||same(old,row),'The original restore histories disagree about immutable bytes.');required.set(row.path,row);}
+    }
+    for(const name of names)if(/^restore-complete\.[a-f0-9]{64}\.json$/.test(name))need(names.includes(name.replace('restore-complete.','restore-intent.')),'A restored commitment lost its original intention.');
+    for(const row of required.values()){
+      let body;try{body=await raw(join(root,row.path));}catch(error){if(error.code!=='ENOENT')throw error;throw fail('INSTALLATION_RESTORE_PENDING','A retained restored member is missing. Restore the exact full original snapshot before any native work.');}
+      need(body.length===row.bytes&&sha(body)===row.sha256,'A retained restored member changed. Restore its exact original bytes before any native work.','INSTALLATION_RESTORE_PENDING');
+    }
+  }
+  async function operationFiles(id,expected=null,preparationDirectories=[]){
+    const files=new Map(),known=new Map(),rootOwner=await raw(join(root,'OWNER.json'));
+    for(const [path,value]of [...returned,...failureObservations])if(dirname(path)===folder(id)){
+      const body=encode(value);known.set(id+'/'+path.split(/[\\/]/).pop(),{bytes:body.length,sha256:sha(body),raw:body});
+    }
+    files.set('OWNER.json',{path:'OWNER.json',bytes:rootOwner.length,sha256:sha(rootOwner),raw:rootOwner});
+    const allowedDirectories=expected?new Set([id]):null;
+    if(allowedDirectories)for(const name of preparationDirectories)allowedDirectories.add(id+'/preparation/'+name);
+    if(allowedDirectories)for(const name of expected.keys()){let parts=name.split('/');parts.pop();while(parts.length){allowedDirectories.add(parts.join('/'));parts.pop();}}
+    async function visit(relative){
+      if(allowedDirectories)need(allowedDirectories.has(relative),'The destination contains an undeclared original directory.');
+      const dir=join(root,relative);await workflowSeriesPrivateDirectory(dir);
+      for(const name of (await readdir(dir)).sort()){
+        const path=relative+'/'+name,full=join(root,path),stat=await lstat(full);
+        need(!stat.isSymbolicLink(),'The original receiving member became a symbolic link.');
+        if(stat.isDirectory()){need(path===id+'/preparation'||path.startsWith(id+'/preparation/'),'Keep only the original complete preparation directories.');await visit(path);continue;}
+        need(stat.isFile(),'Keep complete regular receiving files.');
+        const stage=/^\.(.+)\.pending-([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})$/.exec(name);
+        if(stage){
+          const finalPath=relative+'/'+stage[1],final=expected?.get(finalPath)??known.get(finalPath);
+          let completed;try{completed=await lstat(join(root,finalPath));}catch(error){if(error.code!=='ENOENT')throw error;}
+          const body=await raw(full);
+          if(final)need(body.length===final.bytes&&sha(body)===final.sha256,'The retained publication stage differs from this exact restore.');
+          else need(completed&&completed.isFile()&&!completed.isSymbolicLink()&&(await raw(join(root,finalPath))).equals(body),'An incomplete publication remains; preserve it and reconcile the original writer before snapshot.');
+          if(stat.nlink!==1)need(completed&&stat.nlink===2&&completed.nlink===2&&stat.dev===completed.dev&&stat.ino===completed.ino,'The retained private alias differs from the original completed publication.');
+          continue;
+        }
+        const body=await raw(full);files.set(path,{path,bytes:body.length,sha256:sha(body),raw:body});
+      }
+    }
+    let present=true;try{await lstat(folder(id));}catch(error){if(error.code!=='ENOENT')throw error;present=false;}
+    if(present)await visit(id);
+    return files;
+  }
+  function memoryFiles(id,files){
+    const base=folder(id);
+    for(const phaseName of ['preview','save','export','receive']){
+      const value=returned.get(join(base,phaseName+'.response.json'));if(!value)continue;
+      const standard=id+'/'+phaseName+'.response.json',observed=id+'/'+phaseName+'.observed-response.json',body=encode(value);
+      if(files.has(standard)){need(files.get(standard).raw.equals(body),'A complete returned response differs from its retained receipt.');continue;}
+      if(files.has(observed))need(files.get(observed).raw.equals(body),'A complete observed response changed.');
+      else files.set(observed,{path:observed,bytes:body.length,sha256:sha(body),raw:body});
+    }
+    for(const [path,value]of failureObservations)if(dirname(path)===base){
+      const rel=id+'/'+path.split(/[\\/]/).pop(),body=encode(value);
+      if(files.has(rel))need(files.get(rel).raw.equals(body),'The original in-memory error observation changed.');
+      else files.set(rel,{path:rel,bytes:body.length,sha256:sha(body),raw:body});
+    }
+    return files;
+  }
+  async function snapshot(id){
+    await restored(id);
+    const ctx=await input(id),files=memoryFiles(id,await operationFiles(id));
+    const packet={schema:RECEIVING_SCHEMA+'.snapshot',operationId:id,owner:clone(owner),preparation:clone(ctx.intent.preparation),
+      files:[...files.values()].sort((a,b)=>a.path.localeCompare(b.path)).map(row=>fileRow(row.path,row.raw))};
+    packet.contentSha256=sha(encode(metadata(packet)));
+    checkedSnapshot(packet);return packet;
+  }
+  async function restore(selected){
+    const incoming=checkedSnapshot(selected),id=incoming.id,dir=folder(id),digest=incoming.packet.contentSha256;
+    const marker={schema:RECEIVING_SCHEMA+'.restore',operationId:id,owner:clone(owner),preparation:incoming.packet.preparation,
+      contentSha256:digest,files:metadata(incoming.packet).files};
+    const markerPath=id+'/restore-intent.'+digest+'.json',completePath=id+'/restore-complete.'+digest+'.json';
+    const anticipated=new Map(incoming.files);
+    for(const [path,value]of [[markerPath,marker],[completePath,{...marker,schema:RECEIVING_SCHEMA+'.restored'}]]){
+      const body=encode(value);anticipated.set(path,{path,bytes:body.length,sha256:sha(body),raw:body});
+    }
+    const current=memoryFiles(id,await operationFiles(id,anticipated,incoming.ctx.prepared.directories));
+    for(const [path,row]of current){
+      const selected=anticipated.get(path);
+      need(selected&&selected.raw.equals(row.raw),'Restore would omit or change existing original receiving evidence: '+path+'.');
+    }
+    // A first restore or an exact retry is allowed. Another incomplete original
+    // restore keeps its own evidence and may not be replaced by a different cut.
+    for(const path of current.keys())if(/\/restore-intent\.[a-f0-9]{64}\.json$/.test(path)&&!current.has(path.replace('/restore-intent.','/restore-complete.')))
+      need(path===markerPath,'Continue the earlier exact original restore before selecting another snapshot.','INSTALLATION_RESTORE_PENDING');
+    await workflowSeriesPrivateDirectory(dir,true);
+    await publish(dir,'restore-intent.'+digest+'.json',marker);
+    const rows=[...incoming.files.values()].filter(row=>row.path!=='OWNER.json');
+    rows.sort((a,b)=>(a.path===id+'/intent.json')-(b.path===id+'/intent.json')||a.path.localeCompare(b.path));
+    for(const row of rows){
+      let parent=root;for(const part of row.path.split('/').slice(0,-1)){parent=join(parent,part);await workflowSeriesPrivateDirectory(parent,true);}
+      await writeConsoleWorkflowFile(join(root,row.path),row.raw);
+    }
+    for(const name of [...incoming.ctx.prepared.directories].sort((a,b)=>a.split('/').length-b.split('/').length||a.localeCompare(b))){
+      let parent=join(dir,'preparation');for(const part of name.split('/')){parent=join(parent,part);await workflowSeriesPrivateDirectory(parent,true);}
+    }
+    const prepared=await readPreparedInstallation(join(dir,'preparation'),incoming.ctx.intent.preparation.sha256);
+    need(same(prepared.identity,incoming.ctx.intent.preparation),'The restored complete preparation changed.');
+    for(const row of incoming.files.values()){const body=await raw(join(root,row.path));need(body.equals(row.raw),'The restored original member changed before completion.');}
+    await publish(dir,'restore-complete.'+digest+'.json',{...marker,schema:RECEIVING_SCHEMA+'.restored'});
+    return read(id);
+  }
+
   return {
+    snapshot:id=>run(()=>snapshot(operationId(id))),restore:value=>run(()=>restore(value)),
     directory:root,prepare:args=>run(()=>prepare(args)),save:id=>run(()=>save(operationId(id))),
     export:id=>run(()=>exported(operationId(id))),receive:id=>run(()=>receive(operationId(id))),
     read:id=>run(()=>read(operationId(id))),file:(id,name)=>run(()=>file(operationId(id),name)),
