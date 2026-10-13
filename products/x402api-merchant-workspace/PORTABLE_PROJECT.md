@@ -226,11 +226,20 @@ reservation bridge; a direct Python invocation can select that same executable
 with `MERCHANT_PORTABLE_NODE`.
 
 
+## Capturing a working merchant
+
+Browser export finishes already admitted invoice operations and durably retains their provider and fulfillment returns before native copying starts. New mutations pause until native capture and ZIP packaging finish. Invoice review, completed-result downloads and existing project downloads remain available. The Project handover panel displays the capture state and disables invoice-changing controls while preserving entered values. New API updates and webhooks receive HTTP503 with Retry-After:5 during that window; retry the original request when the package is ready. Background reconciliation resumes automatically. Allow an operating window for the complete copy and packaging duration, particularly for large projects.
+
+A capture becomes selected only after its database snapshot and every original input, result and reservation file are retained together. An earlier interruption leaves a private unselected attempt. Retrying the same export request captures the now-current merchant in a fresh private attempt, keeping the original request UUID and input selection. Once a complete capture is selected, retries use its same immutable database and files to finish ZIP packaging. This prevents later live locks from being combined with an earlier SQLite backup. Unselected attempts remain beneath that export's captures/ directory for inspection; remove them after the selected export and its receiving copy are complete.
+
+The original Node entrypoint passes its actual executable to Python. During export, each reservation subprocess also inherits the existing merchant ownership descriptor for its lifetime. A terminated Python parent therefore cannot release the original ownership descriptor while its reservation worker is still reading the captured state.
+
+
 ### Complete retained result state and interrupted selection
 
 New project ZIPs retain every original file beneath the private results directory in `retainedResultFiles`. That includes the native window where a final response exists and its lock is already retired while fulfillment remains RETURNED, and an empty-lock interruption with an unreferenced partial file. The original database, reservation mappings, file bytes and history remain unchanged.
 
-The export freezes the full file identities and native mappings in its original control directory before copying result files. The selection belongs to that same request and retained SQLite snapshot. A resumed export reuses that selection and every already-retained file; it cannot silently replace it with newer partials or reservation bytes.
+Within each private capture attempt, export freezes the full file identities and native mappings before copying result files. That selection belongs to the attempt's request and retained SQLite snapshot. Only the complete durable snapshot, inputs and result inventory become the selected project. An interrupted unpublished attempt stays retained; a retry captures the current merchant into a new private attempt. Once selected, resumed packaging reuses that entire original project and cannot combine its snapshot with newer partials or reservation bytes.
 
 Receiving validates the complete extracted inventory, carries all of it into the original private preparation, and relocates only native lock paths. Complete originals and the prepared copy stay available after publication; repeated receive preserves subsequent native recovery. Earlier ZIPs retain their original inventory contract.
 
