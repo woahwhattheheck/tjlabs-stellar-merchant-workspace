@@ -196,14 +196,16 @@ async function readConfiguration(publisher,runtime){
   const end=options['ends-at']??now(),start=options['starts-at']??new Date(Date.parse(end)-30*86400000).toISOString();need(Number.isFinite(Date.parse(start))&&Number.isFinite(Date.parse(end))&&Date.parse(start)<Date.parse(end),'OPERATING_PERIOD_INVALID');
   return {startsAt:new Date(start).toISOString(),endsAt:new Date(end).toISOString()};
  });
- const result={connections,runtimes,profile,window:originalWindow,vaults:supplied.vaults??testnetVaults,
+ const connectionAliases=Object.fromEntries(['mainnet','testnet'].map(network=>[network,supplied.connectionAliases?.[network]??Object.entries(supplied.connections??{}).find(([,value])=>(value.private?.network??value.network)===network)?.[0]??network]));
+ for(const [network,alias]of Object.entries(connectionAliases))need(connections[alias]&&(connections[alias].private?.network??connections[alias].network)===network,'SELECTED_CONNECTION_NETWORK_MISMATCH',{network,alias});
+ const result={connections,connectionAliases,runtimes,profile,window:originalWindow,vaults:supplied.vaults??testnetVaults,
   history:supplied.history??[],corrections:supplied.correctiveOperations??[],ratesInput:supplied.ratesInput??null,
   source:{commit:SOURCE_COMMIT,metadata:'Endpoints from original frontend/src/history.ts, frontend/src/status.ts and original native script defaults; deployed testnet IDs from complete original JSON.'}};
  const selectedBytes=bytes(result);await exact(path.join(ROOT,'private','configuration-'+sourceIdentity.sha256+'-'+sha(selectedBytes)+'.json'),selectedBytes);return result;
 }
 async function savePeriod(network,configuration){
  const definition={name:'Original '+network+' operating history',network,...configuration.window,expectedSnapshotIntervalSeconds:900,
-  expectedSurfaceIntervalSeconds:900,expectedHealthIntervalSeconds:900,surfaces:(configuration.connections[network]?.surfaces??[]).map(s=>s.id),
+  expectedSurfaceIntervalSeconds:900,expectedHealthIntervalSeconds:900,surfaces:(configuration.connections[findAlias(configuration,network)]?.surfaces??[]).map(s=>s.id),
   healthDimensions:['keeper','alerts','snapshots','flows'],acceptance:{executedMainnetHarvests:50,rateHistoryDays:30,consecutiveGreenDays:14},
   originalSourceCommit:SOURCE_COMMIT};
  const id=await pinned('period-id:'+network,{network},async()=>randomUUID());
@@ -275,7 +277,7 @@ async function registerVaults(configuration){
   const row=await invokeOriginal(operator,'vault:'+id,'vault.save',{vaultId:id,name:definition.name??definition.symbol,definition});result.push({row:row.vault,definition});}
  return result;
 }
-function findAlias(configuration,network){return Object.entries(configuration.connections).find(([,c])=>(c.private?.network??c.network)===network)?.[0]??null;}
+function findAlias(configuration,network){return configuration.connectionAliases?.[network]??Object.entries(configuration.connections).find(([,c])=>(c.private?.network??c.network)===network)?.[0]??null;}
 async function nativeRead(name,selection,required=true){
  return stage('native:'+name,async()=>completeNative(await runOriginalOperation(name,selection),name),{required});
 }
