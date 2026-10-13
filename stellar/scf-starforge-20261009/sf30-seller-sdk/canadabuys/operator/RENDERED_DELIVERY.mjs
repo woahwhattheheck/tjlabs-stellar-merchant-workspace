@@ -75,6 +75,30 @@ export async function renderCanadaBuysDelivery({page,url,receivingUrl,journey,bi
     await target.locator('[data-notice-id='+attr(journey.noticeId)+']').click();
     await target.locator('#notice-language').selectOption('both');
   }
+  async function openSavedRecord(target,expected,action) {
+    const route='/api/bidder/records/'+expected.kind+'/'+encodeURIComponent(expected.id);
+    const [response]=await Promise.all([target.waitForResponse(response=>{
+      const u=new URL(response.url());
+      return response.request().method()==='GET' && u.pathname===route && u.searchParams.get('history')==='true';
+    }),action()]);
+    need(response.ok(),'The saved bidder record could not be opened.');
+    const value=await response.json(),actual=value.record||value;
+    need(actual.id===expected.id&&actual.revision===expected.revision&&actual.editionSha256===expected.editionSha256,
+      'The opened '+expected.kind+' edition changed; retain it for review in the original desk.');
+    await target.waitForFunction(record=>{
+      const kind=record.recordKind, label=document.getElementById(kind+'-revision')?.textContent||'';
+      if(!label.startsWith('Saved revision '+record.revision+' · '))return false;
+      if(kind==='evidence')return document.getElementById('e-download')?.getAttribute('href')===
+        '/api/bidder/evidence/'+encodeURIComponent(record.id)+'/file?revision='+record.revision;
+      if(kind==='requirement')return document.getElementById('r-text')?.value===record.requirementText;
+      if(kind==='profile')return document.getElementById('profile-select')?.value===record.id&&
+        document.getElementById('p-label')?.value===record.label&&document.getElementById('p-legal')?.value===(record.legalName||'');
+      return document.getElementById('decision-form')?.dataset.contextSha256===record.contextSha256&&
+        [...document.querySelectorAll('#decision-reports a')].some(a=>a.getAttribute('href')===
+          '/api/bidder/decisions/'+encodeURIComponent(record.id)+'/report?revision='+record.revision+'&format=html');
+    },{...actual,recordKind:expected.kind});
+    return actual;
+  }
   async function viewFile(target,record,name,mime) {
     const bytes=await readFile(record.path);
     need(bytes.length===record.bytes && sha(bytes)===record.sha256,'Outgoing file changed before rendering: '+name);
@@ -92,8 +116,17 @@ export async function renderCanadaBuysDelivery({page,url,receivingUrl,journey,bi
     await checkpoint();
   }
   try {
-    const original=await json(page,new URL('/api/workspace',url).href);
-    result.workspaceBefore=original.workspace;
+    const original=(await json(page,new URL('/api/workspace',url).href)).workspace;
+    need(original.id===journey.workspace.id,'The original operator workspace identity changed.');
+    result.workspaceBefore=original;
+    let receivingBefore;
+    if(receivingUrl) {
+      const expected=journey.receiving?.after?.id||journey.receiving?.before?.id;
+      need(expected,'The original journey must identify its receiving workspace.');
+      receivingBefore=(await json(page,new URL('/api/workspace',receivingUrl).href)).workspace;
+      need(receivingBefore.id===expected,'The original receiving workspace identity changed.');
+      result.receivingWorkspaceBefore=receivingBefore;
+    }
     const operator=await fresh('procurement');
     for(const width of [1440,390]) {
       await operator.setViewportSize({width,height:960});await ready(operator,url);
@@ -110,12 +143,19 @@ export async function renderCanadaBuysDelivery({page,url,receivingUrl,journey,bi
       await capture(operator,'procurement-empty-search-'+width,{region:'#notice-list'});
       await ready(operator,url);
     }
+    await operator.close();
     const documentPage=await fresh('outgoing-files');
     for(const [key,name] of [['workshareHandover','partner-workshare'],['report_html','complete-notice-report']])
       if(journey.downloads[key])await viewFile(documentPage,journey.downloads[key],name,'text/html');
     if(bidderResponse) {
       need(bidderResponse.status==='completed' && bidderResponse.summary?.originalNoticeId===journey.noticeId,
         'Use the completed response for this original notice.');
+      for(const [key,expected] of Object.entries(bidderResponse.records)) {
+        const value=await json(page,new URL('/api/bidder/records/'+expected.kind+'/'+encodeURIComponent(expected.id),url).href);
+        const actual=value.record||value;
+        need(actual.revision===expected.revision&&actual.editionSha256===expected.editionSha256,
+          'The saved response '+key+' has changed; retain the current edition for review in the original desk.');
+      }
       const bidder=await fresh('bidder');
       const bidderURL=new URL('/bidder-desk',url);bidderURL.searchParams.set('noticeId',journey.noticeId);
       const decisionId=bidderResponse.summary.decisionId;
@@ -125,23 +165,24 @@ export async function renderCanadaBuysDelivery({page,url,receivingUrl,journey,bi
         await bidder.setViewportSize({width,height:960});await bidder.goto(bidderURL.href,{waitUntil:'domcontentloaded'});
         await bidder.waitForFunction(()=>document.getElementById('status')?.textContent.startsWith('Opened '));
         need(await bidder.locator('#notice-select').inputValue()===journey.noticeId,'The bidder page selected another notice.');
-        if(await bidder.locator('#profile-select').inputValue()!==profileId) {
-          await bidder.locator('#profile-select').selectOption(profileId);
-          await bidder.waitForFunction(()=>document.getElementById('status')?.textContent.startsWith('Selected '));
-        }
+        await openSavedRecord(bidder,bidderResponse.records.profile,
+          ()=>bidder.locator('#profile-select').selectOption(profileId));
         for(const tab of ['notice','profile','evidence','requirement','decision']) {
           await bidder.locator('[data-tab='+attr(tab)+']').click();
           if(tab==='evidence'||tab==='requirement') {
             const selected=Object.values(bidderResponse.records).find(record=>record.kind===tab);
             need(selected,'The original response has no saved '+tab+' record.');
-            await bidder.locator('[data-open-kind='+attr(tab)+'][data-open-id='+attr(selected.id)+']').click();
-            await bidder.waitForFunction(kind=>document.getElementById('status')?.textContent.startsWith('Opened '+kind+' revision '),tab);
+            await openSavedRecord(bidder,selected,()=>bidder.locator('[data-open-kind='+attr(tab)+'][data-open-id='+attr(selected.id)+']').click());
           }
           if(tab==='decision') {
-            await bidder.locator('[data-open-kind="decision"][data-open-id='+attr(decisionId)+']').click();
-            await bidder.waitForFunction(()=>document.getElementById('status')?.textContent.startsWith('Opened decision revision '));
+            const savedDecision=Object.values(bidderResponse.records).find(record=>record.kind==='decision'&&record.id===decisionId);
+            need(savedDecision,'The original response must identify its saved decision edition.');
+            await openSavedRecord(bidder,savedDecision,()=>bidder.locator('[data-open-kind="decision"][data-open-id='+attr(decisionId)+']').click());
             await bidder.locator('#decision-compare').click();
             await bidder.locator('#decision-comparison .panel').waitFor();
+            const current=await json(bidder,new URL('/api/bidder/decisions/'+encodeURIComponent(decisionId)+'/compare',url).href);
+            result.decisionComparison=current;
+            need(current.changes?.changed===false,'The original saved decision context changed before rendering.');
           }
           await capture(bidder,'bidder-'+tab+'-'+width,{region:'#pane-'+tab});
         }
@@ -152,26 +193,34 @@ export async function renderCanadaBuysDelivery({page,url,receivingUrl,journey,bi
         const originalRecord=await json(bidder,new URL('/api/bidder/records/evidence/'+encodeURIComponent(record.id)+'?revision='+record.revision,url).href);
         const evidence=originalRecord.record||originalRecord;if(evidence.accessState!=='CAPTURED')continue;
         await bidder.locator('[data-tab="evidence"]').click();
-        await bidder.locator('[data-open-kind="evidence"][data-open-id='+attr(record.id)+']').click();
-        await bidder.locator('#e-download').waitFor();
-        const captured=await download(bidder,bidder.locator('#e-download'),join(directory,'evidence-'+record.id+'.txt'));
+        await openSavedRecord(bidder,record,()=>bidder.locator('[data-open-kind="evidence"][data-open-id='+attr(record.id)+']').click());
+        const exactHref='/api/bidder/evidence/'+encodeURIComponent(record.id)+'/file?revision='+record.revision;
+        const control=bidder.locator('#e-download[href='+attr(exactHref)+']');
+        await control.waitFor({state:'visible'});
+        const captured=await download(bidder,control,join(directory,'evidence-'+record.id+'.txt'));
         need(captured.bytes===evidence.bytes&&captured.sha256===evidence.sha256,'Saved evidence download differs from its exact edition: '+key);
         await viewFile(documentPage,captured,'evidence-'+key,'text/plain');
       }
       const retainedReport=bidderResponse.downloads['decision.html'];
       if(retainedReport)await viewFile(documentPage,retainedReport,'saved-bid-decision','text/html');
       result.bidder={decisionId,revision:bidderResponse.summary.decisionRevision,packageId:bidderResponse.packageId};
+      await bidder.close();
     }
+    await documentPage.close();
     if(receivingUrl) {
       const receiver=await fresh('receiver');
       await receiver.setViewportSize({width:390,height:960});await ready(receiver,receivingUrl);
       await receiver.locator('#tab-workshare').click();
       const choose=receiver.locator('[data-workshare-id='+attr(result.workshareId)+']');if(await choose.count())await choose.click();
       await receiver.locator('#workshare-form').waitFor();await capture(receiver,'receiver-saved-workshare-390',{region:'#active-panel'});
-      result.receiver={url:receivingUrl,workshareId:result.workshareId};
+      const receivingAfter=(await json(receiver,new URL('/api/workspace',receivingUrl).href)).workspace;
+      need(receivingAfter.id===receivingBefore.id&&receivingAfter.revision===receivingBefore.revision,
+        'The original receiving workspace changed during rendering.');
+      result.receiver={url:receivingUrl,workshareId:result.workshareId,before:receivingBefore,after:receivingAfter};
+      await receiver.close();
     }
-    const after=await json(page,new URL('/api/workspace',url).href);result.workspaceAfter=after.workspace;
-    need(after.workspace.id===original.workspace.id && after.workspace.revision===original.workspace.revision,
+    const after=(await json(page,new URL('/api/workspace',url).href)).workspace;result.workspaceAfter=after;
+    need(after.id===original.id && after.revision===original.revision,
       'The read-only rendered course observed a workspace change; retain it for the original reviewer.');
     need(!result.browserErrors.length,'The original rendered application reported browser errors.');
     result.layoutFindings=result.views.filter(view=>view.overflow).map(view=>({name:view.name,viewport:view.viewport,document:view.document}));

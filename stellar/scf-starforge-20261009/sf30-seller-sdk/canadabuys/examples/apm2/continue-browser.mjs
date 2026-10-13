@@ -42,6 +42,13 @@ if (result.browser?.status === 'completed' && result.browser.renderedDelivery?.s
   const {renderCanadaBuysDelivery} = await load('operator/RENDERED_DELIVERY.mjs');
   server = await startCanadaBuysServer({directory:join(root,'operator-workspace'),operator:'TJLabs browser receiving',title:'CanadaBuys procurement desk'});
   receiving = await startCanadaBuysServer({directory:join(root,'receiving-workspace'),operator:'TJLabs browser receiving',title:'CanadaBuys receiving desk'});
+  const expectedOperatorId=result.operator.saved.workshare.workspaceId ||
+    result.stages.find(item=>item.stage==='reopen-original-customer')?.operator?.id;
+  const expectedReceivingId=result.operator.receiving.after?.id || result.operator.receiving.before?.id ||
+    result.stages.find(item=>item.stage==='reopen-original-customer')?.receiver?.id;
+  need(expectedOperatorId && expectedReceivingId &&
+    server.workspace.metadata().id===expectedOperatorId && receiving.workspace.metadata().id===expectedReceivingId,
+    'Both browser workspaces must match the original saved customer identities.');
   need(server.workspace.getWorkshare(workshareId).noticeId === noticeId &&
     receiving.workspace.getWorkshare(workshareId).feeCents === 720000,
     'The browser must use the original saved and received workshare.');

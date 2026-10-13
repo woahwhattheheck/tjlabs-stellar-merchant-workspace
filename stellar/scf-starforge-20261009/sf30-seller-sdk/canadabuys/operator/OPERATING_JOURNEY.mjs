@@ -47,7 +47,6 @@ function objectDiff(expected, actual, prefix = '') {
   }
   if (expected && typeof expected === 'object') {
     for (const [key, value] of Object.entries(expected)) {
-      if (key === 'id' || key === 'revision' || key === 'createdAt' || key === 'updatedAt' || key === 'history') continue;
       out.push(...objectDiff(value, actual?.[key], prefix ? prefix + '.' + key : key));
     }
     return out;
@@ -336,7 +335,14 @@ export async function operateCanadaBuysDesk({
         };
         const row = saved.result.notices.find(notice => notice.id === noticeId);
         requireCondition(row, 'The saved workspace omitted the reviewed notice.');
-        const differences = objectDiff(review, row.review);
+        const expected = plain(review);
+        for (const key of ['id','revision','createdAt','updatedAt','history','expectedRevision']) delete expected[key];
+        if (expected.qualification?.requirements) expected.qualification.requirements =
+          expected.qualification.requirements.map(({id,...fields})=>fields);
+        const differences = [
+          ...objectDiff(expected, row.review),
+          ...objectDiff(reviewContent(saved.request), reviewContent(row.review))
+        ];
         requireCondition(differences.length === 0, 'The saved review differs from supplied form values: ' + JSON.stringify(differences));
       }
     }
@@ -369,10 +375,10 @@ export async function operateCanadaBuysDesk({
         requireCondition(typeof workshareId === 'string' && workshareId.length > 0, 'The saved workshare request lacks its original identity.');
         const actual = saved.result.workshares.find(record => record.id === workshareId);
         requireCondition(actual, 'The saved workspace omitted the workshare.');
-        const expected = plain(workshare);
-        delete expected.expectedRevision;
+        const expected = workshareContent(workshare);
+        for (const key of ['milestones','costs']) if (expected[key]) expected[key] = expected[key].map(({id,...fields})=>fields);
         if (expected.currency) expected.currency = expected.currency.toUpperCase();
-        const differences = objectDiff(expected, actual);
+        const differences = [...objectDiff(expected, actual), ...objectDiff(workshareContent(saved.request), workshareContent(actual))];
         requireCondition(differences.length === 0, 'The saved workshare differs from supplied form values: ' + JSON.stringify(differences));
         result.saved.workshareOperation = {
           status: saved.status, id: workshareId, expectedRevision: saved.request.expectedRevision,
@@ -488,5 +494,6 @@ export async function operateCanadaBuysDesk({
   } finally {
     page.off('pageerror', pageError);
     if (receiver && receiverError) receiver.off('pageerror', receiverError);
+    if (receiver) await receiver.close().catch(() => {});
   }
 }
