@@ -308,7 +308,6 @@ screenshots and control/download/reopen outcomes to the producing maintainer
 in the original receiving operation. The producer opens those images and
 resolves concrete defects there. Continue the same implementation and native
 operation; keep the existing focused-validation policy and owner schedule.
-The current fleet cutoff is October 13, 2026 at 14:00 UTC.
 
 ## Financial units and recurring service
 
