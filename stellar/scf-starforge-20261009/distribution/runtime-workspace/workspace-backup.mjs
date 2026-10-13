@@ -137,7 +137,11 @@ async function startOperation(root,store,kind,input,{continueOriginal=false}={})
   catch(error){if(error.code==='RUNTIME_WORKSPACE_OPERATION_RUNNING')return operationView(store,id);throw error;}
   try{
     const record=await boundedJSON(join(folder,'operation.json'),true);
-    if(record&&(!continueOriginal||record.phase==='COMPLETE'))return operationView(store,id);
+    if(record&&(!continueOriginal||record.phase==='COMPLETE')){
+      // The observer must not mistake this request-reconciliation lease for a worker.
+      const held=lease;lease=null;await held.close();
+      return operationView(store,id);
+    }
     const current={...(record??{}),schema:SCHEMA,operationId:id,kind,input,root,storageDirectory:store,
       createdAt:record?.createdAt??now(),updatedAt:now(),phase:'QUEUED',error:null,
       attempt:(record?.attempt??0)+1};
@@ -152,7 +156,7 @@ async function startOperation(root,store,kind,input,{continueOriginal=false}={})
       await saveJSON(join(folder,'operation.json'),{...actual,phase:'FAILED',updatedAt:now(),error:failure(error)},true);throw error;
     }finally{await log.close();}
     return current;
-  }finally{await lease.close();}
+  }finally{await lease?.close();}
 }
 async function runWorker(root,store,id){
   absolute(root);await privateDirectory(store);operationId(id);const folder=await privateDirectory(join(store,'operations',id));
