@@ -34,7 +34,7 @@ Committed writes use the original workspace request journal. If a save is interr
 
 Each saved comparison offers complete JSON, CSV and printable HTML. These preserve original evaluation identities, all findings, correspondence choices, source and rule changes, follow-up histories and linked result metadata. CSV escapes spreadsheet formula prefixes. Open source and result files through the original workspace.
 
-The original whole-workspace export contains independent `qualityFollowup` state, the original Quality state, source objects, operations and all application files. Version 8 adds the follow-up application; source inventories for earlier application versions remain explicit. Receiving older source editions remains supported. A package containing follow-up records requires its complete version 8 application.
+The original whole-workspace export contains independent `qualityFollowup` state, the original Quality state, source objects and operations. Packages containing follow-up records require the version 8 format. A complete installed handover selects `includeApplication: true` to retain all application files; state-only exports using `includeApplication: false` remain supported. Version 8 adds the follow-up application, while source inventories and receiving for earlier application versions remain explicit and supported.
 
 ## CLI and typed client
 
@@ -55,6 +55,23 @@ The typed `QualityFollowupClient` extends the original `QualityClient`. The dist
 `QUALITY_FOLLOWUP_RECEIVING.mjs` performs one complete original fixture course with retained request inputs and results. It imports the original full OpenLineage fixture, retains a changed second execution, saves both evaluations through the maintained evaluator, records an earlier disposition, compares explicit runs, saves and revises follow-up, verifies exact replay, exports all reports and the complete application, then independently receives and validates that package. The course labels its source as a fixture throughout.
 
 Customer-facing receiving also opens this actual application at desktop and narrow phone widths, operates comparison, explicit correspondence, authoring, working-copy download/reopen and report controls, checks the served source, and retains screenshots. Inspect the actual saved pixels, generated reports and complete reopened output before marking the customer workflow ready. Native results and desktop/phone receiving are separate recorded phases of the same original course.
+
+
+### Recover the entered copy before replacing it
+
+The browser keeps each original workspace's in-memory copy independent while reading or saving another workspace. This tab remembers its selected copy across reloads. The saved-copy list also includes retained in-page copies that could not be written. Earlier/later run choices and an uncommitted finding-pair choice, the selected follow-up view and report format remain in the complete authoring file.
+
+If browser storage cannot open, the current native overview and editor remain usable in memory. Download the complete working copy immediately when needed; it does not wait for storage or an outstanding native save. Native saves still require the entered copy to be retained first. **Retry saving this working copy** retries a storage failure. After a concurrent-tab conflict, use **Save these entries as a separate working copy** or **Reopen current saved version**. A conflict never silently overwrites the newer stored version.
+
+Opening a file or another saved copy first downloads the complete preceding entered copy, including unsaved/conflicting fields. The incoming file is checked against the original workspace before adoption. During an explicit read, replacement or native save, the local editor controls wait for that operation; ordinary background autosave does not interrupt typing. A late response from a different workspace or copy cannot replace current fields. The page warns before closing with entered fields that have not reached storage.
+
+A complete working-copy download also retains any active Quality follow-up request from the existing workspace journal. Opening the file does not dispatch it or manufacture a new operation. **Restore original request to workspace recovery** first downloads the preceding full copy, retains the entered copy, and deliberately adopts the exact action, arguments, operation ID and expected revision into that same authoritative journal. It refuses a different active request and requires the original connected workspace. An identical already-retained request keeps its existing recovery status. Use the original workspace recovery controls to read or replay the original outcome; a known rejected request remains available for its existing correction/cancel course. Source and result bytes, committed comparisons and complete follow-up histories travel in the separate whole-workspace package.
+
+### Original receiving completion
+
+The retained fixture course checks an existing receiving receipt against the exact original package and payload, reads the independently received full workspace, and verifies every received original object and application member. A different or incomplete destination is retained and rejected. The native result becomes complete only after the owned server and receiving lock have closed. Primary failures and cleanup failures remain separately recorded; no failure is converted into a completed browser review. Actual desktop/narrow operation and producing-owner inspection of the returned images and deliverables remain required.
+
+Large successful comparison or follow-up saves may exceed the Merchant response view. The existing confirmed receipt then returns the original operation and revision together with the saved comparison or follow-up identity. The complete original response remains in the native operation journal and whole-workspace export; retrieve all original export ranges. Replaying the same operation still identifies that accepted save, without creating another comparison or decision.
 
 ## Complete receiving commands
 

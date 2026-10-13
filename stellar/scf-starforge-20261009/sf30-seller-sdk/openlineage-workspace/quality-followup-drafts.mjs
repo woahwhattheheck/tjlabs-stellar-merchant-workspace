@@ -5,10 +5,11 @@ const copy = value => structuredClone(value);
 function open() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DATABASE, 1);
+    let failed = false;
     request.onupgradeneeded = () => request.result.createObjectStore(STORE, {keyPath: "key"});
-    request.onerror = () => reject(request.error ?? new Error("Could not open saved working copies"));
-    request.onblocked = () => reject(new Error("Close another workspace tab to open saved working copies"));
-    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => { failed = true; reject(request.error ?? new Error("Could not open saved working copies")); };
+    request.onblocked = () => { failed = true; reject(new Error("Close another workspace tab to open saved working copies")); };
+    request.onsuccess = () => { if (failed) request.result.close(); else resolve(request.result); };
   });
 }
 export async function listQualityDrafts(workspaceId) {
@@ -33,6 +34,7 @@ export async function saveQualityDraft(workspaceId, id, expectedVersion, value) 
       const current = request.result;
       if ((current?.version ?? 0) !== expectedVersion) {
         failure = new Error("Another tab saved this working copy. Your entered fields remain here; save a separate copy or reopen the current saved version.");
+        failure.code = "QUALITY_DRAFT_CONFLICT";
         transaction.abort(); return;
       }
       result = {schema: "commons.openlineage.quality-working-copy.v1", key, workspaceId, id,
@@ -56,12 +58,26 @@ export function validateQualityDraft(value, workspaceId) {
       string(item.sourceDisposition.evaluationId) && string(item.sourceDisposition.findingId) &&
       Number.isSafeInteger(item.sourceDisposition.version) && item.sourceDisposition.version > 0);
   const draft = item => record(item) && entered(item.values) && entered(item.opened) && basis(item.basis);
+  const safeKey = key => !["__proto__", "constructor", "prototype"].includes(key);
+  const controls = item => record(item) && string(item.beforeRunKey) && string(item.afterRunKey) &&
+    record(item.findingChoices) && Object.entries(item.findingChoices).every(([key, choice]) => safeKey(key) && string(choice)) &&
+    ["html", "json", "csv"].includes(item.reportFormat) &&
+    (item.tab === undefined || ["compare", "followup"].includes(item.tab)) &&
+    (item.search === undefined || string(item.search)) &&
+    (item.page === undefined || Number.isSafeInteger(item.page) && item.page >= 0);
+  const pending = item => record(item) && item.workspaceId === workspaceId &&
+    ["quality.followup.comparison.save", "quality.followup.save"].includes(item.action) &&
+    record(item.args) && string(item.args.operationId) && Boolean(item.args.operationId.trim()) &&
+    Number.isSafeInteger(item.args.expectedRevision) && item.args.expectedRevision >= 0;
   const work = value?.value, selection = work?.selection;
   if (!record(value) || value.schema !== "commons.openlineage.quality-working-copy.v1" || value.workspaceId !== workspaceId ||
     !record(work) || !record(selection) || !string(selection.beforeEvaluationId) || !string(selection.afterEvaluationId) ||
     !string(selection.title) || !pairs(selection.runPairs, "beforeRunKey", "afterRunKey") ||
     !pairs(selection.findingPairs, "beforeFindingId", "afterFindingId") || !string(work.selectedComparisonId) ||
-    !string(work.selectedRowId) || !record(work.followups) || Object.entries(work.followups).some(([key, item]) =>
+    !string(work.selectedRowId) || (work.controls !== undefined && !controls(work.controls)) ||
+    (value.originalPendingRequest !== undefined && !pending(value.originalPendingRequest)) ||
+    (work.originalPendingRequest !== undefined && !pending(work.originalPendingRequest)) ||
+    !record(work.followups) || Object.entries(work.followups).some(([key, item]) =>
       ["__proto__", "constructor", "prototype"].includes(key) || !draft(item) || item.previous !== undefined && !draft(item.previous)))
     throw new Error("Choose a complete working copy belonging to this original workspace");
   if (JSON.stringify(value).length > 10000000) throw new Error("Working copy exceeds the 10 MB authoring limit");

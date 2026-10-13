@@ -171,6 +171,16 @@ async function journal(mode, value) {
     request.onsuccess = () => {
       found = request.result;
       if (mode === "read") return;
+      if (mode === "restore" && found) {
+        const ordered = item => Array.isArray(item) ? item.map(ordered) :
+          item && typeof item === "object" ? Object.fromEntries(Object.keys(item).sort().map(key => [key, ordered(item[key])])) : item;
+        const originalInput = item => ({workspaceId: item.workspaceId, action: item.action, args: item.args});
+        if (JSON.stringify(ordered(originalInput(found))) !== JSON.stringify(ordered(originalInput(value)))) {
+          conflictMessage = "A different original request is already retained. Recover it before restoring this working copy's request.";
+          tx.abort();
+        }
+        return;
+      }
       const currentId = found?.args?.operationId;
       const requestedId = mode === "clear" ? value : value?.args?.operationId;
       const reviewedReplacement = mode === "write" && found?.status === "conflict" && value?.previousRequest?.operationId === currentId;
@@ -189,6 +199,27 @@ async function retainPending(value) {
   try { await journal("write", value); state.pending = value; }
   catch (error) { state.pending = await journal("read").catch(() => state.pending); throw error; }
   finally { renderPending(); setBusyControls(); }
+}
+async function restoreQualityPending(value) {
+  const record = item => item !== null && typeof item === "object" && !Array.isArray(item);
+  const original = structuredClone(value);
+  if (!record(original) || !["quality.followup.comparison.save", "quality.followup.save"].includes(original.action) ||
+    !record(original.args) || typeof original.args.operationId !== "string" || !original.args.operationId.trim() ||
+    !Number.isSafeInteger(original.args.expectedRevision) || original.args.expectedRevision < 0 ||
+    typeof original.workspaceId !== "string" || original.workspaceId !== state.view?.workspaceId ||
+    original.workspaceId !== state.identity?.workspaceId || state.pendingBusy)
+    throw new Error("Restore one complete original Quality request in its same connected workspace while no request is being sent.");
+  // Receiving does not send a mutation. The original panel reconciles this exact request.
+  const restored = {...original, originalStatus: original.status,
+    status: original.status === "rejected" ? "rejected" : "uncertain",
+    uncertainOutcome: original.status !== "rejected",
+    message: original.status === "rejected" ? original.message :
+      "This original request was reopened from a complete working copy. Recover the same saved request to read its outcome."};
+  const existing = await journal("restore", restored);
+  state.pending = existing ?? restored;
+  renderPending(); setBusyControls();
+  notice("The original Quality request is retained. Use its existing recovery controls; no request was sent.");
+  return structuredClone(state.pending);
 }
 async function clearPending() {
   await journal("clear", state.pending?.args?.operationId);
@@ -253,12 +284,17 @@ async function applyReviewedRequest() {
 async function sendPending() {
   const pending = state.pending;
   if (!pending || state.pendingBusy || !state.view || pending.workspaceId !== state.view.workspaceId) return null;
+  const connection = {workspaceId: state.identity?.workspaceId, instanceId: state.identity?.instanceId};
   state.pendingBusy = true; setBusyControls();
   let saved = null;
   const wasUncertain = pending.uncertainOutcome || ["uncertain", "submitting"].includes(pending.status);
   try {
     await retainPending({ ...pending, status: "submitting", message: "" });
     try {
+      if (!connection.workspaceId || !connection.instanceId || connection.workspaceId !== pending.workspaceId ||
+        state.view?.workspaceId !== connection.workspaceId || state.identity?.workspaceId !== connection.workspaceId ||
+        state.identity?.instanceId !== connection.instanceId)
+        throw new RequestError("The connected workspace changed while retaining this request. Reconnect to its original workspace and recover the saved request.");
       saved = await action(pending.action, pending.args);
       if (!saved || !Number.isSafeInteger(saved.revision)) throw new RequestError("The save response was incomplete.", 502);
     } catch (error) {
@@ -1023,6 +1059,7 @@ const qualityDesk = installQualityDesk({
 });
 const qualityFollowupDesk = installQualityFollowupDesk({
   getState: () => state, action, mutate, refresh, notify: notice, download: downloaded,
+  restoreRequest: restoreQualityPending,
   navigate(section) {
     if (!state.view) return;
     state.section = section; state.selection = null; state.detail = null; state.detailVersion++;

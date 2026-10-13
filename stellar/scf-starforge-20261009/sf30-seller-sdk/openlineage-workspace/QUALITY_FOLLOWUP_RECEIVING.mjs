@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { promises as fs } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { LineageWorkspace, verifyBundle, receiveBundle, APPLICATION_FILES } from "./store.mjs";
 import { startServer } from "./server.mjs";
 import { QualityFollowupClient } from "./quality-followup-client.mjs";
@@ -18,16 +18,46 @@ const read = async path => JSON.parse(await fs.readFile(path, "utf8"));
 const exists = async path => fs.access(path).then(() => true, () => false);
 async function exact(path, value) {
   const text = typeof value === "string" ? value : JSON.stringify(value, null, 2) + "\n";
-  if (await exists(path)) { assert.equal(await fs.readFile(path, "utf8"), text, "Retain original " + path); return; }
-  await fs.writeFile(path, text, {flag: "wx", mode: 0o600});
+  const bytes = Buffer.from(text, "utf8");
+  const retained = async () => {
+    assert.ok((await fs.readFile(path)).equals(bytes), "Retain original " + path);
+  };
+  if (await exists(path)) { await retained(); return; }
+  const temporary = path + ".pending-" + randomUUID();
+  let handle = null, owned = false, primary = null;
+  try {
+    handle = await fs.open(temporary, "wx", 0o600); owned = true;
+    await handle.writeFile(bytes); await handle.sync();
+    await handle.close(); handle = null;
+    try { await fs.link(temporary, path); }
+    catch (error) { if (error.code !== "EEXIST") throw error; await retained(); }
+  } catch (error) { primary = error; throw error; }
+  finally {
+    const cleanup = [];
+    if (handle) try { await handle.close(); } catch (error) { cleanup.push(error); }
+    if (owned) try { await fs.unlink(temporary); }
+      catch (error) { if (error.code !== "ENOENT") cleanup.push(error); }
+    if (cleanup.length) {
+      const error = new AggregateError(cleanup, "Could not close the retained output temporary file.");
+      if (primary) primary.cleanupError = error; else throw error;
+    }
+  }
 }
 export async function receiveQualityFollowup(directory) {
   const root = resolve(directory); await fs.mkdir(root, {recursive: true, mode: 0o700});
   const lockPath = join(root, "receiving.lock");
   const lock = await fs.open(lockPath, "wx", 0o600);
-  await lock.writeFile(JSON.stringify({pid: process.pid, startedAt: new Date().toISOString()}));
-  let host;
+  let host, lockOpen = true, lockRetained = true, primaryError = null;
+  async function closeResources() {
+    const errors = [];
+    if (host) try { await host.close(); host = null; } catch (error) { errors.push(error); }
+    if (lockOpen) try { await lock.close(); lockOpen = false; } catch (error) { errors.push(error); }
+    if (!host && !lockOpen && lockRetained) try { await fs.unlink(lockPath); lockRetained = false; }
+      catch (error) { if (error.code === "ENOENT") lockRetained = false; else errors.push(error); }
+    if (errors.length) throw new AggregateError(errors, "Could not close the original Quality receiving resources: " + errors.map(error => error.message).join("; "));
+  }
   try {
+    await lock.writeFile(JSON.stringify({pid: process.pid, startedAt: new Date().toISOString()}));
     const manifest = [];
     for (const name of APPLICATION_FILES) {
       const bytes = await fs.readFile(join(SOURCE, name));
@@ -37,6 +67,7 @@ export async function receiveQualityFollowup(directory) {
     const workspace = new LineageWorkspace(join(root, "workspace"));
     await workspace.initialize("Quality follow-up — original OpenLineage fixture course");
     const initial = await workspace.read();
+    await exact(join(root, "receiving-identity.json"), {workspaceId: initial.workspaceId, sourceSha256: digest(manifest)});
     if (await exists(join(root, "NATIVE_RESULT.json"))) {
       const completed = await read(join(root, "NATIVE_RESULT.json"));
       assert.equal(completed.workspaceId, initial.workspaceId); assert.equal(completed.sourceSha256, digest(manifest));
@@ -45,6 +76,7 @@ export async function receiveQualityFollowup(directory) {
       const reopened = verifyBundle(originalExport);
       assert.equal(reopened.state.workspaceId, completed.workspaceId); assert.equal(reopened.state.revision, completed.revision);
       validateQualityFollowup(initial, {deep: true});
+      await closeResources();
       return completed;
     }
     await exact(join(root, "receiving-identity.json"), {workspaceId: initial.workspaceId, sourceSha256: digest(manifest)});
@@ -166,6 +198,20 @@ export async function receiveQualityFollowup(directory) {
     const receivePath = join(root, "received");
     if (!await exists(join(receivePath, "received.json"))) await receiveBundle(bytes, receivePath);
     const receiveInfo = await read(join(receivePath, "received.json"));
+    assert.equal(receiveInfo.packageSha256, verified.packageSha256, "Retain the exact original received package");
+    assert.equal(receiveInfo.payloadSha256, verified.payloadSha256, "Retain the original received payload");
+    assert.equal(typeof receiveInfo.installationId, "string"); assert.ok(receiveInfo.installationId);
+    const reopened = await new LineageWorkspace(receivePath).read();
+    assert.deepEqual(reopened, verified.state, "The independently received original workspace must remain complete");
+    validateQualityFollowup(reopened, {deep: true});
+    for (const [id, originalBytes] of verified.objects) {
+      const receivedBytes = await fs.readFile(join(receivePath, "objects", id));
+      assert.equal(receivedBytes.length, originalBytes.length); assert.equal(sha256(receivedBytes), id);
+    }
+    for (const [name, originalBytes] of verified.application) {
+      const receivedBytes = await fs.readFile(join(receivePath, "application", name));
+      assert.equal(receivedBytes.length, originalBytes.length); assert.equal(sha256(receivedBytes), sha256(originalBytes));
+    }
     const result = {schema: "commons.openlineage.quality-followup.receiving.v1", workspaceId: final.workspaceId,
       revision: final.revision, sourceSha256: digest(manifest), nativeStatus: "COMPLETE", browserStatus: "PENDING",
       fixture: {originalSha256: sha256(fixtureBytes), gitBlob: original.gitBlob, laterSha256: sha256(Buffer.from(laterText))},
@@ -173,12 +219,26 @@ export async function receiveQualityFollowup(directory) {
       followupId: second.id, followupVersion: second.version, ambiguousBeforeReview: ambiguous.summary.ambiguous,
       matched: compared.summary.matched, afterOnly: compared.summary.afterOnly,
       applicationFiles: verified.application.size, export: exported, receiving: receiveInfo};
+    await closeResources();
     await exact(join(root, "NATIVE_RESULT.json"), result);
     return result;
   } catch (error) {
-    await fs.writeFile(join(root, "INTERRUPTION.json"), JSON.stringify({at: new Date().toISOString(), message: error.message, stack: error.stack}, null, 2));
+    primaryError = error;
+    try {
+      await fs.writeFile(join(root, "INTERRUPTION.json"), JSON.stringify({at: new Date().toISOString(), message: error.message, stack: error.stack}, null, 2));
+    } catch (retentionError) { error.retentionError = retentionError.message; }
     throw error;
-  } finally { if (host) await host.close(); await lock.close(); await fs.unlink(lockPath); }
+  } finally {
+    try { await closeResources(); }
+    catch (cleanupError) {
+      try {
+        await fs.writeFile(join(root, "CLEANUP_INTERRUPTION.json"), JSON.stringify({at: new Date().toISOString(),
+          message: cleanupError.message, primaryError: primaryError?.message ?? null}, null, 2));
+      } catch (retentionError) { cleanupError.retentionError = retentionError.message; }
+      if (primaryError) primaryError.cleanupError = cleanupError.message;
+      else throw cleanupError;
+    }
+  }
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url))
   receiveQualityFollowup(process.argv[2] ?? "").then(result => console.log(JSON.stringify(result, null, 2))).catch(error => {
