@@ -28,7 +28,7 @@ node stellar/scf-starforge-20261009/distribution/runtime-install-cli.mjs run \
 
 The product itself uses Node builtins and requires Linux with Node 22.16 or later. Use the actual selected host runtime; the maintained Node 24 receiving host is suitable. Native contracts retain Rust 1.91, the locked Soroban toolchain and their original compiler course. A ready Node installation does not establish a successful Rust build, native lifecycle or deployment.
 
-The contribution carries all 320 current operator files and all 44 original reference files as exact explicit source paths. This includes original Cargo locks, tests, snapshots, hidden configuration and complete source packets that ordinary runtime discovery might omit. PRODUCT_SOURCE.json binds each original byte sequence. Browser manifests describe both original servers' existing routes without changing either server. The shared builder resolves its original module and asset dependencies.
+The contribution carries all 320 current operator files and all 44 historical reference files as explicit source paths. The liquidity-desk-1 operator edition amends the original browser, consumed guides and source bindings while preserving the original contract/API/compiler bodies. The manifest identifies the upstream baseline separately from these exact current postimages. This includes original Cargo locks, tests, snapshots, hidden configuration and complete source packets that ordinary runtime discovery might omit. PRODUCT_SOURCE.json binds each original byte sequence. Browser manifests describe both original servers' existing routes without changing either server. The shared builder resolves its original module and asset dependencies.
 
 ## Initialize or receive an ordinary workspace
 
@@ -102,3 +102,7 @@ starforge principal-protocol source
 Use these commands through the selected runtime run operation if starforge is not on the host PATH. Source returns the verified current/reference inventory; the selected distribution contains the actual files. The original portable workspace carries all current application bytes, saved requests, complete objects and history. The installed runtime archive additionally carries the original reference and Applications adapter. Receive both through their existing receiving owners for a full installed colleague workflow.
 
 Run the original contract build course from operator/native/PAIRED_EXIT_BUILD.md in the same accepted native operation. Then follow RECEIVING.md for the installed lifecycle and actual browser continuation. No deployment or compiler result is inferred from this source adoption.
+
+## Liquidity operations
+
+Open Market & contract wiring for native deposit and withdrawal quotes, real reserves and account balances, explicit limits and expiry, and the original transaction preparation. The complete consumed workflow and retained JSON/HTML/cold-reopen behavior are documented in operator/OPERATOR.md. The installed source remains on the same contract API edition; its operator edition is liquidity-desk-1. Source readiness is distinct from native and rendered receiving.

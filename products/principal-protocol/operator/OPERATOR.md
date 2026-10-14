@@ -197,3 +197,42 @@ zero-YT fractional recovery and mature PT/YT redemption. Preserve the exact nati
 snapshots and source edition. Open the new preview, original position and recovery
 receipts at desktop and narrow width, then download and reopen the full review,
 browser working copy and native workspace.
+
+
+## Liquidity desk — operator edition 1
+
+The Market page now offers complete **Deposit PT and SY** and **Withdraw PT and SY** workflows. They consume the existing MarketPool `quote_deposit`, `quote_withdrawal`, `add_liquidity` and `remove_liquidity` methods. This operator change does not change contract arithmetic, the 204-method API, original permissions or the deployed contract edition.
+
+Select the actual network, MarketPool, current contract identities and public source account in Configuration first. The desk pins that complete configuration, workspace, original API/WASM bindings and exact input atoms. The public source account becomes the original transaction's `from`. Changing account, network, contract, code, execution configuration or input invalidates its preparation shortcut; read a new quote. Existing native source requirements and signer custody still apply.
+
+### Deposit
+
+Enter separate maximum PT token atoms and SY share atoms. The operator reads native market configuration, actual reserves, the account's LP/PT/SY balances, PT precision and the exact quote. Every read remains a separate saved observation, with its original command, native output bytes and timestamp. They are not represented as one atomic ledger snapshot.
+
+For an existing pool, the original contract floors the supported LP share amount and then rounds each actual asset input upward. The displayed quote is authoritative; the operator does not reproduce that formula. The desk shows both actual inputs and unused maxima. For an empty pool, the original contract consumes both supplied maxima and initializes LP atoms as floor(maximum PT / 1,000); amounts too small to produce a positive LP atom fail at the original contract. The initial reserve ratio is the author's choice.
+
+Enter a minimum LP atom amount and an explicit expiry in Unix seconds. The initial minimum equals the original quoted LP amount; it is not silently weakened by an inferred slippage percentage. An explicitly entered zero removes that minimum protection. LP has four decimals; PT formatting uses the actual retained token precision; SY stays labeled as exact share atoms because the current SY API does not expose a decimals method.
+
+### Withdrawal
+
+Enter exact positive LP atoms. The native quote floors proportional **real** PT and SY reserve entitlements. Virtual pricing balances and protocol/creator SY fee liabilities are separate and cannot be withdrawn as liquidity.
+
+The native withdrawal quote is account-independent. The account's retained LP balance is therefore shown separately. Neither it nor a successful quote establishes execution eligibility. Withdrawal still checks original account and pool permissions, LP balance, custody, explicit minima and expiry. The operator does not block withdrawal merely because maturity was reached, trading was paused or an oracle reading is unavailable: the original withdrawal method deliberately does not invoke the trading/deposit live check.
+
+A small share withdrawal may round one or both asset returns to zero. Both exact values stay visible. A quote returning zero PT **and** zero SY requires an explicit acknowledgment before its prepared-command shortcut can be used; it is not changed to a fabricated positive return. The raw original native API remains available.
+
+### Preparation, freshness and interruption
+
+After selecting explicit minima and expiry, **Review original transaction fields** opens the maintained preparation form with the complete original quote selection. Quoted input amounts and the source account cannot be silently edited under that quote. Return to liquidity and read a new quote to change them. The minima and expiry remain explicit editable transaction values.
+
+**Prepare exact transaction** rechecks the saved original observations and selection, reads the native configuration/position/quote again through the existing retained request pipeline, and checks the chosen minima against the new native result. It saves that complete review through the original immutable note operation, then prepares the original `plan.prepare` command with the selected native parameters. The final queued preparation boundary checks the original workspace/account/deployment again. This fresh read does not reserve a price or create an atomic quote/transaction; the deployed contract applies the exact minima, expiry, current balances, custody and permissions when invoked.
+
+Simulation and invocation remain separate explicit original actions. No automatic signing, deployment or transaction is added. If an observation or note request is interrupted, use the existing Request recovery view and original request identity. A failed native quote remains inspectable under Contract observations; the desk does not fall back to an older successful quote for that failed operation.
+
+### Save, export and reopen
+
+Each complete liquidity review is saved as an original workspace note with schema `principal.liquidity-review.v1`, containing the exact selection and complete native observations. Saved reviews remain historical when configuration changes. The desk downloads both complete JSON and readable HTML; the HTML embeds the same complete JSON for normal offline download. The whole operator review now includes deposit/withdrawal quote tables and saved liquidity selections.
+
+Reopening a review verifies its workspace, complete selection and every original observation against the current native workspace. Receive the original complete Workspace first if those originals are not installed. Review JSON does not import or invent native observations. Original workspace export/cold receive preserves the notes, original observations, files and native source; the separate complete browser Working copy preserves edited inputs, selected review, explicit limits and pending request history.
+
+Before a recipient-ready handoff, the producing peer must operate the exact final desk at desktop and 390px, inspect the actual rendered views and every outgoing HTML/JSON/workspace attachment, and reopen each applicable export. Include deposit maxima with unused amounts, changed input/account/deployment, an original native failure, a small/zero-return withdrawal, fresh minima rejection, saved review selection, request recovery and cold Workspace/Working copy reopening in the existing receiving operation. Source checks do not establish native execution or visual acceptance. Keep the existing original market compiler/lifecycle course; do not issue another native controller or enable Actions.

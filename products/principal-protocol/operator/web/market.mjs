@@ -1,5 +1,5 @@
 // MIT. Current Principal source-bound projections; original observations stay intact.
-export const SOURCE={repository:'principal-Protocol-org/principal',baseCommit:'f35b914cbf4896255a3711d81795b810b0a47f1c',implementationEdition:'paired-exit-1-market-1-accounting-3'};
+export const SOURCE={repository:'principal-Protocol-org/principal',baseCommit:'f35b914cbf4896255a3711d81795b810b0a47f1c',implementationEdition:'paired-exit-1-market-1-accounting-3',operatorEdition:'liquidity-desk-1'};
 export const CONTRACTS=['oracle_adapter','permissioning','principal_manager','pt_token','recovery_escrow','risk_control','sy_wrapper','yt_token','market_pool','router'];
 const plain=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 export function canonical(value){if(value===null||typeof value!=='object')return JSON.stringify(value);if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';return '{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+canonical(value[k])).join(',')+'}';}
@@ -90,5 +90,100 @@ export function reportHTML(record){
  // encoded request/source bodies as a single rendered text block.
  const complete=JSON.stringify(record).replaceAll('<','\\u003c');
  const downloadScript=`document.getElementById('download-review').addEventListener('click',()=>{const text=document.getElementById('complete-review').textContent;const url=URL.createObjectURL(new Blob([text+'\\n'],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='principal-review-complete.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),60000);});`;
- return '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Principal operator review</title><style>body{max-width:1100px;margin:40px auto;padding:0 20px;font:15px/1.5 system-ui;color:#202020;overflow-wrap:anywhere}h1,h2{line-height:1.2}.table-scroll{overflow:auto}table{border-collapse:collapse;width:100%;min-width:680px;margin:20px 0}td,th{border:1px solid #aaa;padding:8px;text-align:left;overflow-wrap:anywhere;min-width:96px}td:first-child,th:first-child{min-width:240px}button{font:inherit;padding:10px 14px;border:1px solid #888;background:#fff;cursor:pointer}.note{border-top:1px solid #ddd;padding:16px 0}@media(max-width:600px){body{margin:20px auto}table{font-size:12px}}</style><h1>Principal operator review</h1><p>Saved workspace '+esc(record.workspace?.name)+' · revision '+esc(record.workspace?.revision)+' · '+esc(record.createdAt)+'</p><p>Observations retain their original time, contract and selected source edition. Case stages are operator review records.</p><h2>Contract wiring</h2>'+table(record.topology,[['Contract',x=>x.contract],['Read',x=>x.method],['Expected',x=>x.expected],['Observed',x=>x.observed],['Status',x=>x.status]])+'<h2>Retained native market quotes</h2><p>Historical contract results; amounts are exact atoms and a quote does not reserve a price. Both directions charge SY fees.</p>'+table((record.observations??[]).filter(x=>x.actionId==='market_pool.quote_swap'&&x.status==='CLI_EXIT_0'&&!x.parseError),[['Observed',x=>x.createdAt],['Contract',x=>x.contractId],['Direction',x=>x.value?.sy_in?'SY to PT':'PT to SY'],['Input',x=>x.value?.amount_in],['Gross output',x=>x.value?.gross_amount_out],['Net output',x=>x.value?.amount_out],['Fee · SY',x=>x.value?.total_fee],['Source observation',x=>x.id]])+'<h2>Recovery cases</h2>'+table(record.cases,[['Case',x=>x.caseId],['Account',x=>x.account],['History',x=>x.status],['Stage',x=>x.value?.stage??'Explicit resolution required'],['Operator',x=>x.value?.operator??''],['Reason',x=>x.value?.reason??''],['Editions',x=>x.history.length]])+'<h2>Original files</h2>'+table(record.files??[],[['File',x=>x.name],['Bytes',x=>x.bytes],['SHA-256',x=>x.sha256]])+'<h2>Original requests</h2>'+table(record.requests??[],[['Request',x=>x.id],['Method',x=>x.envelope?.method],['State',x=>x.status],['Revision',x=>x.response?.revision??''],['Error',x=>x.error?.code??'']])+'<h2>Working notes</h2>'+(record.notes??[]).map(n=>'<section class="note"><h3>'+esc(n.title)+'</h3><p>'+esc(n.body)+'</p><p>'+esc(n.createdAt)+'</p></section>').join('')+'<h2>Complete saved review</h2><p>The full original review is embedded in this file, including every request body and result. Download it to inspect the complete JSON. The separate native workspace export also includes every original file byte and installed application member.</p><button id="download-review" type="button">Download complete saved review JSON</button><script id="complete-review" type="application/json">'+complete+'</script><script>'+downloadScript+'</script></html>';
+ return '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Principal operator review</title><style>body{max-width:1100px;margin:40px auto;padding:0 20px;font:15px/1.5 system-ui;color:#202020;overflow-wrap:anywhere}h1,h2{line-height:1.2}.table-scroll{overflow:auto}table{border-collapse:collapse;width:100%;min-width:680px;margin:20px 0}td,th{border:1px solid #aaa;padding:8px;text-align:left;overflow-wrap:anywhere;min-width:96px}td:first-child,th:first-child{min-width:240px}button{font:inherit;padding:10px 14px;border:1px solid #888;background:#fff;cursor:pointer}.note{border-top:1px solid #ddd;padding:16px 0}@media(max-width:600px){body{margin:20px auto}table{font-size:12px}}</style><h1>Principal operator review</h1><p>Saved workspace '+esc(record.workspace?.name)+' · revision '+esc(record.workspace?.revision)+' · '+esc(record.createdAt)+'</p><p>Observations retain their original time, contract and selected source edition. Case stages are operator review records.</p><h2>Contract wiring</h2>'+table(record.topology,[['Contract',x=>x.contract],['Read',x=>x.method],['Expected',x=>x.expected],['Observed',x=>x.observed],['Status',x=>x.status]])+'<h2>Retained native market quotes</h2><p>Historical contract results; amounts are exact atoms and a quote does not reserve a price. Both directions charge SY fees.</p>'+table((record.observations??[]).filter(x=>x.actionId==='market_pool.quote_swap'&&x.status==='CLI_EXIT_0'&&!x.parseError),[['Observed',x=>x.createdAt],['Contract',x=>x.contractId],['Direction',x=>x.value?.sy_in?'SY to PT':'PT to SY'],['Input',x=>x.value?.amount_in],['Gross output',x=>x.value?.gross_amount_out],['Net output',x=>x.value?.amount_out],['Fee · SY',x=>x.value?.total_fee],['Source observation',x=>x.id]])+'<h2>Retained native liquidity quotes</h2><p>Deposit and withdrawal values are original native results. Each row has its own source and time; fee liabilities and virtual balances are excluded from liquidity withdrawals.</p>'+table((record.observations??[]).filter(x=>['market_pool.quote_deposit','market_pool.quote_withdrawal'].includes(x.actionId)&&x.status==='CLI_EXIT_0'&&!x.parseError),[['Observed',x=>x.createdAt],['Operation',x=>x.actionId==='market_pool.quote_deposit'?'Deposit':'Withdrawal'],['PT atoms',x=>x.value?.pt],['SY atoms',x=>x.value?.sy],['LP atoms',x=>x.value?.shares],['Original quote',x=>x.id]])+'<h2>Saved liquidity reviews</h2>'+table(liquidityReviews(record),[['Saved',x=>x.note.createdAt],['Operation',x=>x.review.selection.mode],['Account',x=>x.review.selection.account],['Original quote',x=>x.review.id]])+'<h2>Recovery cases</h2>'+table(record.cases,[['Case',x=>x.caseId],['Account',x=>x.account],['History',x=>x.status],['Stage',x=>x.value?.stage??'Explicit resolution required'],['Operator',x=>x.value?.operator??''],['Reason',x=>x.value?.reason??''],['Editions',x=>x.history.length]])+'<h2>Original files</h2>'+table(record.files??[],[['File',x=>x.name],['Bytes',x=>x.bytes],['SHA-256',x=>x.sha256]])+'<h2>Original requests</h2>'+table(record.requests??[],[['Request',x=>x.id],['Method',x=>x.envelope?.method],['State',x=>x.status],['Revision',x=>x.response?.revision??''],['Error',x=>x.error?.code??'']])+'<h2>Working notes</h2>'+(record.notes??[]).filter(n=>!liquidityReviews(record).some(x=>x.note.id===n.id)).map(n=>'<section class="note"><h3>'+esc(n.title)+'</h3><p>'+esc(n.body)+'</p><p>'+esc(n.createdAt)+'</p></section>').join('')+'<h2>Complete saved review</h2><p>The full original review is embedded in this file, including every request body and result. Download it to inspect the complete JSON. The separate native workspace export also includes every original file byte and installed application member.</p><button id="download-review" type="button">Download complete saved review JSON</button><script id="complete-review" type="application/json">'+complete+'</script><script>'+downloadScript+'</script></html>';
+}
+
+// Liquidity desk edition 1. Read native quotes; never reproduce market pricing.
+export const LIQUIDITY_SCHEMA='principal.liquidity-review.v1';
+const liquidityLimit=1000000000000000000000000000n;
+const liquidityI128=170141183460469231731687303715884105727n;
+function liquidityNeed(ok,message){if(!ok)throw Error(message);}
+function liquidityInt(value,{positive=false,maximum=liquidityLimit}={}){
+ const n=integer(value);liquidityNeed(n>=(positive?1n:0n)&&n<=maximum,'Use an exact '+(positive?'positive':'nonnegative')+' integer within the native amount limit.');return n.toString();
+}
+export function liquiditySelection(state,api,mode,values){
+ liquidityNeed(['deposit','withdraw'].includes(mode),'Select deposit or withdrawal.');
+ const account=state.config?.sourceAccount?.address;
+ liquidityNeed(/^[GC][A-Z2-7]{55}$/.test(account??''),'Select the original public source account in Configuration.');
+ const bindings={};for(const key of ['market_pool','pt_token','sy_wrapper']){bindings[key]=binding(state.config,key,api);liquidityNeed(completeBinding(bindings[key]),'Configure the complete '+key+' deployment and source before reading liquidity.');}
+ const parameters=mode==='deposit'?{max_pt:liquidityInt(values.max_pt,{positive:true}),max_sy:liquidityInt(values.max_sy,{positive:true})}:{shares:liquidityInt(values.shares,{positive:true})};
+ return {mode,account,workspaceId:state.workspace.id,configuration:structuredClone(state.config),bindings,parameters};
+}
+export function assertLiquiditySelection(state,api,selected){
+ liquidityNeed(plain(selected),'Keep the complete original liquidity selection.');
+ const current=liquiditySelection(state,api,selected.mode,selected.parameters);
+ liquidityNeed(canonical(current)===canonical(selected),'The workspace, source account, network, contract or input changed. Read a new liquidity quote.');
+ return current;
+}
+export function liquidityQueries(selected){
+ const account={account:selected.account};
+ return [['market_pool','configuration',{}],['market_pool','reserves',{}],['market_pool','balance',account],['pt_token','balance',account],['sy_wrapper','balance_of',account],['pt_token','decimals',{}],['market_pool',selected.mode==='deposit'?'quote_deposit':'quote_withdrawal',selected.parameters]];
+}
+function liquidityNative(state,api,selected,ids=null){
+ const records={};for(const [contract,method,parameters]of liquidityQueries(selected)){
+  const key=contract+'.'+method,row=ids?(state.observations??[]).find(x=>x.id===ids[key]):latest(state,api,contract,method,parameters);
+  liquidityNeed(row&&row.actionId===key&&row.status==='CLI_EXIT_0'&&!row.parseError&&sameBinding(observedBinding(row),selected.bindings[contract])&&canonical(row.parameters)===canonical(parameters),'A complete native '+key+' observation is required for this selection.');
+  records[key]=structuredClone(row);
+ }
+ const config=records['market_pool.configuration'].value;
+ liquidityNeed(plain(config),'Keep the original native market configuration.');
+ for(const [field,key]of [['pt','pt_token'],['sy','sy_wrapper'],['manager','principal_manager'],['yt','yt_token'],['oracle','oracle_adapter'],['permissioning','permissioning'],['risk','risk_control'],['escrow','recovery_escrow']])
+  liquidityNeed(typeof config[field]==='string'&&config[field]===state.config.contracts?.[key]?.id,'The native market '+field+' differs from the selected deployment. Review Contract wiring.');
+ const quote=records['market_pool.'+(selected.mode==='deposit'?'quote_deposit':'quote_withdrawal')],value=quote.value;
+ liquidityNeed(plain(value),'Retain the complete native liquidity quote.');
+ const q={shares:liquidityInt(value.shares,{positive:true}),pt:liquidityInt(value.pt),sy:liquidityInt(value.sy)};
+ if(selected.mode==='deposit'){
+  liquidityNeed(integer(q.pt)>0n&&integer(q.sy)>0n&&integer(q.pt)<=integer(selected.parameters.max_pt)&&integer(q.sy)<=integer(selected.parameters.max_sy),'The native deposit quote does not match the selected maximum amounts.');
+ }else liquidityNeed(q.shares===selected.parameters.shares,'The native withdrawal quote changed the selected share amount.');
+ const r=records['market_pool.reserves'].value;liquidityNeed(plain(r),'Retain the original real-reserve reading.');
+ const reserves={};for(const key of ['reserve_pt','reserve_sy','fee_sy','creator_sy','lp_supply'])reserves[key]=liquidityInt(r[key],{maximum:liquidityI128});
+ const balances={pt:liquidityInt(records['pt_token.balance'].value,{maximum:liquidityI128}),sy:liquidityInt(records['sy_wrapper.balance_of'].value,{maximum:liquidityI128}),shares:liquidityInt(records['market_pool.balance'].value,{maximum:liquidityI128})};
+ const ptDecimals=liquidityInt(records['pt_token.decimals'].value,{maximum:38n});
+ return {records,quote,q,reserves,balances,ptDecimals};
+}
+export function liquidityReview(state,api,selected){
+ assertLiquiditySelection(state,api,selected);const native=liquidityNative(state,api,selected);
+ return {schema:LIQUIDITY_SCHEMA,id:native.quote.id,selection:structuredClone(selected),observations:native.records,
+  amounts:native.q,reserves:native.reserves,balances:native.balances,ptDecimals:native.ptDecimals,
+  zeroReturn:selected.mode==='withdraw'&&native.q.pt==='0'&&native.q.sy==='0',
+  unused:selected.mode==='deposit'?{pt:(integer(selected.parameters.max_pt)-integer(native.q.pt)).toString(),sy:(integer(selected.parameters.max_sy)-integer(native.q.sy)).toString()}:null};
+}
+export function assertLiquidityReview(state,api,record){
+ liquidityNeed(record?.schema===LIQUIDITY_SCHEMA,'Open a complete original liquidity review.');
+ assertLiquiditySelection(state,api,record.selection);
+ const ids={};for(const [key,row]of Object.entries(record.observations??{}))ids[key]=row?.id;
+ const n=liquidityNative(state,api,record.selection,ids);
+ const rebuilt={schema:LIQUIDITY_SCHEMA,id:n.quote.id,selection:structuredClone(record.selection),observations:n.records,amounts:n.q,reserves:n.reserves,balances:n.balances,ptDecimals:n.ptDecimals,
+  zeroReturn:record.selection.mode==='withdraw'&&n.q.pt==='0'&&n.q.sy==='0',
+  unused:record.selection.mode==='deposit'?{pt:(integer(record.selection.parameters.max_pt)-integer(n.q.pt)).toString(),sy:(integer(record.selection.parameters.max_sy)-integer(n.q.sy)).toString()}:null};
+ liquidityNeed(canonical(record)===canonical(rebuilt),'This review differs from its complete original native observations.');
+ return rebuilt;
+}
+export function liquidityReviews(state){
+ const out=[];for(const note of state.notes??[]){try{const value=JSON.parse(note.body);if(value.schema===LIQUIDITY_SCHEMA&&note.subjectId==='liquidity-review:'+value.id)out.push({note,review:value});}catch{}}
+ return out;
+}
+export function liquidityParameters(record,values,{acceptZero=false}={}){
+ liquidityNeed(record?.schema===LIQUIDITY_SCHEMA,'Keep the complete liquidity review.');
+ const s=record.selection,p={from:s.account,...s.parameters};
+ if(Object.hasOwn(values,'from'))liquidityNeed(values.from===s.account,'The source account changed. Read a new liquidity quote.');
+ for(const [key,value]of Object.entries(s.parameters))if(Object.hasOwn(values,key))liquidityNeed(liquidityInt(values[key],{positive:true})===value,'The quoted amount changed. Return to liquidity and read a new quote.');
+ if(s.mode==='deposit'){p.min_shares=liquidityInt(values.min_shares);liquidityNeed(integer(record.amounts.shares)>=integer(p.min_shares),'The latest native share quote is below the selected minimum. Review the quote or minimum.');}
+ else{
+  p.min_pt=liquidityInt(values.min_pt);p.min_sy=liquidityInt(values.min_sy);
+  liquidityNeed(integer(record.amounts.pt)>=integer(p.min_pt)&&integer(record.amounts.sy)>=integer(p.min_sy),'The latest native token quote is below a selected minimum. Review the quote or minima.');
+  liquidityNeed(!record.zeroReturn||acceptZero,'This quote burns LP shares for zero PT and zero SY. Explicitly acknowledge that result before preparing.');
+ }
+ p.expires=liquidityInt(values.expires,{positive:true,maximum:18446744073709551615n});
+ return p;
+}
+export function liquidityHTML(record){
+ const esc=x=>String(x??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
+ const rows=[['Public source account',record.selection.account],['Pool',record.selection.bindings.market_pool.contractId],['Network',record.selection.bindings.market_pool.passphrase],
+ ['Quoted PT atoms',record.amounts.pt],['Quoted SY share atoms',record.amounts.sy],['Quoted LP atoms (4 decimals)',record.amounts.shares],
+ ['PT actual reserve',record.reserves.reserve_pt],['SY actual reserve',record.reserves.reserve_sy],['LP supply',record.reserves.lp_supply],
+ ['Protocol SY fee liability',record.reserves.fee_sy],['Creator SY fee liability',record.reserves.creator_sy],
+ ['Observed account PT',record.balances.pt],['Observed account SY',record.balances.sy],['Observed account LP',record.balances.shares]];
+ const data=JSON.stringify(record).replaceAll('<','\\u003c');
+ return '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Principal liquidity review</title><style>body{font:15px/1.5 system-ui;max-width:960px;margin:32px auto;padding:0 18px;color:#222;overflow-wrap:anywhere}table{width:100%;border-collapse:collapse}th,td{border:1px solid #aaa;padding:8px;text-align:left}th{width:45%}h1,h2{line-height:1.2}button{font:inherit;padding:10px;border:1px solid #888;background:white}pre{white-space:pre-wrap}@media print{button{display:none}h2{break-after:avoid}}</style><h1>Liquidity '+esc(record.selection.mode==='deposit'?'deposit':'withdrawal')+' review</h1><p>Historical native quote '+esc(record.id)+'. Actual execution applies current contract checks and the explicitly prepared minima and expiry.</p>'+(record.zeroReturn?'<p><strong>This quoted withdrawal burns shares for zero PT and zero SY.</strong></p>':'')+'<table>'+rows.map(([k,v])=>'<tr><th>'+esc(k)+'</th><td>'+esc(v)+'</td></tr>').join('')+'<h2>Original reading times</h2><p>These are separate native reads, not one atomic ledger snapshot. Fee liabilities and virtual pricing balances are excluded from the displayed actual liquidity reserves. Account balances are context, not an eligibility approval.</p><table><tr><th>Native read</th><th>Time</th></tr>'+Object.entries(record.observations).map(([key,row])=>'<tr><td>'+esc(key)+'</td><td>'+esc(row.createdAt)+'</td></tr>').join('')+'<h2>Complete original review</h2><button id="download">Download complete JSON</button><details><summary>Complete bound source and observations</summary><pre>'+esc(JSON.stringify(record,null,2))+'</pre></details><script type="application/json" id="record">'+data+'</script><script>document.getElementById("download").onclick=()=>{const u=URL.createObjectURL(new Blob([document.getElementById("record").textContent+"\\n"],{type:"application/json"}));const a=document.createElement("a");a.href=u;a.download="principal-liquidity-review.json";a.click();setTimeout(()=>URL.revokeObjectURL(u),60000);};</script></html>';
 }
