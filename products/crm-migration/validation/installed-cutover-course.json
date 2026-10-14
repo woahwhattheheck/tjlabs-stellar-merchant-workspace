@@ -1,52 +1,27 @@
 {
-  "model": {
-    "revision": 41,
-    "sources": 32,
-    "plans": [
-      {
-        "id": "cutover-1",
-        "issues": 0,
-        "changes": 15,
-        "decisions": 4
-      }
-    ],
-    "packets": [
-      {
-        "id": "approved-window-1",
-        "steps": 10
-      }
-    ],
-    "reconciliations": [
-      {
-        "id": "observed-late-edit",
-        "findings": 1
-      },
-      {
-        "id": "observed-authored-complete",
-        "findings": 0
-      }
-    ],
-    "exports": 46
+  "runtime": "V8 maintained cutover host with explicit in-memory filesystem/identity substitutes",
+  "nativeFilesystemExecuted": false,
+  "originalCourseRevision": 41,
+  "sourceCount": 32,
+  "bridgeSourceFiles": 2,
+  "uncertainCommit": "EIO",
+  "committedRequestRecovered": true,
+  "bridgeRevision": 43,
+  "retryAfterLaterRevision": 44,
+  "siblingBranchRejected": "CRM_BASE_CHANGED",
+  "staleSourceRejected": "CRM_OPERATION_REJECTED",
+  "rejectedRequestRetained": true,
+  "freshSelectionRevision": 45,
+  "terminalRejection": "CRM_OPERATION_REJECTED",
+  "portableRejectedRequestRecovered": true,
+  "uncommittedBaseRejected": "CRM_OPERATION_REJECTED",
+  "retainedReversal": {
+    "sha256": "55040612ad7aa6ffdcf8d091554174eb0afb52344bde37793c6f4d6a66c056de",
+    "ready": 5,
+    "conflicts": 1,
+    "manual": 4
   },
-  "host": {
-    "runtime": "V8 maintained cutover host with explicit in-memory filesystem/identity substitutes",
-    "nativeFilesystemExecuted": false,
-    "originalCourseRevision": 41,
-    "sourceCount": 32,
-    "bridgeSourceFiles": 2,
-    "uncertainCommit": "EIO",
-    "committedRequestRecovered": true,
-    "bridgeRevision": 43,
-    "retryAfterLaterRevision": 44,
-    "siblingBranchRejected": "CRM_BASE_CHANGED",
-    "retainedReversal": {
-      "sha256": "674b39891d62eb7f25307ccc5945e78323b574f60f4c06bbdc32b33209af8d97",
-      "ready": 5,
-      "conflicts": 1,
-      "manual": 4
-    },
-    "completeExportFiles": 51,
-    "sourceBytesPreserved": true,
-    "replacedDirectoryRejected": "CRM_DIRECTORY_CHANGED"
-  }
+  "completeExportFiles": 55,
+  "sourceBytesPreserved": true,
+  "replacedDirectoryRejected": "CRM_DIRECTORY_CHANGED"
 }

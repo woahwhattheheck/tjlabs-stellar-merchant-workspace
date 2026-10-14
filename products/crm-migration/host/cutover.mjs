@@ -5,24 +5,38 @@ import {privateDirectory,readJSON,readBytes,writeJSON,need,json,sha,decode} from
 import runtime from '../cutover/runtime.cjs';
 const {workspace:model,comparison,core}=runtime;
 export function attachCutover({directory,crmWorkspaceId,guard,currentCrm}){
- const path=join(directory,'cutover.workspace.json'),editions=join(directory,'cutover-editions'),requests=join(directory,'cutover-requests'),checks=join(directory,'cutover-reversals');
+ const path=join(directory,'cutover.workspace.json'),editions=join(directory,'cutover-editions'),requests=join(directory,'cutover-requests'),checks=join(directory,'cutover-reversals'),rejections=join(directory,'cutover-rejections');
  let originalId=null;
- async function folders(){await guard();for(const d of [editions,requests,checks])await privateDirectory(d,{create:true});}
+ async function folders(){await guard();for(const d of [editions,requests,checks,rejections])await privateDirectory(d,{create:true});}
  async function existing(){await guard();let r;try{r=(await readJSON(path)).value;}catch(e){if(e.code==='ENOENT')return null;throw e;}
  need(r.schema==='crm-migration.attached-cutover.v1'&&r.crmWorkspaceId===crmWorkspaceId,'CUTOVER_OWNER','This cutover belongs to another original CRM workspace.',409);const ws=model.restore(r.archive);need(originalId===null||ws.id===originalId,'CUTOVER_WORKSPACE_CHANGED','Original cutover identity changed.',409);originalId=ws.id;return ws;}
  async function save(ws){await folders();model.validate(ws);need(originalId===null||originalId===ws.id,'CUTOVER_WORKSPACE_CHANGED','Keep the original cutover identity.',409);
  const archive=model.archive(ws);await guard();await writeJSON(join(editions,archive.sha256+'.json'),archive);await guard();await writeJSON(path,{schema:'crm-migration.attached-cutover.v1',crmWorkspaceId,archive},{replace:true});originalId=ws.id;return archive;}
  async function read(){let ws=await existing();if(!ws){ws=model.create('cutover-'+comparison.digest(crmWorkspaceId).slice(0,24),(await currentCrm()).title+' — cutover');await save(ws);}return ws;}
+ function rejectionError(message){return Object.assign(new Error(message+' The original rejected request is retained. Refresh the workspace and select the current source edition before trying again.'),{code:'CRM_OPERATION_REJECTED',status:409});}
+ async function rejectBridge(op,baseSha256,ws,error){
+ // A rejection can release the browser's pending request only after proving that
+ // none of this original bridge's operations is in the current workspace.
+ need(!ws.operations.some(e=>e.id===op.id||e.id.startsWith(op.id+':')),'CUTOVER_REQUEST_UNRESOLVED','An original intake operation exists; retain this request for reconciliation.',409);
+ const record={schema:'crm-migration.rejected-cutover-request.v1',crmWorkspaceId,workspaceId:ws.id,baseSha256,currentWorkspaceSha256:comparison.digest(ws),operation:op,reasonCode:error.code||'CUTOVER_VALIDATION',reason:error.message,committed:false};
+ await folders();await guard();await writeJSON(join(rejections,op.id+'.json'),record);
+ throw rejectionError(error.message);
+ }
  async function bridgeRequest(op,baseSha256,ws){
  need(typeof op.id==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,99}$/.test(op.id),'CUTOVER_OPERATION_ID','Use an original operation ID, at most 100 characters.');
+ let rejected;try{rejected=(await readJSON(join(rejections,op.id+'.json'))).value;}catch(e){if(e.code!=='ENOENT')throw e;}
+ if(rejected){need(rejected.workspaceId===ws.id&&rejected.baseSha256===baseSha256&&comparison.digest(rejected.operation)===comparison.digest(op),'CUTOVER_REQUEST_CHANGED','The original rejected intake request differs.',409);need(!ws.operations.some(e=>e.id===op.id||e.id.startsWith(op.id+':')),'CUTOVER_REQUEST_UNRESOLVED','Rejected intake has conflicting operations; preserve its request for reconciliation.',409);throw rejectionError(rejected.reason);}
  const file=join(requests,op.id+'.json');let saved;try{saved=(await readJSON(file)).value;}catch(e){if(e.code!=='ENOENT')throw e;}
  if(saved){need(saved.workspaceId===ws.id&&saved.baseSha256===baseSha256&&comparison.digest(saved.operation)===comparison.digest(op),'CUTOVER_REQUEST_CHANGED','The original source intake request differs.',409);return saved;}
- need(baseSha256===comparison.digest(ws)&&op.expected_revision===ws.revision,'CRM_BASE_CHANGED','Source intake belongs to another cutover edition.',409);
- const crm=await currentCrm(),p=op.payload;
+ need(!ws.operations.some(e=>e.id===op.id||e.id.startsWith(op.id+':')),'CUTOVER_REQUEST_UNRESOLVED','Original intake operations exist without their retained request; preserve the request for reconciliation.',409);
+ if(baseSha256!==comparison.digest(ws)||op.expected_revision!==ws.revision)return rejectBridge(op,baseSha256,ws,Object.assign(Error('Source intake belongs to another cutover edition.'),{code:'CRM_BASE_CHANGED'}));
+ const crm=await currentCrm(),p=op.payload;let operations;
+ try{
  need(p?.crmSha256===comparison.digest(crm)&&Array.isArray(p.sources)&&p.sources.length>0&&p.sources.length<=100,'CUTOVER_CRM_SOURCE','Select the complete current CRM edition and 1–100 original sources.',409);
  need(new Set(p.sources.map(x=>x.sourceId)).size===p.sources.length,'CUTOVER_SOURCE_IDS','Use distinct receiving source IDs.');
- const operations=p.sources.map((selection,i)=>{const s=crm.sourceWorkspace.sources[selection.crmSourceId];need(s,'CUTOVER_CRM_SOURCE','Selected CRM source is absent.',404);return {id:op.id+':'+i,actor:op.actor,at:op.at,expected_revision:ws.revision+i,kind:'ingest',payload:{id:selection.sourceId,filename:s.filename,content:s.content}};});
- let trial=ws;try{for(const operation of operations)trial=model.apply(trial,operation);}catch(e){throw Object.assign(e,{code:'CRM_OPERATION_REJECTED',status:409});}
+ operations=p.sources.map((selection,i)=>{const s=crm.sourceWorkspace.sources[selection.crmSourceId];need(s,'CUTOVER_CRM_SOURCE','Selected CRM source is absent.',404);return {id:op.id+':'+i,actor:op.actor,at:op.at,expected_revision:ws.revision+i,kind:'ingest',payload:{id:selection.sourceId,filename:s.filename,content:s.content}};});
+ let trial=ws;for(const operation of operations)trial=model.apply(trial,operation);
+ }catch(e){return rejectBridge(op,baseSha256,ws,e);}
  saved={schema:'crm-migration.cutover-source-request.v1',crmWorkspaceId,crmSha256:p.crmSha256,workspaceId:ws.id,baseSha256,operation:op,operations};
  await folders();await guard();await writeJSON(file,saved);return saved;
  }
@@ -31,7 +45,8 @@ export function attachCutover({directory,crmWorkspaceId,guard,currentCrm}){
  if(op?.kind==='bridge_crm_sources'){
  const saved=await bridgeRequest(op,baseSha256,ws),earlier=saved.operations.map(o=>ws.operations.find(e=>e.id===o.id));
  if(earlier.every(Boolean)){for(let i=0;i<earlier.length;i++)need(comparison.digest(earlier[i].request)===comparison.digest(saved.operations[i]),'CUTOVER_REQUEST_CHANGED','Committed source intake differs.',409);return {archive:model.archive(ws),receipt:{id:op.id,operationIds:earlier.map(x=>x.id)},reused:true};}
- need(earlier.every(x=>!x)&&comparison.digest(ws)===saved.baseSha256,'CRM_BASE_CHANGED','The original source intake belongs to a different cutover edition.',409);
+ need(earlier.every(x=>!x),'CUTOVER_REQUEST_UNRESOLVED','Only part of the original source intake is present; preserve its request for reconciliation.',409);
+ if(comparison.digest(ws)!==saved.baseSha256)return rejectBridge(op,baseSha256,ws,Object.assign(Error('The original source intake belongs to a different cutover edition.'),{code:'CRM_BASE_CHANGED'}));
  for(const operation of saved.operations)ws=model.apply(ws,operation);
  return {archive:await save(ws),receipt:{id:op.id,operationIds:saved.operations.map(x=>x.id)},reused:false};
  }
@@ -43,6 +58,8 @@ export function attachCutover({directory,crmWorkspaceId,guard,currentCrm}){
  async function requestStatus({operation:op,baseSha256}){
  const ws=await read();need(typeof op?.id==='string'&&/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,99}$/.test(op.id),'CUTOVER_OPERATION_ID','Use the retained original operation ID.');need(/^[a-f0-9]{64}$/.test(baseSha256||''),'CRM_BASE_HASH','Retain the original base SHA.');
  if(op?.kind==='bridge_crm_sources'){
+ let rejected;try{rejected=(await readJSON(join(rejections,op.id+'.json'))).value;}catch(e){if(e.code!=='ENOENT')throw e;}
+ if(rejected){need(rejected.workspaceId===ws.id&&rejected.baseSha256===baseSha256&&comparison.digest(rejected.operation)===comparison.digest(op),'CUTOVER_REQUEST_CHANGED','Original rejected intake request differs.',409);need(!ws.operations.some(e=>e.id===op.id||e.id.startsWith(op.id+':')),'CUTOVER_REQUEST_UNRESOLVED','Rejected intake has conflicting operations.',409);return {recoverable:true,committed:false,rejected:true,reason:rejected.reason};}
  let saved;try{saved=(await readJSON(join(requests,op.id+'.json'))).value;}catch(e){if(e.code!=='ENOENT')throw e;}
  if(saved){need(saved.workspaceId===ws.id&&saved.baseSha256===baseSha256&&comparison.digest(saved.operation)===comparison.digest(op),'CUTOVER_REQUEST_CHANGED','Saved intake request differs.',409);const earlier=saved.operations.map(o=>ws.operations.find(e=>e.id===o.id));need(earlier.every((e,i)=>e&&comparison.digest(e.request)===comparison.digest(saved.operations[i]))||earlier.every(e=>!e)&&comparison.digest(ws)===baseSha256,'CRM_BASE_CHANGED','Saved intake belongs to another original branch.',409);return {recoverable:true,committed:earlier.every(Boolean)};}
  }else{const earlier=ws.operations.find(x=>x.id===op?.id);if(earlier){need(comparison.digest(earlier.request)===comparison.digest(op),'CUTOVER_REQUEST_CHANGED','Original committed operation differs.',409);return {recoverable:true,committed:true};}}
@@ -58,7 +75,7 @@ export function attachCutover({directory,crmWorkspaceId,guard,currentCrm}){
  }
  async function files(){
  const ws=await existing();if(!ws)return {};await folders();const out=runtime.exportFiles(ws);
- for(const [dir,label]of [[requests,'source-intake-requests'],[checks,'reversal-checks']])for(const name of await readdir(dir)){need(/^[A-Za-z0-9][A-Za-z0-9_.:-]*\.json$/.test(name),'CUTOVER_MEMBER','Unexpected retained cutover member.');out[label+'/'+name]=decode((await readBytes(join(dir,name))).bytes);}
+ for(const [dir,label]of [[requests,'source-intake-requests'],[checks,'reversal-checks'],[rejections,'rejected-source-intake-requests']])for(const name of await readdir(dir)){need(/^[A-Za-z0-9][A-Za-z0-9_.:-]*\.json$/.test(name),'CUTOVER_MEMBER','Unexpected retained cutover member.');out[label+'/'+name]=decode((await readBytes(join(dir,name))).bytes);}
  return out;
  }
  return {state:async()=>model.archive(await read()),action,requestStatus,reversal,files,

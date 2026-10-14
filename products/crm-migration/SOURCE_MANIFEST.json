@@ -425,8 +425,8 @@
     },
     {
       "path": "host/cutover.mjs",
-      "bytes": 10000,
-      "sha256": "bce0470ff73bad5651fedf5e74bfec35d7304ca90ac1995c73e2be70af63a1e4"
+      "bytes": 12736,
+      "sha256": "22ead0970ae9b51ebaa5ec455db13c8371018865c0a933fd102593c2d2b785fc"
     },
     {
       "path": "host/hubspot.mjs",
@@ -455,8 +455,8 @@
     },
     {
       "path": "INSTALLED_CUTOVER.md",
-      "bytes": 8118,
-      "sha256": "791b3f43b255a70d90d36827775f1380ffb1e19309c5e2798c318d669beb858e"
+      "bytes": 8539,
+      "sha256": "7d518b92ee2d8909ef996e0d16b5d26483622c31495de2122fa73491dbcc4ee1"
     },
     {
       "path": "LICENSE",
@@ -600,8 +600,8 @@
     },
     {
       "path": "validation/installed-cutover-course.json",
-      "bytes": 1212,
-      "sha256": "eb9a42c31cd7cf28ec9f4ed6d0569745175129ac91562d7f9d5ff611a989fc53"
+      "bytes": 933,
+      "sha256": "a338af01ebcee7a10f7594611f78e5fdbc5e71503a3e91bcc02be838bbba8666"
     },
     {
       "path": "validation/integrated-store-course.json",
