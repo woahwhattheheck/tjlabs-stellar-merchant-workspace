@@ -54,7 +54,9 @@ Direct launch:
 node products/crm-migration/managed.mjs --workspace /private/crm-course --port 0
 ~~~
 
-Applications Stop and SIGINT/SIGTERM retire that listener's private connection, drain accepted requests, and release the original writer. The same workspace reopens with a new instance. A stale browser must reopen the current link.
+Applications Stop and SIGINT/SIGTERM retire that listener's private connection, drain accepted requests, and release the original writer. The same workspace reopens with a new instance. Port 0 first selects an available port, then reuses that workspace's retained original port on later starts so browser request storage remains reachable. An occupied retained port gives an explicit conflict instead of silently moving the browser origin. A stale browser must reopen the current link.
+
+Save pending request downloads the complete exact request and its workspace-bound content hash. Open pending request receives that file on the same original workspace; Recover saved operation reconciles it through the normal original writer. Save the pending file before deliberately changing the port or transferring to another browser. The ordinary workspace download also saves an unresolved request as a companion file; Save offline desk retains it and offers Save unfinished host request. Closing unresolved work triggers a warning. The managed working-bundle button selects the exact current host edition, receives every retained ZIP byte and verifies its hash; recover any pending operation first. Import preserves its operation ID, timestamp, expected revision and full payload; it never rebases an uncertain request onto a newer edition.
 
 ## Native operations and complete receiving
 

@@ -9,11 +9,11 @@ const defs=new Map(crmTools((name,description,properties,required)=>({name,prope
 export async function readCrmConfiguration(path){
  const r=await readJSON(path,1024*1024),v=r.value;need(v.schema==='stellar-forge.crm-host.v1'&&v.workspaces&&Object.keys(v.workspaces).length>0&&Object.keys(v.workspaces).length<=32,'CRM_CONFIG','Declare 1–32 CRM workspaces.');
  const workspaces=Object.create(null),seen=new Set();
- for(const [key,input]of Object.entries(v.workspaces)){alias(key);const directory=(await privateDirectory(resolve(dirname(path),input.directory))).path;need(!seen.has(directory),'CRM_ALIAS_DUPLICATE','Declare one alias per original workspace.');seen.add(directory);
+ for(const [key,input]of Object.entries(v.workspaces)){alias(key);const directoryIdentity=await privateDirectory(resolve(dirname(path),input.directory)),directory=directoryIdentity.path;need(!seen.has(directory),'CRM_ALIAS_DUPLICATE','Declare one alias per original workspace.');seen.add(directory);
  const original=runtime.workspace.restore((await readJSON(join(directory,'workspace.json'))).value);
  need(!input.workspaceId||input.workspaceId===original.id,'CRM_WORKSPACE_CHANGED','Configured workspace identity differs from its complete original.',409);
  const inputs=Object.create(null);for(const [name,s]of Object.entries(input.inputs||{})){alias(name);need(/^[a-f0-9]{64}$/.test(s.sha256||''),'CRM_INPUT_HASH','Declare the exact original input hash.');const file=await readBytes(resolve(dirname(path),s.file));need(file.sha256===s.sha256,'CRM_INPUT_CHANGED','The declared complete input differs.',409);inputs[name]={file:file.path,filename:basename(file.path),sha256:file.sha256,bytes:file.bytes.length};}
- workspaces[key]={label:input.label||key,directory,workspaceId:original.id,inputs};}
+ workspaces[key]={label:input.label||key,directory,directoryIdentity,workspaceId:original.id,inputs};}
  return {path,sha256:r.sha256,workspaces};
 }
 export class MerchantCrm{
@@ -25,9 +25,10 @@ export class MerchantCrm{
  if(name==='merchant_crm_status'&&!args.workspace)return {...this.summary,workspaces:Object.entries(all).map(([workspace,s])=>({workspace,label:s.label,workspaceId:s.workspaceId,inputs:Object.entries(s.inputs).map(([sourceInput,i])=>({sourceInput,filename:i.filename,sha256:i.sha256,bytes:i.bytes}))}))};
  const scope=all[alias(args.workspace)];need(scope,'CRM_WORKSPACE','Choose a configured workspace.',404);
  let c=this.clients.get(args.workspace);
- if(name==='merchant_crm_connect'){const next=await CrmClient.connect(scope.directory,{workspaceId:scope.workspaceId,instanceId:args.instanceId});await c?.close();this.clients.set(args.workspace,next);return {...next.identity,status:await next.status()};}
+ if(name==='merchant_crm_connect'){const next=await CrmClient.connect(scope.directory,{workspaceId:scope.workspaceId,instanceId:args.instanceId,directoryIdentity:scope.directoryIdentity});await c?.close();this.clients.set(args.workspace,next);return {...next.identity,status:await next.status()};}
  if(name==='merchant_crm_disconnect'){await c?.close();this.clients.delete(args.workspace);return {workspace:args.workspace,state:'DISCONNECTED'};}
  if(name==='merchant_crm_file'){
+ const currentDirectory=await privateDirectory(scope.directory);need(currentDirectory.dev===scope.directoryIdentity.dev&&currentDirectory.ino===scope.directoryIdentity.ino,'CRM_DIRECTORY_CHANGED','The configured original export directory was replaced.',409);
  const id=args.fileId,offset=args.offset??0,limit=args.limit??196608;
  need(/^[a-f0-9]{64}$/.test(id||'')&&Number.isSafeInteger(offset)&&offset>=0&&Number.isInteger(limit)&&limit>0&&limit<=196608,'CRM_FILE_SELECTION','Select a complete retained file and valid byte range.');
  const r=await readBytes(join(scope.directory,'exports',id+'.zip'));need(r.sha256===id&&offset<=r.bytes.length,'CRM_FILE_CHANGED','Original retained file or range differs.',409);

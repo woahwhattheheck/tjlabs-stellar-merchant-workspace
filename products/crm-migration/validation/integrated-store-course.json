@@ -10,6 +10,7 @@
   "oldReceiptRevision": 41,
   "staleRejected": "CRM_OPERATION_REJECTED",
   "completeExportsIdentical": true,
-  "exportBytes": 285338,
-  "finalFindings": 0
+  "exportBytes": 285557,
+  "finalFindings": 0,
+  "replacedOriginalDirectory": "CRM_DIRECTORY_CHANGED"
 }

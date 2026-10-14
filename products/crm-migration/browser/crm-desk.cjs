@@ -5,12 +5,12 @@ const $=s=>document.querySelector(s),esc=v=>String(v??"").replace(/[&<>"']/g,c=>
 let ws=model.restore(payload.archive),tab="overview",runId=Object.keys(ws.runs)[0]||"",sourceId=Object.keys(ws.sourceWorkspace.sources)[0]||"",draft=clone(Object.values(ws.contracts).at(-1)?.contract||{schema:"crm-migration.contract.v1",objects:[],associations:[]}),draftDirty=false,otherDirty=false,persisted=false,expected=null,db=null,busy=false,objectIndex=0,associationIndex=0,reviewDrafts={};
 
 const managed=payload.managed||null;
-let managedDB=null;
+let managedDB=null,hasPending=false;
 const pendingKey=managed?'pending:'+managed.workspaceId:null;
 function managedDatabase(){return new Promise((accept,reject)=>{const r=indexedDB.open('tjlabs-crm-managed-requests-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('requests');r.onsuccess=()=>accept(r.result);r.onerror=()=>reject(r.error);});}
 async function pendingRequest(){return new Promise((accept,reject)=>{const tx=managedDB.transaction('requests','readonly'),r=tx.objectStore('requests').get(pendingKey);r.onsuccess=()=>accept(r.result||null);r.onerror=()=>reject(r.error);});}
-async function reserveRequest(op){return new Promise((accept,reject)=>{const tx=managedDB.transaction('requests','readwrite'),s=tx.objectStore('requests'),r=s.get(pendingKey);let failure;r.onsuccess=()=>{if(r.result){failure=Error('A saved operation needs recovery. Use Recover saved operation.');tx.abort();}else s.put({operation:op,workspaceId:ws.id},pendingKey);};tx.oncomplete=()=>accept();tx.onabort=()=>reject(failure||tx.error);tx.onerror=()=>reject(failure||tx.error);});}
-async function completeRequest(op,result){return new Promise((accept,reject)=>{const tx=managedDB.transaction('requests','readwrite'),s=tx.objectStore('requests'),r=s.get(pendingKey);r.onsuccess=()=>{if(r.result?.operation.id===op.id){s.put({...r.result,result,completed_at:new Date().toISOString()},'history:'+ws.id+':'+op.id);s.delete(pendingKey);}};tx.oncomplete=()=>accept();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
+async function reserveRequest(op){await new Promise((accept,reject)=>{const tx=managedDB.transaction('requests','readwrite'),s=tx.objectStore('requests'),r=s.get(pendingKey);let failure;r.onsuccess=()=>{if(r.result){if(cmp.digest(r.result.operation)!==cmp.digest(op)){failure=Error('A saved operation needs recovery. Use Recover saved operation.');tx.abort();}}else s.put({operation:op,workspaceId:ws.id},pendingKey);};tx.oncomplete=()=>accept();tx.onabort=()=>reject(failure||tx.error);tx.onerror=()=>reject(failure||tx.error);});hasPending=true;}
+async function completeRequest(op,result){await new Promise((accept,reject)=>{const tx=managedDB.transaction('requests','readwrite'),s=tx.objectStore('requests'),r=s.get(pendingKey);r.onsuccess=()=>{if(r.result?.operation.id===op.id){s.put({...r.result,result,completed_at:new Date().toISOString()},'history:'+ws.id+':'+op.id);s.delete(pendingKey);}};tx.oncomplete=()=>accept();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});hasPending=!!await pendingRequest();}
 async function hostCall(path,body){
  const token=new URLSearchParams(location.hash.slice(1)).get('token');
  const r=await fetch(path,{method:body===undefined?'GET':'POST',headers:{authorization:'Bearer '+token,'x-crm-instance':managed.instanceId,...(body===undefined?{}:{'content-type':'application/json'})},body:body===undefined?undefined:JSON.stringify(body),cache:'no-store'});
@@ -24,6 +24,36 @@ async function performManaged(op){
  await completeRequest(op,{receipt:result.receipt,reused:result.reused,sha256:result.archive.sha256});
  ws=next;persisted=true;expected=result.archive.sha256;status('Saved on the original host · revision '+ws.revision);return result;
 }
+async function managedBundle(){
+ if(await pendingRequest())throw Error('Recover the saved operation before exporting this host edition. Save pending request to continue elsewhere.');
+ const descriptor=await hostCall('/api/export',{expectedSha256:cmp.digest(ws)});
+ if(descriptor.workspaceId!==ws.id||descriptor.workspaceSha256!==cmp.digest(ws)||!Number.isSafeInteger(descriptor.bytes)||descriptor.bytes<1||descriptor.bytes>256*1024*1024||!/^[a-f0-9]{64}$/.test(descriptor.fileId||'')||descriptor.sha256!==descriptor.fileId)throw Error('The retained export identity differs from the selected workspace.');
+ const output=new Uint8Array(descriptor.bytes);let offset=0;
+ while(offset<output.length){
+ const page=await hostCall('/api/file?id='+encodeURIComponent(descriptor.fileId)+'&offset='+offset+'&limit=196608'),bytes=codec.base64Decode(page.contentBase64);
+ if(page.fileId!==descriptor.fileId||page.sha256!==descriptor.sha256||page.bytes!==descriptor.bytes||page.offset!==offset||bytes.length<1||offset+bytes.length>output.length||page.nextOffset!==(offset+bytes.length<output.length?offset+bytes.length:null))throw Error('The original retained export page differs.');
+ output.set(bytes,offset);offset+=bytes.length;
+ }
+ if(codec.sha256(output)!==descriptor.sha256)throw Error('The complete retained export hash differs.');
+ saveFile(descriptor.filename,output,'application/zip');status('Downloaded retained host export · revision '+descriptor.revision+' · '+descriptor.sha256);
+}
+async function pendingEnvelope(){
+ const saved=managedDB?await pendingRequest():null;
+ if(saved){const value={schema:'crm-migration.saved-request.v1',workspaceId:ws.id,operation:saved.operation};return {...value,sha256:cmp.digest(value)};}
+ return payload.requestContinuation||null;
+}
+async function savePendingRequest(){
+ const value=await pendingEnvelope();if(!value)throw Error('No saved operation is awaiting recovery.');
+ saveFile(value.workspaceId+'-'+value.operation.id+'.request.json',JSON.stringify(value,null,2)+'\n','application/json');
+ status('Saved the complete original request. Keep it for this same workspace.');
+}
+async function receivePendingRequest(file){
+ if(!managedDB)throw Error('Original request storage is unavailable.');if(busy)throw Error('A save is already running.');
+ if(!requireDiscard())return;
+ const received=JSON.parse(await file.text()),value={schema:received.schema,workspaceId:received.workspaceId,operation:received.operation};
+ if(received.schema!=='crm-migration.saved-request.v1'||received.workspaceId!==ws.id||cmp.digest(value)!==received.sha256||!received.operation||typeof received.operation.id!=='string')throw Error('Choose the complete original request for this same workspace.');
+ await reserveRequest(received.operation);status('Original request received. Use Recover saved operation to reconcile its outcome.');
+}
 async function recoverManaged(){if(!managedDB)throw Error('Original request storage is unavailable.');const saved=await pendingRequest();if(!saved){status('No saved operation is awaiting recovery.');return;}if(busy)throw Error('A save is already running');busy=true;try{await performManaged(saved.operation);render();}finally{busy=false;}}
 async function refreshManaged(){if(busy)throw Error('A save is already running');if(!requireDiscard())return;if(await pendingRequest())throw Error('Recover the original saved operation before refreshing.');const next=model.restore(await hostCall('/api/workspace'));ws=next;persisted=true;expected=cmp.digest(ws);draft=clone(Object.values(ws.contracts).at(-1)?.contract||{schema:'crm-migration.contract.v1',objects:[],associations:[]});draftDirty=false;otherDirty=false;reviewDrafts={};runId=Object.keys(ws.runs).at(-1)||'';sourceId=Object.keys(ws.sourceWorkspace.sources).at(-1)||'';render();status('Opened current host revision '+ws.revision);}
 
@@ -31,7 +61,7 @@ const status=(s,error=false)=>{const e=$("#status");e.textContent=s;e.setAttribu
 const saveFile=(name,data,type="text/plain;charset=utf-8")=>{const a=document.createElement("a"),url=URL.createObjectURL(new Blob([data],{type}));a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),3000);};
 function archiveFile(s=ws){saveFile(s.id+"-r"+s.revision+".workspace.json",JSON.stringify(model.archive(s),null,2)+"\n","application/json");}
 function safePath(s){return encodeURIComponent(s);}
-function bundle(){const out={"workspace.json":JSON.stringify(model.archive(ws),null,2)+"\n","START_HERE.txt":"Open workspace.json in the CRM migration desk. Original CSVs are retained verbatim; use reports/ for spreadsheet-safe findings. Each comparison retains its own configuration and reviews.\n"};for(const s of Object.values(ws.sourceWorkspace.sources))out["originals/"+safePath(s.id)+"/"+safePath(s.filename)]=s.content;for(const c of Object.values(ws.contracts))out["configurations/"+safePath(c.id)+".json"]=JSON.stringify(c,null,2)+"\n";for(const r of Object.values(ws.runs)){out["reports/"+safePath(r.id)+".txt"]=report.text(ws,r.id);out["reports/"+safePath(r.id)+".csv"]=model.findingCSV(ws,r.id);out["reports/"+safePath(r.id)+".html"]=report.html(ws,r.id);}out["operations.json"]=JSON.stringify(ws.operations,null,2)+"\n";return out;}
+function bundle(pending=null){const out={"workspace.json":JSON.stringify(model.archive(ws),null,2)+"\n","START_HERE.txt":"Open workspace.json in the CRM migration desk. Original CSVs are retained verbatim; use reports/ for spreadsheet-safe findings. Each comparison retains its own configuration and reviews.\n"};for(const s of Object.values(ws.sourceWorkspace.sources))out["originals/"+safePath(s.id)+"/"+safePath(s.filename)]=s.content;for(const c of Object.values(ws.contracts))out["configurations/"+safePath(c.id)+".json"]=JSON.stringify(c,null,2)+"\n";for(const r of Object.values(ws.runs)){out["reports/"+safePath(r.id)+".txt"]=report.text(ws,r.id);out["reports/"+safePath(r.id)+".csv"]=model.findingCSV(ws,r.id);out["reports/"+safePath(r.id)+".html"]=report.html(ws,r.id);}out["operations.json"]=JSON.stringify(ws.operations,null,2)+"\n";if(pending)out["pending-request.json"]=JSON.stringify(pending,null,2)+"\n";return out;}
 async function openDb(){return new Promise((resolve,reject)=>{const r=indexedDB.open("tjlabs-crm-production-desk-v1",1);r.onupgradeneeded=()=>{r.result.createObjectStore("current");r.result.createObjectStore("versions");};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
 async function current(id){if(!db)return null;return new Promise((resolve,reject)=>{const tx=db.transaction("current","readonly"),r=tx.objectStore("current").get(id);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});}
 async function persist(next,allowAdoption=false){if(!db){ws=next;persisted=false;status("Working in memory. Save a workspace file before closing.",true);return;}
@@ -82,12 +112,14 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button");i
  if(b.dataset.removeType!==undefined){draft.associations[associationIndex].types.splice(Number(b.dataset.removeType),1);draftDirty=true;render();return;}
  if(b.dataset.removeIgnore!==undefined){draft.associations[associationIndex].ignoredTargetTypes.splice(Number(b.dataset.removeIgnore),1);draftDirty=true;render();return;}
  const act=b.dataset.action;if(!act)return;
+ if(act==='save-host-request'){await savePendingRequest();return;}
+ if(act==='receive-host-request'){$('#host-request-file').click();return;}
  if(act==='recover-host'){await recoverManaged();return;}
  if(act==='refresh-host'){await refreshManaged();return;}
  if(managed&&['new-workspace','import-workspace','versions'].includes(act))throw Error('Receive a complete workspace into a separate native directory, then open that workspace through Applications.');const ids=Object.keys(ws.sourceWorkspace.sources),o=draft.objects[objectIndex],a=draft.associations[associationIndex];
- if(act==="save-workspace"){archiveFile();status("Workspace file downloaded. Unsaved form edits remain in this tab.");return;}
- if(act==="bundle"){saveFile(ws.id+"-r"+ws.revision+".zip",zip.zip(bundle()),"application/zip");return;}
- if(act==="offline-copy"){const doc=document.documentElement.cloneNode(true),p=doc.querySelector("#payload");doc.querySelectorAll('[data-action="recover-host"],[data-action="refresh-host"]').forEach(x=>x.remove());doc.querySelectorAll('[data-action="new-workspace"],[data-action="import-workspace"],[data-action="versions"]').forEach(x=>x.hidden=false);p.textContent=JSON.stringify({...payload,managed:undefined,archive:model.archive(ws)}).replace(/</g,"\\u003c");doc.querySelector("#main").textContent="Opening CRM migration desk…";saveFile(ws.id+"-desk.html","<!doctype html>\n"+doc.outerHTML,"text/html;charset=utf-8");return;}
+ if(act==="save-workspace"){archiveFile();if(await pendingEnvelope())await savePendingRequest();else status("Workspace file downloaded. Unsaved form edits remain in this tab.");return;}
+ if(act==="bundle"){if(managed)await managedBundle();else saveFile(ws.id+"-r"+ws.revision+".zip",zip.zip(bundle(await pendingEnvelope())),"application/zip");return;}
+ if(act==="offline-copy"){const doc=document.documentElement.cloneNode(true),p=doc.querySelector("#payload");doc.querySelectorAll('[data-action="recover-host"],[data-action="refresh-host"],[data-action="save-host-request"],[data-action="receive-host-request"],#host-request-file').forEach(x=>x.remove());doc.querySelectorAll('[data-action="new-workspace"],[data-action="import-workspace"],[data-action="versions"]').forEach(x=>x.hidden=false);p.textContent=JSON.stringify({...payload,managed:undefined,requestContinuation:await pendingEnvelope(),archive:model.archive(ws)}).replace(/</g,"\\u003c");doc.querySelector("#main").textContent="Opening CRM migration desk…";saveFile(ws.id+"-desk.html","<!doctype html>\n"+doc.outerHTML,"text/html;charset=utf-8");return;}
  if(act==="import-workspace"){$("#workspace-file").click();return;}
  if(act==="versions"){await savedVersions();return;}
  if(act==="new-workspace"){const title=prompt("New workspace title");if(title?.trim())await replace(model.create(uid("crm"),title.trim()));return;}
@@ -111,11 +143,13 @@ document.addEventListener("submit",async e=>{const f=e.target;e.preventDefault()
  else if(f.classList.contains("review")){await command("review",{run_id:runId,finding_id:f.dataset.finding,...v});delete reviewDrafts[runId+"|"+f.dataset.finding];otherDirty=Object.keys(reviewDrafts).length>0;}
  else if(f.id==="decide"){await command("decide",{run_id:runId,...v});}render();}catch(err){status(err.message,true);}});
 $("#workspace-file").addEventListener("change",async e=>{try{const file=e.target.files[0];if(file)await replace(model.restore(JSON.parse(await file.text())));}catch(err){status("Import failed: "+err.message,true);}finally{e.target.value="";}});
-addEventListener("beforeunload",e=>{if(draftDirty||otherDirty||!persisted){e.preventDefault();e.returnValue="";}});
+addEventListener("beforeunload",e=>{if(draftDirty||otherDirty||!persisted||busy||hasPending){e.preventDefault();e.returnValue="";}});
 (async()=>{render();if(managed){persisted=true;expected=cmp.digest(ws);
  for(const action of ['new-workspace','import-workspace','versions'])document.querySelector('[data-action="'+action+'"]').hidden=true;
- const bar=document.querySelector('.toolbar.global');for(const [action,label]of [['refresh-host','Open current host edition'],['recover-host','Recover saved operation']]){const button=document.createElement('button');button.dataset.action=action;button.textContent=label;bar.append(button);}
- try{managedDB=await managedDatabase();const saved=await pendingRequest();status(saved?'A saved operation needs recovery. Use Recover saved operation.':'Connected to original host · revision '+ws.revision,!!saved);}catch(e){status('Original request storage unavailable: '+e.message+'. Native receiving remains available.',true);}return;}
+ const bar=document.querySelector('.toolbar.global');for(const [action,label]of [['refresh-host','Open current host edition'],['recover-host','Recover saved operation'],['save-host-request','Save pending request'],['receive-host-request','Open pending request']]){const button=document.createElement('button');button.dataset.action=action;button.textContent=label;bar.append(button);}
+ const input=document.createElement('input');input.id='host-request-file';input.type='file';input.accept='.json,application/json';input.hidden=true;input.addEventListener('change',async e=>{try{if(e.target.files[0])await receivePendingRequest(e.target.files[0]);}catch(err){status(err.message,true);}finally{e.target.value='';}});document.body.append(input);
+ try{managedDB=await managedDatabase();const saved=await pendingRequest();hasPending=!!saved;status(saved?'A saved operation needs recovery. Use Recover saved operation.':'Connected to original host · revision '+ws.revision,!!saved);}catch(e){status('Original request storage unavailable: '+e.message+'. Native receiving remains available.',true);}return;}
+ if(payload.requestContinuation){const button=document.createElement('button');button.dataset.action='save-host-request';button.textContent='Save unfinished host request';document.querySelector('.toolbar.global').append(button);}
  try{db=await openDb();const old=await current(ws.id);if(old){const candidate=model.restore(old.archive);if(confirm("A locally saved version of this workspace exists. Open it?")){ws=candidate;expected=old.hash;persisted=true;draft=clone(Object.values(ws.contracts).at(-1)?.contract||{schema:"crm-migration.contract.v1",objects:[],associations:[]});runId=Object.keys(ws.runs)[0]||"";sourceId=Object.keys(ws.sourceWorkspace.sources)[0]||"";render();status("Opened saved revision "+ws.revision);}else{expected=null;persisted=false;status("Embedded copy open. Download it or choose Saved versions before making changes to an existing local workspace.",true);}}else await persist(ws);}catch(err){persisted=false;status("Local saving unavailable: "+err.message+". Download a workspace file before closing.",true);}})();
 }
 module.exports={startCrmDesk};

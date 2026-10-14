@@ -1,13 +1,16 @@
 // MIT. Typed operations attach to one host-owned CRM listener.
 import {join} from 'node:path';
-import {readJSON,need,MAX_BYTES,decode} from './io.mjs';
+import {readJSON,privateDirectory,need,MAX_BYTES,decode} from './io.mjs';
 export const CONNECTION_SCHEMA='stellar-forge.crm-connection.v1';
 export async function readConnection(directory,expected={}){
+ const identity=await privateDirectory(directory);
  const file=await readJSON(join(directory,'crm.connection.json'),32768),v=file.value;
  let u;try{u=new URL(v.origin);}catch{}
  need(v.schema===CONNECTION_SCHEMA&&v.directory===directory&&u?.protocol==='http:'&&u.hostname==='127.0.0.1'&&u.origin===v.origin&&u.port&&
  !u.username&&!u.password&&/^[a-f0-9]{64}$/.test(v.token||'')&&typeof v.instanceId==='string'&&typeof v.workspaceId==='string',
  'CRM_CONNECTION','Select the current original CRM connection.');
+ need(v.directoryIdentity?.path===identity.path&&v.directoryIdentity?.dev===identity.dev&&v.directoryIdentity?.ino===identity.ino,'CRM_DIRECTORY_CHANGED','The original listener directory was moved or replaced.',409);
+ need(!expected.directoryIdentity||(expected.directoryIdentity.dev===identity.dev&&expected.directoryIdentity.ino===identity.ino),'CRM_DIRECTORY_CHANGED','The configured original directory identity changed.',409);
  need(!expected.workspaceId||expected.workspaceId===v.workspaceId,'CRM_WORKSPACE_CHANGED','The original workspace identity changed.',409);
  need(!expected.instanceId||expected.instanceId===v.instanceId,'CRM_INSTANCE_CHANGED','The application instance changed; reconnect.',409);
  return {...file,value:v};

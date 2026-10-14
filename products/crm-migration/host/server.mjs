@@ -28,9 +28,13 @@ export async function startServer({directory,workspaceId,port=0}){
  need(Number.isInteger(port)&&port>=0&&port<=65535,'CRM_PORT','Select a port from 0 to 65535.');
  const store=await openStore(directory),instanceId=randomUUID(),token=randomBytes(32).toString('hex'),pending=new Set();
  let server,connection,origin,closing=false,closePromise;
+ let selectedPort=port;
  try{
  need(!workspaceId||workspaceId===store.id,'CRM_WORKSPACE_CHANGED','The selected workspace identity changed.',409);
  const modules=await moduleSources();
+ if(port===0){let previous;try{previous=(await readJSON(join(directory,'crm.listener.json'),32768)).value;}catch(e){if(e.code!=='ENOENT')throw e;}
+ if(previous){need(previous.schema==='stellar-forge.crm-listener.v1'&&previous.workspaceId===store.id&&Number.isInteger(previous.port)&&previous.port>0&&previous.port<=65535,'CRM_LISTENER_RECORD','The retained listener selection differs from this original workspace.',409);selectedPort=previous.port;}}
+
  const handler=async(req,res)=>{
   need(!closing,'CRM_CLOSING','The application is closing.',503);
   need(req.headers.host===new URL(origin).host,'CRM_HOST','Use the actual local application origin.',403);
@@ -41,7 +45,7 @@ export async function startServer({directory,workspaceId,port=0}){
    return send(res,200,html,'text/html;charset=utf-8');
   }
   const supplied=req.headers.authorization?.replace(/^Bearer /,'')??'';
-  need(supplied.length===token.length&&timingSafeEqual(Buffer.from(supplied),Buffer.from(token)),'CRM_AUTH','Use the original private application connection.',401);
+  need(/^[a-f0-9]{64}$/.test(supplied)&&timingSafeEqual(Buffer.from(supplied),Buffer.from(token)),'CRM_AUTH','Use the original private application connection.',401);
   need(req.headers['x-crm-instance']===instanceId,'CRM_INSTANCE_CHANGED','Reconnect the original current application instance.',409);
   need(!req.headers.origin||req.headers.origin===origin,'CRM_ORIGIN','Use the same local application origin.',403);
   if(req.method==='GET'&&url.pathname==='/api/status')return send(res,200,{schema:CONNECTION_SCHEMA,instanceId,workspaceId:store.id,...await store.summary()});
@@ -58,8 +62,9 @@ export async function startServer({directory,workspaceId,port=0}){
  };
  server=http.createServer((req,res)=>{const work=handler(req,res).catch(e=>{if(!res.headersSent)send(res,e.status??500,{error:{code:e.code??'CRM_OPERATION',message:e.message}});else res.destroy();});pending.add(work);work.finally(()=>pending.delete(work));});
  server.requestTimeout=120000;server.headersTimeout=15000;
- await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(port,'127.0.0.1',()=>{server.off('error',reject);resolve();});});
+ await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(selectedPort,'127.0.0.1',()=>{server.off('error',reject);resolve();});});
  origin='http://127.0.0.1:'+server.address().port;
+ await writeJSON(join(directory,'crm.listener.json'),{schema:'stellar-forge.crm-listener.v1',workspaceId:store.id,port:server.address().port},{replace:true});
  const value={schema:CONNECTION_SCHEMA,directory,directoryIdentity:store.identity,workspaceId:store.id,instanceId,pid:process.pid,origin,url:origin+'/#token='+token,token};
  const written=await writeJSON(join(directory,CONNECTION),value,{replace:true});connection={...written,value};
  const close=()=>closePromise||(closePromise=(async()=>{
@@ -69,7 +74,7 @@ export async function startServer({directory,workspaceId,port=0}){
   try{await store.close();}catch(e){first??=e;}if(first)throw first;
  })());
  return {directory,workspaceId:store.id,instanceId,origin,url:value.url,connection,close};
- }catch(e){if(server?.listening)await new Promise(r=>server.close(r));await store.close().catch(c=>{e.cleanupError=c;});throw e;}
+ }catch(e){if(e.code==='EADDRINUSE'&&port===0&&selectedPort)e.message='The original CRM listener port '+selectedPort+' is occupied. Restore its availability to retain browser request history, or save pending requests before deliberately selecting another port. '+e.message;if(server?.listening)await new Promise(r=>server.close(r));await store.close().catch(c=>{e.cleanupError=c;});throw e;}
 }
 export function startup(service){return {schema:STARTUP_SCHEMA,status:'CRM_WORKSPACE_READY',directory:service.directory,workspaceId:service.workspaceId,
  instanceId:service.instanceId,pid:process.pid,origin:service.origin,url:service.url,connectionFile:service.connection.path,connectionSha256:service.connection.sha256};}

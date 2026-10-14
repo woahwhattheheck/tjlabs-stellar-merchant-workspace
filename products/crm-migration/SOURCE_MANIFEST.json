@@ -10,13 +10,13 @@
     },
     {
       "path": "browser/crm-desk.cjs",
-      "bytes": 35054,
-      "sha256": "25284a596461b3df39ed6da2a78697bbc1ec9b99b7625b26d0a0d58fa55b16d2"
+      "bytes": 39226,
+      "sha256": "31c0bb32870dc26f3e8a0365612655115ad1f707cd3878c528842c7a3ddf1d77"
     },
     {
       "path": "browser/render-desk.cjs",
-      "bytes": 7178,
-      "sha256": "6c6daff7c962c6c4a9874a237c9bad7c279e78dcd377e9d89675189663ca88b6"
+      "bytes": 7201,
+      "sha256": "1a36787c157671b3e272da191c67914d366498fe3a1f95d024fc1d4d38659dad"
     },
     {
       "path": "cli.mjs",
@@ -25,8 +25,8 @@
     },
     {
       "path": "CRM_Migration_Desk.html",
-      "bytes": 256005,
-      "sha256": "6ba1b35fa3df73ec8699a31917360ff6cafde579ee4d2c1f23dd88ca901c7ff2"
+      "bytes": 260264,
+      "sha256": "47d35b00f9a8da017757cdb4f37aacd22a0d1126b59c7c6a8a0ba5a9edc4cdf6"
     },
     {
       "path": "docs/CUTOVER.md",
@@ -165,8 +165,8 @@
     },
     {
       "path": "host/client.mjs",
-      "bytes": 3564,
-      "sha256": "79a6b55f68b206d0987bc667ecdda8709dac0aa3c0de23b67938beb1b9e6d788"
+      "bytes": 4063,
+      "sha256": "755eb126bf3234ec0a17d434f19c336b69dd0753f4055ecad4cc07cfaefe994a"
     },
     {
       "path": "host/io.mjs",
@@ -175,13 +175,13 @@
     },
     {
       "path": "host/server.mjs",
-      "bytes": 6333,
-      "sha256": "f8868affa2c15cf9fb3b3e50866db5fd67f4ed9e4dacd7280f49759e4a868a20"
+      "bytes": 7238,
+      "sha256": "db85c9733b906788fa15107e6afc02906135473e516eb110faa9c49882629b08"
     },
     {
       "path": "host/store.mjs",
-      "bytes": 4547,
-      "sha256": "bddd087c053e17c4cfc0f4627aaa89c47f98272d31a18509e78491054754db29"
+      "bytes": 5202,
+      "sha256": "ae5ec728559544a917d062328fa9350755fb5052ee9ae2ceab5084cde407c43a"
     },
     {
       "path": "LICENSE",
@@ -195,8 +195,8 @@
     },
     {
       "path": "mcp.mjs",
-      "bytes": 7531,
-      "sha256": "454d8905e6b87c9010e14af5af499a4e323bf50d81894d6a6ac5ea9e73d93488"
+      "bytes": 7884,
+      "sha256": "87e64be193d5003b74989685275778aeefc9ee22c2af7700b22badef639008d8"
     },
     {
       "path": "merchant-provider.mjs",
@@ -210,8 +210,8 @@
     },
     {
       "path": "OPERATING.md",
-      "bytes": 10179,
-      "sha256": "62dc410958fb2df332190f165b5629a6ce2a3d10a6cfe5aa0252dec7badb61d2"
+      "bytes": 11281,
+      "sha256": "7b9b95f1e2deb745926b08ccfd4ab1b3d0aa89d1254b3dcf1b6b92d7f24f3489"
     },
     {
       "path": "package.json",
@@ -225,8 +225,8 @@
     },
     {
       "path": "RECEIVING.md",
-      "bytes": 3186,
-      "sha256": "1732ad42f163f3ba8601a793bd5c7cd488561cddf592bd2187314cc24a7f0ca9"
+      "bytes": 3421,
+      "sha256": "f29f3d08f74e4cd3151b34588b030b2569fadc67912a498d6d946c8b208768b3"
     },
     {
       "path": "runtime/connected_gzip.cjs",
@@ -305,8 +305,13 @@
     },
     {
       "path": "validation/integrated-store-course.json",
-      "bytes": 439,
-      "sha256": "48a25b407b26151f13ba62569ed6b0294f2f309f0b921aece4d853391ebe85d5"
+      "bytes": 495,
+      "sha256": "95fbdb5eb420c2c01f267a87de67daa4763362dfcd9933c0bf7a28d14200456b"
+    },
+    {
+      "path": "validation/listener-recovery-course.json",
+      "bytes": 357,
+      "sha256": "f50144a4283746b2d9e36f21c706536f08d31bbfd473c012119fafc7d9bcc2fe"
     },
     {
       "path": "validation/receiving-checks.cjs",
