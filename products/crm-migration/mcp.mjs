@@ -35,6 +35,37 @@ export class MerchantCrm{
  const end=Math.min(r.bytes.length,offset+limit);return {fileId:id,sha256:id,bytes:r.bytes.length,offset,nextOffset:end<r.bytes.length?end:null,contentBase64:r.bytes.subarray(offset,end).toString('base64')};}
  if(name==='merchant_crm_status'&&!c)return {workspace:args.workspace,state:'DISCONNECTED'};
  need(c,'CRM_DISCONNECTED','Connect the existing CRM application.',409);
+
+ if(name==='merchant_crm_cutover'){
+ const action=args.action;
+ if(action==='status')return c.cutover('summary');
+ if(action==='browser'){const link=await c.browser(),url=new URL(link.url);url.pathname='/cutover';return {...link,url:url.href};}
+ if(action==='crm_sources')return c.cutover('crmSources');
+ if(action==='export')return c.cutover('export',{expectedSha256:args.expectedSha256});
+ if(action==='action'||action==='request_status'){need(['configure','plan','decide','issue_packet','reconcile','record_execution','bridge_crm_sources'].includes(args.operation?.kind),'CUTOVER_ACTION','Choose a declared cutover operation.');const r=await c.cutover(action==='action'?'action':'requestStatus',{operation:args.operation,baseSha256:args.baseSha256});return action==='request_status'?r:{receipt:r.receipt,reused:r.reused,revision:r.archive.workspace.revision,sha256:r.archive.sha256};}
+ if(action==='reversal'){const r=await c.cutover('reversal',{expectedSha256:args.expectedSha256,packetId:args.id,observed:args.observed,actor:args.actor,at:args.at});return {id:r.sha256,workspaceSha256:r.workspaceSha256,packetId:r.packetId,ready:r.output.ready.length,conflicts:r.output.conflicts.length,manual:r.output.manual.length};}
+ let rows,sha256,revision;
+ if(action==='reversal_result'){need(['ready','conflicts','manual'].includes(args.collection),'CUTOVER_COLLECTION','Choose ready, conflicts or manual.');const r=await c.cutover('reversalState',args.id);rows=r.output[args.collection];sha256=r.sha256;}
+ else{need(action==='inspect','CUTOVER_ACTION','Choose a declared cutover operation.');const archive=await c.cutover('state'),ws=archive.workspace;need(archive.sha256===args.expectedSha256,'CRM_REVISION_CHANGED','Select the current complete cutover SHA.',409);sha256=archive.sha256;revision=ws.revision;
+ switch(args.collection){
+ case 'sources':rows=Object.values(ws.originals).map(x=>({id:x.id,filename:x.filename,bytes:x.bytes,sha256:x.sha256,actor:x.actor,at:x.at}));break;
+ case 'rows':rows=ws.originals[args.id]?runtime.comparison.parseCSV(ws.originals[args.id].content).records:undefined;break;
+ case 'configurations':rows=Object.values(ws.configurations);break;
+ case 'plans':rows=Object.values(ws.plans).map(x=>({id:x.id,configuration_id:x.configuration_id,actor:x.actor,at:x.at,issues:x.output.issues.length,changes:x.output.items.length,decisions:x.decisions.length}));break;
+ case 'changes':rows=ws.plans[args.id]?.output.items;break;
+ case 'issues':rows=ws.plans[args.id]?.output.issues;break;
+ case 'decisions':rows=ws.plans[args.id]?.decisions;break;
+ case 'packets':rows=Object.values(ws.packets).map(x=>({id:x.id,plan_id:x.plan_id,sha256:x.output.sha256,steps:x.output.steps.length,actor:x.output.actor,at:x.output.at}));break;
+ case 'steps':rows=ws.packets[args.id]?.output.steps;break;
+ case 'reconciliations':rows=Object.values(ws.reconciliations).map(x=>({id:x.id,packet_id:x.packet_id,observed:x.observed,findings:x.output.findings.length,actor:x.actor,at:x.at}));break;
+ case 'findings':rows=ws.reconciliations[args.id]?.output.findings;break;
+ case 'operations':rows=ws.operations.map(x=>({id:x.id,revision:x.revision,kind:x.request.kind,actor:x.request.actor,at:x.request.at,result:x.result}));break;
+ case 'executions':rows=ws.executions;break;
+ }}
+ need(Array.isArray(rows),'CUTOVER_COLLECTION','Select an existing cutover collection and identifier.');const offset=args.offset??0,limit=args.limit??20;need(Number.isSafeInteger(offset)&&offset>=0&&Number.isInteger(limit)&&limit>0&&limit<=50,'CRM_PAGE','Choose an offset and 1–50 rows.');
+ return {sha256,revision,collection:args.collection,id:args.id,offset,total:rows.length,nextOffset:offset+limit<rows.length?offset+limit:null,rows:rows.slice(offset,offset+limit)};
+ }
+
  if(name==='merchant_crm_hubspot'){const {workspace,action,...input}=args;need(['list','status','start','advance','adopt','adoption','export'].includes(action),'HUBSPOT_ACTION','Choose a declared read-only acquisition operation.');if(action!=='list')alias(input.id);return c.hubspot(action,['status','adoption'].includes(action)?input.id:input);}
  if(name==='merchant_crm_status')return c.status();
  if(name==='merchant_crm_browser')return c.browser();

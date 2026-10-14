@@ -53,7 +53,7 @@ export async function startServer({directory,workspaceId,port=0}){
   if(req.method==='GET'&&url.pathname==='/api/status')return send(res,200,{schema:CONNECTION_SCHEMA,instanceId,workspaceId:store.id,...await store.summary()});
   if(req.method==='GET'&&url.pathname==='/api/cutover')return send(res,200,await store.cutover('state'));
   if(req.method==='POST'&&url.pathname==='/api/cutover'){
-   const input=await body(req);need(['summary','action','requestStatus','reversal','crmSources','export'].includes(input.action),'CUTOVER_ACTION','Choose a declared cutover operation.');
+   const input=await body(req);need(['summary','action','requestStatus','reversal','reversalState','crmSources','export'].includes(input.action),'CUTOVER_ACTION','Choose a declared cutover operation.');
    return send(res,200,input.action==='export'?await store.cutoverExport(input.args.expectedSha256):await store.cutover(input.action,input.args));
   }
   if(req.method==='GET'&&url.pathname==='/api/hubspot')return send(res,200,await store.hubspot('list'));

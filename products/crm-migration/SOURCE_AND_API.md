@@ -23,3 +23,7 @@ The complete original generic source is retained in source-history/generic-base.
 ## HubSpot acquisition modules
 
 runtime/hubspot-capture.cjs owns the current versioned read plan, page transitions, precise identifiers, response replay and complete CSV derivation. host/hubspot.mjs attaches response custody and resumable capture to the existing store serial writer. host/store.mjs exposes hubspot(action,args) and captureExport(id,expectedSha256); host/client.mjs exposes hubspot(action,args). The existing server, CLI, browser and merchant_crm_hubspot customer-agent operation all use those same paths. HUBSPOT.md contains the complete declared API contract and receiving instructions.
+
+## Installed cutover composition
+
+cutover/core.cjs, workspace.cjs and runtime.cjs retain the full four-snapshot model, operation replay, ordered packets, observed reconciliation and identity-bound reversal behavior. cutover/desk.cjs and render-desk.cjs provide the normal-form editor in offline and managed modes. host/cutover.mjs owns the original companion through the existing host/store.mjs queue and lease, including byte-exact source bridge, stable request recovery, full exports and retained reversal results. The existing CLI, listener, client and merchant_crm_cutover tool route to that same writer. Complete generic predecessor94 is retained under source-history/generic-cutover.gzip.json.

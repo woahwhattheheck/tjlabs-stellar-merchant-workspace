@@ -5,13 +5,13 @@
   "files": [
     {
       "path": "application-provider.mjs",
-      "bytes": 3316,
-      "sha256": "1cdc328b1691809fa17e0b057f36ffb104293b6018682a2f61e24ca3388f2b75"
+      "bytes": 3312,
+      "sha256": "c253702ac9d38ed0600ac55e46c654e10c1a14839f41a0eb120b80d0d22ff129"
     },
     {
       "path": "browser/crm-desk.cjs",
-      "bytes": 47371,
-      "sha256": "c62c6348d2dd67f4ac33ba2a7c75060dca399b1dc30847f50d528771d9e05c24"
+      "bytes": 47588,
+      "sha256": "c6512e851236b331aeac95dc53a07cf0f020e931f8ea23b7503872453b67b967"
     },
     {
       "path": "browser/render-desk.cjs",
@@ -20,13 +20,253 @@
     },
     {
       "path": "cli.mjs",
-      "bytes": 4793,
-      "sha256": "0592834387f6064e4f73743de0eb5d33908d26a1f9868443189685e89329a34c"
+      "bytes": 6552,
+      "sha256": "69ecb389b3df5d59ff828c168dee819f7defe313f0dfdc20730c8e5af5f891ca"
     },
     {
       "path": "CRM_Migration_Desk.html",
-      "bytes": 280161,
-      "sha256": "f7b468fbafd32d85658b6a7dba2dc046db7e09da4903a886e50d2124104c6328"
+      "bytes": 280378,
+      "sha256": "760cd257740cd2c4519b5237a794fb1ed400a8e42abad8e5e4654903945c6455"
+    },
+    {
+      "path": "CUTOVER_API.md",
+      "bytes": 3128,
+      "sha256": "9eeded00499cc6fc68975ad6c73a2e24492d048ee95bfac5552459ed929f76b1"
+    },
+    {
+      "path": "Cutover_Desk.html",
+      "bytes": 433601,
+      "sha256": "1938b06ada495eba29d224fc9330f80e3ebb204bcf653117b3ab326396beabf9"
+    },
+    {
+      "path": "cutover/core.cjs",
+      "bytes": 22629,
+      "sha256": "9c3bca089de2cd1d2d622b2f949ec02e2b66d747f6e31741c7c7a369616df87a"
+    },
+    {
+      "path": "cutover/create-example.cjs",
+      "bytes": 7604,
+      "sha256": "ff21671a35f70c9e52f94f93debcde996b9e19cf0c066ecee71a007eaa29735d"
+    },
+    {
+      "path": "cutover/desk.cjs",
+      "bytes": 37187,
+      "sha256": "fdebd65dc88129a5affe53a2f564af43fb4c487b7ede93bff89c00824aa9cd55"
+    },
+    {
+      "path": "cutover/examples/companies-map.csv",
+      "bytes": 47,
+      "sha256": "5cc8b1ac9f4ea88c733e800a9199d48b4a52e050ebf02e2b186e91d2bc7fa872"
+    },
+    {
+      "path": "cutover/examples/companies-post-map.csv",
+      "bytes": 47,
+      "sha256": "5cc8b1ac9f4ea88c733e800a9199d48b4a52e050ebf02e2b186e91d2bc7fa872"
+    },
+    {
+      "path": "cutover/examples/companies-post.csv",
+      "bytes": 95,
+      "sha256": "735bc150cb6f20d759b1c8bdcbc19db5a9101ed5c61bfcc8fc8c07f7fec18d88"
+    },
+    {
+      "path": "cutover/examples/companies-s0.csv",
+      "bytes": 67,
+      "sha256": "5f38c7017dd1d582a96c74651a885c80a6f50dde6e2ed9e6fb13bb9d2977de78"
+    },
+    {
+      "path": "cutover/examples/companies-s1.csv",
+      "bytes": 73,
+      "sha256": "881e2ecaccfc14fe557ae6efc759fd4daa095ec5926c571da767d439e2eb9a5e"
+    },
+    {
+      "path": "cutover/examples/companies-t0.csv",
+      "bytes": 82,
+      "sha256": "af3319fbbce69c8a308343464c0d63d2de2e1c246cd308adbc10a24764b14b6e"
+    },
+    {
+      "path": "cutover/examples/companies-t1.csv",
+      "bytes": 89,
+      "sha256": "f82e0a798199ab5955fe16dd46ee23bd6bb72d9d5fe4dc93860961484a9f8ee9"
+    },
+    {
+      "path": "cutover/examples/contact-company-post.csv",
+      "bytes": 138,
+      "sha256": "a81eae908093055f276ae29d0c7430af8fffedc6c9824713fa96e235fd2bec2f"
+    },
+    {
+      "path": "cutover/examples/contact-company-s0.csv",
+      "bytes": 60,
+      "sha256": "841e1ceb96a2810acbce2165ee8c0bae4159b6d1aafbca5dbc90b5a6d6cc995c"
+    },
+    {
+      "path": "cutover/examples/contact-company-s1.csv",
+      "bytes": 60,
+      "sha256": "e88a8f745a32b11a988aa2da45a9e76b51b188cc58b4e303fb478d1c1cab5bdc"
+    },
+    {
+      "path": "cutover/examples/contact-company-t0.csv",
+      "bytes": 103,
+      "sha256": "384078f1b6f3dde475519d2e39628ce0cb17f31f5cc083a325a466579dfc0d44"
+    },
+    {
+      "path": "cutover/examples/contact-company-t1.csv",
+      "bytes": 103,
+      "sha256": "384078f1b6f3dde475519d2e39628ce0cb17f31f5cc083a325a466579dfc0d44"
+    },
+    {
+      "path": "cutover/examples/contacts-map.csv",
+      "bytes": 49,
+      "sha256": "f09170f42cabaee51fd65f02cbbce652f8ea7ca306d83f1518c7459d80dea91f"
+    },
+    {
+      "path": "cutover/examples/contacts-post-map.csv",
+      "bytes": 61,
+      "sha256": "f8746b53ffd3e973217d24a3278373aba45bdfc2d9e2d4ea6ae0ad5fe72f89a0"
+    },
+    {
+      "path": "cutover/examples/contacts-post.csv",
+      "bytes": 144,
+      "sha256": "c0ea68e41a4a288b0bc823530a08d9f1004eb7e8ffa56c8df5257c938ff76435"
+    },
+    {
+      "path": "cutover/examples/contacts-s0.csv",
+      "bytes": 101,
+      "sha256": "43d928a34841c56bbec13f96efb9112a6a30bd55c2fd46609229723fa9dfac0c"
+    },
+    {
+      "path": "cutover/examples/contacts-s1.csv",
+      "bytes": 105,
+      "sha256": "3bbba25ac61b2c2d65b490725731104644c59d7f0f053e65440a78939a9ffae4"
+    },
+    {
+      "path": "cutover/examples/contacts-t0.csv",
+      "bytes": 103,
+      "sha256": "808ee7eb4cb2e6ac06295cae3dbf6574f57dc21f4d416d5d177544dda35b702a"
+    },
+    {
+      "path": "cutover/examples/contacts-t1.csv",
+      "bytes": 113,
+      "sha256": "e3e4e1b1228d15c07a475e559fd6ac8c2e9183a65751bc03941daca4f77c42ee"
+    },
+    {
+      "path": "cutover/examples/course-result.json",
+      "bytes": 5646,
+      "sha256": "63fba887368c1312dc98257376e987252e41819841b9c78f156d58576708f1bd"
+    },
+    {
+      "path": "cutover/examples/deal-company-post.csv",
+      "bytes": 173,
+      "sha256": "245ba3f961d89e9889e96b57a13c73a9ae9b4c016a01fd180f95e34cbd7f2cda"
+    },
+    {
+      "path": "cutover/examples/deal-company-s0.csv",
+      "bytes": 80,
+      "sha256": "5e51af932114b85db06f03d1ffe83e5b794d839ff9662ca32f51782e312ff32a"
+    },
+    {
+      "path": "cutover/examples/deal-company-s1.csv",
+      "bytes": 100,
+      "sha256": "716d1419b8e7a34e60d6b99e026c8149185a5f7d37e1b47f0633cd099773b6b3"
+    },
+    {
+      "path": "cutover/examples/deal-company-t0.csv",
+      "bytes": 138,
+      "sha256": "e4083f648a4e6481944fe6fa51603a3f001080a85c0b0830ced9a7d026f505c1"
+    },
+    {
+      "path": "cutover/examples/deal-company-t1.csv",
+      "bytes": 138,
+      "sha256": "e4083f648a4e6481944fe6fa51603a3f001080a85c0b0830ced9a7d026f505c1"
+    },
+    {
+      "path": "cutover/examples/deals-map.csv",
+      "bytes": 61,
+      "sha256": "9b53ae2895fde4760c9e73aace107ec9f34f20ac51830118c1b505800ff06abd"
+    },
+    {
+      "path": "cutover/examples/deals-post-late.csv",
+      "bytes": 365,
+      "sha256": "8f85c79e8198826e5c83a1200db70ac8dc25881777b83af2ff265ad944044a55"
+    },
+    {
+      "path": "cutover/examples/deals-post-map.csv",
+      "bytes": 73,
+      "sha256": "b285e78833f58e79908e997e6e09f92217dd0f11a004599ae86e0090591ca161"
+    },
+    {
+      "path": "cutover/examples/deals-post.csv",
+      "bytes": 365,
+      "sha256": "40aec82a6e72bd0d79fc25b23f02b8242ad3eef298e2cdb9332c7e9268187514"
+    },
+    {
+      "path": "cutover/examples/deals-s0.csv",
+      "bytes": 238,
+      "sha256": "ce64c08b6e36eb4065ee30c850a3f04221371f735880b76d99449927cc2bedec"
+    },
+    {
+      "path": "cutover/examples/deals-s1.csv",
+      "bytes": 285,
+      "sha256": "eee070235ea6425ac603accd195651729ba73fe29f32068927a24401ab2dfcfc"
+    },
+    {
+      "path": "cutover/examples/deals-t0.csv",
+      "bytes": 299,
+      "sha256": "0051a0a8507fb7f1564a6170055803d230ad3aa5c7de8038201e5eeadc3540f0"
+    },
+    {
+      "path": "cutover/examples/deals-t1.csv",
+      "bytes": 300,
+      "sha256": "2144a75478ab854ada806220f1ccdd5cd719925f635db9cdbd3557cc97351463"
+    },
+    {
+      "path": "cutover/examples/workspace.json",
+      "bytes": 131215,
+      "sha256": "c84e037224621647fdd498fe96798e83e121fa4a18ee5cf8253c5a968b08b95f"
+    },
+    {
+      "path": "cutover/render-desk.cjs",
+      "bytes": 4802,
+      "sha256": "e93a8153a6d740b4634be446d80414dbdcdcf594eaab38ba6fe0d335129fd969"
+    },
+    {
+      "path": "cutover/runtime.cjs",
+      "bytes": 2923,
+      "sha256": "05281b7ad709773466fd1beda0c1b9ca88096e2ce243762820a58bc6adbc8b24"
+    },
+    {
+      "path": "cutover/verification.json",
+      "bytes": 1677,
+      "sha256": "b91608f8e3f354c884dc1b9d331839e7cfe34202ee81e32cb60f39e0276c64fa"
+    },
+    {
+      "path": "cutover/verify.cjs",
+      "bytes": 3918,
+      "sha256": "4510c2e15d93b69f5b412141bef25806818f1320b33f1acd02364fee1eea3fad"
+    },
+    {
+      "path": "cutover/workspace.cjs",
+      "bytes": 5517,
+      "sha256": "46c13e49dde54b2e0449d410dd532d802f529e765686198abb94f3d0d50de120"
+    },
+    {
+      "path": "docs/CUTOVER_INPUTS.md",
+      "bytes": 3057,
+      "sha256": "d55311d2dda86090df2cebaba7bfdabf5569f330277288c35339cdf9ecdd7231"
+    },
+    {
+      "path": "docs/CUTOVER_OPERATIONS.md",
+      "bytes": 3992,
+      "sha256": "39a422fdbef5719be8de50813d3f3d2682e4c7021ae961dbe967b8586cf09469"
+    },
+    {
+      "path": "docs/CUTOVER_PLATFORM_HANDOVER.md",
+      "bytes": 2280,
+      "sha256": "bb05770cd1d0804bdde5591e617ffe9ddc5b09e861a31107c51bd488fe288880"
+    },
+    {
+      "path": "docs/CUTOVER_RECEIVING.md",
+      "bytes": 2347,
+      "sha256": "04d34e77ab736a00f38ca875d92fcfe227b5d27659239dca9c9334b4d6285f7c"
     },
     {
       "path": "docs/CUTOVER.md",
@@ -180,8 +420,13 @@
     },
     {
       "path": "host/client.mjs",
-      "bytes": 4176,
-      "sha256": "51d43f8a120883ba577bdb631b3b74f6e1cd56fb2345cdb6571f940712d5562c"
+      "bytes": 4290,
+      "sha256": "7797febafb949a02e9846246d1d274034a53bb334117305985e40c7ad104961c"
+    },
+    {
+      "path": "host/cutover.mjs",
+      "bytes": 10000,
+      "sha256": "bce0470ff73bad5651fedf5e74bfec35d7304ca90ac1995c73e2be70af63a1e4"
     },
     {
       "path": "host/hubspot.mjs",
@@ -195,18 +440,23 @@
     },
     {
       "path": "host/server.mjs",
-      "bytes": 8008,
-      "sha256": "45b5810316f447f7b5e0c16b40bd16b523b750d1777a359997243bb5ffc00b21"
+      "bytes": 8781,
+      "sha256": "8427ddf7669a657f8ebac23667d396cd06d668688cce7f21a8e59d41540e7a39"
     },
     {
       "path": "host/store.mjs",
-      "bytes": 6565,
-      "sha256": "22aaa30c10d8e8d166357c2f389718df5ea701dcb489b6f265747191e806f17e"
+      "bytes": 8050,
+      "sha256": "3eb3cf5a30ac3badcd863c14dd34b2a90a7c483b2fa5312e836c29e9a641a88f"
     },
     {
       "path": "HUBSPOT.md",
       "bytes": 9022,
       "sha256": "25e1462114ae8e25d6119cafb521b5e0d61fe304ebc676b809c851a355f6b805"
+    },
+    {
+      "path": "INSTALLED_CUTOVER.md",
+      "bytes": 8118,
+      "sha256": "791b3f43b255a70d90d36827775f1380ffb1e19309c5e2798c318d669beb858e"
     },
     {
       "path": "LICENSE",
@@ -220,13 +470,13 @@
     },
     {
       "path": "mcp.mjs",
-      "bytes": 8231,
-      "sha256": "d016a94e191969769ae33c2362bce714273c14df4af04ff6a5733c9a774d7dbb"
+      "bytes": 11987,
+      "sha256": "e94c0114bd03b2368c8d0d9afd86d3640fbee91298eaae2d7a4859ed19b77d75"
     },
     {
       "path": "merchant-provider.mjs",
-      "bytes": 1565,
-      "sha256": "0786995abf40aae7181db75e84e9db59c3c233a30b29425507d11c56f4a38a6a"
+      "bytes": 2005,
+      "sha256": "c3a7cdf294d198956db7364d3a09d1a3dc76af42b24dd21e9fb4ecb1d3390260"
     },
     {
       "path": "native/crm-desk.cjs",
@@ -234,9 +484,14 @@
       "sha256": "5ec49ef7376bf7fcded46d81e45c4a3aaba6e72512e4e8af1c739e19ca2c686c"
     },
     {
+      "path": "native/cutover-desk.cjs",
+      "bytes": 5008,
+      "sha256": "be28aa021801a76144ee0f3b0c2b62cc4654e82e212fd0ed2ccc87c90b2734ee"
+    },
+    {
       "path": "OPERATING.md",
-      "bytes": 11895,
-      "sha256": "490d46c50a63fc244024c50954d651f3a99648eecc7dfcf27ec54820acd32181"
+      "bytes": 12198,
+      "sha256": "31f830625d996b951cee6f0ebc2d408f4b9d0261f3ed6f14d1c83d2129354321"
     },
     {
       "path": "package.json",
@@ -245,13 +500,13 @@
     },
     {
       "path": "README.md",
-      "bytes": 7627,
-      "sha256": "52b08ae5e390c50e365b6ad21af37488c0f80a2ed287789069889ba37d5e160e"
+      "bytes": 8140,
+      "sha256": "31b38e4f7cfb320af8dbf1710e32ec85ab33dd15df9c28fd05272c50f6f698ac"
     },
     {
       "path": "RECEIVING.md",
-      "bytes": 4317,
-      "sha256": "d503e2f360caea0fffb4fa929617fef9e27a7560cfa335f9a5c4b3c2483ac22d"
+      "bytes": 5255,
+      "sha256": "48a9a48d9364981f0c65c6e0fa0b3538a750b031691eada5e415f3d86941cde7"
     },
     {
       "path": "runtime/connected_gzip.cjs",
@@ -310,8 +565,8 @@
     },
     {
       "path": "SOURCE_AND_API.md",
-      "bytes": 3397,
-      "sha256": "34ec840bf8fc079f68203ae09b81a313e5e601509579035c7ba77af202275349"
+      "bytes": 4098,
+      "sha256": "6afda5c0cb233e5783689b116b44207594bb4ecc17ba1586c4189ada5f2fe3a9"
     },
     {
       "path": "source-history/generic-base.gzip.json",
@@ -319,9 +574,14 @@
       "sha256": "2649a9a145efbc1f3055f1e05ccaa31d39861701685113a80650c20b3d0308d1"
     },
     {
+      "path": "source-history/generic-cutover.gzip.json",
+      "bytes": 464883,
+      "sha256": "ffdf456fc33e131e029374b86fcc59e5cf94862c4ed1e4a062a21008a39e8a7e"
+    },
+    {
       "path": "tools.mjs",
-      "bytes": 3641,
-      "sha256": "c65065cb1c674bbfe2064f260744e364891914f0130f1da7d2870bedec12b655"
+      "bytes": 4935,
+      "sha256": "3eaa32c1419a66554e4f4c0603f75e3a66ef78e073b5665c13891ac8b154a390"
     },
     {
       "path": "validation/actual-v8-results.json",
@@ -337,6 +597,11 @@
       "path": "validation/hubspot-host-receiving.json",
       "bytes": 641,
       "sha256": "5beaf01f1532378a16bbe21c80f45710ebd9a98fa4cf080bd4e04d3619afbaee"
+    },
+    {
+      "path": "validation/installed-cutover-course.json",
+      "bytes": 1212,
+      "sha256": "eb9a42c31cd7cf28ec9f4ed6d0569745175129ac91562d7f9d5ff611a989fc53"
     },
     {
       "path": "validation/integrated-store-course.json",

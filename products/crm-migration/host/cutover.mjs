@@ -50,7 +50,7 @@ export function attachCutover({directory,crmWorkspaceId,guard,currentCrm}){
  }
  async function reversal({expectedSha256,packetId,observed,actor,at}){
  const ws=await read();need(expectedSha256===comparison.digest(ws),'CRM_REVISION_CHANGED','Select the exact current cutover edition.',409);
- need(typeof actor==='string'&&actor.trim()&&typeof at==='string'&&Number.isFinite(Date.parse(at)),'CUTOVER_OPERATOR','Name the recording operator and UTC timestamp.');
+ need(typeof actor==='string'&&actor.trim()&&typeof at==='string'&&/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(at)&&Number.isFinite(Date.parse(at))&&new Date(at).toISOString().replace('.000Z','Z')===at.replace('.000Z','Z'),'CUTOVER_OPERATOR','Name the recording operator and UTC timestamp.');
  const packet=ws.packets[packetId];need(packet,'CUTOVER_PACKET','Select an issued packet.',404);const values={};
  for(const [entity,roles]of Object.entries(observed||{})){values[entity]={};for(const [role,id]of Object.entries(roles)){need(ws.originals[id],'CUTOVER_SOURCE','Select a retained observed source.',404);values[entity][role]=ws.originals[id].content;}}
  const output=core.reversalCheck(packet.output,values),record={schema:'crm-migration.retained-reversal.v1',workspaceId:ws.id,workspaceSha256:expectedSha256,packetId,packetSha256:packet.output.sha256,observed,actor,at,output},id=comparison.digest(record);
@@ -62,6 +62,7 @@ export function attachCutover({directory,crmWorkspaceId,guard,currentCrm}){
  return out;
  }
  return {state:async()=>model.archive(await read()),action,requestStatus,reversal,files,
+ async reversalState(id){need(/^[a-f0-9]{64}$/.test(id||''),'CUTOVER_REVERSAL_ID','Select a retained reversal check by SHA.');await guard();const value=(await readJSON(join(checks,id+'.json'))).value;need(comparison.digest(value)===id&&value.workspaceId===(await read()).id,'CUTOVER_REVERSAL_CHANGED','The retained reversal check differs.',409);return {...value,sha256:id};},
  async receive(archive){const ws=model.restore(archive),old=await existing();need(!old||comparison.digest(old)===archive.sha256,'CUTOVER_RECEIVE_CONFLICT','This original CRM host already contains another cutover edition.',409);return old?{archive:model.archive(old),reused:true}:{archive:await save(ws),reused:false};},
  async summary(){const ws=await read();return {id:ws.id,title:ws.title,revision:ws.revision,sha256:comparison.digest(ws),sources:Object.values(ws.originals).map(x=>({id:x.id,filename:x.filename,sha256:x.sha256,bytes:x.bytes})),configurations:Object.keys(ws.configurations),plans:Object.values(ws.plans).map(x=>({id:x.id,issues:x.output.issues.length,changes:x.output.items.length,decisions:x.decisions.length})),packets:Object.values(ws.packets).map(x=>({id:x.id,steps:x.output.steps.length,sha256:x.output.sha256})),reconciliations:Object.values(ws.reconciliations).map(x=>({id:x.id,findings:x.output.findings.length})),executions:ws.executions.length};},
  async crmSources(){const ws=await currentCrm();return {workspaceId:ws.id,sha256:comparison.digest(ws),sources:Object.values(ws.sourceWorkspace.sources).map(x=>({id:x.id,filename:x.filename,sha256:x.sha256,bytes:x.bytes,role:x.role,edition:x.edition}))};}
