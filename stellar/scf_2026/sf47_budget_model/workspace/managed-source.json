@@ -39,7 +39,6 @@
     "../../../../stellar-forge/mcp-merchant-operator/catalog/gravitee-workspace.mjs",
     "../../../../stellar-forge/mcp-merchant-operator/gravitee-workspace.mjs",
     "../../../../stellar-forge/mcp-merchant-operator/providers/gravitee-workspaces.mjs",
-    "../../../../stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs",
     "task-outcomes-workbook.mjs",
     "task-outcomes-workbook-desk.mjs",
     "TASK_OUTCOMES_WORKBOOK.md",
