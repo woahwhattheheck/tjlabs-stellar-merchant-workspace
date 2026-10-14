@@ -2,6 +2,7 @@
 import {parseAwardCsvText,originalAwardCsvBytes,prepareAwardCsvImportStructure,
   createAwardCsvImportPlanner} from './awards-exchange-core.mjs';
 import {sha256Bytes,sha256Text} from './awards-import-hash.mjs';
+import {verifyAwardCsvRowReview,materializeAwardCsvRowReview,encodeAwardCsvRowReview} from './awards-import-row-review.mjs';
 const utf8=text=>new TextEncoder().encode(text);
 function prepareAwardCsvImport(portfolio,input){
   const csv=originalAwardCsvBytes(input.csv),plan=prepareAwardCsvImportStructure(portfolio,{...input,csv},sha256Bytes(csv));
@@ -10,6 +11,7 @@ function prepareAwardCsvImport(portfolio,input){
 
 export const AWARD_IMPORT_SESSION_SCHEMA='stellar-forge.awards-csv-import-session.v1';
 export const AWARD_IMPORT_BATCH_SCHEMA='stellar-forge.awards-csv-session-batch.v1';
+export const AWARD_REVIEWED_IMPORT_SESSION_SCHEMA='stellar-forge.awards-csv-import-session.v2';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const OPERATION=/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/;
 const HASH=/^[0-9a-f]{64}$/;
@@ -45,7 +47,8 @@ function checkRound(portfolio,session){
 function record(records,id){return records.find(row=>row.id===id)??null;}
 function guardSelectedRecords(basis,current,session,index,csv,parsedSource){
   checkRound(current,session);
-  const parsed=parsedSource??parseAwardCsvText(new TextDecoder('utf-8',{fatal:true}).decode(csv));
+  const parsed=parsedSource??(session.input.rowReview?materializeAwardCsvRowReview(session.input.rowReview,csv):
+    parseAwardCsvText(new TextDecoder('utf-8',{fatal:true}).decode(csv)));
   const originalIndexes={applications:new Map(basis.definition.awards.records.applications.map(r=>[r.id,r])),
     ...Object.fromEntries(['partners','nodes'].map(name=>[name,new Map(basis.definition.programme.records[name].map(r=>[r.id,r]))]))};
   const currentIndexes={applications:new Map(current.definition.awards.records.applications.map(r=>[r.id,r])),
@@ -58,7 +61,8 @@ function guardSelectedRecords(basis,current,session,index,csv,parsedSource){
       'A selected applicant organisation or project changed. Review a successor session explicitly.');
   };
   for(const indexOfRow of session.batches[index].rowIndexes){
-    const row=parsed.rows[indexOfRow],applicationId=identities.applications[row[mapping.reference]];
+    const row=parsed.rows[indexOfRow],applicationId=session.input.rowReview?
+      session.input.rowReview.rows[indexOfRow].applicationId:identities.applications[row[mapping.reference]];
     const before=originalIndexes.applications.get(applicationId)??null;
     const after=currentIndexes.applications.get(applicationId)??null;
     need(before===null?after===null:after!==null&&before.revision===after.revision&&before.sha256===after.sha256,
@@ -74,15 +78,21 @@ function guardSelectedRecords(basis,current,session,index,csv,parsedSource){
  * not future actions that bypass intervening portfolio revisions.
  */
 export function prepareAwardCsvImportSession(portfolio,input){
-  exact(input,['sessionId','workspaceId','csv','filename','roundId','actor','mapping','identities','status','batches'],
+  exact(input,['sessionId','workspaceId','csv','filename','roundId','actor','mapping','identities','status','batches','rowReview','reviewDocumentId'],
     ['sessionId','workspaceId','csv','filename','roundId','actor','mapping','identities','batches']);
   need(UUID.test(input.sessionId??'')&&UUID.test(input.workspaceId??''),'Supply stable session and original workspace UUIDs.');
   need(Array.isArray(input.batches)&&input.batches.length>=1&&input.batches.length<=25000,
     'Review from one to 25,000 explicit batches, at most one per original source row.');
   const csv=originalCsv(input.csv),parsed=parseAwardCsvText(new TextDecoder('utf-8',{fatal:true}).decode(csv));
+  const rowReview=input.rowReview?verifyAwardCsvRowReview(portfolio,input.rowReview,csv):null;
+  const materialized=rowReview?materializeAwardCsvRowReview(rowReview,csv):null;
+  const acceptedIndexes=materialized?.acceptedRowIndexes??Array.from({length:parsed.rows.length},(_,i)=>i);
+  const acceptedSet=new Set(acceptedIndexes);
+  need(rowReview||input.reviewDocumentId===undefined,'A row-review document requires the complete retained review.');
   const indexes=new Set(),operations=new Set(),documents=new Set();
   const common={filename:input.filename,roundId:input.roundId,actor:input.actor,mapping:canonical(clone(input.mapping)),
-    identities:canonical(clone(input.identities)),status:input.status??'draft'};
+    identities:canonical(clone(input.identities)),status:input.status??'draft',
+    ...(rowReview?{rowReview:canonical(clone(rowReview)),reviewDocumentId:input.reviewDocumentId}:{})};
   const planner=createAwardCsvImportPlanner(portfolio,{...common,csv},hash(csv));
   const preparedPlan=selection=>{const plan=planner.plan(selection);return {...plan,actionSha256:sha256Text(JSON.stringify(plan.action))};};
   const batches=[];
@@ -94,9 +104,10 @@ export function prepareAwardCsvImportSession(portfolio,input){
     need(UUID.test(batch.documentId??'')&&!documents.has(batch.documentId),
       'Every batch mapping needs a distinct supplied document UUID.');
     operations.add(batch.operationId);documents.add(batch.documentId);
-    need(Array.isArray(batch.rowIndexes)&&batch.rowIndexes.length>0,'Select every batch row explicitly.');
+    need(Array.isArray(batch.rowIndexes)&&(batch.rowIndexes.length>0||rowReview&&acceptedIndexes.length===0&&input.batches.length===1),
+      'Select every accepted batch row explicitly; an all-exception review uses one evidence-only action.');
     for(const rowIndex of batch.rowIndexes){
-      need(Number.isSafeInteger(rowIndex)&&rowIndex>=0&&rowIndex<parsed.rows.length&&!indexes.has(rowIndex),
+      need(Number.isSafeInteger(rowIndex)&&rowIndex>=0&&rowIndex<parsed.rows.length&&!indexes.has(rowIndex)&&acceptedSet.has(rowIndex),
         'Each original CSV data row must belong to exactly one batch.');
       indexes.add(rowIndex);
     }
@@ -107,17 +118,17 @@ export function prepareAwardCsvImportSession(portfolio,input){
     batches.push({index,operationId:batch.operationId,documentId:batch.documentId,rowIndexes:[...batch.rowIndexes],
       rows:preview.rows,previewActionBytes:utf8(JSON.stringify(preview.action)).length});
   }
-  need(indexes.size===parsed.rows.length,'The complete reviewed session must account for every original CSV row.');
-  need(new Set(parsed.rows.map(row=>common.identities.applications[row[common.mapping.reference]])).size===parsed.rows.length,
+  need(indexes.size===acceptedIndexes.length,'Every accepted row must belong to exactly one batch; retained exceptions and non-applications are not written.');
+  if(!rowReview)need(new Set(parsed.rows.map(row=>common.identities.applications[row[common.mapping.reference]])).size===parsed.rows.length,
     'Each original application reference must retain its own supplied record identity.');
-  const session=seal({schema:AWARD_IMPORT_SESSION_SCHEMA,sessionId:input.sessionId,workspaceId:input.workspaceId,
+  const session=seal({schema:rowReview?AWARD_REVIEWED_IMPORT_SESSION_SCHEMA:AWARD_IMPORT_SESSION_SCHEMA,sessionId:input.sessionId,workspaceId:input.workspaceId,
     portfolio:selectedPortfolio(portfolio),source:first.source,round:first.round,input:common,
     sourceRows:parsed.rows.length,batches});
   need(encode(session).length<=32*1024*1024,'Keep the complete reviewed session within 32 MiB.');
   return session;
 }
 function verifySession(basis,session,csv){
-  need(session?.schema===AWARD_IMPORT_SESSION_SCHEMA&&HASH.test(session.sha256??''),
+  need([AWARD_IMPORT_SESSION_SCHEMA,AWARD_REVIEWED_IMPORT_SESSION_SCHEMA].includes(session?.schema)&&HASH.test(session.sha256??''),
     'Open the complete original reviewed import session.');
   const expected=prepareAwardCsvImportSession(basis,{...session.input,sessionId:session.sessionId,
     workspaceId:session.workspaceId,csv,batches:session.batches.map(({operationId,documentId,rowIndexes})=>
@@ -146,7 +157,8 @@ async function context(client,session,csv,options){
     const basis=await client.portfolio(session.portfolio.id,{...options,revision:session.portfolio.revision});
     need(basis.snapshot===session.portfolio.snapshot,'The original session selected another historical portfolio snapshot.');
     verifySession(basis,session,bytes);
-    scope={key,basis:clone(basis),parsed:parseAwardCsvText(new TextDecoder('utf-8',{fatal:true}).decode(bytes)),
+    scope={key,basis:clone(basis),parsed:session.input.rowReview?materializeAwardCsvRowReview(session.input.rowReview,bytes):
+      parseAwardCsvText(new TextDecoder('utf-8',{fatal:true}).decode(bytes)),
       completed:new Map()};
     scopes.set(client,scope);
   }
@@ -247,6 +259,13 @@ export async function submitAwardCsvSessionBatch(client,session,batch,csv,{resum
     'The portfolio changed after this batch was reviewed. Keep the saved plan and explicitly review before dispatch.');
   const uploaded=await client.uploadProgrammeDocument({body:bytes,bytes:bytes.length,sha256:session.source.sha256},options);
   need(uploaded.bytes===bytes.length&&uploaded.sha256===session.source.sha256,'The full original source upload differs.');
+  if(session.input.rowReview){
+    const body=encodeAwardCsvRowReview(session.input.rowReview),sha256=hash(body);
+    need(batch.plan.rowReview?.object.sha256===sha256&&batch.plan.rowReview.object.bytes===body.length,
+      'The retained complete row-review evidence differs from this reviewed batch.');
+    const uploadedReview=await client.uploadProgrammeDocument({body,bytes:body.length,sha256},options);
+    need(uploadedReview.bytes===body.length&&uploadedReview.sha256===sha256,'The complete row-review evidence upload differs.');
+  }
   // If the transport outcome is uncertain, the caller reads this exact ID next.
   request=await client.action(batch.plan.action,options);
   await verifiedRequest(client,session,index,request,basis,bytes,options,scope);
@@ -273,9 +292,11 @@ export async function inspectAwardCsvImportSession(client,session,csv,options={}
       state:request?.state??'NOT_ADMITTED',request:request?{id:request.id,state:request.state,
         inputSha256:request.inputSha256,sha256:digest(request),error:clone(request.error??null)}:null});
   }
-  return {schema:'stellar-forge.awards-csv-session-observation.v1',sessionId:session.sessionId,
+  return {schema:session.input.rowReview?'stellar-forge.awards-csv-session-observation.v2':'stellar-forge.awards-csv-session-observation.v1',sessionId:session.sessionId,
     sessionSha256:session.sha256,workspaceId:session.workspaceId,portfolioId:session.portfolio.id,
     source:clone(session.source),sourceRows:session.sourceRows,completedRows,
+    ...(session.input.rowReview?{rowReview:{sha256:session.input.rowReview.sha256,counts:clone(session.input.rowReview.counts),
+      documentId:session.input.reviewDocumentId}}:{}),
     state:batches.every(batch=>batch.state==='COMPLETED')?'COMPLETE':'INCOMPLETE',batches};
 }
 
@@ -287,15 +308,20 @@ export function proposeAwardCsvImportBatches(portfolio,input,{operationPrefix,do
     documentIds.every(id=>UUID.test(id))&&new Set(documentIds).size===documentIds.length,'Supply distinct batch document UUIDs.');
   need(Number.isSafeInteger(maxRows)&&maxRows>=1&&maxRows<=2000,'Choose at most 2,000 rows per reviewed batch.');
   const csv=originalCsv(input.csv),planner=createAwardCsvImportPlanner(portfolio,{...input,csv},hash(csv)),batches=[];
+  const accepted=planner.acceptedRowIndexes??Array.from({length:planner.rows},(_,i)=>i);
+  if(accepted.length===0){
+    const selection={operationId:operationPrefix+'-001',documentId:documentIds[0],rowIndexes:[]};
+    planner.plan(selection);return [selection];
+  }
   let offset=0;
-  while(offset<planner.rows){
+  while(offset<accepted.length){
     need(batches.length<documentIds.length,'Supply more batch identities for this complete source.');
     const common={operationId:operationPrefix+'-'+String(batches.length+1).padStart(3,'0'),
       documentId:documentIds[batches.length]};
-    let low=1,high=Math.min(maxRows,planner.rows-offset),best=0,lastError,firstAttempt=true;
+    let low=1,high=Math.min(maxRows,accepted.length-offset),best=0,lastError,firstAttempt=true;
     while(low<=high){
       const count=firstAttempt?high:Math.floor((low+high)/2);firstAttempt=false;
-      const rowIndexes=Array.from({length:count},(_,i)=>offset+i);
+      const rowIndexes=accepted.slice(offset,offset+count);
       try{
         const plan=planner.plan({...common,rowIndexes});
         if(utf8(JSON.stringify(plan.action)).length>=1024*1024)throw Error('The complete mapped action exceeds the original request limit.');
@@ -306,7 +332,7 @@ export function proposeAwardCsvImportBatches(portfolio,input,{operationPrefix,do
       }
     }
     if(!best)throw lastError??Error('One complete application cannot fit the original request.');
-    batches.push({...common,rowIndexes:Array.from({length:best},(_,i)=>offset+i)});offset+=best;
+    batches.push({...common,rowIndexes:accepted.slice(offset,offset+best)});offset+=best;
   }
   return batches;
 }

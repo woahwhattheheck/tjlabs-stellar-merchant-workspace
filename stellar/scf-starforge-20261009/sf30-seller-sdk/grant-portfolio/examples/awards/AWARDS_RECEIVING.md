@@ -138,3 +138,50 @@ The Node result is `complete.json`; the outer result is `foreground-complete.jso
 A source parse, successful package creation, source-only review or a saved preparation is not this outcome. Retain any partial state and actual closed return literally.
 
 Preserve the whole private receiving workspace, original input/source selection, native logs, action inputs/results, phase evidence, customer ZIPs, application CSV/JSON, all screenshots/downloads and both completion receipts through the authorized delivery publisher. Reopen its actual saved artifact before releasing the last native copy. This programme does not create a hosted service or send a customer message; deployment, commercial acceptance and any production tenant activation remain explicit subsequent work.
+
+## Following source-row review chapter on the same original course
+
+After import → receive → reopen has produced the original complete.json, the
+same supplied-client programme has a **row-review** phase. It uses the same
+source and recipient Consoles and original run directory. It creates one
+separate, explicitly internal example portfolio with six original rows: three
+accepted applications (including explicit blank-reference and partner
+corrections), two reasoned exceptions, and one agreed non-application. The
+complete CSV includes BOM, quoted CRLF, Unicode, an exact long decimal and
+unmapped literal values.
+
+```sh
+node examples/awards/import-session-receiving.mjs \
+--phase row-review \
+--source-connection /ABSOLUTE/private/source-console-url.json \
+--recipient-connection /ABSOLUTE/private/recipient-console-url.json \
+--out /ABSOLUTE/private/original-session-receiving \
+--actor "Actual operator"
+```
+
+The chapter retains its own selection and original action files under row-review
+names within that existing directory. Its accepted batches use original indexes
+[0,1] then [2]. It reconciles the first committed request before retaining the
+local return, pauses for an actual cold reopen of the same source Console before
+the final batch, and continues from those same saved inputs. It then records an
+all-excluded evidence-only review, verifies that the awards model is unchanged,
+opens every original/review evidence object, exports the complete portfolio and
+receives all history and source bytes in the original independent recipient.
+
+When it returns AWAITING_COLD_REOPEN, reopen the original source Console and run
+the same command with its current connection file. When it returns
+AWAITING_FINAL_COLD_REOPEN, reopen both original Consoles and repeat it. It checks
+actual workspace IDs and changed process identities before completing. Completed
+replay reads the same final portfolios. It creates no host/browser/controller and
+does not alter the previous 240-row or 25,000-row capacity selection or operation.
+
+Producing operator: personally open, operate and LOOK at the actual changed
+browser journey at desktop and390px. Select the authored six-row source (and the
+intended own-file source when applicable); inspect original and corrected values,
+record a duplicate exception and non-application, download pending work, reopen
+it, match accepted records, seal/review/save each original batch, download every
+source/review/session/ZIP, and independently reopen the retained portfolio.
+Inspect all outgoing attachments and visible empty/error/recovery states. Fix an
+observed fault within this same source edition; source execution alone is not
+rendered/native acceptance. Preserve the original CEDAR/0DF8 commercial and
+receiving operation and its retained completed outcomes.

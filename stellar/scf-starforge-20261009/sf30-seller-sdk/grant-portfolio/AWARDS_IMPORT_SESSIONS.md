@@ -208,3 +208,116 @@ The directory retains the complete original CSV, selection and session, every re
 The source adds a reusable import workflow, not a customer-specific bursary policy. Financial values remain original strings and use the maintained domain validation; round criteria, partner mappings and dates remain operator-supplied. No banking, payment provider, credit decision, institution login or Blackbullion tenant integration is present.
 
 The receiving course uses explicit internal applications and the original Workspace/Console/client. For a fresh selection it exercises 25,000 records and 50 source columns, reviewed bounded batches, a first-batch continuation, a real cold reopen before the final batch, unchanged complete CSV evidence, exact decimal strings, all original revisions and requests, independent full export/receive, and another cold reopen of both workspaces. Existing v1 selections retain their original two-batch course. Report its actual execution result separately from publication. The existence of this source does not establish production throughput or acceptance of a proposed commercial scope.
+
+## Retain source-row decisions and import accepted applications
+
+The original complete-source v1 flow remains available. The following v2 flow
+accounts for every original CSV data row before choosing the rows to write. Each
+row is explicitly an accepted application, a reviewed exception, or an agreed
+non-application. Every correction, exception and non-application requires a
+recorded reason of at most 4,000 characters. A pending row blocks preparation;
+it is never silently skipped.
+
+Original source identity is the complete byte SHA-256 plus the zero-based data
+row index and the hash of that row's ordered original headers and values. Row
+positions always refer to the unfiltered source. The sealed review preserves
+every decision, application UUID and literal working correction. It does not
+rewrite the CSV, trim references, infer missing amounts or silently choose a
+duplicate occurrence. Malformed CSV quoting/columns and invalid UTF-8 remain
+source-level errors because skipping those records would change row identities.
+
+### Browser: review, retain unfinished work, match, save and reopen
+
+1. Open Application CSV intake, choose the original file and published round,
+   and map the exact columns. Choose **Review original source rows**.
+2. Inspect the paged original rows. Use **Inspect original row N** for every
+   original cell and its optional literal working correction. Checked corrections
+   affect the mapped application; the original column value remains visible.
+   Unchecking a correction preserves its unfinished text in the working file.
+   It stops applying that text to the sealed review; recheck it to use it again.
+3. Choose each disposition and record the exception/agreement reason. **Accept
+   pending rows with unique references** is an explicit bulk choice for those
+   pending rows only. Duplicate or blank references remain for individual review.
+   Accepted fields and identities are still validated against the published
+   round and native record rules before preparation.
+4. **Download unfinished source review** retains all decisions, literal
+   corrections, column mappings, selected IDs and original source identity,
+   including still-pending work. **Download original CSV** retains the complete
+   companion. Neither command writes an application.
+5. Reopen by selecting that same original CSV and the unfinished JSON under
+   **Saved import plan**, then **Review original saved import**. The current
+   portfolio must match its retained basis. A mismatched source or basis leaves
+   the retained file intact; select its original revision rather than pretending
+   the earlier review approved a changed programme.
+6. **Match accepted programme records** shows only accepted effective keys and
+   applications. Original source row numbers remain visible. Choose actual
+   partners/projects and whether the selected accepted identity creates a record
+   or updates an existing draft.
+7. **Prepare reviewed batches** seals the complete row review and partitions
+   only accepted original indexes. Download the complete session before saving.
+   Review and save each batch through the existing native action controls.
+8. The session shows accepted, exception and non-application counts separately
+   from the number actually recorded. Download the complete sealed review,
+   original source and reviewed batch/session files. Reopen them through the
+   same saved-import route and **Inspect original operations** before resuming.
+
+An all-exception/non-application review produces one evidence-only native
+portfolio action. It saves the complete original CSV and sealed row-review JSON
+as programme documents without adding an awards change. Thus a source with no
+accepted applications still has a durable native record and full archive
+reopening.
+
+The original CSV object and complete canonical sealed review JSON are uploaded
+and retained in the same native programme transaction as the accepted batch.
+Application evidence references both objects. Batch mapping documents contain a
+compact review identity; the complete reasons and corrections live in the
+retained JSON object, not a truncated mapping string. Independent native
+portfolio export/receive retains those original objects, every saved revision and
+the original request results.
+
+A sealed review/session is immutable. A different decision, correction, mapping
+or programme basis requires an explicitly prepared successor and new native
+operation/document identities. Never change a saved admitted action or reuse its
+ID with a new decision. Previously saved applications remain authoritative; the
+normal existing-draft rules still control any subsequent update.
+
+### CLI: prepare a complete review without dispatch
+
+Create a review input JSON with reviewId, filename, roundId, actor, status, the
+exact mapping and programme identity maps, plus one decision per original row.
+Each decision supplies rowIndex, disposition, reason and literal corrections;
+accepted decisions also supply applicationId. Keep the separately selected
+complete CSV.
+
+```sh
+node awards-import-session-cli.mjs review-rows \
+--connection /ABSOLUTE/private/console-url.json \
+--portfolio ORIGINAL_PORTFOLIO_UUID \
+--input /ABSOLUTE/private/row-decisions.json \
+--csv /ABSOLUTE/private/original.csv \
+--out /ABSOLUTE/private/sealed-row-review.json
+```
+
+The command reads the current original portfolio and writes only the retained
+sealed review file. It does not upload or dispatch an application. Pass that file
+and one supplied stable evidence UUID to the existing proposal/prepare flow:
+
+```sh
+node awards-import-session-cli.mjs propose \
+--connection /ABSOLUTE/private/console-url.json \
+--portfolio ORIGINAL_PORTFOLIO_UUID \
+--input /ABSOLUTE/private/proposal-input.json \
+--csv /ABSOLUTE/private/original.csv \
+--row-review /ABSOLUTE/private/sealed-row-review.json \
+--review-document ROW_REVIEW_DOCUMENT_UUID \
+--out /ABSOLUTE/private/proposed-batches.json
+```
+
+The proposal input retains the existing sessionId, filename, roundId, actor,
+mapping, identities, status and supplied proposal operationPrefix/documentIds.
+Its output includes the sealed review and evidence document identity. Use the
+ordinary prepare command on that complete output, then review/submit/inspect as
+above. Accepted original indexes can be noncontiguous; they are never renumbered.
+The existing 64 MiB source, 25,000-row, 32 MiB canonical session and 1 MiB action
+limits remain. All legacy v1 saved selections preserve their original bytes and
+meaning.
