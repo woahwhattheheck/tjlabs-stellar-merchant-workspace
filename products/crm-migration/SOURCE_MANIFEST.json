@@ -1,0 +1,317 @@
+{
+  "schema": "tjlabs.crm-installed-source.v1",
+  "license": "MIT",
+  "runtime": "Node.js >=22.16.0 on Linux; original offline desk is self-contained",
+  "files": [
+    {
+      "path": "application-provider.mjs",
+      "bytes": 3316,
+      "sha256": "1cdc328b1691809fa17e0b057f36ffb104293b6018682a2f61e24ca3388f2b75"
+    },
+    {
+      "path": "browser/crm-desk.cjs",
+      "bytes": 35054,
+      "sha256": "25284a596461b3df39ed6da2a78697bbc1ec9b99b7625b26d0a0d58fa55b16d2"
+    },
+    {
+      "path": "browser/render-desk.cjs",
+      "bytes": 7178,
+      "sha256": "6c6daff7c962c6c4a9874a237c9bad7c279e78dcd377e9d89675189663ca88b6"
+    },
+    {
+      "path": "cli.mjs",
+      "bytes": 2918,
+      "sha256": "59532b0e85092efefe6a811bd95062497e62783325db9710cc37cae684029e13"
+    },
+    {
+      "path": "CRM_Migration_Desk.html",
+      "bytes": 256005,
+      "sha256": "6ba1b35fa3df73ec8699a31917360ff6cafde579ee4d2c1f23dd88ca901c7ff2"
+    },
+    {
+      "path": "docs/CUTOVER.md",
+      "bytes": 1656,
+      "sha256": "3d60b0cb133ec688aaa3f420bc1ac8e94b7edc2be48bc720b16159478054c1aa"
+    },
+    {
+      "path": "docs/INPUT_CONTRACT.md",
+      "bytes": 2500,
+      "sha256": "359212c919e555d8c348965278230b29c2155d83beaab661b4a28c68dfd0b38e"
+    },
+    {
+      "path": "docs/OPERATIONS.md",
+      "bytes": 1602,
+      "sha256": "ff40cc926858fc64dcb2c55ccd98660e5f3e9e09a7edf04428c7586a0d974f9b"
+    },
+    {
+      "path": "docs/RECEIVING.md",
+      "bytes": 2083,
+      "sha256": "15241b92e9027b87a9eb2d2f97a39dda7f9cc3a438192dcacf03f943ef5f9631"
+    },
+    {
+      "path": "examples/contracts/corrected.json",
+      "bytes": 5033,
+      "sha256": "d8a87ae8ca86cbdec04b5b30ce897f9b71fcaf4b464d7bb28197200a3ba30d54"
+    },
+    {
+      "path": "examples/contracts/first.json",
+      "bytes": 5033,
+      "sha256": "1776308ce7d4fdabbae528c579098c986f59cb0b2a02fae57b30f395c15d479a"
+    },
+    {
+      "path": "examples/course-result.json",
+      "bytes": 578,
+      "sha256": "1e00d00614121feea210a28e134c7ceb21343a9045af5c84d0760a3d39e48daa"
+    },
+    {
+      "path": "examples/create-example.cjs",
+      "bytes": 6839,
+      "sha256": "182f97e655a3e2c7e30fb90a6e765f517f6d5f039b428a36e6150931df6bf192"
+    },
+    {
+      "path": "examples/csv/map-companies.csv",
+      "bytes": 54,
+      "sha256": "44f946bef45f8432f35e9ca82161c6e05ae4a754fbd0ac1fb523d479b1ff6bca"
+    },
+    {
+      "path": "examples/csv/map-contacts.csv",
+      "bytes": 65,
+      "sha256": "e79064f226dc7392745e9bfdcd42ed03eabe6c3d1a313d2835eaf19459bf6c59"
+    },
+    {
+      "path": "examples/csv/map-deals.csv",
+      "bytes": 65,
+      "sha256": "148f3d84b872b85ff2da3ddedc41d360c8a9188df12fa1dcff45d7e8979281c1"
+    },
+    {
+      "path": "examples/csv/source-companies.csv",
+      "bytes": 138,
+      "sha256": "5173d94e95738273e0c12e07229a2e56f5d4ed69527baac68c9bf3495891adc0"
+    },
+    {
+      "path": "examples/csv/source-contact-company.csv",
+      "bytes": 100,
+      "sha256": "8e161748d9b5220466d7d9cd9873e825ed010d51f74a61591d69b43f677cf290"
+    },
+    {
+      "path": "examples/csv/source-contacts.csv",
+      "bytes": 178,
+      "sha256": "0941de627b874bc743ab582a307f186657c05a9fdfb4f9f805fcb99c5bdf78e4"
+    },
+    {
+      "path": "examples/csv/source-deal-company-v1.csv",
+      "bytes": 119,
+      "sha256": "4b0593dbe647a6a657e39815a62641e75162a281e6a356a66b9dc36aa73cb74c"
+    },
+    {
+      "path": "examples/csv/source-deal-company-v2.csv",
+      "bytes": 100,
+      "sha256": "d7c12af351fe0545a5983660f490ae6475584af3b1df95f76115bbe449eefb7b"
+    },
+    {
+      "path": "examples/csv/source-deals.csv",
+      "bytes": 318,
+      "sha256": "2ff8220a7d43daf006af18854c8932c924fbe31b15878ea99979eb97fbdffee0"
+    },
+    {
+      "path": "examples/csv/target-companies.csv",
+      "bytes": 138,
+      "sha256": "05d9fc5f96d1b18faa41bacd2eb9d1414fc6a6ad366ca0cd9ad5f7beb0871641"
+    },
+    {
+      "path": "examples/csv/target-contact-company-v1.csv",
+      "bytes": 261,
+      "sha256": "ed7a8d2f3f30f23b3583b44a89a6a54c1f95c279047ef7f3685e5f4a721c8884"
+    },
+    {
+      "path": "examples/csv/target-contact-company-v2.csv",
+      "bytes": 225,
+      "sha256": "8d4f38ea16a21b6f4075e7ac1cd64bdcc08e836ee609b18078e306e79f18f360"
+    },
+    {
+      "path": "examples/csv/target-contacts-v1.csv",
+      "bytes": 181,
+      "sha256": "023b0904ddcd4bf4257f09313128b30d6baff1d6802a199f1eaae2ccbd2fd50a"
+    },
+    {
+      "path": "examples/csv/target-contacts-v2.csv",
+      "bytes": 176,
+      "sha256": "25e270f7985415c935725db4867302f1193dfbc1b113211a6426125d56a29482"
+    },
+    {
+      "path": "examples/csv/target-deal-company-v1.csv",
+      "bytes": 223,
+      "sha256": "d289623626c593dcc7507eb8f7690b8b74ab61a870bd18ed59eadf3b1ec8314b"
+    },
+    {
+      "path": "examples/csv/target-deal-company-v2.csv",
+      "bytes": 186,
+      "sha256": "35df51a06d31f72a0c76ca5f1ec2a99d8204dd2179348bccba067f043464f97c"
+    },
+    {
+      "path": "examples/csv/target-deals-v1.csv",
+      "bytes": 356,
+      "sha256": "fb784f1e46db204149ca562d06864b7f33c62df8b0e3f4b939a5c5e4f648bb14"
+    },
+    {
+      "path": "examples/csv/target-deals-v2.csv",
+      "bytes": 356,
+      "sha256": "b18684306b732598c12530abc241bb6b263623f364a7b923ba5d7867f34d4943"
+    },
+    {
+      "path": "examples/receiving-course.workspace.json",
+      "bytes": 137441,
+      "sha256": "f06eda1da3fd26d8365ed7d4aaf10f57b0a1c8b49a1a109df9df4781c1ba8def"
+    },
+    {
+      "path": "host/client.mjs",
+      "bytes": 3564,
+      "sha256": "79a6b55f68b206d0987bc667ecdda8709dac0aa3c0de23b67938beb1b9e6d788"
+    },
+    {
+      "path": "host/io.mjs",
+      "bytes": 3088,
+      "sha256": "57c2fac264e1faf1f56080ece99599e19d22ff1c18bb509e9880d8145139d683"
+    },
+    {
+      "path": "host/server.mjs",
+      "bytes": 6333,
+      "sha256": "f8868affa2c15cf9fb3b3e50866db5fd67f4ed9e4dacd7280f49759e4a868a20"
+    },
+    {
+      "path": "host/store.mjs",
+      "bytes": 4547,
+      "sha256": "bddd087c053e17c4cfc0f4627aaa89c47f98272d31a18509e78491054754db29"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1091,
+      "sha256": "2c961cd561150af9a4f94f3f48f0bad7bf271acd0f9cdaa1d354c511b94e84d8"
+    },
+    {
+      "path": "managed.mjs",
+      "bytes": 1714,
+      "sha256": "5b18241c761da29149dd2a992d938905bdc5f418438e4f20ba49191bcff05fee"
+    },
+    {
+      "path": "mcp.mjs",
+      "bytes": 7531,
+      "sha256": "454d8905e6b87c9010e14af5af499a4e323bf50d81894d6a6ac5ea9e73d93488"
+    },
+    {
+      "path": "merchant-provider.mjs",
+      "bytes": 1565,
+      "sha256": "0786995abf40aae7181db75e84e9db59c3c233a30b29425507d11c56f4a38a6a"
+    },
+    {
+      "path": "native/crm-desk.cjs",
+      "bytes": 4384,
+      "sha256": "5ec49ef7376bf7fcded46d81e45c4a3aaba6e72512e4e8af1c739e19ca2c686c"
+    },
+    {
+      "path": "OPERATING.md",
+      "bytes": 10179,
+      "sha256": "62dc410958fb2df332190f165b5629a6ce2a3d10a6cfe5aa0252dec7badb61d2"
+    },
+    {
+      "path": "package.json",
+      "bytes": 184,
+      "sha256": "f55ef37a3797e0572b0a26cb897f19e58bb6911be09088178fa10b09c1e475f5"
+    },
+    {
+      "path": "README.md",
+      "bytes": 7234,
+      "sha256": "1833a3fdc76bd49ddb2dae3bdc5e326b6e602661a578cbd7d2e90088c15e5a98"
+    },
+    {
+      "path": "RECEIVING.md",
+      "bytes": 3186,
+      "sha256": "1732ad42f163f3ba8601a793bd5c7cd488561cddf592bd2187314cc24a7f0ca9"
+    },
+    {
+      "path": "runtime/connected_gzip.cjs",
+      "bytes": 47127,
+      "sha256": "1fc9f3b218c60d029c96bf9f1c1e4de5fcb86918ed5a0570586dc81488440119"
+    },
+    {
+      "path": "runtime/connected_zip.cjs",
+      "bytes": 12090,
+      "sha256": "857c79f789e9cf4f6321bf22804e1c8d55af6758495ae1ba09d4fa72fd97bb26"
+    },
+    {
+      "path": "runtime/crm-comparison.cjs",
+      "bytes": 19524,
+      "sha256": "d6253db47a8c64af05f1fc7c314054b816848eeec050922763e51f8235f7b581"
+    },
+    {
+      "path": "runtime/crm-report.cjs",
+      "bytes": 2708,
+      "sha256": "a404acb9a18025562384cb6b510e9a30e2d54aaa6c6fa3812d214adc30237fdb"
+    },
+    {
+      "path": "runtime/crm-runtime.cjs",
+      "bytes": 1504,
+      "sha256": "2668242438df68fefd80331798f090c0b2958af7576ef27186afbbc43e718d37"
+    },
+    {
+      "path": "runtime/crm-workspace.cjs",
+      "bytes": 6281,
+      "sha256": "8f103f377f87982a585227d9cc9e0f9a1866ade5ccd980c58f87bf30b92affb3"
+    },
+    {
+      "path": "runtime/crm-zip.cjs",
+      "bytes": 344,
+      "sha256": "234482db4371b6a967ebd8cf4adc544899438f0796ffbf98d93206ff478c590b"
+    },
+    {
+      "path": "runtime/migration-codec.js",
+      "bytes": 16743,
+      "sha256": "4d0126c246d081328f889e952e52f767c0a508ccd7b5e05c2a776835ac63920a"
+    },
+    {
+      "path": "runtime/migration-core.js",
+      "bytes": 22389,
+      "sha256": "3f2da0546574ee49a66c5dd3b9cba8357315c6d1ac2cb990b60129e69797a33e"
+    },
+    {
+      "path": "setup.mjs",
+      "bytes": 2492,
+      "sha256": "7e7117c7e3e7c85f2e114026f4413c098873d696a3e116bb39ab89f4c03aee96"
+    },
+    {
+      "path": "SOURCE_AND_API.md",
+      "bytes": 2791,
+      "sha256": "9b49a94a867046e6c27b0cbb09dcbaace7ab04291a7705005e0c8a67dfdeead1"
+    },
+    {
+      "path": "source-history/generic-base.gzip.json",
+      "bytes": 231905,
+      "sha256": "2649a9a145efbc1f3055f1e05ccaa31d39861701685113a80650c20b3d0308d1"
+    },
+    {
+      "path": "tools.mjs",
+      "bytes": 3023,
+      "sha256": "93a6edd0c3d9176df52100b8ef6f9e3f1fdea4822ab1017ab59bbd8ec66c5e7d"
+    },
+    {
+      "path": "validation/actual-v8-results.json",
+      "bytes": 1242,
+      "sha256": "b3bf140d722359fb120f70aa39b2a480f1bec549c6b9dc313d61c90a84d00821"
+    },
+    {
+      "path": "validation/distribution-composition.json",
+      "bytes": 694,
+      "sha256": "3d3e817e4c2c52995084d3922eace06f548922800daf2fe7b2a2df4817698600"
+    },
+    {
+      "path": "validation/integrated-store-course.json",
+      "bytes": 439,
+      "sha256": "48a25b407b26151f13ba62569ed6b0294f2f309f0b921aece4d853391ebe85d5"
+    },
+    {
+      "path": "validation/receiving-checks.cjs",
+      "bytes": 2742,
+      "sha256": "a6618aaecef5536fbaa08d7f4240334eedde2cafbc2185b095a618d60bb97f0c"
+    }
+  ]
+}

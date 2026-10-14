@@ -1,0 +1,5 @@
+legacy_id,name,pipeline,stage,amount,currency,close_date
+D001,Mercury renewal,Sales,Approved,1000.00,USD,2026-10-30
+D002,Harbor expansion,Sales,Qualified,2500.50,USD,2026-11-15
+D003,Cedar support,Sales,Qualified,850.00,EUR,2026-11-20
+D004,Exact precision course,Sales,Qualified,9007199254740993.01,USD,2026-12-01

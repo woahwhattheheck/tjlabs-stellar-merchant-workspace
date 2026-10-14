@@ -1,0 +1,34 @@
+'use strict';
+function createCrmExample(){
+const sources={
+"source-contacts":"legacy_id,first_name,last_name,email\r\nC001,Alice,North,alice@example.test\r\nC002,Bob,South,bob@example.test\r\nC003,Casey,West,casey@example.test\r\nC004,Dana,East,dana@example.test\r\n",
+"source-companies":"legacy_id,name,domain\r\nAC01,Mercury Components,mercury.example\r\nAC02,Harbor Instruments,harbor.example\r\nAC03,Cedar Systems,cedar.example\r\n",
+"source-deals":"legacy_id,name,pipeline,stage,amount,currency,close_date\r\nD001,Mercury renewal,Sales,Approved,1000.00,USD,2026-10-30\r\nD002,Harbor expansion,Sales,Qualified,2500.50,USD,2026-11-15\r\nD003,Cedar support,Sales,Qualified,850.00,EUR,2026-11-20\r\nD004,Exact precision course,Sales,Qualified,9007199254740993.01,USD,2026-12-01\r\n",
+"map-contacts":"legacy_id,record_id\r\nC001,1001\r\nC002,1002\r\nC003,1003\r\nC004,1004\r\n",
+"map-companies":"legacy_id,record_id\r\nAC01,2001\r\nAC02,2002\r\nAC03,2003\r\n",
+"map-deals":"legacy_id,record_id\r\nD001,3001\r\nD002,3002\r\nD003,3003\r\nD004,3004\r\n",
+"source-contact-company":"from_id,to_id,relation\r\nC001,AC01,primary\r\nC002,AC02,primary\r\nC003,AC03,primary\r\nC004,AC01,billing\r\n",
+"source-deal-company-v1":"from_id,to_id,relation\r\nD001,AC01,primary\r\nD002,AC02,primary\r\nD003,AC03,primary\r\nD004,AC01,primary\r\nD404,AC01,primary\r\n",
+"source-deal-company-v2":"from_id,to_id,relation\r\nD001,AC01,primary\r\nD002,AC02,primary\r\nD003,AC03,primary\r\nD004,AC01,primary\r\n",
+"target-companies":"Record ID,name,domain\r\n2001,Mercury Components,mercury.example\r\n2002,Harbor Instruments,harbor.example\r\n2003,Cedar Systems,cedar.example\r\n",
+"target-contacts-v1":"Record ID,firstname,lastname,email\r\n1001,Alice,North,alice@example.test\r\n1002,Bob,South,bob.old@example.test\r\n1004,Dana,East,dana@example.test\r\n1099,Alice,North,alice@example.test\r\n",
+"target-contacts-v2":"Record ID,firstname,lastname,email\r\n1001,Alice,North,alice@example.test\r\n1002,Bob,South,bob@example.test\r\n1003,Casey,West,casey@example.test\r\n1004,Dana,East,dana@example.test\r\n",
+"target-deals-v1":"Record ID,dealname,pipeline,dealstage,amount,deal_currency_code,closedate\r\n3001,Mercury renewal,sales-2026,closedwon,1000.00,USD,2026-10-30\r\n3002,Harbor expansion,sales-2026,qualified,2500.05,USD,2026-11-15\r\n3003,Cedar support,sales-2026,qualified,850.00,USD,2026-11-20\r\n3004,Exact precision course,sales-2026,qualified,9007199254740993.01,USD,2026-12-01\r\n",
+"target-deals-v2":"Record ID,dealname,pipeline,dealstage,amount,deal_currency_code,closedate\r\n3001,Mercury renewal,sales-2026,closedwon,1000.00,USD,2026-10-30\r\n3002,Harbor expansion,sales-2026,qualified,2500.50,USD,2026-11-15\r\n3003,Cedar support,sales-2026,qualified,850.00,EUR,2026-11-20\r\n3004,Exact precision course,sales-2026,qualified,9007199254740993.01,USD,2026-12-01\r\n",
+"target-contact-company-v1":"from_id,to_id,category,type_id,label\r\n1001,2001,HUBSPOT_DEFINED,1,Primary\r\n1001,2002,HUBSPOT_DEFINED,1,Primary\r\n1002,2002,HUBSPOT_DEFINED,1,Primary\r\n1003,2003,HUBSPOT_DEFINED,1,Primary\r\n1004,2001,USER_DEFINED,902,Decision maker\r\n1001,2001,HUBSPOT_DEFINED,279,\r\n",
+"target-contact-company-v2":"from_id,to_id,category,type_id,label\r\n1001,2001,HUBSPOT_DEFINED,1,Primary\r\n1002,2002,HUBSPOT_DEFINED,1,Primary\r\n1003,2003,HUBSPOT_DEFINED,1,Primary\r\n1004,2001,USER_DEFINED,901,Billing contact\r\n1001,2001,HUBSPOT_DEFINED,279,\r\n",
+"target-deal-company-v1":"from_id,to_id,category,type_id,label\r\n3001,2001,HUBSPOT_DEFINED,5,Primary\r\n3002,2001,HUBSPOT_DEFINED,5,Primary\r\n3003,2003,HUBSPOT_DEFINED,5,Primary\r\n3004,2001,HUBSPOT_DEFINED,5,Primary\r\n3004,2001,HUBSPOT_DEFINED,5,Primary\r\n",
+"target-deal-company-v2":"from_id,to_id,category,type_id,label\r\n3001,2001,HUBSPOT_DEFINED,5,Primary\r\n3002,2002,HUBSPOT_DEFINED,5,Primary\r\n3003,2003,HUBSPOT_DEFINED,5,Primary\r\n3004,2001,HUBSPOT_DEFINED,5,Primary\r\n"
+};
+const fields=(arr)=>arr.map(([id,source,target,type,extra])=>({id,source,target,type:type||"text",required:true,...extra}));
+function contract(version){const v="-v"+version;return{schema:"crm-migration.contract.v1",objects:[
+{id:"contacts",title:"Contacts",sourceTable:"source-contacts",targetTable:"target-contacts"+v,sourceId:"legacy_id",targetId:"Record ID",match:{mode:"crosswalk",table:"map-contacts",source:"legacy_id",target:"record_id"},fields:fields([["first","first_name","firstname"],["last","last_name","lastname"],["email","email","email","lower",{unique:true}]])},
+{id:"companies",title:"Companies",sourceTable:"source-companies",targetTable:"target-companies",sourceId:"legacy_id",targetId:"Record ID",match:{mode:"crosswalk",table:"map-companies",source:"legacy_id",target:"record_id"},fields:fields([["name","name","name"],["domain","domain","domain","lower"]])},
+{id:"deals",title:"Deals",sourceTable:"source-deals",targetTable:"target-deals"+v,sourceId:"legacy_id",targetId:"Record ID",match:{mode:"crosswalk",table:"map-deals",source:"legacy_id",target:"record_id"},fields:fields([["name","name","dealname"],["pipeline","pipeline","pipeline","enum",{sourceMap:{Sales:"sales-2026"}}],["stage","stage","dealstage","enum",{sourceMap:{Approved:"closedwon",Qualified:"qualified"}}],["amount","amount","amount","decimal",{scale:2}],["close","close_date","closedate","date"]]),amount:{field:"amount",sourceCurrency:"currency",targetCurrency:"deal_currency_code"}}
+],associations:[
+{id:"contact-company",title:"Contact → company",sourceTable:"source-contact-company",targetTable:"target-contact-company"+v,fromObject:"contacts",toObject:"companies",source:{from:"from_id",to:"to_id",type:"relation"},target:{from:"from_id",to:"to_id",category:"category",typeId:"type_id"},types:[{source:"primary",category:"HUBSPOT_DEFINED",typeId:"1",label:"Primary",primaryCompany:true},{source:"billing",category:"USER_DEFINED",typeId:"901",label:"Billing contact"}],ignoredTargetTypes:[{category:"HUBSPOT_DEFINED",typeId:"279",reason:"This comparison checks the selected primary and billing types; default unlabeled links are retained and counted separately."}]},
+{id:"deal-company",title:"Deal → company",sourceTable:"source-deal-company"+v,targetTable:"target-deal-company"+v,fromObject:"deals",toObject:"companies",source:{from:"from_id",to:"to_id",type:"relation"},target:{from:"from_id",to:"to_id",category:"category",typeId:"type_id"},types:[{source:"primary",category:"HUBSPOT_DEFINED",typeId:"5",label:"Primary",primaryCompany:true}],ignoredTargetTypes:[]}
+]};}
+return{schema:"crm-migration.authored-course.v1",description:"Authored commissioning course with fictional records and portal-specific example type 901. Run both complete rehearsals; use actual client exports for a commissioned project.",sources,contracts:{first:contract(1),corrected:contract(2)}};
+}
+module.exports={createCrmExample};

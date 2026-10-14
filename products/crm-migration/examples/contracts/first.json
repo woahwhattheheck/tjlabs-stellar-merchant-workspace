@@ -1,0 +1,209 @@
+{
+  "schema": "crm-migration.contract.v1",
+  "objects": [
+    {
+      "id": "contacts",
+      "title": "Contacts",
+      "sourceTable": "source-contacts",
+      "targetTable": "target-contacts-v1",
+      "sourceId": "legacy_id",
+      "targetId": "Record ID",
+      "match": {
+        "mode": "crosswalk",
+        "table": "map-contacts",
+        "source": "legacy_id",
+        "target": "record_id"
+      },
+      "fields": [
+        {
+          "id": "first",
+          "source": "first_name",
+          "target": "firstname",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "last",
+          "source": "last_name",
+          "target": "lastname",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "email",
+          "source": "email",
+          "target": "email",
+          "type": "lower",
+          "required": true,
+          "unique": true
+        }
+      ]
+    },
+    {
+      "id": "companies",
+      "title": "Companies",
+      "sourceTable": "source-companies",
+      "targetTable": "target-companies",
+      "sourceId": "legacy_id",
+      "targetId": "Record ID",
+      "match": {
+        "mode": "crosswalk",
+        "table": "map-companies",
+        "source": "legacy_id",
+        "target": "record_id"
+      },
+      "fields": [
+        {
+          "id": "name",
+          "source": "name",
+          "target": "name",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "domain",
+          "source": "domain",
+          "target": "domain",
+          "type": "lower",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "deals",
+      "title": "Deals",
+      "sourceTable": "source-deals",
+      "targetTable": "target-deals-v1",
+      "sourceId": "legacy_id",
+      "targetId": "Record ID",
+      "match": {
+        "mode": "crosswalk",
+        "table": "map-deals",
+        "source": "legacy_id",
+        "target": "record_id"
+      },
+      "fields": [
+        {
+          "id": "name",
+          "source": "name",
+          "target": "dealname",
+          "type": "text",
+          "required": true
+        },
+        {
+          "id": "pipeline",
+          "source": "pipeline",
+          "target": "pipeline",
+          "type": "enum",
+          "required": true,
+          "sourceMap": {
+            "Sales": "sales-2026"
+          }
+        },
+        {
+          "id": "stage",
+          "source": "stage",
+          "target": "dealstage",
+          "type": "enum",
+          "required": true,
+          "sourceMap": {
+            "Approved": "closedwon",
+            "Qualified": "qualified"
+          }
+        },
+        {
+          "id": "amount",
+          "source": "amount",
+          "target": "amount",
+          "type": "decimal",
+          "required": true,
+          "scale": 2
+        },
+        {
+          "id": "close",
+          "source": "close_date",
+          "target": "closedate",
+          "type": "date",
+          "required": true
+        }
+      ],
+      "amount": {
+        "field": "amount",
+        "sourceCurrency": "currency",
+        "targetCurrency": "deal_currency_code"
+      }
+    }
+  ],
+  "associations": [
+    {
+      "id": "contact-company",
+      "title": "Contact → company",
+      "sourceTable": "source-contact-company",
+      "targetTable": "target-contact-company-v1",
+      "fromObject": "contacts",
+      "toObject": "companies",
+      "source": {
+        "from": "from_id",
+        "to": "to_id",
+        "type": "relation"
+      },
+      "target": {
+        "from": "from_id",
+        "to": "to_id",
+        "category": "category",
+        "typeId": "type_id"
+      },
+      "types": [
+        {
+          "source": "primary",
+          "category": "HUBSPOT_DEFINED",
+          "typeId": "1",
+          "label": "Primary",
+          "primaryCompany": true
+        },
+        {
+          "source": "billing",
+          "category": "USER_DEFINED",
+          "typeId": "901",
+          "label": "Billing contact"
+        }
+      ],
+      "ignoredTargetTypes": [
+        {
+          "category": "HUBSPOT_DEFINED",
+          "typeId": "279",
+          "reason": "This comparison checks the selected primary and billing types; default unlabeled links are retained and counted separately."
+        }
+      ]
+    },
+    {
+      "id": "deal-company",
+      "title": "Deal → company",
+      "sourceTable": "source-deal-company-v1",
+      "targetTable": "target-deal-company-v1",
+      "fromObject": "deals",
+      "toObject": "companies",
+      "source": {
+        "from": "from_id",
+        "to": "to_id",
+        "type": "relation"
+      },
+      "target": {
+        "from": "from_id",
+        "to": "to_id",
+        "category": "category",
+        "typeId": "type_id"
+      },
+      "types": [
+        {
+          "source": "primary",
+          "category": "HUBSPOT_DEFINED",
+          "typeId": "5",
+          "label": "Primary",
+          "primaryCompany": true
+        }
+      ],
+      "ignoredTargetTypes": []
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+// MIT. Tools select configured host inputs and the existing CRM listener.
+const text=(max=120)=>({type:'string',minLength:1,maxLength:max}),hash={type:'string',pattern:'^[a-f0-9]{64}$'},integer=(max=Number.MAX_SAFE_INTEGER)=>({type:'integer',minimum:0,maximum:max});
+export function crmTools(tool){const scoped=p=>({workspace:text(64),...p}),read={readOnly:true,idempotent:true};
+ return [
+ tool('merchant_crm_status','List configured original workspaces or read the current connected workspace summary.',scoped({}),[],read),
+ tool('merchant_crm_connect','Authenticate the existing Applications-owned workspace and instance.',scoped({instanceId:text()}),['workspace'],{idempotent:true}),
+ tool('merchant_crm_disconnect','Close this client attachment; Applications retains the server and writer.',scoped({}),['workspace'],{idempotent:true}),
+ tool('merchant_crm_browser','Return the private original CRM application link.',scoped({}),['workspace'],read),
+ tool('merchant_crm_inspect','Read selected original rows, mappings, operation receipts or findings. Bind every page to the current workspace SHA.',scoped({collection:{type:'string',enum:['sources','configurations','runs','operations','findings','rows']},id:text(),expectedSha256:hash,offset:integer(),limit:{type:'integer',minimum:1,maximum:50}}),['workspace','collection','expectedSha256'],read),
+ tool('merchant_crm_ingest','Import one complete host-declared UTF-8 CSV using the retained original operation ID and expected revision.',scoped({sourceInput:text(64),expectedSourceSha256:hash,operation:{type:'object',properties:{id:text(),actor:text(240),at:text(40),expected_revision:integer(),sourceId:text(),role:{type:'string',enum:['source','target','crosswalk']},edition:text(),origin:text(4000)},required:['id','actor','at','expected_revision','sourceId','role','edition','origin'],additionalProperties:false}}),['workspace','sourceInput','expectedSourceSha256','operation'],{idempotent:true}),
+ tool('merchant_crm_action','Apply an original configure, compare, review or decide operation with its exact saved ID, actor, UTC time, revision and full payload. Exact retries preserve later work.',scoped({operation:{type:'object',properties:{id:text(),actor:text(240),at:text(40),expected_revision:integer(),kind:{type:'string',enum:['configure','compare','review','decide']},payload:{type:'object'}},required:['id','actor','at','expected_revision','kind','payload'],additionalProperties:false}}),['workspace','operation'],{idempotent:true}),
+ tool('merchant_crm_export','Retain the complete customer ZIP for this exact workspace SHA, including all originals, mappings, runs, decisions and operation history.',scoped({expectedSha256:hash}),['workspace','expectedSha256'],{idempotent:true}),
+ tool('merchant_crm_file','Read the exact retained ZIP by SHA and byte offset, including after the application stops. Continue nextOffset until null.',scoped({fileId:hash,offset:integer(),limit:{type:'integer',minimum:1,maximum:196608}}),['workspace','fileId'],read)
+ ];
+}

@@ -1,0 +1,48 @@
+{
+  "schema": "crm-migration.receiving-results.v1",
+  "runtime": "V8 pure JavaScript",
+  "native_filesystem_executed": false,
+  "browser_rendered": false,
+  "checks": [
+    {
+      "name": "Full original-source replay, first 16 and corrected 0",
+      "passed": true
+    },
+    {
+      "name": "Exact large USD minor-unit total preserved",
+      "passed": true
+    },
+    {
+      "name": "Changed original rejected even with recomputed outer hash",
+      "passed": true
+    },
+    {
+      "name": "Changed operation under existing ID rejected",
+      "passed": true
+    },
+    {
+      "name": "Exact original operation retry preserves current edition",
+      "passed": true
+    },
+    {
+      "name": "Absent observed export rejected",
+      "passed": true
+    },
+    {
+      "name": "Two source IDs mapped to one target produce ambiguity findings",
+      "passed": true
+    },
+    {
+      "name": "Wrong association direction's type is visible",
+      "passed": true
+    },
+    {
+      "name": "Complete portable bundle and ZIP member count",
+      "passed": true
+    }
+  ],
+  "workspace_sha256": "e9f9493d1a036b64ce60b169c52dce668f818af250240420803e9fc9c803dbf8",
+  "first_findings": 16,
+  "corrected_findings": 0,
+  "export_members": 29
+}

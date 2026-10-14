@@ -1,0 +1,10 @@
+{
+  "name": "@tokenjunkielabs/crm-migration-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.16.0"
+  }
+}

@@ -1,0 +1,5 @@
+legacy_id,first_name,last_name,email
+C001,Alice,North,alice@example.test
+C002,Bob,South,bob@example.test
+C003,Casey,West,casey@example.test
+C004,Dana,East,dana@example.test

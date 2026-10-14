@@ -1,0 +1,15 @@
+{
+  "runtime": "V8 actual maintained store with injected file/lease primitives",
+  "native_filesystem_executed": false,
+  "initial": 40,
+  "commitResponseError": "EIO",
+  "readAfterUncertainCommit": 41,
+  "retrySameOperation": true,
+  "laterRevision": 42,
+  "oldRetryRevision": 42,
+  "oldReceiptRevision": 41,
+  "staleRejected": "CRM_OPERATION_REJECTED",
+  "completeExportsIdentical": true,
+  "exportBytes": 285338,
+  "finalFindings": 0
+}
