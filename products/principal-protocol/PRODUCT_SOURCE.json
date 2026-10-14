@@ -2,10 +2,28 @@
   "schema": "principal.installed-product-source.v1",
   "edition": "principal-paired-exit-1-market-1-accounting-3",
   "current": {
-    "repository": "woahwhattheheck/public-commons-sprint-2026",
-    "commit": "9da8ac84864e207bb714ffbb37ac2709c8bb35b2",
-    "directory": "revenue/principal-protocol-current-20261013/operator",
-    "count": 320
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "directory": "products/principal-protocol/operator",
+    "count": 320,
+    "baseline": {
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "commit": "9da8ac84864e207bb714ffbb37ac2709c8bb35b2",
+      "directory": "revenue/principal-protocol-current-20261013/operator",
+      "count": 320
+    },
+    "amendment": {
+      "edition": "liquidity-desk-1",
+      "baseCommit": "d139c527c6f5595c8000efdade1029d495fefca4",
+      "paths": [
+        "operator/web/app.mjs",
+        "operator/web/market.mjs",
+        "operator/OPERATOR.md",
+        "operator/receiving/RECEIVING.md",
+        "operator/SOURCE_BINDINGS.json",
+        "operator/source-files.json"
+      ],
+      "scope": "These original operator paths are amended; all other current contract/API/compiler source and the44 historical reference members remain unchanged."
+    }
   },
   "reference": {
     "repository": "woahwhattheheck/public-commons-sprint-2026",
@@ -92,8 +110,8 @@
     },
     {
       "path": "operator/receiving/RECEIVING.md",
-      "bytes": 9434,
-      "sha256": "a53d07ddecb866b55339cd0b9154df32539c3ed726b69f0affd35a96531b929e"
+      "bytes": 11148,
+      "sha256": "0edaa09307b0abe5dca023625ae812dc9ac55bccee45abe80ad4a094de05ed39"
     },
     {
       "path": "operator/web/index.html",
@@ -117,8 +135,8 @@
     },
     {
       "path": "operator/web/app.mjs",
-      "bytes": 79079,
-      "sha256": "3de9800e4ecc783c76ee6aedda545e7ed1e5dd41a047878ecf6ce557cebd2f32"
+      "bytes": 92390,
+      "sha256": "35c6a488ec3141ffbfc64f80a70fa76ac0b8c8c182bd96cbcf835e0286b9064e"
     },
     {
       "path": "operator/AGENTS.md",
@@ -127,13 +145,13 @@
     },
     {
       "path": "operator/OPERATOR.md",
-      "bytes": 21391,
-      "sha256": "14f47505c5907cc7824ee5ae2192d5b5bfaa46475fd9d1671277134eae1fc682"
+      "bytes": 27931,
+      "sha256": "03d08ec539787545199c8e278fd6a92e181519906b504484226c810eda52c0b2"
     },
     {
       "path": "operator/web/market.mjs",
-      "bytes": 16121,
-      "sha256": "f202b8beb5ce648cc23fec9f78254b050443605c5db4cb73eeb1e1b761385948"
+      "bytes": 28077,
+      "sha256": "bc816622fcf4b804113212e686ba787c901b6d0621c16c7086be3bb30b72dbd2"
     },
     {
       "path": "operator/lib/rpc-events.mjs",
@@ -1502,8 +1520,8 @@
     },
     {
       "path": "operator/SOURCE_BINDINGS.json",
-      "bytes": 5068,
-      "sha256": "9c91e0aa3eccc0f45527ce080f29dee3eaefc40f045f5ee222af366d9bdb4470"
+      "bytes": 6144,
+      "sha256": "5458d9dc8caeb4dec544b56e49f6607636c06e07bcd14819fab598bbd8c482c8"
     },
     {
       "path": "operator/contracts-source/docs/ACCOUNTING_EDITION_3.md",
@@ -1577,8 +1595,8 @@
     },
     {
       "path": "operator/source-files.json",
-      "bytes": 67635,
-      "sha256": "fdb6a3c5372e5dd698418dea1a88fb36db0f452597400f51558d6c51beaec59e"
+      "bytes": 67677,
+      "sha256": "590161949ab6fbfeef6d864a14bb828ef09d95ef9f9429bb20775a6c894f1e8d"
     },
     {
       "path": "operator/contracts-source/contracts/integration_tests/tests/paired_exit_lifecycle.rs",
@@ -1835,5 +1853,6 @@
       "bytes": 7102,
       "sha256": "782cd1eb9b1fb6c58bbc0420ef4f9d0961c0f2af1eb8c3f75a074ca07ecb0494"
     }
-  ]
+  ],
+  "operatorEdition": "liquidity-desk-1"
 }

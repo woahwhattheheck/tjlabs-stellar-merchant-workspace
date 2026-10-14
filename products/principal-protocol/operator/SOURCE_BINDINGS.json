@@ -111,5 +111,36 @@
       "publishedCommit": "7d6eab24647d5eb68bcdbc356b6d63708c37af78",
       "scope": "Complete240 native source members and original market build profile retained byte-exact; original accepted workspace is not migrated."
     }
-  ]
+  ],
+  "operator": {
+    "edition": "liquidity-desk-1",
+    "baseline": {
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "commit": "d139c527c6f5595c8000efdade1029d495fefca4",
+      "directory": "products/principal-protocol/operator"
+    },
+    "scope": "Native liquidity quote, bound preparation, saved review and readable export; original contract/API/compiler bodies unchanged.",
+    "files": [
+      {
+        "path": "web/app.mjs",
+        "bytes": 92390,
+        "sha256": "35c6a488ec3141ffbfc64f80a70fa76ac0b8c8c182bd96cbcf835e0286b9064e"
+      },
+      {
+        "path": "web/market.mjs",
+        "bytes": 28077,
+        "sha256": "bc816622fcf4b804113212e686ba787c901b6d0621c16c7086be3bb30b72dbd2"
+      },
+      {
+        "path": "OPERATOR.md",
+        "bytes": 27931,
+        "sha256": "03d08ec539787545199c8e278fd6a92e181519906b504484226c810eda52c0b2"
+      },
+      {
+        "path": "receiving/RECEIVING.md",
+        "bytes": 11148,
+        "sha256": "0edaa09307b0abe5dca023625ae812dc9ac55bccee45abe80ad4a094de05ed39"
+      }
+    ]
+  }
 }

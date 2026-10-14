@@ -58,7 +58,8 @@ function observationBinding(row){return Market.observedBinding(row);}
 function assertCurrentBinding(observed){const selected=Market.binding(state.config??boot.config??{},observed.contractKey,boot.capabilities?.apiSha256);if(!Market.sameBinding(observed,selected))throw failure('OBSERVATION_BINDING_CHANGED','This original selection uses another network, contract or code edition. Restore its exact configuration before preparing from it.');}
 function dateLabel(value){try{const n=exact(value);if(n<0n||n>8640000000000n)return String(value)+' Unix seconds';return new Date(Number(n)*1000).toISOString();}catch{return asText(value);}}
 function chooseAction(contract,method,params={},binding=null,recoveryCase=null){collect();const action=catalogue().find(a=>(a.contract===contract||a.contractKey===contract)&&a.method===method)||catalogue().find(a=>a.id===contract+'.'+method);if(!action)throw failure('ACTION_UNAVAILABLE','This installed source does not expose '+contract+'.'+method+'.');view.actionId=action.id;view.actionContexts??={};if(binding)view.actionContexts[action.id]={binding:structuredClone(binding),...(recoveryCase?{recoveryCase:structuredClone(recoveryCase)}:{})};view.drafts??={};view.drafts['action:'+action.id]={...(view.drafts['action:'+action.id]??{}),...params};view.page='prepare';view.offset=0;handle(saveDraft);paint();}
-function prepare(host){const selection=node('select');selection.setAttribute('aria-label','Contract operation');for(const a of catalogue()){const o=node('option',(a.label??a.method??a.id)+' · '+a.contract+(a.readOnly?' · read':' · transaction'));o.value=a.id;selection.append(o);}selection.value=view.actionId??catalogue()[0]?.id??'';const action=catalogue().find(a=>a.id===selection.value);selection.addEventListener('change',()=>{collect();view.actionId=selection.value;handle(saveDraft);paint();});host.append(panel('Select operation',selection));if(!action){host.append(empty('No action catalogue was returned by this installed workspace.'));return;}const f=draftForm('action:'+action.id),description=node('p',action.description??'Prepare this exact callable operation against the saved network and contract bindings.');const originalContext=view.actionContexts?.[action.id];if(originalContext){f.append(panel('Original observation selection',json('Selected network, contract, source and original case',originalContext,true),button('Start a new operation in the current configuration',async()=>{delete view.actionContexts[action.id];delete view.drafts['action:'+action.id];await saveDraft();paint();})));}for(const spec of action.fields??[]){let v=saved(f.dataset.draft,spec.name,spec.default??'');if(spec.type==='bool'||spec.type==='boolean'){const wrap=node('label',spec.name),select=node('select');select.name=spec.name;for(const value of ['false','true']){const o=node('option',value);o.value=value;select.append(o);}select.value=String(v||false);wrap.append(select);f.append(wrap);}else{const isObject=/^(json|object|WrapperConfig|ManagerConfig|MarketConfig|Vec<Address>)$/i.test(spec.type??'');const input=field(f,spec.label??spec.name,spec.name,{value:typeof v==='object'?pretty(v):v,type:isObject?'textarea':'text',required:spec.required!==false,help:spec.description??spec.type});if(/^(i128|u64|u32|integer)$/.test(spec.type??'')){input.inputMode='numeric';input.pattern=spec.type==='i128'?'-?[0-9]+':'[0-9]+';}}}const submit=node('button',action.readOnly?'Read contract and retain result':'Prepare exact transaction','primary');submit.type='submit';f.append(actions(submit));f.addEventListener('submit',e=>{e.preventDefault();handle(async()=>{const raw=capture(f,f.dataset.draft),parameters={};for(const spec of action.fields??[]){const value=raw[spec.name];if(value===''&&spec.required===false)continue;parameters[spec.name]=spec.type==='bool'||spec.type==='boolean'?value==='true':/^(json|object|WrapperConfig|ManagerConfig|MarketConfig|Vec<Address>)$/i.test(spec.type??'')?JSON.parse(value):value;}const result=await command(action.readOnly?'observation.capture':'plan.prepare',{actionId:action.id,parameters},{binding:originalContext?.binding??null,before:()=>{if(originalContext?.recoveryCase)Market.currentCase(state,originalContext.recoveryCase);}});if(!action.readOnly){view.page='plans';await saveDraft();paint();}else detail('Complete contract observation',json('Original native result',result,true));});});host.append(panel(action.label??action.method,description,definitions({'Contract':action.contract,'Method':action.method,'Mode':action.readOnly?'Native read':'Prepared transaction'}),f,json('Installed action contract',action)));}
+function prepare(host){const selection=node('select');selection.setAttribute('aria-label','Contract operation');for(const a of catalogue()){const o=node('option',(a.label??a.method??a.id)+' · '+a.contract+(a.readOnly?' · read':' · transaction'));o.value=a.id;selection.append(o);}selection.value=view.actionId??catalogue()[0]?.id??'';const action=catalogue().find(a=>a.id===selection.value);selection.addEventListener('change',()=>{collect();view.actionId=selection.value;handle(saveDraft);paint();});host.append(panel('Select operation',selection));if(!action){host.append(empty('No action catalogue was returned by this installed workspace.'));return;}const f=draftForm('action:'+action.id),description=node('p',action.description??'Prepare this exact callable operation against the saved network and contract bindings.');const originalContext=view.actionContexts?.[action.id];if(originalContext?.liquidity)f.append(node('p','This operation retains its original liquidity selection. Preparing reads a fresh native quote, verifies the account and deployment, and checks the exact minima below. Editing the quoted input amount requires returning to the liquidity desk.'));if(originalContext){f.append(panel('Original observation selection',json('Selected network, contract, source and original case',originalContext,true),button('Start a new operation in the current configuration',async()=>{delete view.actionContexts[action.id];delete view.drafts['action:'+action.id];await saveDraft();paint();})));}for(const spec of action.fields??[]){let v=saved(f.dataset.draft,spec.name,spec.default??'');if(spec.type==='bool'||spec.type==='boolean'){const wrap=node('label',spec.name),select=node('select');select.name=spec.name;for(const value of ['false','true']){const o=node('option',value);o.value=value;select.append(o);}select.value=String(v||false);wrap.append(select);f.append(wrap);}else{const isObject=/^(json|object|WrapperConfig|ManagerConfig|MarketConfig|Vec<Address>)$/i.test(spec.type??'');const input=field(f,spec.label??spec.name,spec.name,{value:typeof v==='object'?pretty(v):v,type:isObject?'textarea':'text',required:spec.required!==false,help:spec.description??spec.type});if(/^(i128|u64|u32|integer)$/.test(spec.type??'')){input.inputMode='numeric';input.pattern=spec.type==='i128'?'-?[0-9]+':'[0-9]+';}}}const submit=node('button',action.readOnly?'Read contract and retain result':'Prepare exact transaction','primary');submit.type='submit';f.append(actions(submit));f.addEventListener('submit',e=>{e.preventDefault();handle(async()=>{const raw=capture(f,f.dataset.draft),parameters={};for(const spec of action.fields??[]){const value=raw[spec.name];if(value===''&&spec.required===false)continue;parameters[spec.name]=spec.type==='bool'||spec.type==='boolean'?value==='true':/^(json|object|WrapperConfig|ManagerConfig|MarketConfig|Vec<Address>)$/i.test(spec.type??'')?JSON.parse(value):value;}let freshLiquidity=null;if(originalContext?.liquidity&&!action.readOnly){const expected='market_pool.'+(originalContext.liquidity.review.selection.mode==='deposit'?'add_liquidity':'remove_liquidity');if(action.id!==expected)throw failure('LIQUIDITY_ACTION_CHANGED','Keep the original liquidity operation.');Object.assign(parameters,Market.liquidityParameters(originalContext.liquidity.review,parameters,{acceptZero:originalContext.liquidity.acceptZero===true}));freshLiquidity=await recheckLiquidity(originalContext.liquidity,parameters,action.id);}
+const result=await command(action.readOnly?'observation.capture':'plan.prepare',{actionId:action.id,parameters},{binding:originalContext?.binding??null,before:()=>{if(originalContext?.recoveryCase)Market.currentCase(state,originalContext.recoveryCase);if(freshLiquidity){assertLiquidityDraft(action.id,originalContext.liquidity,parameters,freshLiquidity);Market.assertLiquidityReview(state,currentAPI(),freshLiquidity);Market.liquidityParameters(freshLiquidity,parameters,{acceptZero:originalContext.liquidity.acceptZero===true});}}});if(!action.readOnly){view.page='plans';await saveDraft();paint();}else detail('Complete contract observation',json('Original native result',result,true));});});host.append(panel(action.label??action.method,description,definitions({'Contract':action.contract,'Method':action.method,'Mode':action.readOnly?'Native read':'Prepared transaction'}),f,json('Installed action contract',action)));}
 function plans(host){host.append(panel('Prepared operations',node('p','A prepared operation pins its complete parameters, selected contract, network and source account. Simulation and invocation are separate explicit actions.'),table([...(state.plans??[])].reverse(),[{label:'Plan',className:'identifier',value:r=>button(idOf(r),()=>showPlan(r))},{label:'Operation',value:r=>r.actionId??r.action?.id},{label:'State',value:r=>badge(r.status??r.state??'PREPARED')},{label:'Created',value:r=>r.createdAt},{label:'Contract',className:'identifier',value:r=>r.contractId??r.config?.contracts?.[r.action?.contract]?.id}])));}
 function showPlan(row){const id=idOf(row);detail('Prepared operation '+id,definitions({'Action':row.actionId??row.action?.id,'State':row.status??row.state,'Created':row.createdAt}),json('Complete pinned plan, command and recorded outcomes',row,true),actions(button('Simulate this exact plan',async()=>{closeDialog();await command('plan.simulate',{planId:id});}),button('Invoke this prepared transaction',async()=>{closeDialog();await command('plan.execute',{planId:id});},true))); }
 function observations(host){host.append(panel('Original contract observations',node('p','Every retained native result preserves its selected contract, parameters and source. Read a fresh observation from Prepare operation.'),table([...(state.observations??[])].reverse(),[{label:'Observation',className:'identifier',value:r=>button(idOf(r),()=>detail('Native observation',json('Complete original observation',r,true)))},{label:'Action',value:r=>r.actionId??r.method},{label:'Observed',value:r=>r.createdAt??r.observedAt},{label:'Contract',className:'identifier',value:r=>r.contractId??r.contract}])));}
@@ -218,8 +219,6 @@ function poolOperations(host){
   operationButton('Prepare this direction with explicit minimum and expiry','market_pool','swap',{from:state.config?.sourceAccount?.address??'',sy_in:v.sy_in,amount_in:String(v.amount_in),min_out:String(v.amount_out),expires:''}),
   json('Complete retained native quote',q),button('Download original quote',()=>downloadJSON(q,'principal-pool-quote-'+q.id+'.json')));}
  section.append(actions(
-  operationButton('Add PT and SY liquidity','market_pool','add_liquidity'),
-  operationButton('Remove actual liquidity','market_pool','remove_liquidity'),
   operationButton('Buy PT with underlying','router','buy_pt'),
   operationButton('Sell PT to underlying','router','sell_pt'),
   operationButton('Tokenize an explicit liquidity split','router','tokenize_liquidity'),
@@ -229,7 +228,131 @@ function poolOperations(host){
  host.append(section);
 }
 
+
+async function readLiquiditySelection(selected,checkDraft=null){
+ if(checkDraft)checkDraft();Market.assertLiquiditySelection(state,currentAPI(),selected);
+ for(const [contract,method,parameters]of Market.liquidityQueries(selected)){
+  const row=await command('observation.capture',{actionId:contract+'.'+method,parameters},{binding:selected.bindings[contract],before:()=>{Market.assertLiquiditySelection(state,currentAPI(),selected);if(checkDraft)checkDraft();}});
+  if(row?.status!=='CLI_EXIT_0'||row.parseError)throw failure('LIQUIDITY_READ_FAILED','The native '+contract+'.'+method+' read did not succeed. Its complete result is retained in Contract observations.');
+ }
+ return Market.liquidityReview(state,currentAPI(),selected);
+}
+async function retainLiquidityReview(review){
+ Market.assertLiquidityReview(state,currentAPI(),review);
+ const existing=Market.liquidityReviews(state).find(x=>x.review.id===review.id);
+ if(existing){if(Market.canonical(existing.review)!==Market.canonical(review))throw failure('LIQUIDITY_REVIEW_CHANGED','This quote already has a different saved review. Inspect the original note.');return existing.note;}
+ return command('note.save',{subjectId:'liquidity-review:'+review.id,title:'Liquidity '+review.selection.mode+' · '+review.id,body:JSON.stringify(review)},{binding:review.selection.bindings.market_pool,before:()=>Market.assertLiquidityReview(state,currentAPI(),review)});
+}
+function assertLiquidityDraft(actionId,context,parameters,review){
+ if(view.page!=='prepare'||view.actionId!==actionId||Market.canonical(view.actionContexts?.[actionId]?.liquidity)!==Market.canonical(context))throw failure('LIQUIDITY_PREPARATION_CHANGED','The selected preparation changed during the native reads. Review the current form before preparing.');
+ const current=view.drafts?.['action:'+actionId]??{};
+ const now=Market.liquidityParameters(review,current,{acceptZero:context.acceptZero===true});
+ if(Market.canonical(now)!==Market.canonical(Market.liquidityParameters(review,parameters,{acceptZero:context.acceptZero===true})))throw failure('LIQUIDITY_DRAFT_CHANGED','The transaction fields changed during the native reads. Prepare the edited fields explicitly.');
+}
+async function recheckLiquidity(context,parameters,actionId){
+ assertLiquidityDraft(actionId,context,parameters,context.review);
+ const original=context.review;
+ Market.assertLiquidityReview(state,currentAPI(),original);
+ Market.liquidityParameters(original,parameters,{acceptZero:context.acceptZero===true});
+ const current=await readLiquiditySelection(original.selection,()=>assertLiquidityDraft(actionId,context,parameters,original));
+ assertLiquidityDraft(actionId,context,parameters,current);
+ Market.liquidityParameters(current,parameters,{acceptZero:context.acceptZero===true});
+ await retainLiquidityReview(current);
+ return current;
+}
+function liquidityDesk(host){
+ if(!hasAction('market_pool','quote_deposit')||!hasAction('market_pool','quote_withdrawal'))return;
+ const account=state.config?.sourceAccount?.address??'Not configured';
+ const section=panel('Add or remove liquidity',node('p','Quote the selected PT/SY market with exact integer amounts, review the native result, then set explicit limits for the original transaction.'),
+  definitions({'Selected public source account':account,'Selected pool':state.config?.contracts?.market_pool?.id??'Not configured'}));
+ const savedReviews=Market.liquidityReviews(state);
+ for(const mode of ['deposit','withdraw']){
+  const key='liquidity:'+mode,form=draftForm(key),inputs={};
+  if(mode==='deposit'){
+   inputs.max_pt=field(form,'Maximum PT atoms','max_pt',{value:saved(key,'max_pt',''),required:true,help:'Exact positive PT token atoms. The initial pool needs at least 1,000 PT atoms per first LP atom.'});
+   inputs.max_sy=field(form,'Maximum SY share atoms','max_sy',{value:saved(key,'max_sy',''),required:true,help:'The native quote determines the amount actually taken. Any unused maximum stays with the account.'});
+  }else inputs.shares=field(form,'LP share atoms to burn','shares',{value:saved(key,'shares',''),required:true,help:'Exact positive LP atoms; LP has four decimal places. Use the quoted account balance as context.'});
+  for(const input of Object.values(inputs)){input.inputMode='numeric';input.pattern='[0-9]+';}
+  const readButton=node('button',mode==='deposit'?'Read deposit quote':'Read withdrawal quote');readButton.type='submit';form.append(readButton);
+  const box=panel(mode==='deposit'?'Deposit PT and SY':'Withdraw PT and SY',form),message=node('p','No selected quote.','muted'),result=node('div');
+  box.append(message,result);
+  const values=()=>Object.fromEntries(Object.entries(inputs).map(([key,input])=>[key,input.value.trim()]));
+  const selected=savedReviews.find(x=>x.note.id===view.liquidity?.[mode]?.noteId)?.review;
+  const matches=()=>{try{return selected&&Market.canonical(Market.liquiditySelection(state,currentAPI(),mode,values()))===Market.canonical(selected.selection)&&!!Market.assertLiquidityReview(state,currentAPI(),selected);}catch{return false;}};
+  const sync=()=>{result.hidden=!matches();message.textContent=selected?(result.hidden?'Inputs or deployment changed. Read a new quote to prepare from this selection.':'Complete original quote '+selected.id):'No selected quote.';};
+  form.addEventListener('input',sync);
+  form.addEventListener('submit',event=>{event.preventDefault();handle(async()=>{
+   const selection=Market.liquiditySelection(state,currentAPI(),mode,values());capture(form,key);await saveDraft();
+   const review=await readLiquiditySelection(selection),note=await retainLiquidityReview(review);
+   view.liquidity??={};view.liquidity[mode]={noteId:note.id};await saveDraft();paint();
+  });});
+  if(selected){
+   const r=selected,tableRows=mode==='deposit'?[
+    ['PT taken',Market.atomText(r.amounts.pt,r.ptDecimals),r.amounts.pt],
+    ['SY taken',r.amounts.sy+' share atoms',r.amounts.sy],
+    ['LP shares minted',Market.atomText(r.amounts.shares,4),r.amounts.shares],
+    ['Unused PT maximum',Market.atomText(r.unused.pt,r.ptDecimals),r.unused.pt],
+    ['Unused SY maximum',r.unused.sy+' share atoms',r.unused.sy]
+   ]:[
+    ['LP shares burned',Market.atomText(r.amounts.shares,4),r.amounts.shares],
+    ['PT returned',Market.atomText(r.amounts.pt,r.ptDecimals),r.amounts.pt],
+    ['SY returned',r.amounts.sy+' share atoms',r.amounts.sy]
+   ];
+   result.append(table(tableRows,[{label:'Movement',value:x=>x[0]},{label:'Amount',value:x=>x[1]},{label:'Exact atoms',value:x=>x[2]}]),
+    definitions({'Observed account PT atoms':r.balances.pt,'Observed account SY atoms':r.balances.sy,'Observed account LP atoms':r.balances.shares,
+    'PT real reserve':r.reserves.reserve_pt,'SY real reserve':r.reserves.reserve_sy,'LP supply':r.reserves.lp_supply,
+    'Protocol SY fees · separate liability':r.reserves.fee_sy,'Creator SY fees · separate liability':r.reserves.creator_sy}),
+    node('p','These are separate native readings. Virtual pricing balances and fee liabilities are not liquidity withdrawals. Account balances do not establish current eligibility.'),
+    json('Original quote, configuration and reading times',r),
+    actions(button('Download complete liquidity JSON',()=>downloadJSON(r,'principal-liquidity-'+r.id+'.json')),
+      button('Download readable liquidity review',()=>downloadBlob(new Blob([Market.liquidityHTML(r)],{type:'text/html'}),'principal-liquidity-'+r.id+'.html'))));
+   if(mode==='deposit'&&r.reserves.lp_supply==='0')result.append(node('p','This was an empty-pool reserve reading. Initial liquidity consumes both authored maxima and sets their real PT/SY ratio; LP atoms are the native floor of PT atoms divided by 1,000.'));
+   if(mode==='withdraw'&&(r.amounts.pt==='0'||r.amounts.sy==='0'))result.append(node('p',r.zeroReturn?'This quote burns LP shares for zero PT and zero SY after integer rounding.':'One token return rounds to zero. Review each exact minimum.'));
+   const limits=draftForm('liquidity-limits:'+r.id);
+   if(mode==='deposit')field(limits,'Minimum LP atoms to receive','min_shares',{value:saved(limits.dataset.draft,'min_shares',r.amounts.shares),required:true,help:'Defaults to this exact quote; zero explicitly removes this minimum protection.'});
+   else{
+    field(limits,'Minimum PT atoms to receive','min_pt',{value:saved(limits.dataset.draft,'min_pt',r.amounts.pt),required:true});
+    field(limits,'Minimum SY atoms to receive','min_sy',{value:saved(limits.dataset.draft,'min_sy',r.amounts.sy),required:true});
+   }
+   field(limits,'Expiry · Unix seconds','expires',{value:saved(limits.dataset.draft,'expires',''),required:true,help:'Enter an explicit native ledger deadline. The contract permits execution at this second and rejects a later ledger timestamp.'});
+   if(r.zeroReturn){const wrap=node('label','Accept this quoted zero-token return'),input=textInput('accept_zero_return','','checkbox');input.checked=saved(limits.dataset.draft,'accept_zero_return',false)===true;wrap.append(input);limits.append(wrap);}
+   const prep=node('button','Review original transaction fields','primary');prep.type='submit';limits.append(prep);
+   limits.addEventListener('submit',event=>{event.preventDefault();handle(async()=>{
+    if(!matches())throw failure('LIQUIDITY_SELECTION_CHANGED','Read a new quote for the current input and configuration.');
+    const raw=capture(limits,limits.dataset.draft),acceptZero=raw.accept_zero_return===true,parameters=Market.liquidityParameters(r,raw,{acceptZero});
+    await saveDraft();const method=mode==='deposit'?'add_liquidity':'remove_liquidity';
+    chooseAction('market_pool',method,parameters,r.selection.bindings.market_pool);
+    view.actionContexts['market_pool.'+method].liquidity={review:structuredClone(r),acceptZero};
+    await saveDraft();paint();
+   });});
+   result.append(limits,node('p','Preparation reads the native market again and checks these exact minima. It saves the original command for explicit simulation and, only when enabled by its owner, invocation. Withdrawal remains distinct from trading: maturity or a trading pause alone does not disable the original withdrawal contract.'));
+  }
+  sync();section.append(box);
+ }
+ const history=panel('Saved liquidity reviews',table([...savedReviews].reverse(),[
+  {label:'Saved',value:x=>x.note.createdAt},{label:'Operation',value:x=>x.review.selection.mode},
+  {label:'Account',className:'identifier',value:x=>x.review.selection.account},
+  {label:'Original quote',value:x=>button(x.review.id,()=>detail('Saved liquidity review',json('Complete original selection',x.review,true),
+   actions(button('Download complete JSON',()=>downloadJSON(x.review,'principal-liquidity-'+x.review.id+'.json')),
+    button('Download readable review',()=>downloadBlob(new Blob([Market.liquidityHTML(x.review)],{type:'text/html'}),'principal-liquidity-'+x.review.id+'.html')),
+    button('Select these exact inputs',async()=>{Market.assertLiquidityReview(state,currentAPI(),x.review);const mode=x.review.selection.mode;view.drafts['liquidity:'+mode]={...x.review.selection.parameters};view.liquidity??={};view.liquidity[mode]={noteId:x.note.id};await saveDraft();paint();}))))}
+ ]));
+ const input=field(history,'Reopen complete liquidity review JSON','liquidity_review_file',{type:'file'});input.accept='.json,application/json';
+ input.addEventListener('change',()=>{const file=input.files[0],id=workspaceId,g=++fileGeneration;if(!file)return;
+  const reading=(async()=>{const value=JSON.parse(await file.text());if(g!==fileGeneration||id!==workspaceId||!input.isConnected)return null;
+   Market.assertLiquidityReview(state,currentAPI(),value);return value;})();
+  trackFileRead('liquidity-review',reading.then(()=>undefined,()=>undefined));
+  reading.then(value=>{if(!value)return;return handle(async()=>{
+   if(g!==fileGeneration||id!==workspaceId||!input.isConnected)return;await retainLiquidityReview(value);
+   const note=Market.liquidityReviews(state).find(x=>x.review.id===value.id)?.note;if(!note)throw failure('LIQUIDITY_REVIEW_MISSING','The saved review was not returned.');
+   view.drafts['liquidity:'+value.selection.mode]={...value.selection.parameters};view.liquidity??={};view.liquidity[value.selection.mode]={noteId:note.id};await saveDraft();paint();
+  });}).catch(report);
+ });
+ section.append(history);host.append(section);
+}
+
 function market(host){
+ liquidityDesk(host);
  poolOperations(host);
  const cards=node('div',undefined,'grid');
  for(const [title,c,m,fmt]of [

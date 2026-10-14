@@ -83,8 +83,8 @@
     },
     {
       "path": "receiving/RECEIVING.md",
-      "bytes": 9434,
-      "sha256": "a53d07ddecb866b55339cd0b9154df32539c3ed726b69f0affd35a96531b929e"
+      "bytes": 11148,
+      "sha256": "0edaa09307b0abe5dca023625ae812dc9ac55bccee45abe80ad4a094de05ed39"
     },
     {
       "path": "web/index.html",
@@ -108,8 +108,8 @@
     },
     {
       "path": "web/app.mjs",
-      "bytes": 79079,
-      "sha256": "3de9800e4ecc783c76ee6aedda545e7ed1e5dd41a047878ecf6ce557cebd2f32"
+      "bytes": 92390,
+      "sha256": "35c6a488ec3141ffbfc64f80a70fa76ac0b8c8c182bd96cbcf835e0286b9064e"
     },
     {
       "path": "AGENTS.md",
@@ -118,13 +118,13 @@
     },
     {
       "path": "OPERATOR.md",
-      "bytes": 21391,
-      "sha256": "14f47505c5907cc7824ee5ae2192d5b5bfaa46475fd9d1671277134eae1fc682"
+      "bytes": 27931,
+      "sha256": "03d08ec539787545199c8e278fd6a92e181519906b504484226c810eda52c0b2"
     },
     {
       "path": "web/market.mjs",
-      "bytes": 16121,
-      "sha256": "f202b8beb5ce648cc23fec9f78254b050443605c5db4cb73eeb1e1b761385948"
+      "bytes": 28077,
+      "sha256": "bc816622fcf4b804113212e686ba787c901b6d0621c16c7086be3bb30b72dbd2"
     },
     {
       "path": "lib/rpc-events.mjs",
@@ -1493,8 +1493,8 @@
     },
     {
       "path": "SOURCE_BINDINGS.json",
-      "bytes": 5068,
-      "sha256": "9c91e0aa3eccc0f45527ce080f29dee3eaefc40f045f5ee222af366d9bdb4470"
+      "bytes": 6144,
+      "sha256": "5458d9dc8caeb4dec544b56e49f6607636c06e07bcd14819fab598bbd8c482c8"
     },
     {
       "path": "contracts-source/docs/ACCOUNTING_EDITION_3.md",
@@ -1601,5 +1601,6 @@
       "bytes": 60307,
       "sha256": "201f8d9e720630a46e2338f775f5f126876c3ce93566393e7fe0a5c4cbc5399c"
     }
-  ]
+  ],
+  "operatorEdition": "liquidity-desk-1"
 }
