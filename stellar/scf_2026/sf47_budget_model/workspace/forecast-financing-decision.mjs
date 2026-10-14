@@ -10,11 +10,13 @@ const id=/^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/;
 const hash=/^[a-f0-9]{64}$/;
 const date=v=>typeof v==='string'&&Number.isFinite(Date.parse(v));
 const draftFields=['name','note','cashBasis','cashMeasure','cashLimit','weeklyLimit','overloadLimit'];
-export function newFinancingDecision(){return {draft:{name:'Planning limits',note:'',cashBasis:'COMMERCIAL',cashMeasure:'STARTING',cashLimit:'',weeklyLimit:'',overloadLimit:''},assessments:[],selectedId:null,draftHistory:[]};}
+const optionalLimitFields=['debtLimit','financingCostLimit'];
+export function newFinancingDecision(){return {draft:{name:'Planning limits',note:'',cashBasis:'COMMERCIAL',cashMeasure:'STARTING',cashLimit:'',weeklyLimit:'',overloadLimit:'',debtLimit:'',financingCostLimit:''},assessments:[],selectedId:null,draftHistory:[]};}
 function checkDraft(v){
-  keys(v,draftFields,'Unexpected planning-limit fields.');
+  keys(v,[...draftFields,...optionalLimitFields],'Unexpected planning-limit fields.');
   for(const k of draftFields)need(typeof v[k]==='string'&&!v[k].includes('\0')&&v[k].length<=(k==='note'?12000:k==='name'?200:100),'Retain complete planning-limit text, including unfinished values.');
-  need(['GRANT','COMMERCIAL','PROTECTED'].includes(v.cashBasis)&&['STARTING','EXTRA'].includes(v.cashMeasure),'Choose the original cash scenario and measure.');
+  for(const k of optionalLimitFields)if(v[k]!==undefined)need(typeof v[k]==='string'&&v[k].length<=100,'Retain the complete optional debt and financing-cost limit.');
+  need(['GRANT','COMMERCIAL','PROTECTED','BRIDGED_GRANT','BRIDGED_COMMERCIAL'].includes(v.cashBasis)&&['STARTING','EXTRA'].includes(v.cashMeasure),'Choose the original cash scenario and measure.');
   return clone(v);
 }
 function units(value,places){
@@ -25,29 +27,31 @@ function units(value,places){
 function nativeUnits(value,places){return units(typeof value==='number'&&Number.isSafeInteger(value)&&value>=0?String(value):value,places);}
 function criteria(v){
   const d=checkDraft(v);need(d.name.trim(),'Name these planning limits.');
-  need(d.cashLimit!==''||d.weeklyLimit!==''||d.overloadLimit!=='','Enter at least one explicit limit. Blank means not selected; zero is an explicit limit.');
-  for(const [key,p,label]of [['cashLimit',2,'Cash limit'],['weeklyLimit',8,'Weekly-equivalent hours limit'],['overloadLimit',0,'Overloaded-day limit']]){
-    if(d[key]!=='')need(units(d[key],p)!==null,label+' must be a nonnegative plain decimal'+(p===0?' integer':', with at most '+p+' decimal places')+'. Complete the retained partial value before assessment.');
+  need(d.cashLimit!==''||d.weeklyLimit!==''||d.overloadLimit!==''||optionalLimitFields.some(k=>d[k]!==undefined&&d[k]!==''),'Enter at least one explicit limit. Blank means not selected; zero is an explicit limit.');
+  for(const [key,p,label]of [['cashLimit',2,'Cash limit'],['weeklyLimit',8,'Weekly-equivalent hours limit'],['overloadLimit',0,'Overloaded-day limit'],['debtLimit',2,'Ending principal limit'],['financingCostLimit',2,'Explicit financing-cost limit']]){
+    if(d[key]!==undefined&&d[key]!=='')need(units(d[key],p)!==null,label+' must be a nonnegative plain decimal'+(p===0?' integer':', with at most '+p+' decimal places')+'. Complete the retained partial value before assessment.');
   }return d;
 }
 function cashFact(r,d){
-  const protectedMode=d.cashBasis==='PROTECTED',scenario=d.cashBasis==='GRANT'?r.scenarios?.conditionalGrant:r.scenarios?.commercial,f=r.customerFunding;
+  const bridged=d.cashBasis.startsWith('BRIDGED_'),grant=['GRANT','BRIDGED_GRANT'].includes(d.cashBasis),protectedMode=d.cashBasis==='PROTECTED',scenario=bridged?(grant?r.bridgeFunding?.scenarios.conditionalGrant:r.bridgeFunding?.scenarios.commercial):(grant?r.scenarios?.conditionalGrant:r.scenarios?.commercial),f=r.customerFunding;
+  if(bridged&&!r.bridgeFunding)return {value:null,reason:'This original option has no bridge schedule.'};
+  if(bridged&&!scenario?.datedCashComplete)return {value:null,reason:'The financed cash schedule has unresolved dates, amounts or original cash valuation.'};
   if(protectedMode&&!f?.enabled)return {value:null,reason:'Customer-fund protection is not enabled in this original option.'};
   const value=protectedMode?(d.cashMeasure==='STARTING'?f.summary?.maximumRequiredStartingCashUsd:f.summary?.extraFundingAfterOpeningUsd):
     (d.cashMeasure==='STARTING'?scenario?.additionalCashNeededUsd:scenario?.gapAfterOpeningCashUsd);
-  if(r.currencyValuation?.datedCashComplete===false||protectedMode&&f.summary?.reservationAndDatedCashComplete===false)return {value:null,reason:'The original result retains unknown cash valuation or customer reservations.'};
+  if((!bridged||!grant)&&r.currencyValuation?.datedCashComplete===false||protectedMode&&f.summary?.reservationAndDatedCashComplete===false)return {value:null,reason:'The original result retains unknown cash valuation or customer reservations.'};
   if(d.cashMeasure==='EXTRA'&&value===null)return {value:null,reason:'Extra funding after opening cash is unresolved in the original result; required starting cash is a different measure.'};
   const undated=r.eventTiming?.undatedDeliveryCostUsd;
-  if(d.cashBasis!=='GRANT'&&(undated===null||(r.eventTiming?.unvaluedDeliveryProjectIds||[]).length>0))return {value:null,reason:'Selected undated delivery obligations have no complete USD valuation. Dated cash alone cannot establish the combined funding requirement.'};
+  if(!grant&&(undated===null||(r.eventTiming?.unvaluedDeliveryProjectIds||[]).length>0))return {value:null,reason:'Selected undated delivery obligations have no complete USD valuation. Dated cash alone cannot establish the combined funding requirement.'};
   const undatedUnits=undated===undefined||undated===null?null:units(undated,2);
-  const omittedCost=Array.isArray(r.events)&&r.events.some(e=>!e.date&&typeof e.amountUsd==='string'&&/^-/.test(e.amountUsd)&&e.amountUsd!=='-0.00'&&(d.cashBasis!=='GRANT'||!e.commercialId));
-  if((d.cashBasis!=='GRANT'&&undatedUnits!==null&&undatedUnits>0n)||omittedCost)return {value:null,reason:'Undated delivery obligations remain in the original result. A dated cash limit cannot establish funding for those obligations.'};
+  const omittedCost=Array.isArray(r.events)&&r.events.some(e=>!e.date&&typeof e.amountUsd==='string'&&/^-/.test(e.amountUsd)&&e.amountUsd!=='-0.00'&&(!grant||!e.commercialId));
+  if((!grant&&undatedUnits!==null&&undatedUnits>0n)||omittedCost)return {value:null,reason:'Undated delivery obligations remain in the original result. A dated cash limit cannot establish funding for those obligations.'};
   return {value:value??null,reason:value===null||value===undefined?'The selected original cash measure is unresolved.':''};
 }
-function population(r,inputs){
+function population(r,inputs,cashBasis){
   if(!Array.isArray(r.packages)||!Array.isArray(r.commercial)||!Array.isArray(r.invoices)||typeof r.firstForecastDate!=='string'||typeof r.lastForecastDate!=='string')return null;
   const select=(rows,fields)=>rows.map(row=>Object.fromEntries(fields.map(k=>[k,row[k]??null]))).sort((a,b)=>String(a.id)<String(b.id)?-1:String(a.id)>String(b.id)?1:0);
-  return {asOfDate:inputs.asOfDate,firstForecastDate:r.firstForecastDate,lastForecastDate:r.lastForecastDate,
+  return {asOfDate:inputs.asOfDate,firstForecastDate:r.firstForecastDate,lastForecastDate:cashBasis?.startsWith('BRIDGED_')?(r.bridgeFunding?.lastForecastDate??r.lastForecastDate):r.lastForecastDate,
     packages:select(r.packages,['id','scope','plannedHours','remainingHours']),
     customers:select(r.commercial.filter(x=>x.selected),['id','scope','remainingHours','sourceIds']),
     invoices:select(r.invoices,['id','totalUsd','openUsd','included','commercialId'])};
@@ -57,7 +61,13 @@ export function evaluateFinancingDecision(comparison,value){
   const rows=comparison.result.options.map(o=>{
     const r=o.preview.report,checks=[];
     const add=(key,label,actual,limit,p,reason='')=>{const n=nativeUnits(actual,p),cap=units(limit,p);checks.push({key,label,actual:actual??null,limit,status:n===null?'UNRESOLVED':n<=cap?'MEETS':'EXCEEDS',reason:n===null?(reason||'The original native value is missing or not an exact nonnegative measure.'):''});};
-    if(d.cashLimit!==''){const c=cashFact(r,d);add('cash',(d.cashBasis==='GRANT'?'Conditional grant':d.cashBasis==='PROTECTED'?'Combined with customer funds protected':'Combined pooled')+(d.cashMeasure==='STARTING'?' required starting cash (USD)':' extra funding after opening cash (USD)'),c.value,d.cashLimit,2,c.reason);}
+    if(d.cashLimit!==''){const c=cashFact(r,d);add('cash',(d.cashBasis==='GRANT'?'Conditional grant':d.cashBasis==='PROTECTED'?'Combined with customer funds protected':d.cashBasis==='BRIDGED_GRANT'?'Financed conditional grant':d.cashBasis==='BRIDGED_COMMERCIAL'?'Financed combined pooled':'Combined pooled')+(d.cashMeasure==='STARTING'?' required starting cash (USD)':' extra funding after opening cash (USD)'),c.value,d.cashLimit,2,c.reason);}
+    if(d.cashLimit!==''&&d.cashBasis.startsWith('BRIDGED_')){
+      const b=r.bridgeFunding,state=b?.creditFeasibility;
+      checks.push({key:'facility',label:'Entered outstanding cap and date terms',actual:state==='WITHIN_ENTERED_OUTSTANDING_CAP'?'0':state==='EXCEEDS'?'1':null,limit:'0',status:state==='EXCEEDS'?'EXCEEDS':state==='WITHIN_ENTERED_OUTSTANDING_CAP'?'MEETS':'UNRESOLVED',reason:'This checks only entered principal caps and dates. It does not establish a lending commitment or permission to redraw; source draw conditions remain separate.'});
+    }
+    if(d.debtLimit!==undefined&&d.debtLimit!=='')add('debt','Ending outstanding principal (USD)',r.bridgeFunding?.endingPrincipalUsd,d.debtLimit,2,'A complete original bridge principal schedule is required.');
+    if(d.financingCostLimit!==undefined&&d.financingCostLimit!=='')add('financingCost','Explicit dated interest and fees (USD)',r.bridgeFunding?.datedFinancingExpenseUsd,d.financingCostLimit,2,'Enter all original interest and fee amounts and dates; no rate or cost is inferred.');
     if(d.weeklyLimit!=='')add('weekly','Peak seven-day-equivalent work hours',r.capacity?.peakWeeklyEquivalentHours,d.weeklyLimit,8);
     if(d.overloadLimit!=='')add('overload','Days above this option’s original native capacity',r.capacity?.overloadedDays,d.overloadLimit,0,r.capacity?.weeklyHours===null?'The original native capacity is unknown.':'');
     // An overload count without its original capacity has no usable meaning.
@@ -68,8 +78,8 @@ export function evaluateFinancingDecision(comparison,value){
       check.reason='The displayed value covers dated work only; selected undated work remains '+(undatedHours??'unresolved')+' hours. Retain and schedule that work before treating the capacity limit as met.';
     }
     const status=checks.some(x=>x.status==='EXCEEDS')?'EXCEEDS':checks.some(x=>x.status==='UNRESOLVED')?'UNRESOLVED':'MEETS';
-    const scope=population(r,o.preview.inputs);
-    return {optionId:o.id,name:o.name,status,checks,scope,nativeWeeklyCapacity:r.capacity?.weeklyHours??null,issues:clone(r.issues||[]),
+    const scope=population(r,o.preview.inputs,d.cashBasis);
+    return {optionId:o.id,name:o.name,status,checks,scope,nativeWeeklyCapacity:r.capacity?.weeklyHours??null,issues:clone(d.cashBasis.startsWith('BRIDGED_')||optionalLimitFields.some(k=>d[k]!==undefined&&d[k]!=='')?[...(r.issues||[]),...(r.bridgeFunding?.issues||[])]:r.issues||[]),
       conditional:true,dominatedBy:[],shortlist:false,scopeGroup:null};
   });
   const groups=[];
@@ -78,7 +88,7 @@ export function evaluateFinancingDecision(comparison,value){
     if(row.status!=='MEETS'||!row.scopeGroup)continue;
     const peers=rows.filter(x=>x!==row&&x.status==='MEETS'&&x.scopeGroup===row.scopeGroup);
     for(const peer of peers){
-      const values=row.checks.map((c,i)=>{const p=c.key==='cash'?2:c.key==='weekly'?8:0;return [nativeUnits(peer.checks[i].actual,p),nativeUnits(c.actual,p)];});
+      const values=row.checks.map((c,i)=>{const p=['cash','debt','financingCost'].includes(c.key)?2:c.key==='weekly'?8:0;return [nativeUnits(peer.checks[i].actual,p),nativeUnits(c.actual,p)];});
       if(values.every(([a,b])=>a!==null&&b!==null&&a<=b)&&values.some(([a,b])=>a<b))row.dominatedBy.push(peer.optionId);
     }
     row.shortlist=row.dominatedBy.length===0;

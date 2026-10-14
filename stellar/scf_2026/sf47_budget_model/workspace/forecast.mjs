@@ -7,6 +7,7 @@ import { currentStaffContext, staffDeskStorageKey } from './staff-session.mjs';
 import {fundingEditor,fundingOpeningEditor,emptyFundingOpening,readFunding,fundingReport,handleFundingReport} from './forecast-customer-funding.mjs';
 import {mountForecastCashReview} from './forecast-cash-reconciliation-desk.mjs';
 import {validateCashDesk,validateCashReview,applyCashDraft} from './forecast-cash-reconciliation.mjs';
+import {bridgeEditor,readBridge,bridgeReport,newBridgeFacility,newBridgeEvent} from './forecast-bridge-funding.mjs';
 import {mountForecastFinancing} from './forecast-financing-desk.mjs';
 import {validateFinancingState,verifyFinancingState} from './forecast-financing.mjs';
 
@@ -71,7 +72,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
   function rawKey(node){
     const form=$('[data-forecast-form]'),parts=[];
     for(const attr of ['data-forecast-commercial','data-forecast-package','data-forecast-invoice','data-forecast-grant',
-      'data-native-price-credit','data-native-cost-credit','data-forecast-funding']){
+      'data-native-price-credit','data-native-cost-credit','data-forecast-funding','data-forecast-bridge','data-forecast-bridge-event']){
       const scope=node.closest('['+attr+']');if(scope)parts.push(attr,scope.getAttribute(attr));
     }
     for(const attr of ['data-forecast-fx','data-forecast-receipt']){
@@ -367,7 +368,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
       +'<details><summary>Conditional grant receipt dates</summary><p>A past-due unreceived payout stays outside the cash curve until a new date is entered. Original observed grant receipts reduce their own tranches.</p><div class="forecast-table"><table><thead><tr><th>Tranche</th><th>Conditional total</th><th>Observed</th><th>New forecast receipt</th><th>Include</th><th>Reason</th></tr></thead><tbody>'
       +current.report.tranches.map(row=>{const input=grants.get(row.tranche)||{};return '<tr data-forecast-grant="'+row.tranche+'"><td>'+row.tranche+' · original day '+row.hypotheticalPaidDay+'</td><td>'+usd(row.conditionalPlannedUsd)+'</td><td>'+usd(row.observedGrantUsd)+'</td><td><input name="date" aria-label="Tranche '+row.tranche+' forecast date" type="date" value="'+esc(input.date||'')+'"></td><td><label class="forecast-check"><input name="include" type="checkbox"'+(input.include===false?'':' checked')+'>Include</label></td><td><input name="note" aria-label="Tranche '+row.tranche+' timing source" value="'+esc(input.note||'')+'"></td></tr>';}).join('')+'</tbody></table></div></details>'
       +currency.ratesEditor(inputs)
-      +'<details open><summary>Customer delivery scenarios</summary><p>Each project carries the original quote, collection schedule and delivery cost. Add only the customer-specific remaining scope.</p><div data-forecast-commercials>'+inputs.commercial.map(commercialEditor).join('')+'</div>'+button('Add customer project','add-commercial')+'</details>'+fundingEditor(inputs,fundingOptions())
+      +'<details open><summary>Customer delivery scenarios</summary><p>Each project carries the original quote, collection schedule and delivery cost. Add only the customer-specific remaining scope.</p><div data-forecast-commercials>'+inputs.commercial.map(commercialEditor).join('')+'</div>'+button('Add customer project','add-commercial')+'</details>'+fundingEditor(inputs,fundingOptions())+bridgeEditor(inputs,{field,button,sourceOptions})
       +'<div class="forecast-actions"><button type="submit">Preview current forecast</button>'+button('Load input JSON','load-inputs')+button('Download input JSON','download-inputs')+'</div><input hidden data-forecast-input-file type="file" accept=".json,application/json"></form>';
   }
   function readEditor({forRecovery=false}={}){
@@ -391,6 +392,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
         sourceUrl:value(row,'sourceUrl'),sourceIds:selectedValues(row,'sourceIds'),cashIds:selectedValues(row,'cashIds'),
         invoiceIds:selectedValues(row,'invoiceIds'),directCashIds:selectedValues(row,'directCashIds'),scope:value(row,'scope'),note:value(row,'note'),
         receipts:[...row.querySelectorAll('[data-forecast-receipt]')].map(receipt=>({id:value(receipt,'receiptId'),label:value(receipt,'receiptLabel'),...currency.readReceiptAmount(row,receipt),date:optional(receipt,'receiptDate')}))}))};
+    const bridge=readBridge(form);if(bridge!==undefined)inputs.bridgeFunding=bridge;
     const funding=readFunding(form);if(funding!==undefined)inputs.customerFunding=funding;
     const rates=currency.readRates(form);
     if(rates.length||Object.hasOwn(inputState,'fxRates')||form.dataset.forecastFxTouched==='true')inputs.fxRates=rates;
@@ -462,7 +464,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
       +'<details open><summary>Customer delivery decisions</summary>'+(r.commercial.length?table(['Project / original stage','Original price / observed receipts','Remaining delivery cash','Uncollected price','Remaining hours / dates','Scenario'],r.commercial.map(row=>{
         const native=currency.nativeSummary(row);
         return [esc(row.title)+'<small>'+esc(row.stage)+' · '+esc(row.caseRef)+'</small>',native?native.price+'<small>Original observed receipts: '+esc(usd(row.observedReceiptsUsd))+'</small>':usd(row.priceUsd)+' / '+usd(row.observedReceiptsUsd),native?native.cost:usd(row.totalRemainingCashCostUsd),native?native.uncollected:usd(row.uncollectedPriceUsd),esc(row.remainingHours)+'<small>'+(row.startDate?esc(row.startDate)+' — '+esc(row.endDate):'Awaiting original start condition')+'</small>',row.selected?'Included':'Excluded'];
-      })):empty('No customer scenario selected.'))+currency.projectReports(r)+'</details>'+fundingReport(r.customerFunding)
+      })):empty('No customer scenario selected.'))+currency.projectReports(r)+'</details>'+fundingReport(r.customerFunding)+bridgeReport(r.bridgeFunding,{table,usd})
       +'<details><summary>Conditional grant amounts</summary>'+table(['Tranche','Original conditional amount','Observed receipt','Remaining amount','Forecast date'],r.grants.map(row=>[esc(row.tranche),usd(row.conditionalPlannedUsd),usd(row.observedGrantUsd),usd(row.remainingUsd),esc(row.included?(row.forecastDate||'Needs new date'):'Excluded')]))+'</details>'
       +'<details'+(r.issues.length?' open':'')+'><summary>Source and estimate decisions ('+r.issues.length+')</summary>'+(warnings?'<ul>'+warnings+'</ul>':empty('No outstanding date or allocation decisions.'))+'</details>'
       +'<details><summary>Complete dated cash and work</summary>'+(r.currencyValuation?.datedCashComplete===false?'<p class="forecast-valuation-warning">Customer outflow and collections below are valued subtotals. Unvalued dated amounts are excluded; the complete combined cash change remains unresolved.</p>':'')+table(['Date','Invoice out','Grant work out',r.currencyValuation?.datedCashComplete===false?'Valued customer work out':'Customer work out','Conditional grants',r.currencyValuation?.datedCashComplete===false?'Valued customer collections':'Customer collections','Combined cash change','Hours'],r.days.map(row=>[esc(row.date),usd(row.invoiceOutflowUsd),usd(row.packageOutflowUsd),esc(valued(row.commercialOutflowUsd)),usd(row.conditionalGrantInflowUsd),esc(valued(row.forecastCustomerInflowUsd)),esc(valued(row.commercialDeltaUsd))+(hasCurrency&&row.commercialDeltaUsd===null?'<small>Known portion: '+esc(usd(row.knownCommercialDeltaUsd))+'</small>':''),esc(row.remainingWorkHours)]))+'</details>'
@@ -523,6 +525,18 @@ export function mountForecast({container,current,api:transport,mutationId,record
     if(action==='recover-source'){void run(async()=>{const result=await workbookHost.resume();if(result.adopted){const original=workbookHistory.appliedSource.selection.review;workbookState={...(workbook?.snapshot()||workbookState),received:clone(original.received),choices:{},appliedReview:{...clone(original),sourceReceipt:clone(result.sourceReceipt),appliedInputs:clone(result.inputs)}};workbook?.dispose();workbook=null;}else{const original=workbookHistory.savedSource.selection.review;workbookState={...(workbook?.snapshot()||workbookState),received:clone(original.received),choices:{},sourceReceipt:clone(result.sourceReceipt),appliedReview:null};workbook?.dispose();workbook=null;}render();if(workbook)await workbook.ready;if(result.preview)$('[data-forecast-report]').innerHTML=reportHtml(result.preview,true);status(result.adopted?'Continued the original source request and previewed its reviewed assumptions. Save this forecast to retain the resulting edition.':result.message);},{recovery:true});return;}
     if(action==='recover-save'){void run(async()=>{await sendSavedForecast();},{recovery:true});return;}
     if(!blocked()&&currency.handleAction(action,target,$('[data-forecast-form]'),{busy:blocked()})){invalidate();captureRaw();persistSoon();return;}
+    if(['start-bridge','add-bridge','remove-bridge','add-bridge-event','remove-bridge-event','remove-bridge-schedule'].includes(action)&&!blocked()){
+      inputState=readEditor({forRecovery:true});captureRaw();
+      if(action==='start-bridge')inputState.bridgeFunding={facilities:[newBridgeFacility()],note:''};
+      if(action==='add-bridge')inputState.bridgeFunding.facilities.push(newBridgeFacility());
+      const facility=target.closest('[data-forecast-bridge]'),eventNode=target.closest('[data-forecast-bridge-event]');
+      if(action==='remove-bridge')inputState.bridgeFunding.facilities=inputState.bridgeFunding.facilities.filter(f=>f.id!==facility.dataset.forecastBridge);
+      if(action==='add-bridge-event')inputState.bridgeFunding.facilities.find(f=>f.id===facility.dataset.forecastBridge).events.push(newBridgeEvent());
+      if(action==='remove-bridge-event')inputState.bridgeFunding.facilities.find(f=>f.id===facility.dataset.forecastBridge).events=inputState.bridgeFunding.facilities.find(f=>f.id===facility.dataset.forecastBridge).events.filter(e=>e.id!==eventNode.dataset.forecastBridgeEvent);
+      if(action==='remove-bridge-schedule')delete inputState.bridgeFunding;
+      for(const key of Object.keys(rawFields))if(JSON.parse(key).some(part=>['data-forecast-bridge','data-forecast-bridge-event'].includes(part))||JSON.parse(key).at(-1)==='bridgeFundingNote')delete rawFields[key];
+      invalidate();render();persistSoon();return;
+    }
     if(action==='start-funding'&&!blocked()){inputState=readEditor({forRecovery:true});inputState.customerFunding={enabled:true,opening:inputState.commercial.map(row=>emptyFundingOpening(row.id)),note:''};captureRaw();invalidate();render();persistSoon();return;}
     if(action==='add-commercial'&&!blocked()){invalidate();const row={id:'project-'+crypto.randomUUID(),title:'',caseRef:'',stage:'QUOTED',selected:true,priceUsd:'',totalDeliveryCostUsd:'',remainingHours:'',startDate:'',endDate:'',paymentMode:'accrual',sourceUrl:'',sourceIds:[],cashIds:[],invoiceIds:[],directCashIds:[],scope:'',note:'',receipts:[{id:'kickoff',label:'Kickoff',amountUsd:'',date:null},{id:'acceptance',label:'Acceptance',amountUsd:'',date:null}]};$('[data-forecast-commercials]').insertAdjacentHTML('beforeend',commercialEditor(row));syncCommercialTiming($('[data-forecast-commercials]').lastElementChild);$('[data-forecast-funding-rows]')?.insertAdjacentHTML('beforeend',fundingOpeningEditor(row,null,fundingOptions()));currency.syncRates($('[data-forecast-form]'),{busy:blocked()});captureRaw();persistSoon();return;}
     if(action==='remove-commercial'&&!blocked()){const row=target.closest('[data-forecast-commercial]'),id=row.dataset.forecastCommercial;row.remove();for(const funding of root.querySelectorAll('[data-forecast-funding]'))if(funding.dataset.forecastFunding===id)funding.remove();for(const key of Object.keys(rawFields)){const parts=JSON.parse(key);if(parts.some((part,i)=>['data-forecast-commercial','data-forecast-funding'].includes(part)&&parts[i+1]===id))delete rawFields[key];}invalidate();captureRaw();persistSoon();return;}

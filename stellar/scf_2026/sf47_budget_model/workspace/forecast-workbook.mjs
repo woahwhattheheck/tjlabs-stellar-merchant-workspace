@@ -19,7 +19,7 @@ export const signature=v=>JSON.stringify(Array.isArray(v)?v.map(x=>JSON.parse(si
 const equal=(a,b)=>signature(a)===signature(b);
 const stable=v=>typeof v==='string'&&/^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(v);
 const HASH=/^[a-f0-9]{64}$/;
-const ROOT=['name','asOfDate','calendarStart','openingCash','packageOverrides','invoiceOverrides','grantReceipts','commercial','capacity','note','fxRates','customerFunding'];
+const ROOT=['name','asOfDate','calendarStart','openingCash','packageOverrides','invoiceOverrides','grantReceipts','commercial','capacity','note','fxRates','customerFunding','bridgeFunding'];
 function safe(v,depth=0){need(depth<40,'Keep the complete original forecast within its supported nesting.');if(Array.isArray(v)){need(v.length<=5000,'A forecast list exceeds the original record limit.');v.forEach(x=>safe(x,depth+1));}else if(plain(v)){for(const [k,x]of Object.entries(v)){need(!['__proto__','prototype','constructor'].includes(k),'Use ordinary forecast field names.');safe(x,depth+1);}}else need(v===null||typeof v==='string'&&v.length<=100000||typeof v==='boolean'||typeof v==='number'&&Number.isFinite(v),'Keep original JSON values.');}
 function verifyInputs(v){need(plain(v)&&Object.keys(v).every(k=>ROOT.includes(k)),'Use the complete original Forecast input.');safe(v);need(['packageOverrides','invoiceOverrides','grantReceipts','commercial'].every(k=>Array.isArray(v[k]))&&plain(v.openingCash)&&plain(v.capacity),'Retain every original Forecast section.');need(utf8(json(v)).length<=MAX_FORECAST_WORKBOOK_BYTES,'The complete forecast exceeds its original input limit.');return copy(v);}
 function optionsValid(o){need(/^operation-[a-f0-9]{32}$/.test(o.caseId||'')&&HASH.test(o.planContentSha256||''),'Bind the workbook to its original case and selected plan content.');}
@@ -38,7 +38,12 @@ export const FORECAST_WORKBOOK_SHEETS=[
  fields('Cost credits','projectId|kind|id|operation|amount|note',[0,1,2]),
  fields('Rates','id|operation|baseCurrency|quoteCurrency|rate|observationDate|publicationDate|basis|rounding|sourceUrl|sourceIds|sourceReference|note',[0]),
  fields('Original','part|json',[0]),
+ fields('Bridge settings','field|state|value',[0]),
+ fields('Facilities','id|operation|name|currency|openingPrincipalUsd|creditLimitUsd|availableDate|maturityDate|termsBasis|sourceIds|note',[0]),
+ fields('Facility events','facilityId|id|operation|kind|amountUsd|date|note',[0,1]),
 ];
+const LEGACY_SHEETS=FORECAST_WORKBOOK_SHEETS.slice(0,-3);
+const specsFor=origin=>origin.bridgeFundingVersion===1?FORECAST_WORKBOOK_SHEETS:LEGACY_SHEETS;
 const SCALARS=['name','asOfDate','calendarStart','note','openingCash.amountUsd','openingCash.basis','openingCash.sourceIds','openingCash.note','capacity.weeklyHours','capacity.note'];
 const pathGet=(v,p)=>p.split('.').reduce((a,k)=>a&&own(a,k)?a[k]:undefined,v);
 function pathSet(v,p,x){const ps=p.split('.'),last=ps.pop();let at=v;for(const k of ps)at=at[k]??=( {} );if(x===undefined)delete at[last];else at[last]=x;}
@@ -63,22 +68,28 @@ function tablesFor(inputs,origin){
   if(native){for(const key of ['price','deliveryCost']){const a=r.nativePricing[key];out['Native amounts'].push([r.id,key,text(a.amount),a.currency,text(a.fxRateId)]);}for(const q of r.nativePricing.priceCredits)out['Price credits'].push([r.id,q.cashId,'UPSERT',q.amount,q.note]);for(const q of r.nativePricing.costCredits)out['Cost credits'].push([r.id,q.kind,q.id,'UPSERT',q.amount,q.note]);}
  }
  for(const r of inputs.fxRates||[])out.Rates.push([r.id,'UPSERT',r.baseCurrency,r.quoteCurrency,r.rate,r.observationDate,text(r.publicationDate),r.basis,r.rounding,r.sourceUrl,listText(r.sourceIds),r.sourceReference,r.note]);
- return FORECAST_WORKBOOK_SHEETS.map(s=>({...copy(s),rows:out[s.name].map(r=>r.map(text))}));
+ if(origin.bridgeFundingVersion===1){
+  out['Bridge settings']=[['present',own(inputs,'bridgeFunding')?'VALUE':'MISSING',own(inputs,'bridgeFunding')?'true':''],['note',own(inputs,'bridgeFunding')?'VALUE':'MISSING',inputs.bridgeFunding?.note||'']];
+  out.Facilities=(inputs.bridgeFunding?.facilities||[]).map(f=>[f.id,'UPSERT',f.name,f.currency,text(f.openingPrincipalUsd),text(f.creditLimitUsd),text(f.availableDate),text(f.maturityDate),f.termsBasis,listText(f.sourceIds),f.note]);
+  out['Facility events']=(inputs.bridgeFunding?.facilities||[]).flatMap(f=>f.events.map(e=>[f.id,e.id,'UPSERT',e.kind,text(e.amountUsd),text(e.date),e.note]));
+ }
+ return specsFor(origin).map(s=>({...copy(s),rows:out[s.name].map(r=>r.map(text))}));
 }
 export async function forecastWorkbookTables(inputs,options={}){
  inputs=verifyInputs(inputs);optionsValid(options);
- const origin={schema:FORECAST_WORKBOOK_SCHEMA,caseId:options.caseId,planContentSha256:options.planContentSha256,createdAt:options.createdAt||new Date().toISOString(),inputs,inputsSha256:await sha256(signature(inputs))};
+ const origin={schema:FORECAST_WORKBOOK_SCHEMA,bridgeFundingVersion:1,caseId:options.caseId,planContentSha256:options.planContentSha256,createdAt:options.createdAt||new Date().toISOString(),inputs,inputsSha256:await sha256(signature(inputs))};
  need(typeof origin.createdAt==='string'&&Number.isFinite(Date.parse(origin.createdAt)),'Retain the original preparation time.');
  return{origin,tables:tablesFor(inputs,origin)};
 }
-function tableMap(tables){need(Array.isArray(tables),'Retain all complete forecast worksheets.');const m=new Map;for(const spec of FORECAST_WORKBOOK_SHEETS){const found=tables.filter(t=>t.name===spec.name);need(found.length===1&&equal(found[0].headers,spec.headers)&&Array.isArray(found[0].rows),'Retain exact '+spec.name+' headings and worksheet.');const rows=found[0].rows;need(rows.length<=5000&&rows.every(r=>Array.isArray(r)&&r.length===spec.headers.length&&r.every(x=>typeof x==='string')),'Retain every complete '+spec.name+' row and cell.');unique(rows,spec.key,spec.name);m.set(spec.name,rows);}need(tables.length===FORECAST_WORKBOOK_SHEETS.length,'Retain only the supported complete worksheets.');return m;}
+function tableMap(tables){need(Array.isArray(tables),'Retain all complete forecast worksheets.');const m=new Map;for(const spec of (tables.length===LEGACY_SHEETS.length?LEGACY_SHEETS:FORECAST_WORKBOOK_SHEETS)){const found=tables.filter(t=>t.name===spec.name);need(found.length===1&&equal(found[0].headers,spec.headers)&&Array.isArray(found[0].rows),'Retain exact '+spec.name+' headings and worksheet.');const rows=found[0].rows;need(rows.length<=5000&&rows.every(r=>Array.isArray(r)&&r.length===spec.headers.length&&r.every(x=>typeof x==='string')),'Retain every complete '+spec.name+' row and cell.');unique(rows,spec.key,spec.name);m.set(spec.name,rows);}need([LEGACY_SHEETS.length,FORECAST_WORKBOOK_SHEETS.length].includes(tables.length),'Retain only the supported complete worksheets.');return m;}
 function upsert(list,id,match,next,remove,label){const at=list.findIndex(match);if(remove){need(at>=0,label+': REMOVE must name an existing original row.');list.splice(at,1);}else if(at>=0)list[at]=next;else list.push(next);}
 const emptyCustomer=id=>({id,title:'',caseRef:'',sourceUrl:'',sourceIds:[],stage:'QUOTED',selected:true,priceUsd:'',totalDeliveryCostUsd:'',remainingHours:'',startDate:null,endDate:null,paymentMode:'accrual',receipts:[],cashIds:[],invoiceIds:[],directCashIds:[],scope:'',note:''});
 export async function receiveForecastWorkbookTables(tables,options={}){
  optionsValid(options);const sheets=tableMap(tables),parts=sheets.get('Original');
  need(parts.length>0&&parts.every((r,i)=>r[0]===String(i+1)),'Retain the complete ordered Original worksheet.');
  let origin;try{origin=JSON.parse(parts.map(r=>r[1]).join(''));}catch{throw Error('The Original worksheet must retain its complete source JSON.');}
- need(origin?.schema===FORECAST_WORKBOOK_SCHEMA&&Object.keys(origin).every(k=>['schema','caseId','planContentSha256','createdAt','inputs','inputsSha256'].includes(k)),'Choose the original complete Forecast preparation workbook.');safe(origin);need(typeof origin.createdAt==='string'&&Number.isFinite(Date.parse(origin.createdAt)),'Retain the exact original preparation time.');
+ need(origin?.schema===FORECAST_WORKBOOK_SCHEMA&&Object.keys(origin).every(k=>['schema','caseId','planContentSha256','createdAt','inputs','inputsSha256','bridgeFundingVersion'].includes(k)),'Choose the original complete Forecast preparation workbook.');safe(origin);need(typeof origin.createdAt==='string'&&Number.isFinite(Date.parse(origin.createdAt)),'Retain the exact original preparation time.');
+ need(origin.bridgeFundingVersion===undefined||origin.bridgeFundingVersion===1,'Use the retained workbook feature edition.');need(tables.length===specsFor(origin).length,'Retain the exact worksheets for this original workbook edition.');
  const base=verifyInputs(origin.inputs);
  need(HASH.test(origin.inputsSha256||'')&&await sha256(signature(base))===origin.inputsSha256,'The retained original inputs differ from their source identity.');
  need([options.caseId,options.originCaseId].filter(Boolean).includes(origin.caseId)&&origin.planContentSha256===options.planContentSha256,'This workbook belongs to another original case or selected plan content.');
@@ -87,7 +98,7 @@ export async function receiveForecastWorkbookTables(tables,options={}){
  for(const [p,state,value]of scalars){need(['MISSING','NULL','VALUE'].includes(state),'Forecast value state must be MISSING, NULL or VALUE.');need(state==='VALUE'||value==='','A missing or null field must have an empty value cell.');let v=state==='MISSING'?undefined:state==='NULL'?null:p==='openingCash.sourceIds'?references(value,p):value;pathSet(next,p,v);}
  for(const r of sheets.get('Packages')){const[id,op,cost,hours,start,end,mode,ids,note]=r;need(stable(id),'Use the original package identity.');if(action(op,'Package')==='REMOVE'){upsert(next.packageOverrides,id,x=>x.costId===id,null,true,'Package');continue;}const old=next.packageOverrides.find(x=>x.costId===id)||{};upsert(next.packageOverrides,id,x=>x.costId===id,{...old,costId:id,remainingCostUsd:nullable(cost,old.remainingCostUsd),remainingHours:nullable(hours,old.remainingHours),startDate:nullable(start,old.startDate),endDate:nullable(end,old.endDate),paymentMode:mode,directCashIds:references(ids,'Package cash'),note},action(op,'Package')==='REMOVE','Package');}
  for(const r of sheets.get('Invoices')){const[id,op,date,include,note]=r;need(typeof id==='string'&&id.length>0,'Use the original invoice identity.');if(action(op,'Invoice')==='REMOVE'){upsert(next.invoiceOverrides,id,x=>x.invoiceId===id,null,true,'Invoice');continue;}const old=next.invoiceOverrides.find(x=>x.invoiceId===id)||{};upsert(next.invoiceOverrides,id,x=>x.invoiceId===id,{...old,invoiceId:id,dueDate:nullable(date,old.dueDate),include:bool(include,'Invoice include'),note},action(op,'Invoice')==='REMOVE','Invoice');}
- for(const r of sheets.get('Grants')){const[id,op,date,include,note]=r;need(/^[0-3]$/.test(id),'Grant tranche must be the original 0, 1, 2 or 3.');const tranche=Number(id);if(action(op,'Grant')==='REMOVE'){upsert(next.grantReceipts,id,x=>x.tranche===tranche,null,true,'Grant');continue;}const old=next.grantReceipts.find(x=>x.tranche===tranche)||{};upsert(next.grantReceipts,id,x=>x.tranche===tranche,{...old,tranche,date:nullable(date,old.date),include:bool(include,'Grant include'),note},action(op,'Grant')==='REMOVE','Grant');}
+ for(const r of sheets.get('Grants')){const[id,op,date,include,note]=r;need(/^[0-3]$/.test(id),'Grant tranche must be the original 0, 1, 2 or 3.');const tranche=Number(id);if(action(op,'Grant')==='REMOVE'){upsert(next.grantReceipts,id,x=>x.tranche===tranche,null,true,'Grant');continue;}const old=next.grantReceipts.find(x=>x.tranche===tranche)||{};upsert(next.grantReceipts,id,x=>x.tranche===tranche,{...old,tranche,date:(nullable(date,old.date)??null),include:bool(include,'Grant include'),note},action(op,'Grant')==='REMOVE','Grant');}
  const removed=new Set;
  for(const r of sheets.get('Customers')){const[id,op,title,caseRef,sourceUrl,sourceIds,stage,selected,pricingMode,price,cost,hours,start,end,paymentMode,cashIds,invoiceIds,directCashIds,scope,note]=r;need(stable(id),'Use a stable customer scenario identity.');if(action(op,'Customer')==='REMOVE'){need(next.commercial.some(x=>x.id===id),'Remove an existing original customer scenario.');next.commercial=next.commercial.filter(x=>x.id!==id);if(next.customerFunding)next.customerFunding.opening=next.customerFunding.opening.filter(x=>x.commercialId!==id);removed.add(id);continue;}
   const old=next.commercial.find(x=>x.id===id)||emptyCustomer(id),v={...old,id,title,caseRef,sourceUrl,sourceIds:references(sourceIds,'Customer sources'),stage,selected:bool(selected,'Customer selected'),remainingHours:nullable(hours,old.remainingHours),startDate:nullable(start,old.startDate),endDate:nullable(end,old.endDate),paymentMode,cashIds:references(cashIds,'Customer receipts'),invoiceIds:references(invoiceIds,'Customer invoices'),directCashIds:references(directCashIds,'Customer direct expenses'),scope,note};
@@ -99,7 +110,7 @@ export async function receiveForecastWorkbookTables(tables,options={}){
  const originalTables=new Map(tablesFor(base,origin).map(t=>[t.name,t]));
  const unchangedIrrelevant=(sheet,row)=>{const t=originalTables.get(sheet),spec=FORECAST_WORKBOOK_SHEETS.find(x=>x.name===sheet),prior=t.rows.find(r=>spec.key.every(i=>r[i]===row[i]));need(prior&&equal(prior,row),'This customer is using USD pricing. Remove newly added or changed '+sheet+' rows, or select NATIVE pricing before applying them.');};
  const project=id=>{const p=next.commercial.find(x=>x.id===id);need(p,'Select an existing customer in Customers before its related rows.');return p;};
- for(const r of sheets.get('Receipts')){const[pid,id,op,label,usd,native,date]=r;if(removed.has(pid))continue;const p=project(pid);need(stable(id),'Use a stable receipt milestone identity.');if(action(op,'Receipt')==='REMOVE'){upsert(p.receipts,id,x=>x.id===id,null,true,'Receipt');continue;}const old=p.receipts.find(x=>x.id===id)||{},key=p.nativePricing?'amountNative':'amountUsd';need((p.nativePricing?usd:native)==='','Keep only the amount for this customer pricing mode.');const v={...old,id,label,[key]:p.nativePricing?native:usd,date:nullable(date,old.date)};delete v[p.nativePricing?'amountUsd':'amountNative'];upsert(p.receipts,id,x=>x.id===id,v,action(op,'Receipt')==='REMOVE','Receipt');}
+ for(const r of sheets.get('Receipts')){const[pid,id,op,label,usd,native,date]=r;if(removed.has(pid))continue;const p=project(pid);need(stable(id),'Use a stable receipt milestone identity.');if(action(op,'Receipt')==='REMOVE'){upsert(p.receipts,id,x=>x.id===id,null,true,'Receipt');continue;}const old=p.receipts.find(x=>x.id===id)||{},key=p.nativePricing?'amountNative':'amountUsd';need((p.nativePricing?usd:native)==='','Keep only the amount for this customer pricing mode.');const v={...old,id,label,[key]:p.nativePricing?native:usd,date:(nullable(date,old.date)??null)};delete v[p.nativePricing?'amountUsd':'amountNative'];upsert(p.receipts,id,x=>x.id===id,v,action(op,'Receipt')==='REMOVE','Receipt');}
  const removedTiming=new Set;
  for(const [pid,op,mode,startCondition,days,release]of sheets.get('Timing')){if(removed.has(pid))continue;const p=project(pid);if(action(op,'Timing')==='REMOVE'){need(p.timing,'Remove an existing event-dependent timing selection.');delete p.timing;removedTiming.add(pid);continue;}need(mode==='EVENT_DEPENDENT'&&/^[1-9]\d*$/.test(days)&&Number.isSafeInteger(Number(days)),'Retain EVENT_DEPENDENT and a whole quoted working-day count.');p.timing={...(p.timing||{}),mode,startCondition,deliveryBusinessDays:Number(days),reviewedReleaseDate:nullable(release,p.timing?.reviewedReleaseDate),receiptConditions:p.timing?.receiptConditions||[]};}
  for(const [pid,id,op,condition]of sheets.get('Conditions')){if(removed.has(pid)||removedTiming.has(pid))continue;const p=project(pid);need(p.timing,'Select event-dependent timing before collection conditions.');upsert(p.timing.receiptConditions,id,x=>x.receiptId===id,{receiptId:id,condition},action(op,'Condition')==='REMOVE','Condition');}
@@ -108,6 +119,32 @@ export async function receiveForecastWorkbookTables(tables,options={}){
  for(const [pid,kind,id,op,amount,note]of sheets.get('Cost credits')){if(removed.has(pid))continue;const p=project(pid);if(!p.nativePricing){if(op!=='REMOVE')unchangedIrrelevant('Cost credits',[pid,kind,id,op,amount,note]);continue;}need(['INVOICE','DIRECT_CASH'].includes(kind),'Keep each original cost-credit kind.');upsert(p.nativePricing.costCredits,id,x=>x.kind===kind&&x.id===id,{kind,id,amount,note},action(op,'Cost credit')==='REMOVE','Cost credit');}
  const rates=sheets.get('Rates');if(rates.length||own(base,'fxRates')||next.commercial.some(x=>x.nativePricing))next.fxRates||=[];
  for(const r of rates){const[id,op,baseCurrency,quoteCurrency,rate,observationDate,publicationDate,basis,rounding,sourceUrl,sourceIds,sourceReference,note]=r;need(stable(id),'Use a stable original exchange-rate identity.');if(action(op,'Exchange rate')==='REMOVE'){upsert(next.fxRates,id,x=>x.id===id,null,true,'Exchange rate');continue;}const old=next.fxRates.find(x=>x.id===id)||{};upsert(next.fxRates,id,x=>x.id===id,{...old,id,baseCurrency,quoteCurrency,rate,observationDate,publicationDate:nullable(publicationDate,old.publicationDate),basis,rounding,sourceUrl,sourceIds:references(sourceIds,'Rate sources'),sourceReference,note},action(op,'Exchange rate')==='REMOVE','Exchange rate');}
+ if(origin.bridgeFundingVersion===1){
+  const settings=sheets.get('Bridge settings');need(settings.length===2&&settings.some(r=>r[0]==='present')&&settings.some(r=>r[0]==='note'),'Retain both original bridge settings.');
+  const present=settings.find(r=>r[0]==='present'),note=settings.find(r=>r[0]==='note');
+  need((present[1]==='MISSING'&&present[2]==='')||(present[1]==='VALUE'&&present[2]==='true'),'Bridge present is MISSING with an empty cell, or VALUE with true.');
+  need((note[1]==='MISSING'&&note[2]==='')||note[1]==='VALUE','Bridge note is MISSING or an explicit VALUE.');
+  if(present[1]==='MISSING'){
+   if(!own(base,'bridgeFunding'))need(sheets.get('Facilities').length===0&&sheets.get('Facility events').length===0,'Set bridge present to VALUE / true before adding facilities.');
+   delete next.bridgeFunding;
+  }else{
+   next.bridgeFunding??={facilities:[],note:''};next.bridgeFunding.note=note[1]==='VALUE'?note[2]:'';
+   const removedFacilities=new Set;
+   for(const [id,op,name,currency,openingPrincipalUsd,creditLimitUsd,availableDate,maturityDate,termsBasis,sourceIds,note]of sheets.get('Facilities')){
+    need(stable(id),'Use a stable facility identity.');const remove=action(op,'Facility')==='REMOVE';
+    if(remove){upsert(next.bridgeFunding.facilities,id,x=>x.id===id,null,true,'Facility');removedFacilities.add(id);continue;}
+    const old=next.bridgeFunding.facilities.find(x=>x.id===id)||{};
+    need(currency==='USD','Retain explicit USD facility units; do not relabel another currency.');
+    upsert(next.bridgeFunding.facilities,id,x=>x.id===id,{...old,id,name,currency,openingPrincipalUsd:(nullable(openingPrincipalUsd,old.openingPrincipalUsd)??null),creditLimitUsd:(nullable(creditLimitUsd,old.creditLimitUsd)??null),availableDate:(nullable(availableDate,old.availableDate)??null),maturityDate:(nullable(maturityDate,old.maturityDate)??null),termsBasis,sourceIds:references(sourceIds,'Facility sources'),note,events:old.events||[]},false,'Facility');
+   }
+   for(const [fid,id,op,kind,amountUsd,date,note]of sheets.get('Facility events')){
+    if(removedFacilities.has(fid))continue;need(stable(id),'Use a stable facility-event identity.');
+    const f=next.bridgeFunding.facilities.find(x=>x.id===fid);need(f,'Select the original facility before its cash events.');
+    if(action(op,'Facility event')==='REMOVE'){upsert(f.events,id,x=>x.id===id,null,true,'Facility event');continue;}
+    const old=f.events.find(x=>x.id===id)||{};upsert(f.events,id,x=>x.id===id,{...old,id,kind,amountUsd:(nullable(amountUsd,old.amountUsd)??null),date:(nullable(date,old.date)??null),note},false,'Facility event');
+   }
+  }
+ }
  const returnedInputs=verifyInputs(copy(next));
  return{schema:FORECAST_WORKBOOK_RETURN_SCHEMA,origin:copy(origin),baseInputs:base,returnedInputs,tables:copy(tables)};
 }
@@ -115,7 +152,7 @@ const MISSING=Symbol('missing');
 const view=v=>v===MISSING?{present:false}:{present:true,value:copy(v)};
 const same=(a,b)=>a===MISSING||b===MISSING?a===b:equal(a,b);
 const pointer=p=>'/'+p.map(k=>String(k).replace(/~/g,'~0').replace(/\//g,'~1')).join('/');
-function keyFields(parts){const k=parts.at(-1);return k==='opening'&&parts.at(-2)==='customerFunding'?['commercialId']:k==='packageOverrides'?['costId']:k==='invoiceOverrides'?['invoiceId']:k==='grantReceipts'?['tranche']:k==='priceCredits'?['cashId']:k==='costCredits'?['kind','id']:k==='receiptConditions'?['receiptId']:['commercial','receipts','fxRates'].includes(k)?['id']:null;}
+function keyFields(parts){const k=parts.at(-1);return k==='opening'&&parts.at(-2)==='customerFunding'?['commercialId']:k==='packageOverrides'?['costId']:k==='invoiceOverrides'?['invoiceId']:k==='grantReceipts'?['tranche']:k==='priceCredits'?['cashId']:k==='costCredits'?['kind','id']:k==='receiptConditions'?['receiptId']:['commercial','receipts','fxRates','facilities','events'].includes(k)?['id']:null;}
 export function reconcileForecastWorkbook(received,currentInputs,choices={}){
  need(received?.schema===FORECAST_WORKBOOK_RETURN_SCHEMA&&plain(choices),'Receive the complete forecast workbook first.');
  const base=verifyInputs(received.baseInputs),returned=verifyInputs(received.returnedInputs),current=verifyInputs(currentInputs),changes=[],conflicts=[],used=new Set;
@@ -194,6 +231,7 @@ export function forecastWorkbookGuide(origin){
  return '# Forecast preparation workbook\n\nOriginal case: '+origin.caseId+'\n\n'+
  'Edit forecast-assumptions.xlsx or complete sheet CSVs. Retain original-forecast.json and the hidden Original sheet. All cells are literal text: blank money is unknown; 0 is entered zero. Dates remain YYYY-MM-DD. Explicit true and false preserve selections. Keep original IDs. Omission retains an original row; REMOVE explicitly removes its assumption override or customer scenario. Native cash, invoices, costs and grants remain unchanged.\n\n'+
  'Forecast retains name, dates, opening cash, capacity and notes. MISSING/NULL/VALUE distinguish absent, null and entered values. Packages adjusts remaining package cost/hours/dates. Invoices and Grants adjust expected timing and inclusion. Customers and Receipts prepare customer scenarios and milestones. Timing and Conditions retain event-dependent release and collection. Native amounts, Price credits, Cost credits and Rates preserve explicit currency valuations and original selected actual payments. References are exact JSON arrays of IDs already in the case.\n\n'+
+ 'Bridge settings marks optional presence explicitly. Facilities retains named USD debt, outstanding-principal cap, original dates, terms basis and source IDs. Facility events retains every draw, principal repayment and separately entered interest/fee date and amount. Blank amounts and dates remain unknown. The principal cap is not a revolving or cumulative commitment. Old workbooks retain their original worksheet edition.\n\n'+
  'Receive the complete XLSX through the maintained native reader, or choose original-forecast.json and one or more returned CSV/TSV sheets with explicit column mapping. Review all changes against the CURRENT Forecast draft. Independently changed fields remain. Resolve each conflicting field explicitly as current or returned. Apply retains the complete original return as a case source and runs the original native preview. Then use the original Forecast save to create its next immutable saved edition. No payment, invoice, purchase or actual cash entry is created by this preparation.\n\n'+
  'Keep native and USD price modes explicit. Native price and deliveryCost each require amount, currency and the selected exchange-rate ID where applicable. When changing modes, update the receipt amount columns as well; native validation owns currency, amount, date and source rules. Event-dependent timing remains provisional until its original release is reviewed. Omitted values never become zero.\n\n'+
  'Download the complete working file before handing off unfinished work. It retains original inputs, full returned bytes and sheet projections, conflict choices, note and the same pending source/save request. After native save, the original full case export carries the source and all saved forecasts. Reviewed XLSX formulas must be pasted as literal values; formulas are rejected on receive.\n';
@@ -229,14 +267,14 @@ function sheetMapping(spec,range){return{schema:'stellar-forge.planning-workbook
  name:'Forecast assumptions '+spec.name,notes:'Complete exact literal assumptions; original workbook and full selected cells retained.',
  sheet:spec.name,range,headerRow:1,hiddenRows:'include',blankRows:'skip',mergedCells:'reject',
  columns:spec.headers.map((name,index)=>({name,source:column(index+1),blank:'empty',formula:'reject',error:'reject',date:'raw',trim:false,valueMap:[]}))},
- numericText:Object.fromEntries(spec.headers.map(name=>[name,['amount','amountUsd','amountNative','priceUsd','totalDeliveryCostUsd','remainingCostUsd','remainingHours','rate'].includes(name)?'decimal':'source']))};}
+ numericText:Object.fromEntries(spec.headers.map(name=>[name,['amount','amountUsd','amountNative','openingPrincipalUsd','creditLimitUsd','priceUsd','totalDeliveryCostUsd','remainingCostUsd','remainingHours','rate'].includes(name)?'decimal':'source']))};}
 function receivedTime(value){need(typeof value==='string'&&Number.isFinite(Date.parse(value)),'Retain the actual complete source receiving time.');return value;}
 function returnLimit(value){need(utf8(json(value)).length<=MAX_WORKBOOK_PROJECT_BYTES,'The full source and selected cells exceed the original 32 MiB recovery allowance.');return value;}
 export async function receiveForecastWorkbook(upload,options={}){
  need(typeof options.inspectWorkbook==='function'&&typeof options.projectWorkbook==='function','Use the maintained native workbook reader.');
  need(upload?.bytes>0&&upload.bytes<=MAX_FORECAST_WORKBOOK_BYTES,'Choose a complete workbook within the original 8 MiB source allowance.');
  let source=upload;const tables=[],projections=[];
- for(const spec of FORECAST_WORKBOOK_SHEETS){
+ async function project(spec){
   const inspected=await options.inspectWorkbook({source,preview:{sheet:spec.name,offset:0,limit:1}});
   await validateWorkbookSource(inspected.source);source=inspected.source;
   const header=inspected.preview.rows[0]?.cells;
@@ -245,8 +283,13 @@ export async function receiveForecastWorkbook(upload,options={}){
   const projected=await options.projectWorkbook({source,mapping:selected});
   await validateWorkbookSource(projected.source);source=projected.source;
   const body=await validateWorkbookProjection(projected.projection,source);
-  tables.push({name:spec.name,headers:[...spec.headers],rows:body.rows.map(row=>row.cells.map(cell=>cell.output))});
-  projections.push({sheet:spec.name,projection:copy(projected.projection)});
+  return {table:{name:spec.name,headers:[...spec.headers],rows:body.rows.map(row=>row.cells.map(cell=>cell.output))},projection:{sheet:spec.name,projection:copy(projected.projection)}};
+ }
+ const retained=await project(FORECAST_WORKBOOK_SHEETS.find(s=>s.name==='Original'));
+ let original;try{original=JSON.parse(retained.table.rows.map(r=>r[1]).join(''));}catch{throw Error('Retain the complete original workbook JSON.');}
+ need(original.bridgeFundingVersion===undefined||original.bridgeFundingVersion===1,'Retain the supported original worksheet edition.');
+ for(const spec of specsFor(original)){
+  const selected=spec.name==='Original'?retained:await project(spec);tables.push(selected.table);projections.push(selected.projection);
  }
  const received=await receiveForecastWorkbookTables(tables,options);
  return returnLimit({...received,transport:'xlsx',source:{...copy(source),mediaType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'},projections,
@@ -273,8 +316,8 @@ export async function receiveForecastCsv(baseline,materials,options={}){
  const base=verifyInputs(origin.inputs),tables=tablesFor(base,origin),seen=new Set;
  need(Array.isArray(materials)&&materials.length>0&&materials.length<FORECAST_WORKBOOK_SHEETS.length,'Select one or more complete returned assumption sheets.');
  for(const item of materials){
-  const spec=FORECAST_WORKBOOK_SHEETS.find(s=>s.name===item.sheet&&s.name!=='Original');
-  need(spec&&!seen.has(spec.name),'Select each returned sheet once.');seen.add(spec.name);await validateRaw(item.source);
+  const spec=specsFor(origin).find(s=>s.name===item.sheet&&s.name!=='Original');
+  need(spec&&!seen.has(spec.name),'Select each returned sheet once from this original workbook edition; export a current workbook to prepare bridge facilities.');seen.add(spec.name);await validateRaw(item.source);
   const parsed=inspectForecastCsv(item.source,{delimiter:item.delimiter}),columns=item.columns;
   need(plain(columns)&&Object.keys(columns).length===spec.headers.length&&spec.headers.every(h=>Number.isInteger(columns[h])&&columns[h]>=0&&columns[h]<parsed.headings.length)&&new Set(Object.values(columns)).size===spec.headers.length,'Map every original field to one distinct returned column.');
   need(parsed.rows.length<=5000,'Keep the complete returned sheet within its record allowance.');
@@ -296,11 +339,11 @@ export async function validateForecastWorkbookReturn(value,options={}){
  let replay;
  if(value.transport==='csv')replay=await receiveForecastCsv(value.baseline,value.materials,{...options,receivedAt:value.receivedAt});
  else{
-  need(value.transport==='xlsx'&&Array.isArray(value.projections)&&value.projections.length===FORECAST_WORKBOOK_SHEETS.length,'Retain every original selected worksheet.');
+  need(value.transport==='xlsx'&&Array.isArray(value.projections)&&[LEGACY_SHEETS.length,FORECAST_WORKBOOK_SHEETS.length].includes(value.projections.length),'Retain every original selected worksheet.');
   await validateWorkbookSource(value.source);need(value.source.mediaType==='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','Retain the XLSX source media type.');
   need(value.source.bytes<=MAX_FORECAST_WORKBOOK_BYTES,'Retain a complete workbook within the case source allowance.');
   const tables=[];
-  for(const spec of FORECAST_WORKBOOK_SHEETS){
+  for(const spec of (value.projections.length===LEGACY_SHEETS.length?LEGACY_SHEETS:FORECAST_WORKBOOK_SHEETS)){
    const selected=value.projections.filter(r=>r.sheet===spec.name);need(selected.length===1,'Retain one complete original '+spec.name+' projection.');
    const body=await validateWorkbookProjection(selected[0].projection,value.source);
    need(body.mapping.plan.sheet===spec.name&&equal(body.mapping,sheetMapping(spec,body.mapping.plan.range)),'Retain exact original worksheet headings and literal-cell mappings.');

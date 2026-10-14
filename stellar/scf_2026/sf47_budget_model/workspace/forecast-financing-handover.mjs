@@ -74,6 +74,7 @@ function tablesFor(report){
     tables.push({key:'event-dependent-receipts',title:'Event-dependent customer receipts',rows:(report.eventTiming.projects||[]).flatMap(p=>(p.receipts||[]).map(r=>({projectId:p.id,...r})))});}
   if(report.customerFunding?.enabled){tables.push({key:'customer-funding-daily',title:'Pooled cash, reserved customer money and available cash',rows:report.customerFunding.days||[]},
     {key:'customer-obligations',title:'Every customer reservation and remaining delivery obligation',rows:report.customerFunding.customerDays||[]});}
+  if(report.bridgeFunding)for(const [key,title,field]of [['bridge-facilities','Named USD facilities and principal caps','facilities'],['bridge-events','Every explicit draw, repayment, interest and fee','events'],['bridge-principal','Outstanding principal progression','principalDays'],['bridge-financed-cash','Financed cash alongside the original cash curve','days'],['bridge-findings','Unresolved facility terms and schedule exceptions','issues']])tables.push({key,title,rows:report.bridgeFunding[field]||[]});
   return tables;
 }
 function assessmentRows(assessments){
@@ -93,6 +94,7 @@ function localHtml(model,studyFile){
     const metadata={optionId:o.id,comparisonId:comparison.id,source:o.preview.source,inputSha256:o.inputSha256,previewSha256:o.preview.previewSha256,
       asOfDate:r.asOfDate,firstForecastDate:r.firstForecastDate,lastForecastDate:r.lastForecastDate,mode:r.mode,basis:r.basis,capacity:r.capacity,openingCash:r.openingCash,scenarios:r.scenarios,totals:r.totals,
       customerFunding:r.customerFunding?{enabled:r.customerFunding.enabled,summary:r.customerFunding.summary,basis:r.customerFunding.basis}:null,
+      ...(r.bridgeFunding?{bridgeFunding:Object.fromEntries(Object.entries(r.bridgeFunding).filter(([k])=>!['facilities','events','principalDays','days','issues'].includes(k)))}:{}),
       eventTiming:r.eventTiming?Object.fromEntries(Object.entries(r.eventTiming).filter(([k])=>k!=='projects')):null,currencyValuation:r.currencyValuation??null};
     return '<section class="option" id="option-'+i+'" data-option="'+escape(o.id)+'"><h2>'+escape(o.name)+'</h2>'+
       '<p class="mono">'+escape(o.id)+' · preview '+escape(o.preview.previewSha256)+'</p>'+
@@ -139,7 +141,7 @@ export async function buildFinancingHandover(state,current,{comparisonId=state.s
   const summary=comparison.result.options.map(o=>{const m=financingMetrics(o.preview),r=o.preview.report;return {optionId:o.id,option:o.name,asOfDate:r.asOfDate,firstForecastDate:r.firstForecastDate,lastForecastDate:r.lastForecastDate,
     grantRequiredStartingUsd:m.grantNeed,combinedRequiredStartingUsd:m.combinedNeed,combinedChangeFromReferenceUsd:financingMoneyDelta(bm.combinedNeed,m.combinedNeed),combinedExtraAfterOpeningUsd:m.combinedGap,combinedPeakDate:m.combinedPeak,endCashUsd:m.endBalance,
     customerProtectionEnabled:m.protectedEnabled,protectedRequiredStartingUsd:m.protectedNeed,protectedExtraAfterOpeningUsd:m.protectedGap,availableWeeklyHours:m.weeklyHours,peakWeeklyEquivalentHours:m.peakWeekly,overloadedDays:m.overloadedDays,
-    undatedWorkHours:r.eventTiming?.undatedHours??'0',undatedDeliveryCostUsd:r.eventTiming? r.eventTiming.undatedDeliveryCostUsd : '0.00',datedCashValuationComplete:m.currencyComplete,issues:m.issueCount};});
+    undatedWorkHours:r.eventTiming?.undatedHours??'0',undatedDeliveryCostUsd:r.eventTiming? r.eventTiming.undatedDeliveryCostUsd : '0.00',datedCashValuationComplete:m.currencyComplete,issues:m.issueCount,...(m.bridgeEnabled?{bridgeEnabled:true,financedStartingUsd:m.financedNeed,financedGapUsd:m.financedGap,financedEndingCashUsd:m.financedEnd,endingPrincipalUsd:m.endingPrincipal,explicitDatedFinancingExpenseUsd:m.financingExpense,enteredCapDateFeasibility:m.bridgeFeasibility}: {})};});
   const file={schema:FINANCING_FILE_SCHEMA,sourceMode:'COMPLETE',exportedAt,study};
   const files=[],add=(path,content)=>files.push({path,content});
   add('study.json',compact(file));add('selection.json',json(selection));add('comparison.json',json(comparison));add('option-summary.csv',financingHandoverCsv(summary));add('assessments.json',json(assessments));add('planning-limits.csv',financingHandoverCsv(assessmentRows(assessments)));
