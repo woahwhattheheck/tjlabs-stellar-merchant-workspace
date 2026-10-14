@@ -1,6 +1,7 @@
 // MIT. One source-owned writer; original CRM operations remain the engine.
 import {join} from 'node:path';
 import {attachHubSpot} from './hubspot.mjs';
+import {attachCutover} from './cutover.mjs';
 import {acquirePrivateDirectoryWriter} from '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/operations/history.mjs';
 import runtime from '../runtime/crm-runtime.cjs';
 import {privateDirectory,readJSON,writeJSON,writeBytes,json,sha,need} from './io.mjs';
@@ -24,7 +25,10 @@ export async function openStore(directory){
  const archive=model.archive(next);await originalDirectory();await writeJSON(join(directory,'editions',archive.sha256+'.json'),archive);
  await originalDirectory();await writeJSON(join(directory,'workspace.json'),archive,{replace:true});ws=next;return archive;}
  const hubspot=attachHubSpot({directory,workspaceId:originalId,guard:originalDirectory,current:reload,save});
+ const cutover=attachCutover({directory,crmWorkspaceId:originalId,guard:originalDirectory,currentCrm:reload});
  return {directory,identity,get id(){return ws.id;},
+ cutover:(action,args)=>run(async()=>{await reload();need(['state','summary','action','requestStatus','reversal','receive','crmSources'].includes(action),'CUTOVER_ACTION','Choose a declared cutover operation.');return cutover[action](args);}),
+ cutoverExport:expected=>run(async()=>{await reload();const current=await cutover.state();need(current.sha256===expected,'CRM_REVISION_CHANGED','Select the exact current cutover SHA.',409);const files=await cutover.files();files['EXPORT_MANIFEST.json']=json({schema:'crm-cutover.retained-files.v1',workspaceId:current.workspace.id,workspaceSha256:expected,files:Object.entries(files).map(([path,value])=>({path,bytes:Buffer.byteLength(value),sha256:sha(Buffer.from(value))}))});const packed=Buffer.from(runtime.zipper.zip(files)),hash=sha(packed);await originalDirectory();const written=await writeBytes(join(directory,'exports',hash+'.zip'),packed);return {schema:'crm-migration.retained-export.v1',crmWorkspaceId:ws.id,workspaceId:current.workspace.id,workspaceSha256:expected,revision:current.workspace.revision,fileId:hash,sha256:hash,bytes:written.bytes,filename:current.workspace.id+'-r'+current.workspace.revision+'.zip',contentType:'application/zip'};}),
  hubspot:(action,args)=>run(async()=>{await reload();need(['list','status','start','advance','adopt','adoption','configure'].includes(action),'HUBSPOT_ACTION','Choose a declared capture operation.');return hubspot[action](args);}),
  captureExport:(id,expectedSha256)=>run(async()=>{await reload();const status=await hubspot.status(id);need(status.sha256===expectedSha256,'HUBSPOT_CAPTURE_CHANGED','Select the exact retained capture.',409);const files=await hubspot.files(id),packed=Buffer.from(runtime.zipper.zip(files)),hash=sha(packed);await originalDirectory();const written=await writeBytes(join(directory,'exports',hash+'.zip'),packed);return {schema:'crm-migration.retained-export.v1',workspaceId:ws.id,captureId:id,captureSha256:expectedSha256,fileId:hash,sha256:hash,bytes:written.bytes,filename:id+'-hubspot-capture.zip',contentType:'application/zip'};}),
  state:()=>run(async()=>model.archive(await reload())),summary:()=>run(async()=>summary(await reload())),
@@ -34,7 +38,7 @@ export async function openStore(directory){
  const archive=earlier?model.archive(ws):await save(next);
  return {archive,receipt:ws.operations.find(x=>x.id===op.id),reused:Boolean(earlier)};}),
  export:expected=>run(async()=>{await reload();need(expected===comparison.digest(ws),'CRM_REVISION_CHANGED','Select the complete current workspace hash for export.',409);
- const archive=model.archive(ws),files={...exportFiles(ws),...await hubspot.allFiles()},all={...files};
+ const archive=model.archive(ws),files={...exportFiles(ws),...await hubspot.allFiles(),...Object.fromEntries(Object.entries(await cutover.files()).map(([path,value])=>['cutover/'+path,value]))},all={...files};
  all['EXPORT_MANIFEST.json']=json({schema:'crm-migration.customer-files.v1',workspace:ws.id,revision:ws.revision,workspaceSha256:archive.sha256,
  files:Object.entries(files).map(([path,text])=>({path,bytes:Buffer.byteLength(text),sha256:sha(Buffer.from(text))}))});
  const packed=Buffer.from(runtime.zipper.zip(all)),hash=sha(packed);await originalDirectory();const written=await writeBytes(join(directory,'exports',hash+'.zip'),packed);

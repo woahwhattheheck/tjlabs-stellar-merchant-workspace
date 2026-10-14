@@ -7,11 +7,12 @@ import {fileURLToPath} from 'node:url';
 import {openStore} from './store.mjs';
 import {writeJSON,readJSON,readBytes,json,sha,need,MAX_BYTES,decode} from './io.mjs';
 import renderer from '../browser/render-desk.cjs';
+import cutoverRenderer from '../cutover/render-desk.cjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 export const CONNECTION='crm.connection.json', CONNECTION_SCHEMA='stellar-forge.crm-connection.v1',STARTUP_SCHEMA='stellar-forge.crm-startup.v1';
 export async function moduleSources(){
  const files={};
- for(const dir of ['runtime','browser'])for(const name of await readdir(join(root,dir)))
+ for(const dir of ['runtime','browser','cutover'])for(const name of await readdir(join(root,dir)))
  if(/\.(?:js|cjs)$/.test(name))files[dir+'/'+name]=await readFile(join(root,dir,name),'utf8');
  return files;
 }
@@ -44,11 +45,17 @@ export async function startServer({directory,workspaceId,port=0}){
    const html=renderer.renderDesk(modules,null,{managed:{instanceId,workspaceId:store.id}});
    return send(res,200,html,'text/html;charset=utf-8');
   }
+  if(req.method==='GET'&&url.pathname==='/cutover')return send(res,200,cutoverRenderer.renderDesk(modules,null,{managed:{instanceId,crmWorkspaceId:store.id}}),'text/html;charset=utf-8');
   const supplied=req.headers.authorization?.replace(/^Bearer /,'')??'';
   need(/^[a-f0-9]{64}$/.test(supplied)&&timingSafeEqual(Buffer.from(supplied),Buffer.from(token)),'CRM_AUTH','Use the original private application connection.',401);
   need(req.headers['x-crm-instance']===instanceId,'CRM_INSTANCE_CHANGED','Reconnect the original current application instance.',409);
   need(!req.headers.origin||req.headers.origin===origin,'CRM_ORIGIN','Use the same local application origin.',403);
   if(req.method==='GET'&&url.pathname==='/api/status')return send(res,200,{schema:CONNECTION_SCHEMA,instanceId,workspaceId:store.id,...await store.summary()});
+  if(req.method==='GET'&&url.pathname==='/api/cutover')return send(res,200,await store.cutover('state'));
+  if(req.method==='POST'&&url.pathname==='/api/cutover'){
+   const input=await body(req);need(['summary','action','requestStatus','reversal','crmSources','export'].includes(input.action),'CUTOVER_ACTION','Choose a declared cutover operation.');
+   return send(res,200,input.action==='export'?await store.cutoverExport(input.args.expectedSha256):await store.cutover(input.action,input.args));
+  }
   if(req.method==='GET'&&url.pathname==='/api/hubspot')return send(res,200,await store.hubspot('list'));
   if(req.method==='POST'&&url.pathname==='/api/hubspot'){const input=await body(req);need(['status','start','advance','adopt','adoption','export'].includes(input.action),'HUBSPOT_ACTION','Choose a declared capture operation.');return send(res,200,input.action==='export'?await store.captureExport(input.args.id,input.args.expectedSha256):await store.hubspot(input.action,input.args));}
   if(req.method==='GET'&&url.pathname==='/api/workspace')return send(res,200,await store.state());
