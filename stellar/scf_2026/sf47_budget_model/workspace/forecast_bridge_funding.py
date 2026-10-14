@@ -183,7 +183,7 @@ def build(report, inputs):
         if facility["maturityDate"] and facility["maturityDate"] <= max(all_stamps):
             cutoff = max(as_of, facility["maturityDate"])
             at_maturity = [d for d in debt_days if d["facilityId"] == fid and d["date"] <= cutoff][-1]
-            maturity_principal = at_maturity["closingPrincipalUsd"]
+            maturity_principal = money(opening) if facility["maturityDate"] <= as_of else at_maturity["closingPrincipalUsd"]
             if maturity_principal is None:
                 issue("PRINCIPAL_AT_MATURITY_REVIEW", fid, "Outstanding principal at the entered maturity (or as-of date for an already matured facility) is unresolved. Retain an explicit repayment plan.")
             elif Decimal(maturity_principal) > ZERO:
