@@ -63,7 +63,7 @@ Install the whole selected successor, including:
 - original working model, colleague model, source reader, working/colleague controls and complete HTML composer;
 - both original Python operator/routes files and this guide;
 - original complete source/store/native action implementation;
-- the matching distribution contribution, Analysis project selection and managed source inventory.
+- the matching distribution contribution and Analysis project source selection.
 
 The original Mercury / A66C /22B7 operation remains the receiving course. Use its existing restored workspace and actual saved action; preserve all previously completed outputs. Open the actual saved source in this page, keep a deliberately unfinished field/note, move between source editions, save and reopen the complete desk, perform the original colleague issue/return/receiving flow, compare/adopt the exact complete work and continue original Review/Apply. Inspect and use the actual outgoing page at desktop and390px, then open every applicable JSON/HTML/original source/assignment/return/desk download and the original complete workspace archive. Reopen the saved standalone and full desk independently. Repair the first actual exception in this same source.
 
