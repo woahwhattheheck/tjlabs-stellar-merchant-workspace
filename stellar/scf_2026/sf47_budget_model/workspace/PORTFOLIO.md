@@ -310,3 +310,8 @@ To review the complete new mode, use the original native-currency case with a mi
 ## Complete named working copies
 
 The original Portfolio desk now retains named, durable working copies and immutable checkpoints, with the exact input/result selection, unfinished resource and phase controls, complete source attachments and original interrupted save request. See [Portfolio working copies](PORTFOLIO_WORKING_COPIES.md) for the complete operator workflow, recovery and existing native receiving course. The original allocation calculation, saved record identities and exports remain authoritative.
+
+
+## Schedule cash with financing and customer reservations
+
+The existing Portfolio now supports one explicit shared cash basis across the original saved Forecast and all entered schedule alternatives, with original, financed and customer-protected views. Complete editor/working-copy retention, selected financial frontier, common maturity assessment, report/CSV/JSON/export and original Forecast date selection are described in [Portfolio schedule and cash comparison](PORTFOLIO_CASH_COMPARISON.md). The choice is optional; existing saved Portfolio calculations and original cash fields remain unchanged when it is absent.

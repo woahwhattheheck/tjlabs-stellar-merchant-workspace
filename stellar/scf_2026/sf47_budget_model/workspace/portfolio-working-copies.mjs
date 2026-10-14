@@ -43,6 +43,11 @@ export function portfolioUnbase64(value){
 export async function portfolioDigest(bytes){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');}
 
 function rawProjection(s,parts,row){
+ if(parts[0]==='cashComparison'){
+  const key={portfolioCashBasis:'basis',portfolioCashMeasure:'measure',portfolioCashNote:'note'}[parts[1]];
+  if(!key||!s.draft)return null;
+  return {actual:s.draft.cashComparison?.[key]??'',expected:row.value,value:row.value,numeric:false};
+ }
  const profile=parts[0],a=profile==='base'?null:s.draft?.alternatives.find(x=>x.id===profile);
  if(!s.draft||profile!=='base'&&!a)return null;
  const p=a?{...s.draft,calendar:a.calendar??s.draft.calendar,resources:a.resources??s.draft.resources,tasks:a.tasks??s.draft.tasks,installationPlans:a.installationPlans??s.draft.installationPlans??[]}:s.draft;
