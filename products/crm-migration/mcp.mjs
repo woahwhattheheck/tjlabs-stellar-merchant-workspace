@@ -35,6 +35,7 @@ export class MerchantCrm{
  const end=Math.min(r.bytes.length,offset+limit);return {fileId:id,sha256:id,bytes:r.bytes.length,offset,nextOffset:end<r.bytes.length?end:null,contentBase64:r.bytes.subarray(offset,end).toString('base64')};}
  if(name==='merchant_crm_status'&&!c)return {workspace:args.workspace,state:'DISCONNECTED'};
  need(c,'CRM_DISCONNECTED','Connect the existing CRM application.',409);
+ if(name==='merchant_crm_hubspot'){const {workspace,action,...input}=args;need(['list','status','start','advance','adopt','adoption','export'].includes(action),'HUBSPOT_ACTION','Choose a declared read-only acquisition operation.');if(action!=='list')alias(input.id);return c.hubspot(action,['status','adoption'].includes(action)?input.id:input);}
  if(name==='merchant_crm_status')return c.status();
  if(name==='merchant_crm_browser')return c.browser();
  if(name==='merchant_crm_action'){need(['configure','compare','review','decide'].includes(args.operation?.kind),'CRM_ACTION','Choose an original mapping, comparison or review action.');const r=await c.apply(args.operation);return {receipt:r.receipt,reused:r.reused,revision:r.archive.workspace.revision,sha256:r.archive.sha256};}

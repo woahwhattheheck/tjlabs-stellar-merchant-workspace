@@ -120,7 +120,7 @@ starforge merchant-providers init crm-migration --options /private/crm-setup.jso
 starforge merchant-mcp-stdio --config /private/crm-merchant/merchant-mcp.json
 ~~~
 
-The source-owned provider exposes nine tools:
+The source-owned provider exposes ten tools:
 
 | Tool | Operation |
 | --- | --- |
@@ -143,3 +143,7 @@ The typed client exports CrmClient.connect(directory, {workspaceId, instanceId})
 README.md describes the standalone desk. docs/INPUT_CONTRACT.md, OPERATIONS.md and CUTOVER.md preserve the original semantic and lead-operating contracts. RECEIVING.md gives the complete installed course, including actual rendered use.
 
 The original pure core and whole course execute in V8. The integrated store also executed an actual lost-commit-response → replay → later comparison → original-operation replay course with injected file/lease primitives; the retained result states that runtime explicitly. The equipped Linux receiving course runs the actual filesystem, HTTP, Applications, merchant and browser integration.
+
+## HubSpot acquisition
+
+Use the existing CRM host with a private HubSpot declaration. [HUBSPOT.md](HUBSPOT.md) describes the complete account-bound capture, resume, adoption and download flow. The capture writes local source history under the existing store lease; the platform connection only reads the explicitly selected scope.

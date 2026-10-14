@@ -1,0 +1,24 @@
+{
+  "runtime": "V8 maintained host module with explicit in-memory filesystem, transport and clock substitutes",
+  "nativeFilesystemExecuted": false,
+  "liveHubSpotExecuted": false,
+  "sourcePages": 8,
+  "httpRequests": 19,
+  "savedFailures": [
+    "HUBSPOT_ACCOUNT_CHANGED",
+    "HUBSPOT_HTTP"
+  ],
+  "completeFiles": 24,
+  "originalResponseFiles": 19,
+  "sourceReplay": true,
+  "atomicIntakeRevision": 3,
+  "uncertainCommit": "EIO",
+  "originalRequestRetained": 3,
+  "reusedAfterLaterRevision": 4,
+  "changedStateRejected": "HUBSPOT_REPLAY_CHANGED",
+  "guardCalls": 143,
+  "exactIdsPreserved": {
+    "contacts": 2,
+    "companies": 2
+  }
+}

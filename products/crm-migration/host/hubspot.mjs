@@ -66,7 +66,15 @@ export function attachHubSpot({directory,workspaceId,guard,current,save,fetchImp
  async function files(id){
  const s=await read(id),path=await dir(id),out={'capture.json':json({sha256:capture.digest(s),capture:s}),'README.txt':'HubSpot read-only capture. Records were read over the recorded start/end window, not an atomic database snapshot. The complete configured active-record scope and each original response are retained. Missing and null values become empty CSV cells; the response originals retain that distinction. Preserve this archive with the migration workspace.\n'};
  for(const entry of await readdir(join(path,'responses'),{withFileTypes:true})){need(entry.isFile()&&/^[a-f0-9]{64}\.json$/.test(entry.name),'HUBSPOT_RESPONSE_FILE','Unexpected capture response member.');const r=await readBytes(join(path,'responses',entry.name));need(r.sha256===entry.name.slice(0,-5),'HUBSPOT_RESPONSE_CHANGED','An original retained response changed.',409);const v=JSON.parse(decode(r.bytes)),body=Buffer.from(v.bodyBase64,'base64');need(body.length===v.bodyBytes&&sha(body)===v.bodySha256,'HUBSPOT_BODY_CHANGED','Original response bytes differ.',409);out['responses/'+entry.name]=decode(r.bytes);}
- for(const r of s.accepted)need(out['responses/'+r.sha256+'.json'],'HUBSPOT_RESPONSE_MISSING','An accepted original response is missing.',409);
+ let replay=capture.create({captureId:s.id,connection:s.connection,portalId:s.portalId,workspaceId,plan:s.plan,at:s.startedAt});
+ for(const receipt of s.accepted){
+ const text=out['responses/'+receipt.sha256+'.json'];need(text,'HUBSPOT_RESPONSE_MISSING','An accepted original response is missing.',409);const raw=JSON.parse(text);
+ need(raw.captureId===s.id&&raw.workspaceId===workspaceId&&raw.portalId===s.portalId&&raw.status===200&&raw.bodySha256===receipt.bodySha256,'HUBSPOT_RESPONSE_BINDING','An accepted response does not belong to this original capture.',409);
+ const value=JSON.parse(decode(Buffer.from(raw.bodyBase64,'base64')));
+ if(raw.request.kind==='account')need(capture.id(value.portalId)===s.portalId,'HUBSPOT_ACCOUNT_CHANGED','Retained account identity differs.',409);
+ else replay=capture.accept(replay,raw.request,value,receipt,receipt.at);
+ }
+ for(const key of ['phase','objectIndex','familyIndex','after','seenCursors','properties','labels','objects','associations','queue'])need(capture.digest(replay[key])===capture.digest(s[key]),'HUBSPOT_REPLAY_CHANGED','The capture differs from its complete accepted original response replay.',409);
  if(s.phase==='complete')for(const [name,value]of Object.entries(capture.outputs(s)))out['derived/'+name]=value;
  try{out['adoption.json']=decode((await readBytes(join(path,'adoption.json'))).bytes);}catch(e){if(e.code!=='ENOENT')throw e;}
  return out;
@@ -95,6 +103,6 @@ export function attachHubSpot({directory,workspaceId,guard,current,save,fetchImp
  async list(){let c;try{c=await config();}catch(e){if(e.code!=='ENOENT')throw e;c={connections:{}};}return {connections:Object.entries(c.connections).map(([connection,v])=>({connection,portalId:v.portalId,plan:v.plan})),captures:await Promise.all((await names()).map(status))};},
  status,start,advance,adopt,files,
  async allFiles(){const out={};for(const id of await names())for(const [path,content]of Object.entries(await files(id)))out['hubspot-captures/'+id+'/'+path]=content;return out;},
- async adoption(id){return (await readJSON(join(await dir(id),'adoption.json'))).value;}
+ async adoption(id){try{return (await readJSON(join(await dir(id),'adoption.json'))).value;}catch(e){if(e.code==='ENOENT')return null;throw e;}}
  };
 }

@@ -46,7 +46,7 @@ function accept(original,req,data,receipt,at){
  s.properties[req.object]=data.results;
  if(++s.objectIndex===s.plan.objects.length){s.objectIndex=0;s.phase=s.plan.associations.length?'labels':'objects';}
  }else if(req.kind==='labels'){
- for(const x of data.results){need(['HUBSPOT_DEFINED','USER_DEFINED','INTEGRATOR_DEFINED'].includes(x.category)&&Number.isSafeInteger(x.typeId)&&x.typeId>=0,'Association label schema is invalid.');}
+ for(const x of data.results){need(['HUBSPOT_DEFINED','USER_DEFINED'].includes(x.category)&&Number.isSafeInteger(x.typeId)&&x.typeId>=0,'Association label schema is invalid.');}
  need(!data.paging?.next,'Unexpected association-schema pagination requires an explicit contract update.');s.labels[req.family]=data.results;
  if(++s.familyIndex===s.plan.associations.length){s.familyIndex=0;s.phase='objects';}
  }else if(req.kind==='objects'){
@@ -67,7 +67,7 @@ function accept(original,req,data,receipt,at){
  for(const originalItem of s.queue.slice(0,req.body.inputs.length)){
  const r=results.get(originalItem.id);
  for(const target of r.to){const to=id(target.toObjectId);need(Array.isArray(target.associationTypes)&&target.associationTypes.length>0,'Association target has no type identity.');
- for(const t of target.associationTypes){need(['HUBSPOT_DEFINED','USER_DEFINED','INTEGRATOR_DEFINED'].includes(t.category)&&Number.isSafeInteger(t.typeId)&&t.typeId>=0,'Association type identity is incomplete.');
+ for(const t of target.associationTypes){need(['HUBSPOT_DEFINED','USER_DEFINED'].includes(t.category)&&Number.isSafeInteger(t.typeId)&&t.typeId>=0,'Association type identity is incomplete.');
  const edge={from_id:originalItem.id,to_id:to,category:t.category,type_id:String(t.typeId),label:t.label??''},k=[edge.from_id,edge.to_id,edge.category,edge.type_id].join('|');
  need(!seen.has(k),'An association appeared twice during capture; preserve this window and start a fresh capture.');seen.add(k);edges.push(edge);}}
  const after=cursor(r.paging);if(after!==null){need(after!==originalItem.after&&!originalItem.seen.includes(after),'HubSpot repeated a source association cursor.');queue.push({id:originalItem.id,after,seen:[...originalItem.seen,after]});}}
