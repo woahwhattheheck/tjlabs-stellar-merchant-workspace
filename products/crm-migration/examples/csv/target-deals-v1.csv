@@ -1,0 +1,5 @@
+Record ID,dealname,pipeline,dealstage,amount,deal_currency_code,closedate
+3001,Mercury renewal,sales-2026,closedwon,1000.00,USD,2026-10-30
+3002,Harbor expansion,sales-2026,qualified,2500.05,USD,2026-11-15
+3003,Cedar support,sales-2026,qualified,850.00,USD,2026-11-20
+3004,Exact precision course,sales-2026,qualified,9007199254740993.01,USD,2026-12-01

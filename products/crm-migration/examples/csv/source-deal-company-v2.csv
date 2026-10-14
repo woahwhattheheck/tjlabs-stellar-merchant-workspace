@@ -1,0 +1,5 @@
+from_id,to_id,relation
+D001,AC01,primary
+D002,AC02,primary
+D003,AC03,primary
+D004,AC01,primary

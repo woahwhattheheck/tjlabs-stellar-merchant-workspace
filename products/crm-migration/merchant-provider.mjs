@@ -1,0 +1,7 @@
+// MIT. Source-owned Merchant registry integration.
+import {defineMerchantProvider,MERCHANT_PROVIDER_SCHEMA} from '../../stellar-forge/mcp-merchant-operator/provider-contract.mjs';
+import {crmTools} from './tools.mjs';
+export default defineMerchantProvider({schema:MERCHANT_PROVIDER_SCHEMA,id:'crm-migration',family:'crmMigration',title:'CRM migration review',order:1120,catalogOrder:1120,configKey:'crmMigration',summary:true,dependencies:[],
+ configuration:{input:'crmMigrationConnection',privateExports:true,read:async(value,{hostPath})=>(await import('./mcp.mjs')).readCrmConfiguration(hostPath(value))},
+ tools:crmTools,load:()=>import('./mcp.mjs'),create:(m,c)=>new m.MerchantCrm(c),initialize:async o=>(await import('./setup.mjs')).initializeMerchant(o),maxRequestBytes:2*1024*1024,
+ instructions:[{prefix:'merchant_crm_',order:1120,text:'Connect the declared original CRM workspace started by Applications. Retain every operation ID, actor, timestamp, expected revision and complete payload before applying. After transport uncertainty, replay that exact operation; the original writer retains its outcome and later work. Inputs are complete host-declared CSVs at their selected hashes. Mapping editions, observed target data, directed association types, findings and lead decisions stay in the original model. Export the whole original workspace and read every byte through file/nextOffset; file receiving remains available after the application stops. Disconnect closes only this attachment. Applications Stop drains the original server and writer.'}]});

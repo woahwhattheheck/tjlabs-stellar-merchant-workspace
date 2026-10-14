@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "crm-migration",
+  "description": "Complete CRM original-export, directed-association review and customer receiving workspace",
+  "components": [
+    "products/crm-migration"
+  ],
+  "commands": {
+    "crm-migration": "products/crm-migration/cli.mjs",
+    "crm-managed": "products/crm-migration/managed.mjs"
+  },
+  "commandDescriptions": {
+    "crm-migration": "Create, receive, compare and export complete CRM migration workspaces",
+    "crm-managed": "Open the original CRM workspace through Applications and agent tools"
+  },
+  "exports": {
+    "./products/crm-migration": "./source/products/crm-migration/runtime/crm-runtime.cjs",
+    "./products/crm-migration/client": "./source/products/crm-migration/host/client.mjs",
+    "./products/crm-migration/server": "./source/products/crm-migration/host/server.mjs"
+  },
+  "applicationProviders": {
+    "crm-migration": "products/crm-migration/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "crm-migration": "products/crm-migration/merchant-provider.mjs"
+  }
+}
