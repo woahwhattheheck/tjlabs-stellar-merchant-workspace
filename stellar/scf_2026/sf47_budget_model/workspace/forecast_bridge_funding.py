@@ -84,12 +84,18 @@ def normalize(context, raw, as_of, last):
     return {"facilities": result, "note": text(raw.get("note", ""), "Bridge funding note", 8000)}
 
 
-def build(report, inputs):
+def build(report, inputs, *, assessment_end=None):
     """Keep original cash/expense results intact; append an explicit financing view."""
     issues, facilities, events, debt_days = [], [], [], []
     grouped = defaultdict(lambda: defaultdict(lambda: ZERO))
     as_of = report["asOfDate"]
     all_stamps = [as_of, report["lastForecastDate"], *[e["date"] for f in inputs["facilities"] for e in f["events"] if e["date"]]]
+    if assessment_end is not None:
+        # Explicit caller window; absent keeps every original saved Forecast exact.
+        stamp = domain.calendar(assessment_end, "Facility assessment end")
+        if stamp < max(all_stamps):
+            domain.fail("The facility assessment cannot omit original dated cash.", "INVALID_FORECAST_BRIDGE")
+        all_stamps.append(stamp)
     cash_complete, debt_complete = True, True
 
     def issue(code, fid, message, eid=None):

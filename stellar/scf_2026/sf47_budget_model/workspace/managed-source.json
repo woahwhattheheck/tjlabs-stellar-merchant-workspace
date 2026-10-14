@@ -1257,6 +1257,9 @@
     "../../../../products/material-catalog/commissioning/FOLLOWING_INSTALLATION.md",
     "forecast_bridge_funding.py",
     "forecast-bridge-funding.mjs",
-    "FORECAST_BRIDGE_FUNDING.md"
+    "FORECAST_BRIDGE_FUNDING.md",
+    "portfolio_cash_comparison.py",
+    "portfolio-cash-comparison.mjs",
+    "PORTFOLIO_CASH_COMPARISON.md"
   ]
 }

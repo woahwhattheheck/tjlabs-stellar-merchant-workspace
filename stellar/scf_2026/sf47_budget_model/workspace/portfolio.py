@@ -21,6 +21,7 @@ import operations_domain as domain
 import forecast as forecasts
 import portfolio_schedule as allocation
 import portfolio_installations as installation_plans
+import portfolio_cash_comparison as cash_comparison
 
 SCHEMA = "stellar-forge.sf47-portfolio.v1"
 ENGINE_VERSION = 1
@@ -236,7 +237,7 @@ def effort_size(fields):
 
 
 def normalize(context, saved, raw):
-    raw = obj(raw, {"schema", "name", "forecastId", "forecastSha256", *FIELDS, "alternatives", "note"}, "Portfolio")
+    raw = obj(raw, {"schema", "name", "forecastId", "forecastSha256", *FIELDS, "alternatives", "note", "cashComparison"}, "Portfolio")
     if raw.get("schema") != SCHEMA:
         fail("Use the supported portfolio schema.")
     if raw.get("forecastId") != saved["id"] or raw.get("forecastSha256") != saved["sha256"]:
@@ -263,7 +264,8 @@ def normalize(context, saved, raw):
         fail("The complete comparison exceeds 3,000,000 task-resource dates. Shorten its horizon or reduce the alternatives.")
     return {"schema": SCHEMA, "name": text(raw.get("name"), "Portfolio name", 300, True),
             "forecastId": saved["id"], "forecastSha256": saved["sha256"], **fields,
-            "alternatives": alternatives, "note": text(raw.get("note", ""), "Portfolio basis", 12000)}
+            "alternatives": alternatives, "note": text(raw.get("note", ""), "Portfolio basis", 12000),
+            **({"cashComparison": cash_comparison.normalize(raw["cashComparison"])} if "cashComparison" in raw else {})}
 
 
 def seed(context, saved, installation_selections=None, draft_inputs=None, include_inventory=False):
@@ -665,6 +667,8 @@ def build(context, saved, inputs):
             "eligibleAlternativeIds": [row["id"] for row in comparable],
             "excludedAlternativeIds": [row["id"] for row in alternatives if row["id"] not in {item["id"] for item in comparable}],
             "basis": result["comparisonBasis"]}
+    if "cashComparison" in inputs:
+        cash_comparison.apply(result, saved, inputs["cashComparison"], forecasts.MAX_DAYS)
     return result
 
 def preview(context, saved, raw):
@@ -709,7 +713,9 @@ def summary(value):
         "readyAlternatives": sum(row["status"] == "READY" for row in value["report"]["alternatives"]),
         "comparison": deepcopy(value["report"]["comparison"]),
         **({"financialComparison": deepcopy(value["report"]["financialComparison"])}
-           if "financialComparison" in value["report"] else {})}
+           if "financialComparison" in value["report"] else {}),
+        **({"cashComparison": deepcopy(value["report"]["cashComparison"])}
+           if "cashComparison" in value["report"] else {})}
 
 
 def select(context, value, alternative_id):
@@ -735,7 +741,11 @@ def select(context, value, alternative_id):
         "alternativeId": row["id"], "baseForecast": value["baseForecast"], "source": forecasts.source_identity(context),
         "previewSha256": candidate["previewSha256"], "chosenDates": deepcopy(row["chosenDates"]),
         **({"installationSource": selected_source, "installationPlans": deepcopy(row.get(installation_plans.FIELD, []))}
-           if selected_source is not None else {})}}
+           if selected_source is not None else {}),
+        **({"cashComparison": {"choice": deepcopy(value["inputs"]["cashComparison"]),
+            "assessmentEndDate": value["report"]["cashComparison"]["assessmentEndDate"],
+            "selectedCash": deepcopy(row["summary"]["cashComparison"]["selected"])}}
+           if "cashComparison" in value["inputs"] else {})}}
 
 
 def report_html(value):
@@ -744,22 +754,31 @@ def report_html(value):
         head = "".join("<th>" + escape(label) + "</th>" for key, label in columns)
         body = "".join("<tr>" + "".join("<td>" + escape("" if row.get(key) is None else str(row[key])) + "</td>" for key, label in columns) + "</tr>" for row in rows)
         return "<div class='scroll'><table><thead><tr>" + head + "</tr></thead><tbody>" + body + "</tbody></table></div>"
+    selected_cash = "cashComparison" in report
+    comparison_columns = ([("name","Alternative"),("status","State"),("finishDate","Finish"),("lateTasks","Late tasks"),
+        ("cashBasis","Selected basis"),("cashMeasure","Selected measure"),("selectedCashValueUsd","Selected cash USD"),
+        ("selectedCashDeltaUsd","Selected change USD"),("frontier","Selected financial frontier")] if selected_cash else
+        [("name","Alternative"),("status","State"),("finishDate","Finish"),("totalHours","Hours"),("lateTasks","Late tasks"),
+         ("additionalCashNeededUsd","Funding need USD"),("fundingNeedDeltaUsd","Change USD"),("frontier","Comparison frontier")])
+    comparison_rows = [{**row, "selectedCashValueUsd": ("Unresolved" if not row.get("selectedCash") or row["selectedCash"]["comparisonValueUsd"] is None else row["selectedCash"]["comparisonValueUsd"])}
+        for row in report["comparison"]] if selected_cash else report["comparison"]
     parts = ["<!doctype html><html lang='en'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>",
         "<title>" + escape(value["inputs"]["name"]) + "</title><style>body{font:15px/1.5 system-ui,sans-serif;color:#202020;background:#fafafa;max-width:1200px;margin:32px auto;padding:0 24px}h1,h2{line-height:1.2}h2{margin-top:36px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#e9e9e9}.scroll{overflow:auto}code{overflow-wrap:anywhere}p{max-width:95ch}a{color:#222}</style><body>",
         "<h1>" + escape(value["inputs"]["name"]) + "</h1><p>Original forecast: <code>" + escape(value["baseForecast"]["id"]) + "</code>. Saved allocation: <code>" + escape(value["id"]) + "</code>.</p>",
         "<p>" + escape(report["paymentTimingBasis"]) + "</p><p>" + escape(value["inputs"]["note"]) + "</p>",
         "<h2>Delivery and cash comparison</h2>",
-        table([("name","Alternative"),("status","State"),("finishDate","Finish"),("totalHours","Hours"),("lateTasks","Late tasks"),
-               ("additionalCashNeededUsd","Funding need USD"),("fundingNeedDeltaUsd","Change USD"),("frontier","Comparison frontier")], report["comparison"]),
+        table(comparison_columns, comparison_rows),
         "<p>Original dated forecast finishes " + escape(report["baseline"]["finishDate"]) + ", with " + str(report["baseline"]["overloadedDays"]) + " calendar dates above its original weekly-equivalent capacity. " + escape(report["comparisonBasis"]) + "</p>"]
     if "financialComparison" in report:
         parts.append("<h2>Financial comparison eligibility</h2>" + table([
             ("name","Alternative"),("financialComparisonEligible","Eligible"),
-            ("financialComparisonReason","Reason"),("fundingNeedDeltaUsd","Funding change USD"),
+            ("financialComparisonReason","Reason"),("selectedCashDeltaUsd" if selected_cash else "fundingNeedDeltaUsd","Selected cash change USD" if selected_cash else "Funding change USD"),
             ("frontier","Financial frontier")],
             [{**row, "fundingNeedDeltaUsd": "Unvalued" if row.get("fundingNeedDeltaUsd") is None else row["fundingNeedDeltaUsd"],
               "frontier": "Excluded" if row.get("frontier") is None else row["frontier"]} for row in report["comparison"]]))
         parts.append(currency_report_html(value["baseForecastSnapshot"]["report"], table))
+    if "cashComparison" in report:
+        parts.append(cash_comparison.report_html(value, table))
     for row in report["alternatives"]:
         parts.extend(["<h2>" + escape(row["name"]) + "</h2><p>" + escape(row["note"]) + "</p>"])
         if row["findings"]:
@@ -869,6 +888,10 @@ def export(value):
                 (["knownCommercialDeltaUsd","knownCommercialBalanceUsd"] if "currencyValuation" in report else []), report["days"])
             files[prefix + "cash-events.csv"] = csv_bytes(["date","kind","id","title","amountUsd","conditional","commercialId"], report["events"])
     files.update(installation_plans.export_files(value))
+    files.update(cash_comparison.export_files(value))
+    if "cashComparison" in value["report"]:
+        # The main recipient CSV uses the same measure as its financial frontier.
+        files["comparison.csv"] = files["cash-comparison/comparison.csv"]
     manifest = {"schema": SCHEMA + ".bundle", "portfolioId": value["id"], "portfolioSha256": value["sha256"],
         "files": [{"path": name, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()} for name, raw in sorted(files.items())]}
     files["MANIFEST.json"] = (canonical(manifest) + "\n").encode()

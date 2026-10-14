@@ -2788,6 +2788,42 @@ export interface GrantPortfolioAlternative {
   /** Complete replacement; [] uses aggregate tasks. Seed preserves this authored override. */
   installationPlans?: GrantPortfolioInstallationPlan[];
 }
+/** One common cash comparison for the source and every entered allocation. */
+export type GrantPortfolioCashBasis = 'SPENDING' | 'GRANT' | 'COMMERCIAL' | 'PROTECTED' |
+  'FINANCED_SPENDING' | 'FINANCED_GRANT' | 'FINANCED_COMMERCIAL' | 'FINANCED_PROTECTED';
+export interface GrantPortfolioCashChoice {
+  basis: GrantPortfolioCashBasis;
+  measure: 'REQUIRED_STARTING_CASH' | 'GAP_AFTER_OPENING';
+  note: string;
+}
+export interface GrantPortfolioCashCurve extends GrantObject {
+  basis: GrantPortfolioCashBasis;
+  label: string;
+  available: boolean;
+  datedCashComplete: boolean;
+  requiredStartingCashUsd: string | null;
+  extraFundingAfterOpeningUsd: string | null;
+  comparisonValueUsd: string | null;
+  endAvailableCashUsd: string | null;
+  peakNeedDate: GrantCivilDate | null;
+  lastForecastDate: GrantCivilDate | null;
+  financialComparisonEligible: boolean;
+  reasons: Array<{code: string; message: string}>;
+  knownPortion: GrantObject;
+  creditFeasibility: 'EXCEEDS' | 'UNRESOLVED' | 'WITHIN_ENTERED_OUTSTANDING_CAP' | null;
+  endingPrincipalUsd: string | null;
+}
+export interface GrantPortfolioCashProjection extends GrantObject {
+  schema: 'stellar-forge.portfolio-cash-comparison.v1';
+  choice: GrantPortfolioCashChoice;
+  selected: GrantPortfolioCashCurve;
+  curves: GrantPortfolioCashCurve[];
+  days: GrantObject[];
+  originalForecastEndDate: GrantCivilDate;
+  assessmentEndDate: GrantCivilDate;
+  /** Exact original bridge calculator over the common explicit window; source Forecast remains unchanged. */
+  assessedBridge: GrantObject | null;
+}
 export interface GrantPortfolioInputs extends GrantObject {
   schema: 'stellar-forge.sf47-portfolio.v1';
   name: string;
@@ -2799,6 +2835,8 @@ export interface GrantPortfolioInputs extends GrantObject {
   installationPlans?: GrantPortfolioInstallationPlan[];
   alternatives: GrantPortfolioAlternative[];
   note: string;
+  /** Omitted preserves the original saved Portfolio calculation byte-for-byte. */
+  cashComparison?: GrantPortfolioCashChoice;
 }
 export interface GrantPortfolioForecastRef {
   id: string;
@@ -2849,6 +2887,7 @@ export interface GrantPortfolioChosenDates extends GrantObject {
   endShiftDays: number | null;
 }
 export interface GrantPortfolioAlternativeSummary extends GrantObject {
+  cashComparison?: GrantPortfolioCashProjection;
   phaseLateTasks?: number;
   sourceTasks?: number;
 }
@@ -2865,6 +2904,7 @@ export interface GrantPortfolioAlternativeResult extends GrantObject {
   installationPlans?: GrantPortfolioInstallationPlanResult[];
 }
 export interface GrantPortfolioReport extends GrantObject {
+  cashComparison?: {schema: 'stellar-forge.portfolio-cash-comparison.v1'; choice: GrantPortfolioCashChoice; assessmentEndDate: GrantCivilDate; baselineEligible: boolean; eligibleAlternativeIds: string[]; excludedAlternativeIds: string[]; basis: string};
   sourceTasks: GrantPortfolioSourceTask[];
   baseline: GrantObject;
   alternatives: GrantPortfolioAlternativeResult[];
