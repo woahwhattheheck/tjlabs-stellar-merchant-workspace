@@ -1,0 +1,807 @@
+{
+  "schema": "stellar-forge.grant-product-registration.v1",
+  "id": "record-mastering",
+  "heading": "## Record Mastering: source decisions, customer deliveries and retained-edition comparison",
+  "sources": [
+    {
+      "id": "record-mastering-distribution-selections-record-mastering-workspace-json",
+      "label": "Record Mastering: selections/record-mastering-workspace.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/selections/record-mastering-workspace.json",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "347d39fe1196a157031d24dca42019ffdc874346",
+          "bytes": 11185,
+          "sha256": "6840a9b28310bf54357743564ec3da3ebc43ca7a9b28f32f48063cb269600de2"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-distribution-contributions-record-mastering-json",
+      "label": "Record Mastering: contributions/record-mastering.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/record-mastering.json",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "61e7352e11e96d2354f6a8aa41bada1486142ec1",
+          "bytes": 1276,
+          "sha256": "d0bcd9aa71db599643e39ede0c745d62ed6fcda7899fa74fdda4c2a4d5f5bf38"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-distribution-contributions-record-mastering-workspace-json",
+      "label": "Record Mastering: contributions/record-mastering-workspace.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/distribution/contributions/record-mastering-workspace.json",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "67f8aec49e62e8b713840d7e33ebb75124ae4914",
+          "bytes": 643,
+          "sha256": "fef33995cc29f019a7c2653c2ca6bb15b80ef82ebdb2d259e97435f2ac001398"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-product-receiving-readme-md",
+      "label": "Record Mastering: receiving/README.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/record-mastering/receiving/README.md",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "2b02f1cc4be3983fcc439b436bd8630abcc621f1",
+          "bytes": 7715,
+          "sha256": "7f56e612018fe94e25be03813240a501b91dc98dd50464eac16c5a50180beade"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-product-operating-md",
+      "label": "Record Mastering: OPERATING.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/record-mastering/OPERATING.md",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "aa30c6cd6d76d1ab0ac824d9e45e4cf106c1626a",
+          "bytes": 18505,
+          "sha256": "c178a05ed099a27c5d79b1ea8f6650612df3135004daf47ec9f56012408dcb41"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-product-cli-mjs",
+      "label": "Record Mastering: cli.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/record-mastering/cli.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "2c33585f1314260c517a5a1c93c13274259da795",
+          "bytes": 4874,
+          "sha256": "0afb7cbe6bfa11b0463aa1bf38d1b2ecb31508981c48f53b3652134aa4a8feb4"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-product-workspace-mjs",
+      "label": "Record Mastering: workspace.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/record-mastering/workspace.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "2ea4dddbcf2027539c66667f47a57fea93547866",
+          "bytes": 19277,
+          "sha256": "e576b733affc859059981062c511b7a667c1e5690f8ded762333b5de7910fcb7"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-product-receiving-installed-receiving-mjs",
+      "label": "Record Mastering: receiving/installed-receiving.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/record-mastering/receiving/installed-receiving.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "eaa2ca6419f32df73a80943674663e7519a2899f",
+          "bytes": 30990,
+          "sha256": "17f40b105fbb13285131598fb1f970d0cdb18f1f63dc295ddab7e9bcdcfcfd77"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-product-receiving-preparation-example-json",
+      "label": "Record Mastering: receiving/preparation.example.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/record-mastering/receiving/preparation.example.json",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "e65833100e5c499720dbf76e02ab2a11d5eda6e6",
+          "bytes": 641,
+          "sha256": "e0831b8368bbffe2562b7b39041389f50c3fba3c997149210d614461396ae42c"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-product-receiving-prepare-installed-mjs",
+      "label": "Record Mastering: receiving/prepare-installed.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/record-mastering/receiving/prepare-installed.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "25fe5a435e8e10556708ec76a18ad891fcf642d2",
+          "bytes": 9394,
+          "sha256": "44b985fb34528a80acf0f8e427f87a60f6c8435a74974c95b7391d372c4551da"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-exercise-mjs",
+      "label": "Record Mastering: EXERCISE.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/EXERCISE.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "b385f7d927f99767f7df4caf44c13ce44164dde2",
+          "bytes": 10126,
+          "sha256": "46500963b99b124f383c23ecff03a74e78a0929dede88e2de202b4220d7b431f"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-license",
+      "label": "Record Mastering: LICENSE",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/LICENSE",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "abbdfa2906fbca24096151f0575330d7c0f3b2cb",
+          "bytes": 1074,
+          "sha256": "a013def64d46550c0c51c20e2280341720fe6fc1847021d8bf5f2e97b1a99d77"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-readme-md",
+      "label": "Record Mastering: README.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/README.md",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "78b4de2894e2f6e031113a258c474f5a6c1deba8",
+          "bytes": 14680,
+          "sha256": "77afa6b8dc28463b7b499c9c4309215c551cbeca0cc920a129c6f4913974af3f"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-application-provider-mjs",
+      "label": "Record Mastering: application-provider.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/application-provider.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "9bc5d0a22e0116073f79772b48d0c522c95747f7",
+          "bytes": 948,
+          "sha256": "6e1f4f7454556740f7bab9e0a395e5d49bf3aa3d5b8768ce9a10dbcf8fc7f2bb"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-application-mjs",
+      "label": "Record Mastering: application.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/application.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "6023ca2b4fddeb806b49749cb4f6622f296a8e47",
+          "bytes": 5740,
+          "sha256": "9b3f762d4b1584e9187f6914b10553d79485abd770d445d924eb68fe9741e64c"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-browser-assets-json",
+      "label": "Record Mastering: browser-assets.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/browser-assets.json",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "bea2d0b8a3a92fb9deaa21099ae1e56a0eaffd4e",
+          "bytes": 470,
+          "sha256": "60cadf944fdc2fd49a50725c6c8dd620a8b1fe5d47d0c247a1228ecf15f8bc62"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-cli-mjs",
+      "label": "Record Mastering: cli.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/cli.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "068b60dff77b810c60d57b2475fa2385aecffb4a",
+          "bytes": 8155,
+          "sha256": "ed031a3e9713b553e63d7b5a057c178436d8c7f509dddb1765d8e82511264858"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-client-d-mts",
+      "label": "Record Mastering: client.d.mts",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/client.d.mts",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "bae325e9c3408a591ef89c9e9e53b741eb1bab83",
+          "bytes": 12787,
+          "sha256": "ed70bca6ea2560caeeae1cab0f98b023fe698cee0b0467a21bfffa9336b9d175"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-client-mjs",
+      "label": "Record Mastering: client.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/client.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "f45d197ae1c3c930bc6e1e07531fa84854199891",
+          "bytes": 1580,
+          "sha256": "32948b04742823211ae555fd9a3d4a4ffb3e58474000382e62cc3862d9874e73"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-core-mjs",
+      "label": "Record Mastering: core.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/core.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "16f1bb600e32c2f4e8db3bcc86a902ffcfc241d5",
+          "bytes": 34506,
+          "sha256": "35fb1310d4a3c79394e9a2bdf5418fa419ab6273f27da6b3306788f1aa8368da"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-csv-mjs",
+      "label": "Record Mastering: csv.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/csv.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "69ab48d3d770c008140415a42d580753961b00d1",
+          "bytes": 2434,
+          "sha256": "e0152ec7bfaa1c9a49d7e49e65586cc26f8c481cab731cd2051c322eeec9d5a5"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-example-workspace-mjs",
+      "label": "Record Mastering: example-workspace.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/example-workspace.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "926446a526185ab02f049a87391d8543ae104cec",
+          "bytes": 3377,
+          "sha256": "117f7d12cf5bca514175eee12c5c94470fc7363ebdc168f302b8063013589ea0"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-launch-example-mjs",
+      "label": "Record Mastering: launch-example.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/launch-example.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "cfa368a1236a31ea70e22ab01a2b1327c95c237f",
+          "bytes": 1649,
+          "sha256": "745bb63f20ec7353da9d490a26f1827750369d9e6e376e8ff3fc50f363cb4e10"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-mcp-tools-mjs",
+      "label": "Record Mastering: mcp-tools.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/mcp-tools.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "015341e95a9ea1641e72d66d835e3c8b2682131c",
+          "bytes": 3836,
+          "sha256": "8c36ea67831f12617900f22ffc2d9cef02a04c97c426fe8fd90047480122a0ea"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-mcp-mjs",
+      "label": "Record Mastering: mcp.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/mcp.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "0f64ec8d4c6e987ec9b287c868a2b2cffe360e14",
+          "bytes": 19029,
+          "sha256": "d1d8d451e30d44cfd502cc2eed6baec305554b64110d49cde03ce56ec2defb40"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-merchant-provider-mjs",
+      "label": "Record Mastering: merchant-provider.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/merchant-provider.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "b9b69adc17c2fd805d2cb42e0c4e7498e5f4d3c4",
+          "bytes": 1999,
+          "sha256": "5ebce0024021f12b3873e8b7e6e09445f8946022fee966a22422e2ab55448402"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-package-json",
+      "label": "Record Mastering: package.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/package.json",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "b5ec3a4566f99473b53b21636f0794ffe139e984",
+          "bytes": 629,
+          "sha256": "a3e7f84659f01ada1be966ead38f88b3b50e6e154d2b2d87e9c5be438dc769fd"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-packet-reader-mjs",
+      "label": "Record Mastering: packet-reader.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/packet-reader.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "12eb9d404dbc39ce4f2421ae659c5c721cb2b791",
+          "bytes": 5077,
+          "sha256": "eda6b964d713ec435862e58fc11266331470f0e31aa0d367ace34cee0d5abbcf"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-portable-mjs",
+      "label": "Record Mastering: portable.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/portable.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "699b2b322d834f24243067b1bd98c88d19dbe02e",
+          "bytes": 14281,
+          "sha256": "d62f8e9cc924e61a67db600b12e9c5c0e1e72eef3f587b2172daebbdfaecf84c"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-projection-mjs",
+      "label": "Record Mastering: projection.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/projection.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "eca6de40ac9b826f9873511e06eafd9047ba0acc",
+          "bytes": 9604,
+          "sha256": "71e0ad212699e3da74af342179c65d30d1efaabb1947f8256956487474e17835"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-schema-sql",
+      "label": "Record Mastering: schema.sql",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/schema.sql",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "5209cd49b18a7abe814841a94e803c5d51d01dc1",
+          "bytes": 2421,
+          "sha256": "ebda8fef06489e74c197c10364846e76ed9277033933418413902027802fc43e"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-server-mjs",
+      "label": "Record Mastering: server.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/server.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "4f5d329cea50f5bea6fcc63d76fdb2961ab04a72",
+          "bytes": 6867,
+          "sha256": "2f3af612c689cf71ff029b5c8e33fe4b7affb2a64cd39b348afaae2cb1e6a96c"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-example-example-md",
+      "label": "Record Mastering: example/EXAMPLE.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/example/EXAMPLE.md",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "a087ff5679f48a5cc580cea15029830a61669a48",
+          "bytes": 980,
+          "sha256": "a5013658f8399a3501fcad156436e37d264c9fe11f4b37b767c4fb3a98c17ed6"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-example-billing-corrections-csv",
+      "label": "Record Mastering: example/billing-corrections.csv",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/example/billing-corrections.csv",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "b2a80eb609569c6e6c75bf19d25b17bc0d31e789",
+          "bytes": 380,
+          "sha256": "ec00515866754f2e34eba6bc348808c380a8135176785cb235305a38e9f686a8"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-example-billing-csv",
+      "label": "Record Mastering: example/billing.csv",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/example/billing.csv",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "05638c5415f86634379f226a2daed97083ca8134",
+          "bytes": 386,
+          "sha256": "81697fc3d6eae5a30e181f731c6a84281180f8adfd73e4937f646d14feed8046"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-example-crm-csv",
+      "label": "Record Mastering: example/crm.csv",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/example/crm.csv",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "b77cbae770f0a536dbf5c9427a095cadd77d2cd0",
+          "bytes": 607,
+          "sha256": "3d24537bbe7c49d1b1623437498a1919b6a4c29071074dbbae40db5c1b25c5be"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-example-customer-delivery-gz",
+      "label": "Record Mastering: example/customer-delivery.gz",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/example/customer-delivery.gz",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "c163acb2517c4c34be1747b4ac53422165fc9503",
+          "bytes": 7205,
+          "sha256": "16b23c27e19e556d786c63a809cbcd49593cd567aacadf90b43eeb1ffb94e2e8"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-ui-app-js",
+      "label": "Record Mastering: ui/app.js",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/ui/app.js",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "9795ac5b2792aac9dc6eab12442fb0265b341f20",
+          "bytes": 26849,
+          "sha256": "53353df6a4368f6c4e2163c20ed3fcb1886de776f6f633abcfbe44309e57f7f0"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-ui-index-html",
+      "label": "Record Mastering: ui/index.html",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/ui/index.html",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "fdef093891ef16affe9bbc491846c5e054bb1eca",
+          "bytes": 1291,
+          "sha256": "2910942800627176672df813ca9526e48890e8ced4f080e3f4b178a1d3d7c695"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-ui-style-css",
+      "label": "Record Mastering: ui/style.css",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/ui/style.css",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "88ad561577faf63ac0defc5fa799d2a93fd21c6a",
+          "bytes": 7278,
+          "sha256": "c45c9e4a021515158272695f1e3465693af5d55c6c7b7e0f69c49bdeca83fcd4"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-product-receiving-application-lifetime-mjs",
+      "label": "Record Mastering: receiving/application-lifetime.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/record-mastering/receiving/application-lifetime.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "4a60c4a6ec103734b97884d8b1b0c2a278090bbb",
+          "bytes": 9445,
+          "sha256": "8d1446a3deee42c5e1297bdfd299fa2f6c91fc35a438ea4e1e9db0512e51dc36"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-product-packagereadme-md",
+      "label": "Record Mastering: PACKAGE_README.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/record-mastering/PACKAGE_README.md",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "e9ff761c71e883c013bcc84a189403adde2888be",
+          "bytes": 10795,
+          "sha256": "ffdbe3c96aaa79440f2efab1a575a475e9d47092dfa586a532561cd00d8419e5"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-product-agents-md",
+      "label": "Record Mastering: AGENTS.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/record-mastering/AGENTS.md",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "39bdd68cb84f6ffb4ee49cb1960185d1c6acda96",
+          "bytes": 4994,
+          "sha256": "dd6c11227fed17fd81b18a456a41e36abe30e7103ab190733444120d5837d527"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-product-publicsource-json",
+      "label": "Record Mastering: PUBLIC_SOURCE.json",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/record-mastering/PUBLIC_SOURCE.json",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "4d7fed9968d2c02ca31384321d426164e6ff1917",
+          "bytes": 35367,
+          "sha256": "826b78e794133e534138b10a945e95aaa08852ad04fce992673d0a27a828ca64"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-delivery-comparison-mjs",
+      "label": "Record Mastering: delivery-comparison.mjs",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/delivery-comparison.mjs",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "4bd3069921f5366eb1bd0f22a3f84c6486ff2506",
+          "bytes": 12024,
+          "sha256": "6389e5527b08e941ab7687c929dfe5641ebfed696eecd150f21b6447f6dd60df"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-ui-delivery-comparison-js",
+      "label": "Record Mastering: ui/delivery-comparison.js",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/ui/delivery-comparison.js",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "6d8b66fb7f8bbcae62fda45dc61949187c218a06",
+          "bytes": 9886,
+          "sha256": "8bcf82126f34a3e5179cdd7f81ff02a8ede7e774346252a653a0e89986cb58f1"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-native-deliverycomparison-md",
+      "label": "Record Mastering: DELIVERY_COMPARISON.md",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/record-mastering/DELIVERY_COMPARISON.md",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "d2eff1d76b3449eb7432e8926d318b77c404b980",
+          "bytes": 7260,
+          "sha256": "2825061d29d81aaaca023d3351861ccb702336ca4ea22812817b89aeaa74ff3e"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-installed-source-adoption",
+      "label": "Exact installed adoption of the complete public 47-file edition",
+      "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "kind": "blob",
+      "path": "products/record-mastering/SOURCE_ADOPTION.json",
+      "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+      "editions": [
+        {
+          "commit": "7d86cb3153e42951ea98cab837f91c041f4c217e",
+          "git_blob": "664d380d1024ec8f741bd44ee1b6b60392915607",
+          "bytes": 20161,
+          "sha256": "d17087df82fb8992446c4913015006fe5c6e57c20a716e3ae150b89628bbf5c8"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-complete-comparison-source",
+      "label": "Complete 47-file original product and comparison source",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "operations/record-mastering-delivery-comparison-20261014/source.json",
+      "commit": "62b2c75caf7f96ffb255e82176901c9ebe8e4a8d",
+      "editions": [
+        {
+          "commit": "62b2c75caf7f96ffb255e82176901c9ebe8e4a8d",
+          "git_blob": "b9a024feb2fc1379ebf0f9562d764f1fe4847697",
+          "bytes": 596968,
+          "sha256": "58be0737d1b833e8aea840d437636efb4e6ead44f0bab6012d13a1e12bf8f630"
+        }
+      ]
+    },
+    {
+      "id": "record-mastering-pre-comparison-source-lineage",
+      "label": "Retained preceding 44-file source and original 40-file lineage",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "path": "products/record-mastering/PUBLIC_SOURCE.json",
+      "commit": "8332857124fc0fd2b8b4409be9ee83ee3fb163f7",
+      "editions": [
+        {
+          "commit": "8332857124fc0fd2b8b4409be9ee83ee3fb163f7",
+          "git_blob": "d78930575fec2643066d332db79b620f998599a1",
+          "bytes": 23559,
+          "sha256": "9ece4ada5f3527879841e337837b8c645ab8872f579811d802e7f089c721812e"
+        }
+      ]
+    }
+  ]
+}
