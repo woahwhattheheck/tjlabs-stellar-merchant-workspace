@@ -18,8 +18,8 @@ import uuid
 HERE = Path(__file__).resolve().parent
 READY = "stellar-forge.project-portfolio-ready.v1"
 SELECTION = "stellar-forge.project-portfolio-selection.v1"
-SOURCE_COMMIT = "2f54dcabe790af0af23cccde2064fa0a82a46864"
-SOURCE_TREE = "d44a15111bd02cb7fd40a50e98d850e6c1187487"
+SOURCE_COMMIT = "d83cfee4a02d794ec81b22b7b131ab5426724cb8"
+SOURCE_TREE = "605e61aad1cc971c329a6da22ba8408f626d0e55"
 
 
 def need(value, message):

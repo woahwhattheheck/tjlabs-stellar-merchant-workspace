@@ -1,8 +1,8 @@
 {
   "schema": "stellar-forge.project-portfolio-source-adoption.v1",
   "repository": "woahwhattheheck/public-commons-sprint-2026",
-  "commit": "2f54dcabe790af0af23cccde2064fa0a82a46864",
-  "productTree": "d44a15111bd02cb7fd40a50e98d850e6c1187487",
+  "commit": "d83cfee4a02d794ec81b22b7b131ab5426724cb8",
+  "productTree": "605e61aad1cc971c329a6da22ba8408f626d0e55",
   "sourceDirectory": "services/project-portfolio-migration",
   "files": [
     {
@@ -19,9 +19,9 @@
     },
     {
       "path": "archive/COMPARISON.md",
-      "bytes": 9204,
-      "sha256": "6be20a6fc07f61ac35e161f858adb417de077d57ceb5076cb36c5295258a3bb9",
-      "gitBlob": "5a8d11e6302762f076dcff7a4f9ebcde3cf4aeee"
+      "bytes": 9356,
+      "sha256": "5746df2e4467817035af88b331a531892511fb3d10cfcf839554a8dee82234a2",
+      "gitBlob": "136874c1981a0396adec92ffb52ebaac6d7b8a2e"
     },
     {
       "path": "archive/dataset.py",
@@ -122,8 +122,8 @@
     {
       "path": "archive/source-manifest.json",
       "bytes": 5191,
-      "sha256": "aabe260aa6f0d010465e71b11ac935dc404019c6e15a4e1109d50440229f3c84",
-      "gitBlob": "6238ab5d9257f5d23b39e440482205ef83d5f6c7"
+      "sha256": "d91fe663ce5c20935073842288f8e6baebfcdf0a52262ca2d7f0ca63b6ce5e20",
+      "gitBlob": "dc7a7e71c32d0b548957710981e7ae1a6be6781b"
     },
     {
       "path": "archive/timephased_contract.py",
