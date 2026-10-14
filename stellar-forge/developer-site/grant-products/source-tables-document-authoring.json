@@ -49,7 +49,8 @@
           "sha256": "f5d0d411e38c2af0a0076341651de2ffd9a30c9872f6e8c15d44599b28d8db34",
           "git_blob": "c5953fb910b76259b450ce09d76bc73eb55e154b"
         }
-      ]
+      ],
+      "commit": "0bbb9dec3d0b3049a0603ecd7ef89a60b1cdc703"
     },
     {
       "id": "source-tables-document-preparations",
@@ -65,7 +66,8 @@
           "sha256": "b6772b928ae5ce81b6b47d0882feee010dd34121f13e752ccc699819f709d28e",
           "git_blob": "f7c30e72f3d6b1d2dbdd74a66737017488fc9415"
         }
-      ]
+      ],
+      "commit": "0bbb9dec3d0b3049a0603ecd7ef89a60b1cdc703"
     },
     {
       "id": "source-tables-wago-original",
