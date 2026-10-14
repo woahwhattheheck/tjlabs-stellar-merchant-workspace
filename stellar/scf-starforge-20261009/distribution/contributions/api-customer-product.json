@@ -8,12 +8,14 @@
   "commands": {
     "merchant-api-pass": "stellar-forge/mcp-merchant-operator/api-pass-cli.mjs",
     "api-pass-recovery": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-cli.mjs",
-    "api-pass-recovery-programme": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-programme.mjs"
+    "api-pass-recovery-programme": "stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-programme.mjs",
+    "catalog-workflow": "products/api-customer/catalog-cli.mjs"
   },
   "commandDescriptions": {
     "merchant-api-pass": "Operate API portfolios and reviewed replacement purchases through the original customer workspace, exact retained agent requests and complete downloads.",
     "api-pass-recovery": "Create encrypted original customer handovers, verify and restore their complete state, resume retained operations, and explicitly reopen the verified customer.",
-    "api-pass-recovery-programme": "Capture or independently receive an actual original API customer with encrypted files, retained phases and explicit normal customer reopening."
+    "api-pass-recovery-programme": "Capture or independently receive an actual original API customer with encrypted files, retained phases and explicit normal customer reopening.",
+    "catalog-workflow": "Review recurring captured API catalogs, resolve product and pack comparisons, publish complete reports, and continue original periods."
   },
   "exports": {
     "./merchant/mcp/api-pass": "./source/stellar-forge/mcp-merchant-operator/api-pass-workspace.mjs",
@@ -45,7 +47,9 @@
     "./merchant/api-pass-workspace/recovery/programme": {
       "types": "./source/stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-programme.d.mts",
       "import": "./source/stellar/scf-starforge-20261009/sf101-merchant-receiver/api-access/workspace/recovery-programme.mjs"
-    }
+    },
+    "./merchant/api-customer/catalog": "./source/products/api-customer/catalog-workflow.mjs",
+    "./merchant/api-customer/catalog/views": "./source/products/api-customer/catalog-views.mjs"
   },
   "browserAssets": [
     {

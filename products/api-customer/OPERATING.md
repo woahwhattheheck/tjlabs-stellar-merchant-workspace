@@ -297,3 +297,7 @@ The underlying source is available in this repository:
 - [Original standalone merchant operations](../merchant-workspace/OPERATING.md).
 
 Authored by TokenJunkieLabs.
+
+## Recurring catalog buyer work
+
+The [catalog workbench](CATALOG.md) turns complete original API-pass responses into reviewed product/variant/offer catalogs, comparable price changes and attention reports. Use the registered `catalog-workflow` command to retain whole period populations, import original response exports, publish ordinary CSV/HTML and continue the next period from the complete saved workspace. The browser review file offers the same decisions and source inspection. Original paid requests, purchases and recovery remain in this API customer.
