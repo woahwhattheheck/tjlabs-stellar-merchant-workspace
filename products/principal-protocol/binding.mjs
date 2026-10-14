@@ -20,7 +20,9 @@ export async function ordinary(file,{privateOnly=false,maximum=128*1024*1024}={}
  try{
   const before=await handle.stat({bigint:true});
   requireValue(before.isFile()&&before.dev===BigInt(stat.dev)&&before.ino===BigInt(stat.ino)&&before.size<=BigInt(maximum),'SOURCE_FILE_CHANGED');
+  if(privateOnly)requireValue((before.mode&0o077n)===0n&&before.uid===BigInt(process.getuid()),'PRIVATE_TOKEN_FILE_REQUIRED');
   const data=await handle.readFile(),after=await handle.stat({bigint:true});
+  if(privateOnly)requireValue((after.mode&0o077n)===0n&&after.uid===BigInt(process.getuid()),'PRIVATE_TOKEN_FILE_REQUIRED');
   requireValue(before.dev===after.dev&&before.ino===after.ino&&before.size===after.size&&before.mtimeNs===after.mtimeNs&&before.ctimeNs===after.ctimeNs&&BigInt(data.length)===before.size,'SOURCE_FILE_CHANGED');
   return {path:absolute,bytes:data.length,sha256:digest(data),data};
  }finally{await handle.close();}
@@ -66,15 +68,16 @@ export async function workspaceBinding(directory,source){
 }
 export function selectedArguments(args){
  requireValue(Array.isArray(args)&&args[0]==='launch','PRINCIPAL_APPLICATION_ARGUMENTS');
- const values={},allowed=new Set(['workspace','token-file','expected-workspace-id','expected-api-sha256','expected-source-sha256','expected-token-sha256','port']);
+ const values={},allowed=new Set(['source-root','workspace','token-file','expected-workspace-id','expected-api-sha256','expected-source-sha256','expected-token-sha256','port']);
  for(let i=1;i<args.length;i+=2){const name=args[i];requireValue(typeof name==='string'&&name.startsWith('--')&&allowed.has(name.slice(2))&&typeof args[i+1]==='string'&&!Object.hasOwn(values,name.slice(2)),'PRINCIPAL_APPLICATION_ARGUMENTS');values[name.slice(2)]=args[i+1];}
- for(const name of ['workspace','token-file','expected-workspace-id','expected-api-sha256','expected-source-sha256','expected-token-sha256'])requireValue(values[name],'PRINCIPAL_APPLICATION_ARGUMENTS');
+ for(const name of ['source-root','workspace','token-file','expected-workspace-id','expected-api-sha256','expected-source-sha256','expected-token-sha256'])requireValue(values[name],'PRINCIPAL_APPLICATION_ARGUMENTS');
  for(const name of ['expected-api-sha256','expected-source-sha256','expected-token-sha256'])requireValue(/^[a-f0-9]{64}$/.test(values[name]),'PRINCIPAL_APPLICATION_ARGUMENTS');
  requireValue(/^[a-f0-9-]{36}$/.test(values['expected-workspace-id']),'PRINCIPAL_APPLICATION_ARGUMENTS');
+ requireValue(isAbsolute(values['source-root']),'ABSOLUTE_SOURCE_PATH_REQUIRED');
  const port=values.port??'0';requireValue(/^(0|[1-9]\d*)$/.test(port)&&Number(port)<=65535,'PORT_REQUIRED');return {...values,port:Number(port)};
 }
 export async function verifySelection(args){
- const selected=selectedArguments(args),source=await sourceBinding(),workspace=await workspaceBinding(selected.workspace,source),token=await privateToken(selected['token-file'],selected['expected-token-sha256']);
+ const selected=selectedArguments(args),source=await sourceBinding(selected['source-root']),workspace=await workspaceBinding(selected.workspace,source),token=await privateToken(selected['token-file'],selected['expected-token-sha256']);
  requireValue(source.manifestSha256===selected['expected-source-sha256']&&workspace.apiSha256===selected['expected-api-sha256']&&workspace.workspaceId===selected['expected-workspace-id'],'PRINCIPAL_APPLICATION_BINDING_CHANGED','Review the exact current workspace and source edition before starting.');
  return {selected,source,workspace,token};
 }

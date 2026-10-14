@@ -18,7 +18,7 @@ export async function preparePrincipalApplication(settings,{inputPath,runtimeDir
  const workspace=await original.workspaceBinding(directory.path,source),token=await original.privateToken(tokenInput.path);
  const inputs=[directory,tokenInput];
  for(const relative of ['PRODUCT_SOURCE.json','binding.mjs','application.mjs','application-provider.mjs','cli.mjs',...source.files.map(row=>row.path)])inputs.push(await inputPath(join(root,relative),'file'));
- return {args:['launch','--workspace',workspace.directory,'--token-file',token.path,'--expected-workspace-id',workspace.workspaceId,'--expected-api-sha256',workspace.apiSha256,'--expected-source-sha256',source.manifestSha256,'--expected-token-sha256',token.sha256],inputs,createDirectories:[]};
+ return {args:['launch','--source-root',root,'--workspace',workspace.directory,'--token-file',token.path,'--expected-workspace-id',workspace.workspaceId,'--expected-api-sha256',workspace.apiSha256,'--expected-source-sha256',source.manifestSha256,'--expected-token-sha256',token.sha256],inputs,createDirectories:[]};
 }
 function bootstrap(url,token){return new Promise((resolveResult,reject)=>{
  const request=get(new URL('/api/bootstrap',url),{headers:{Authorization:'Bearer '+token},timeout:5000},response=>{
@@ -32,10 +32,10 @@ export async function principalStartup(request,text){
  let ready;try{ready=JSON.parse(text);}catch{return null;}
  if(ready?.schema!==PRODUCT_SCHEMA+'.startup')return null;
  const selected=selectedArguments(request.args),url=new URL(ready.url);
- requireValue(ready.state==='LISTENING'&&ready.directory===resolve(selected.workspace)&&ready.workspaceId===selected['expected-workspace-id']&&ready.apiSha256===selected['expected-api-sha256']&&ready.sourceManifestSha256===selected['expected-source-sha256'],'PRINCIPAL_APPLICATION_BINDING_CHANGED');
+ requireValue(ready.state==='LISTENING'&&ready.sourceRoot===resolve(selected['source-root'])&&ready.directory===resolve(selected.workspace)&&ready.workspaceId===selected['expected-workspace-id']&&ready.apiSha256===selected['expected-api-sha256']&&ready.sourceManifestSha256===selected['expected-source-sha256'],'PRINCIPAL_APPLICATION_BINDING_CHANGED');
  requireValue(url.protocol==='http:'&&url.hostname==='127.0.0.1'&&url.pathname==='/'&&!url.username&&!url.password&&!url.search&&!url.hash&&/^[1-9]\d*$/.test(url.port)&&Number(url.port)<=65535&&(!selected.port||Number(url.port)===selected.port),'PRINCIPAL_APPLICATION_URL_CHANGED');
  const token=await privateToken(selected['token-file'],selected['expected-token-sha256']),live=await bootstrap(url,token.token);
  requireValue(live.workspace?.id===ready.workspaceId&&live.capabilities?.apiSha256===ready.apiSha256&&live.capabilities?.sourceEdition===ready.sourceEdition,'PRINCIPAL_APPLICATION_OWNER_CHANGED');
  url.hash=new URLSearchParams({token:token.token}).toString();
- return {url:url.href,workspaceId:ready.workspaceId,original:{schema:ready.schema,directory:ready.directory,workspaceId:ready.workspaceId,apiSha256:ready.apiSha256,sourceEdition:ready.sourceEdition,sourceManifestSha256:ready.sourceManifestSha256}};
+ return {url:url.href,workspaceId:ready.workspaceId,original:{schema:ready.schema,sourceRoot:ready.sourceRoot,directory:ready.directory,workspaceId:ready.workspaceId,apiSha256:ready.apiSha256,sourceEdition:ready.sourceEdition,sourceManifestSha256:ready.sourceManifestSha256}};
 }
