@@ -84,7 +84,7 @@ async function captureAdopt(id){
  const c=captureList.captures.find(x=>x.id===id);if(!c||c.phase!=='complete')throw Error('Select a completed capture.');
  const saved=await hostCall('/api/hubspot',{action:'adoption',args:id}),actor=saved?.actor||$('#actor').value.trim();if(!actor)throw Error('Enter the recording operator name.');
  const args={id,expectedSha256:c.sha256,baseSha256:saved?.baseSha256||cmp.digest(ws),actor,at:saved?.at||new Date().toISOString()};busy=true;
- try{const r=await hostCall('/api/hubspot',{action:'adopt',args});ws=model.restore(r.archive);persisted=true;expected=r.archive.sha256;draftDirty=false;otherDirty=false;reviewDrafts={};await captureRefresh();status('Imported complete HubSpot target edition · revision '+ws.revision);}
+ try{const r=await hostCall('/api/hubspot',{action:'adopt',args});ws=model.restore(r.archive);persisted=true;expected=r.archive.sha256;draft=clone(Object.values(ws.contracts).at(-1)?.contract||{schema:'crm-migration.contract.v1',objects:[],associations:[]});objectIndex=0;associationIndex=0;draftDirty=false;otherDirty=false;reviewDrafts={};sourceId=Object.keys(ws.sourceWorkspace.sources).filter(x=>x.startsWith('hubspot-'+id+'-')).at(0)||Object.keys(ws.sourceWorkspace.sources).at(-1)||'';if(!ws.runs[runId])runId=Object.keys(ws.runs).at(-1)||'';await captureRefresh();status('Imported complete HubSpot target edition · revision '+ws.revision);}
  catch(e){status('The original intake request is retained on the host. Use Recover original intake to reconcile its outcome. '+e.message,true);throw e;}
  finally{busy=false;}
 }

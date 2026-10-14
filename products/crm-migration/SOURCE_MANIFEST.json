@@ -10,8 +10,8 @@
     },
     {
       "path": "browser/crm-desk.cjs",
-      "bytes": 47008,
-      "sha256": "edc44b75b19664cd771d5fee411930e4aeaff8ad6485ee474a5904e821d6ac59"
+      "bytes": 47371,
+      "sha256": "c62c6348d2dd67f4ac33ba2a7c75060dca399b1dc30847f50d528771d9e05c24"
     },
     {
       "path": "browser/render-desk.cjs",
@@ -25,8 +25,8 @@
     },
     {
       "path": "CRM_Migration_Desk.html",
-      "bytes": 279798,
-      "sha256": "662556133bcdb7d45f91d3c5038497e938ab7d01b473fdb215b876b77c37630c"
+      "bytes": 280161,
+      "sha256": "f7b468fbafd32d85658b6a7dba2dc046db7e09da4903a886e50d2124104c6328"
     },
     {
       "path": "docs/CUTOVER.md",
