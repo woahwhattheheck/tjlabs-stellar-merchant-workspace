@@ -9,16 +9,16 @@ let managedDB=null,hasPending=false;
 const pendingKey=managed?'pending:'+managed.workspaceId:null;
 function managedDatabase(){return new Promise((accept,reject)=>{const r=indexedDB.open('tjlabs-crm-managed-requests-v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('requests');r.onsuccess=()=>accept(r.result);r.onerror=()=>reject(r.error);});}
 async function pendingRequest(){return new Promise((accept,reject)=>{const tx=managedDB.transaction('requests','readonly'),r=tx.objectStore('requests').get(pendingKey);r.onsuccess=()=>accept(r.result||null);r.onerror=()=>reject(r.error);});}
-async function reserveRequest(op){await new Promise((accept,reject)=>{const tx=managedDB.transaction('requests','readwrite'),s=tx.objectStore('requests'),r=s.get(pendingKey);let failure;r.onsuccess=()=>{if(r.result){if(cmp.digest(r.result.operation)!==cmp.digest(op)){failure=Error('A saved operation needs recovery. Use Recover saved operation.');tx.abort();}}else s.put({operation:op,workspaceId:ws.id},pendingKey);};tx.oncomplete=()=>accept();tx.onabort=()=>reject(failure||tx.error);tx.onerror=()=>reject(failure||tx.error);});hasPending=true;}
+async function reserveRequest(op,baseSha256=cmp.digest(ws)){if(!/^[a-f0-9]{64}$/.test(baseSha256||''))throw Error('The original request has no retained base workspace identity.');await new Promise((accept,reject)=>{const tx=managedDB.transaction('requests','readwrite'),s=tx.objectStore('requests'),r=s.get(pendingKey);let failure;r.onsuccess=()=>{if(r.result){if(cmp.digest(r.result.operation)!==cmp.digest(op)||r.result.baseSha256!==baseSha256){failure=Error('A saved operation needs recovery. Use Recover saved operation.');tx.abort();}}else s.put({operation:op,workspaceId:ws.id,baseSha256},pendingKey);};tx.oncomplete=()=>accept();tx.onabort=()=>reject(failure||tx.error);tx.onerror=()=>reject(failure||tx.error);});hasPending=true;}
 async function completeRequest(op,result){await new Promise((accept,reject)=>{const tx=managedDB.transaction('requests','readwrite'),s=tx.objectStore('requests'),r=s.get(pendingKey);r.onsuccess=()=>{if(r.result?.operation.id===op.id){s.put({...r.result,result,completed_at:new Date().toISOString()},'history:'+ws.id+':'+op.id);s.delete(pendingKey);}};tx.oncomplete=()=>accept();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});hasPending=!!await pendingRequest();}
 async function hostCall(path,body){
  const token=new URLSearchParams(location.hash.slice(1)).get('token');
  const r=await fetch(path,{method:body===undefined?'GET':'POST',headers:{authorization:'Bearer '+token,'x-crm-instance':managed.instanceId,...(body===undefined?{}:{'content-type':'application/json'})},body:body===undefined?undefined:JSON.stringify(body),cache:'no-store'});
  const value=await r.json();if(!r.ok)throw Object.assign(Error(value.error?.message||'CRM operation failed'),{code:value.error?.code,status:r.status});return value;
 }
-async function performManaged(op){
+async function performManaged(op,baseSha256){if(!/^[a-f0-9]{64}$/.test(baseSha256||''))throw Error('The original request has no retained base workspace identity.');
  let result;
- try{result=await hostCall('/api/action',op);}
+ try{result=await hostCall('/api/action',{schema:'crm-migration.managed-action.v1',baseSha256,operation:op});}
  catch(error){if(error.code==='CRM_OPERATION_REJECTED')await completeRequest(op,{rejected:true,message:error.message});throw error;}
  const next=model.restore(result.archive);if(next.id!==managed.workspaceId)throw Error('The original workspace identity changed.');
  await completeRequest(op,{receipt:result.receipt,reused:result.reused,sha256:result.archive.sha256});
@@ -39,7 +39,7 @@ async function managedBundle(){
 }
 async function pendingEnvelope(){
  const saved=managedDB?await pendingRequest():null;
- if(saved){const value={schema:'crm-migration.saved-request.v1',workspaceId:ws.id,operation:saved.operation};return {...value,sha256:cmp.digest(value)};}
+ if(saved){const value={schema:'crm-migration.saved-request.v1',workspaceId:ws.id,baseSha256:saved.baseSha256,operation:saved.operation};return {...value,sha256:cmp.digest(value)};}
  return payload.requestContinuation||null;
 }
 async function savePendingRequest(){
@@ -50,11 +50,13 @@ async function savePendingRequest(){
 async function receivePendingRequest(file){
  if(!managedDB)throw Error('Original request storage is unavailable.');if(busy)throw Error('A save is already running.');
  if(!requireDiscard())return;
- const received=JSON.parse(await file.text()),value={schema:received.schema,workspaceId:received.workspaceId,operation:received.operation};
- if(received.schema!=='crm-migration.saved-request.v1'||received.workspaceId!==ws.id||cmp.digest(value)!==received.sha256||!received.operation||typeof received.operation.id!=='string')throw Error('Choose the complete original request for this same workspace.');
- await reserveRequest(received.operation);status('Original request received. Use Recover saved operation to reconcile its outcome.');
+ const received=JSON.parse(await file.text()),value={schema:received.schema,workspaceId:received.workspaceId,baseSha256:received.baseSha256,operation:received.operation};
+ if(received.schema!=='crm-migration.saved-request.v1'||received.workspaceId!==ws.id||!/^[a-f0-9]{64}$/.test(received.baseSha256||'')||cmp.digest(value)!==received.sha256||!received.operation||typeof received.operation.id!=='string')throw Error('Choose the complete original request for this same workspace.');
+ const current=model.restore(await hostCall('/api/workspace')),earlier=current.operations.find(x=>x.id===received.operation.id);
+ if(earlier?cmp.digest(earlier.request)!==cmp.digest(received.operation):cmp.digest(current)!==received.baseSha256)throw Error('This saved request belongs to a different original edition or branch.');
+ await reserveRequest(received.operation,received.baseSha256);status('Original request received. Use Recover saved operation to reconcile its outcome.');
 }
-async function recoverManaged(){if(!managedDB)throw Error('Original request storage is unavailable.');const saved=await pendingRequest();if(!saved){status('No saved operation is awaiting recovery.');return;}if(busy)throw Error('A save is already running');busy=true;try{await performManaged(saved.operation);render();}finally{busy=false;}}
+async function recoverManaged(){if(!managedDB)throw Error('Original request storage is unavailable.');const saved=await pendingRequest();if(!saved){status('No saved operation is awaiting recovery.');return;}if(busy)throw Error('A save is already running');busy=true;try{await performManaged(saved.operation,saved.baseSha256);render();}finally{busy=false;}}
 async function refreshManaged(){if(busy)throw Error('A save is already running');if(!requireDiscard())return;if(await pendingRequest())throw Error('Recover the original saved operation before refreshing.');const next=model.restore(await hostCall('/api/workspace'));ws=next;persisted=true;expected=cmp.digest(ws);draft=clone(Object.values(ws.contracts).at(-1)?.contract||{schema:'crm-migration.contract.v1',objects:[],associations:[]});draftDirty=false;otherDirty=false;reviewDrafts={};runId=Object.keys(ws.runs).at(-1)||'';sourceId=Object.keys(ws.sourceWorkspace.sources).at(-1)||'';render();status('Opened current host revision '+ws.revision);}
 
 const status=(s,error=false)=>{const e=$("#status");e.textContent=s;e.setAttribute("role",error?"alert":"status");e.classList.toggle("error",error);};
@@ -70,7 +72,7 @@ async function persist(next,allowAdoption=false){if(!db){ws=next;persisted=false
  ws=next;expected=hash;persisted=true;status("Saved locally · revision "+ws.revision+" · "+hash.slice(0,12));
 }
 async function command(kind,payload){if(busy)throw Error("A save is already running");const actor=$("#actor").value.trim();if(!actor)throw Error("Enter the operator's name");busy=true;try{const op={id:uid("op"),actor,at:new Date().toISOString(),expected_revision:ws.revision,kind,payload};
- if(managed){if(!managedDB)throw Error('Original request storage is unavailable; save/download your work and use the native operator.');await reserveRequest(op);await performManaged(op);}
+ if(managed){if(!managedDB)throw Error('Original request storage is unavailable; save/download your work and use the native operator.');const baseSha256=cmp.digest(ws);await reserveRequest(op,baseSha256);await performManaged(op,baseSha256);}
  else{const next=model.apply(ws,op);await persist(next);}
  otherDirty=Object.keys(reviewDrafts).length>0;}finally{busy=false;}}
 function options(values,value){return values.map(x=>{const v=typeof x==="string"?x:x[0],label=typeof x==="string"?x:x[1];return '<option value="'+esc(v)+'"'+(v===value?" selected":"")+">"+esc(label)+"</option>";}).join("");}

@@ -24,9 +24,9 @@ export async function openStore(directory){
  await originalDirectory();await writeJSON(join(directory,'workspace.json'),archive,{replace:true});ws=next;return archive;}
  return {directory,identity,get id(){return ws.id;},
  state:()=>run(async()=>model.archive(await reload())),summary:()=>run(async()=>summary(await reload())),
- action:op=>run(async()=>{await reload();
+ action:(op,{baseSha256}={})=>run(async()=>{await reload();
  const earlier=ws.operations.find(x=>x.id===op?.id);let next;
- try{next=model.apply(ws,op);}catch(e){throw Object.assign(e,{code:'CRM_OPERATION_REJECTED',status:409});}
+ try{if(baseSha256!==undefined){need(/^[a-f0-9]{64}$/.test(baseSha256),'CRM_BASE_HASH','Retain the complete original base workspace hash.',409);if(!earlier)need(baseSha256===comparison.digest(ws),'CRM_BASE_CHANGED','This original request belongs to a different workspace edition or branch.',409);}next=model.apply(ws,op);}catch(e){throw Object.assign(e,{code:'CRM_OPERATION_REJECTED',status:409});}
  const archive=earlier?model.archive(ws):await save(next);
  return {archive,receipt:ws.operations.find(x=>x.id===op.id),reused:Boolean(earlier)};}),
  export:expected=>run(async()=>{await reload();need(expected===comparison.digest(ws),'CRM_REVISION_CHANGED','Select the complete current workspace hash for export.',409);

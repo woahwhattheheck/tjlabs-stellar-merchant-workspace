@@ -50,7 +50,10 @@ export async function startServer({directory,workspaceId,port=0}){
   need(!req.headers.origin||req.headers.origin===origin,'CRM_ORIGIN','Use the same local application origin.',403);
   if(req.method==='GET'&&url.pathname==='/api/status')return send(res,200,{schema:CONNECTION_SCHEMA,instanceId,workspaceId:store.id,...await store.summary()});
   if(req.method==='GET'&&url.pathname==='/api/workspace')return send(res,200,await store.state());
-  if(req.method==='POST'&&url.pathname==='/api/action')return send(res,200,await store.action(await body(req)));
+  if(req.method==='POST'&&url.pathname==='/api/action'){
+   const input=await body(req);if(input?.schema==='crm-migration.managed-action.v1'){need(/^[a-f0-9]{64}$/.test(input.baseSha256||''),'CRM_BASE_HASH','Retain the original request base SHA.');return send(res,200,await store.action(input.operation,{baseSha256:input.baseSha256}));}
+   return send(res,200,await store.action(input));
+  }
   if(req.method==='POST'&&url.pathname==='/api/export')return send(res,200,await store.export((await body(req)).expectedSha256));
   if(req.method==='GET'&&url.pathname==='/api/file'){
    const id=url.searchParams.get('id'),offset=Number(url.searchParams.get('offset')??0),limit=Number(url.searchParams.get('limit')??196608);
