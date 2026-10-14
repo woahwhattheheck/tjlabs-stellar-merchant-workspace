@@ -7,9 +7,9 @@ import {readConnection,CrmClient} from './host/client.mjs';
 import runtime from './runtime/crm-runtime.cjs';
 export default{
  schema:APPLICATION_PROVIDER_SCHEMA,id:'crm-migration',order:1120,
- catalog({common,field}){return [{id:'crm-migration',command:'crm-managed',title:'CRM migration review',terminal:false,
+ catalog({common,field}){return [{id:'crm-migration',command:'crm-managed',title:'CRM migration and cutover',terminal:false,
  requiredSource:'products/crm-migration/managed.mjs',
- description:'Retain original CRM exports, explicit ID and field maps, exact currency and directed association comparisons, reviews and complete editable receiving.',
+ description:'Capture and compare CRM sources, plan four-snapshot cutovers, retain decisions, ordered packets, execution references and complete receiving.',
  fields:[field('workspaceDirectory','CRM workspace','path',true,'Original private directory created or received with crm-migration.'),...common]}];},
  validateSettings(_type,settings){managedOptions(['--workspace',settings.workspaceDirectory]);},
  async prepare(_type,settings,{inputPath}){

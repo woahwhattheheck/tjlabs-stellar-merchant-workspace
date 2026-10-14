@@ -37,6 +37,7 @@ export class CrmClient{
   const result=await fullResponse(response);if(!response.ok)throw Object.assign(new Error(result.error?.message||'CRM request failed'),{code:result.error?.code||'CRM_TRANSPORT',status:response.status});
   return result;
  }
+ cutover(action,args){return action==='state'?this.call('/api/cutover'):this.call('/api/cutover',{action,args});}
  hubspot(action,args){return action==='list'?this.call('/api/hubspot'):this.call('/api/hubspot',{action,args});}
  status(){return this.call('/api/status');}
  workspace(){return this.call('/api/workspace');}

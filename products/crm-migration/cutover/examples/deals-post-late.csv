@@ -1,0 +1,5 @@
+"Record ID","dealname","amount","dealstage","pipeline","hubspot_owner_id"
+"301","Claim One","140.00","presentationscheduled","claims","Local estimator"
+"302","Claim Two","50.00","closedwon","claims","Noah"
+"303","Large exact decimal","9007199254740993.01","presentationscheduled","claims","Mia"
+"304","New Claim","75.00","presentationscheduled","claims","Mia"

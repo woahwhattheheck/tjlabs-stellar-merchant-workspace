@@ -9,7 +9,8 @@ import {readJSON,writeJSON,writeBytes,absolute,json,need} from './host/io.mjs';
 import {CrmClient} from './host/client.mjs';
 import {moduleSources} from './host/server.mjs';
 import renderer from './browser/render-desk.cjs';
-const help='CRM migration\n  init DIRECTORY ID TITLE\n  course DIRECTORY\n  receive DIRECTORY WORKSPACE.json\n  inspect DIRECTORY\n  apply DIRECTORY OPERATION.json\n  export DIRECTORY EXPECTED_SHA OUTPUT.zip\n  workspace DIRECTORY OUTPUT.json\n  desk DIRECTORY OUTPUT.html\n  connected DIRECTORY OPERATION.json\n  hubspot-configure DIRECTORY HOST.json\n  hubspot-list DIRECTORY\n  hubspot-start DIRECTORY CONNECTION CAPTURE_ID\n  hubspot-run DIRECTORY CAPTURE_ID\n  hubspot-adopt DIRECTORY CAPTURE_ID EXPECTED_CAPTURE_SHA BASE_WORKSPACE_SHA ACTOR UTC_TIME\n  hubspot-recover-adoption DIRECTORY CAPTURE_ID\n  hubspot-export DIRECTORY CAPTURE_ID EXPECTED_CAPTURE_SHA OUTPUT.zip\nAll supplied paths are absolute physical host paths. Close Applications before standalone writes; connected uses its existing listener.\n';
+import cutoverRenderer from './cutover/render-desk.cjs';
+const help='CRM migration\n  init DIRECTORY ID TITLE\n  course DIRECTORY\n  receive DIRECTORY WORKSPACE.json\n  inspect DIRECTORY\n  apply DIRECTORY OPERATION.json\n  export DIRECTORY EXPECTED_SHA OUTPUT.zip\n  workspace DIRECTORY OUTPUT.json\n  desk DIRECTORY OUTPUT.html\n  connected DIRECTORY OPERATION.json\n  hubspot-configure DIRECTORY HOST.json\n  hubspot-list DIRECTORY\n  hubspot-start DIRECTORY CONNECTION CAPTURE_ID\n  hubspot-run DIRECTORY CAPTURE_ID\n  hubspot-adopt DIRECTORY CAPTURE_ID EXPECTED_CAPTURE_SHA BASE_WORKSPACE_SHA ACTOR UTC_TIME\n  hubspot-recover-adoption DIRECTORY CAPTURE_ID\n  hubspot-export DIRECTORY CAPTURE_ID EXPECTED_CAPTURE_SHA OUTPUT.zip\n  cutover-inspect DIRECTORY\n  cutover-course DIRECTORY\n  cutover-receive DIRECTORY WORKSPACE.json\n  cutover-apply DIRECTORY BASE_SHA OPERATION.json\n  cutover-export DIRECTORY EXPECTED_SHA OUTPUT.zip\n  cutover-workspace DIRECTORY OUTPUT.json\n  cutover-desk DIRECTORY OUTPUT.html\n  cutover-reversal DIRECTORY REQUEST.json\n  cutover-connected DIRECTORY REQUEST.json\nAll supplied paths are absolute physical host paths. Close Applications before standalone writes; connected uses its existing listener.\n';
 export async function main(argv=process.argv.slice(2)){
  const [command,raw,...args]=argv;if(!command||['help','--help'].includes(command)){process.stdout.write(help);return;}
  const directory=absolute(raw);let result,store;
@@ -18,8 +19,17 @@ export async function main(argv=process.argv.slice(2)){
  else if(command==='course'){const archive=JSON.parse(await readFile(new URL('./examples/receiving-course.workspace.json',import.meta.url),'utf8'));result=await initializeStore(directory,archive);}
  else if(command==='receive'){result=await initializeStore(directory,(await readJSON(absolute(args[0]))).value);}
  else if(command==='connected'){const client=await CrmClient.connect(directory);try{result=await client.apply((await readJSON(absolute(args[0]))).value);}finally{await client.close();}}
+ else if(command==='cutover-connected'){const client=await CrmClient.connect(directory);try{const request=(await readJSON(absolute(args[0]))).value;result=await client.cutover(request.action,request.args);}finally{await client.close();}}
  else{store=await openStore(directory);
- if(command==='hubspot-configure')result=await store.hubspot('configure',(await readJSON(absolute(args[0]))).value);
+ if(command==='cutover-inspect')result=await store.cutover('summary');
+ else if(command==='cutover-course')result=await store.cutover('receive',JSON.parse(await readFile(new URL('./cutover/examples/workspace.json',import.meta.url),'utf8')));
+ else if(command==='cutover-receive')result=await store.cutover('receive',(await readJSON(absolute(args[0]))).value);
+ else if(command==='cutover-apply')result=await store.cutover('action',{baseSha256:args[0],operation:(await readJSON(absolute(args[1]))).value});
+ else if(command==='cutover-export'){result=await store.cutoverExport(args[0]);await writeBytes(absolute(args[1]),await readFile(join(directory,'exports',result.fileId+'.zip')));}
+ else if(command==='cutover-workspace')result=await writeJSON(absolute(args[0]),await store.cutover('state'));
+ else if(command==='cutover-desk')result=await writeBytes(absolute(args[0]),Buffer.from(cutoverRenderer.renderDesk(await moduleSources(),await store.cutover('state'))));
+ else if(command==='cutover-reversal')result=await store.cutover('reversal',(await readJSON(absolute(args[0]))).value);
+ else if(command==='hubspot-configure')result=await store.hubspot('configure',(await readJSON(absolute(args[0]))).value);
  else if(command==='hubspot-list')result=await store.hubspot('list');
  else if(command==='hubspot-start')result=await store.hubspot('start',{connection:args[0],id:args[1]});
  else if(command==='hubspot-run'){result=await store.hubspot('status',args[0]);while(result.phase!=='complete'){if(result.notBefore){const remaining=Date.parse(result.notBefore)-Date.now();if(remaining>0)await new Promise(r=>setTimeout(r,Math.min(remaining,60000)));if(Date.parse(result.notBefore)>Date.now())continue;}result=await store.hubspot('advance',{id:args[0],expectedSha256:result.sha256});process.stderr.write(json(result));if(result.lastError)throw Object.assign(new Error(result.lastError.message),{code:result.lastError.code});}}

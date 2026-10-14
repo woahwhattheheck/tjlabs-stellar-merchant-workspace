@@ -120,7 +120,7 @@ starforge merchant-providers init crm-migration --options /private/crm-setup.jso
 starforge merchant-mcp-stdio --config /private/crm-merchant/merchant-mcp.json
 ~~~
 
-The source-owned provider exposes ten tools:
+The source-owned provider exposes eleven tools:
 
 | Tool | Operation |
 | --- | --- |
@@ -147,3 +147,7 @@ The original pure core and whole course execute in V8. The integrated store also
 ## HubSpot acquisition
 
 Use the existing CRM host with a private HubSpot declaration. [HUBSPOT.md](HUBSPOT.md) describes the complete account-bound capture, resume, adoption and download flow. The capture writes local source history under the existing store lease; the platform connection only reads the explicitly selected scope.
+
+## Cutover companion
+
+The same managed CRM writer now owns the full cutover companion. Use the Cutover planning link or merchant_crm_cutover; read [INSTALLED_CUTOVER.md](INSTALLED_CUTOVER.md) for complete source intake, four-snapshot planning, packet/observation work and restart/recovery commands.

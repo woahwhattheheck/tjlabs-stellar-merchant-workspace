@@ -62,3 +62,7 @@ All files in this package are the reusable CRM operating product and its authore
 ## Direct HubSpot target acquisition
 
 The installed desk includes **Capture HubSpot**: declared portal/property scope, complete retained responses, resumable object and per-source association pagination, atomic target intake and original capture download. See [HUBSPOT.md](HUBSPOT.md) for the host declaration, native and customer-agent operations, actual API contracts and receiving course.
+
+## Complete cutover planning
+
+Open **Cutover planning** from the installed CRM desk to compare baseline/current source and target editions, resolve concurrent edits, issue ordered packets, retain execution references, reconcile observations and check identity-bound reversal conditions. Existing CRM originals and HubSpot capture sources enter the companion as one recoverable transaction. [INSTALLED_CUTOVER.md](INSTALLED_CUTOVER.md) covers the complete browser, native, customer-agent and receiving lifecycle.
