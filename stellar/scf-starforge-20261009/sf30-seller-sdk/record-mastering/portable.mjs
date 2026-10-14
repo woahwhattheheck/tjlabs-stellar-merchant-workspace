@@ -6,36 +6,57 @@ import { DatabaseSync } from 'node:sqlite';
 import { gzipSync, gunzipSync, createGunzip } from 'node:zlib';
 import { WorkspacePacketReader } from './packet-reader.mjs';
 import { MasteringWorkspace, SCHEMA, sha256, ensure } from './core.mjs';
+
+// Always attempt every owned cleanup and preserve the original failure object.
+function finishOwnedCleanup(primary, actions) {
+    const failures = [];
+    for (const action of actions) { try { action(); } catch (error) { failures.push(error); } }
+    if (primary) {
+        if (failures.length && (typeof primary === 'object' || typeof primary === 'function')) {
+            try { Object.defineProperty(primary, 'cleanupErrors', { value: [...(primary.cleanupErrors ?? []), ...failures], configurable: true }); } catch {}
+        }
+        throw primary;
+    }
+    if (failures.length) { const first = failures.shift(); if (failures.length && first && (typeof first === 'object' || typeof first === 'function')) { try { Object.defineProperty(first, 'cleanupErrors', { value: [...(first.cleanupErrors ?? []), ...failures], configurable: true }); } catch {} } throw first; }
+}
+
 const json = v => JSON.stringify(v) + '\n';
 const deliveryNames = new Set(['master.csv', 'dataset.json', 'delivery.json', 'field-provenance.jsonl', 'conflicts.csv', 'READING.md']);
-export function createFile(path, bytes) { path = resolve(path); const temporary = join(dirname(path), '.mastering-' + randomUUID()); try {
-    writeFileSync(temporary, bytes, { flag: 'wx', mode: 0o600 });
-    linkSync(temporary, path);
+export function createFile(path, bytes) {
+    path = resolve(path);
+    const temporary = join(dirname(path), '.mastering-' + randomUUID());
+    let fd, owned = false, primary;
+    try {
+        fd = openSync(temporary, 'wx', 0o600); owned = true;
+        writeAll(fd, bytes); fsyncSync(fd); closeSync(fd); fd = undefined;
+        linkSync(temporary, path);
+        return { path, bytes: bytes.length, sha256: sha256(bytes) };
+    } catch (error) { primary = error; }
+    finally { finishOwnedCleanup(primary, [
+        () => { if (fd !== undefined) closeSync(fd); },
+        () => { if (owned) rmSync(temporary, { force: true }); },
+    ]); }
 }
-finally {
-    if (existsSync(temporary))
-        unlinkSync(temporary);
-} return { path, bytes: bytes.length, sha256: sha256(bytes) }; }
 export function workspacePacket(workspace, { expectedRevision } = {}) {
     const temp = join(workspace.directory, '.snapshot-' + randomUUID() + '.sqlite');
+    let primary;
     try {
         workspace.db.prepare('VACUUM INTO ?').run(temp);
         if (expectedRevision !== undefined) {
             const captured = new DatabaseSync(temp, { readOnly: true });
+            let captureError;
             try {
                 ensure(captured.prepare('SELECT revision FROM workspace').get().revision === expectedRevision, 'REVISION_CHANGED', 'The workspace changed before its snapshot was captured.', 409);
             }
-            finally {
-                captured.close();
-            }
+            catch (error) { captureError = error; }
+            finally { finishOwnedCleanup(captureError, [() => captured.close()]); }
         }
         const bytes = readFileSync(temp);
         ensure(bytes.length < 380 * 1024 * 1024, 'TRANSFER_TOO_LARGE', 'This workspace exceeds the 380 MiB portable snapshot size.');
         return gzipSync(Buffer.from(json({ schema: SCHEMA + '.workspace-packet', databaseSha256: sha256(bytes), database: bytes.toString('base64') })));
     }
-    finally {
-        rmSync(temp, { force: true });
-    }
+    catch (error) { primary = error; }
+    finally { finishOwnedCleanup(primary, [() => rmSync(temp, { force: true })]); }
 }
 function decode(bytes, schema, expectedSha256) {
     if (expectedSha256)
@@ -51,7 +72,7 @@ export function receiveWorkspace(bytes, destination, { expectedSha256, receipt }
     ensure(!existsSync(destination), 'DESTINATION_EXISTS', 'Receive into a new directory.', 409);
     const stage = join(dirname(destination), '.mastering-receive-' + randomUUID());
     mkdirSync(stage, { mode: 0o700 });
-    let workspace;
+    let workspace, primary;
     try {
         writeFileSync(join(stage, 'mastering.sqlite'), db, { flag: 'wx', mode: 0o600 });
         workspace = new MasteringWorkspace(stage);
@@ -69,16 +90,11 @@ export function receiveWorkspace(bytes, destination, { expectedSha256, receipt }
         try {
             renameSync(join(stage, 'mastering.sqlite'), join(destination, 'mastering.sqlite'));
         }
-        catch (error) {
-            rmSync(destination, { recursive: true, force: true });
-            throw error;
-        }
+        catch (error) { finishOwnedCleanup(error, [() => rmSync(destination, { recursive: true, force: true })]); }
         return { directory: destination, workspaceId: result.id, revision: result.revision, counts: result.counts, sha256: sha256(bytes) };
     }
-    finally {
-        workspace?.close();
-        rmSync(stage, { recursive: true, force: true });
-    }
+    catch (error) { primary = error; }
+    finally { finishOwnedCleanup(primary, [() => workspace?.close(), () => rmSync(stage, { recursive: true, force: true })]); }
 }
 export function deliveryPacket(workspace, deliveryId) { const delivery = workspace.delivery(deliveryId); return gzipSync(Buffer.from(json({ schema: SCHEMA + '.delivery-packet', deliveryId, files: delivery.files, sha256: Object.fromEntries(Object.entries(delivery.files).map(([name, b64]) => [name, sha256(Buffer.from(b64, 'base64'))])) }))); }
 export function receiveDelivery(bytes, destination, { expectedSha256 } = {}) {
@@ -93,10 +109,7 @@ export function receiveDelivery(bytes, destination, { expectedSha256 } = {}) {
         for (const file of files)
             writeFileSync(join(destination, file.name), file.data, { flag: 'wx', mode: 0o600 });
     }
-    catch (error) {
-        rmSync(destination, { recursive: true, force: true });
-        throw error;
-    }
+    catch (error) { finishOwnedCleanup(error, [() => rmSync(destination, { recursive: true, force: true })]); }
     return { directory: destination, deliveryId: packet.deliveryId, files: files.map(f => ({ name: f.name, bytes: f.data.length, sha256: sha256(f.data) })), rowCount: info.rowCount };
 }
 
@@ -105,10 +118,11 @@ export function receiveDelivery(bytes, destination, { expectedSha256 } = {}) {
 // same v1 JSON object after gunzip, without an intermediate whole-database base64 string.
 export function hashFile(path) {
     const fd=openSync(path,'r'), hash=createHash('sha256'), buffer=Buffer.alloc(196608);
-    let bytes=0;
+    let bytes=0, primary;
     try { for (;;) { const size=readSync(fd,buffer,0,buffer.length,null); if (!size) break;
         bytes+=size; hash.update(buffer.subarray(0,size)); } }
-    finally { closeSync(fd); }
+    catch (error) { primary = error; }
+    finally { finishOwnedCleanup(primary, [() => closeSync(fd)]); }
     return {bytes,sha256:hash.digest('hex')};
 }
 function writeAll(fd,bytes) { let offset=0; while(offset<bytes.length) {
@@ -118,14 +132,14 @@ export function workspaceFile(workspace,output,{expectedRevision}={}) {
     output=resolve(output);
     const snapshot=join(workspace.directory,'.snapshot-'+randomUUID()+'.sqlite');
     const temporary=join(dirname(output),'.mastering-'+randomUUID());
-    let input, destination;
+    let input, destination, primary;
     try {
         workspace.db.prepare('VACUUM INTO ?').run(snapshot); chmodSync(snapshot,0o600);
         ensure(statSync(snapshot).size<380*1024*1024,'TRANSFER_TOO_LARGE','This workspace exceeds the 380 MiB portable snapshot size.');
-        if(expectedRevision!==undefined) { const captured=new DatabaseSync(snapshot,{readOnly:true});
+        if(expectedRevision!==undefined) { const captured=new DatabaseSync(snapshot,{readOnly:true}); let captureError;
             try { ensure(captured.prepare('SELECT revision FROM workspace').get().revision===expectedRevision,
                 'REVISION_CHANGED','The workspace changed before its snapshot was captured.',409); }
-            finally {captured.close();}
+            catch(error){captureError=error;} finally {finishOwnedCleanup(captureError,[()=>captured.close()]);}
         }
         const database=hashFile(snapshot), digest=createHash('sha256'); let size=0;
         destination=openSync(temporary,'wx',0o600);
@@ -141,9 +155,8 @@ export function workspaceFile(workspace,output,{expectedRevision}={}) {
         member('"}\n');fsyncSync(destination);closeSync(destination);destination=undefined;
         linkSync(temporary,output);
         return {path:output,bytes:size,sha256:digest.digest('hex')};
-    } finally {
-        if(input!==undefined)closeSync(input);if(destination!==undefined)closeSync(destination);
-        rmSync(snapshot,{force:true});rmSync(temporary,{force:true});
+    } catch(error){primary=error;} finally {
+        finishOwnedCleanup(primary,[()=>{if(input!==undefined)closeSync(input);},()=>{if(destination!==undefined)closeSync(destination);},()=>rmSync(snapshot,{force:true}),()=>rmSync(temporary,{force:true})]);
     }
 }
 
@@ -152,7 +165,7 @@ export function workspaceFile(workspace,output,{expectedRevision}={}) {
 export async function receiveWorkspaceFile(file,destination,{expectedSha256,receipt,signal}={}) {
     destination=resolve(destination);ensure(!existsSync(destination),'DESTINATION_EXISTS','Receive into a new directory.',409);
     const stage=join(dirname(destination),'.mastering-receive-'+randomUUID());mkdirSync(stage,{mode:0o700});
-    let fd, workspace, source, unzip;
+    let fd, workspace, source, unzip, primary;
     try {
         fd=openSync(join(stage,'mastering.sqlite'),'wx',0o600);
         const reader=new WorkspacePacketReader(bytes=>writeAll(fd,bytes),SCHEMA+'.workspace-packet');
@@ -172,9 +185,9 @@ export async function receiveWorkspaceFile(file,destination,{expectedSha256,rece
         const result=workspace.status();workspace.close();workspace=undefined;
         mkdirSync(destination,{mode:0o700});
         try {renameSync(join(stage,'mastering.sqlite'),join(destination,'mastering.sqlite'));}
-        catch(error){rmSync(destination,{recursive:true,force:true});throw error;}
+        catch(error){finishOwnedCleanup(error,[()=>rmSync(destination,{recursive:true,force:true})]);}
         return {directory:destination,workspaceId:result.id,revision:result.revision,counts:result.counts,sha256:digest};
-    } finally {
-        source?.destroy();unzip?.destroy();if(fd!==undefined)closeSync(fd);workspace?.close();rmSync(stage,{recursive:true,force:true});
+    } catch(error){primary=error;} finally {
+        finishOwnedCleanup(primary,[()=>source?.destroy(),()=>unzip?.destroy(),()=>{if(fd!==undefined)closeSync(fd);},()=>workspace?.close(),()=>rmSync(stage,{recursive:true,force:true})]);
     }
 }

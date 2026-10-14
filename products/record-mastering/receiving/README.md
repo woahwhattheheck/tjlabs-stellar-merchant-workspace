@@ -8,7 +8,7 @@ The programme retains its requests and results across interruption. It calls the
 
 Copy `preparation.example.json` to a private directory and replace its absolute paths with the actual selected source, Git object checkout, build destination, runtime destination, receiving directory and retained browser executables. Pin the source commit that provides the complete `record-mastering-workspace` product.
 
-Use Node22.16 or later, Python3.11 or later, npm and flock. The installed browser exercise uses the selected Playwright and Chromium paths. Reuse an existing compatible runtime dependency graph or the original installer's explicitly selected cache/network mode.
+Use the Node version required by the selected public distribution (the standalone native engine requires Node 22.16 or later), Python 3.11 or later, npm and flock. The installed browser exercise uses the selected Playwright and Chromium paths. Reuse an existing compatible runtime dependency graph or the original installer's explicitly selected cache/network mode.
 
 ```bash
 node prepare-installed.mjs --request /absolute/private/preparation-request.json
@@ -50,7 +50,13 @@ The original product's operating guide is `../OPERATING.md`. Customer datasets a
 
 Use the same original JSON file and command. Each programme takes a native process lease and records namespace-aware process identity. Inspect that retained owner and its outcome before starting a continuation.
 
-Preparation state is `preparation.json`. A missing-source result retains the original `sourceCommit` and exact `missingObjects` list; acquire those objects into the same repository and resume the unchanged request. A retained dependency failure also keeps the native `inspection` result. A saved application `EXITED` or `LAUNCH_FAILED` result is returned immediately with its original operation identity. Receiving state is `receiving.json`, with complete action inputs and results in `steps/`. Application IDs, accepted operation IDs and URLs are retained in the original ready records. Completed steps are reused; interrupted steps retain their original input and dispatch identity. The original Applications owner handles recovery and stop.
+Preparation state is `preparation.json`. A missing-source result retains the original `sourceCommit` and exact `missingObjects` list; acquire those objects into the same repository and resume the unchanged request. A retained dependency failure also keeps the native `inspection` result. A saved application `EXITED` or `LAUNCH_FAILED` result is returned immediately with its original operation identity. Receiving state is `receiving.json`, with complete action inputs and results in `steps/`. Application IDs, accepted operation IDs and URLs are retained in the original ready records. Completed steps are reused; interrupted steps retain their original input and dispatch identity. The original Applications owner handles recovery and stop. Public connection preparation waits for both the retained release and `connectionReady` before Start.
+
+Each Start retains its exact selected native request before dispatch. Closure distinguishes a request that was never dispatched from an uncertain dispatch: an uncertain existing native request is reconciled with the same application, review and operation IDs. Positive closure requires the original cancellation or the completed original-command result; an inactive, pending or interrupted observation does not release receiving ownership. A failed launch is closed only when the managed owner explicitly confirms that its child and observer are closed. The immutable `application-<slot>-closed.json` receipt retains that evidence.
+
+If interruption closed a run before its normal receiving stop step, continuation keeps all original business actions and starts a separately retained `first-resume-00001` or `reopen-resume-00001` attempt. Completed normal stages keep their original result. Browser, Merchant clients, transport, native client and original application close are attempted independently; a failing close retains the same receiving lease until each actual owner ends. SIGINT and SIGTERM stop new steps and enter this same closeout.
+
+An interrupted export resumes its prepared original request and complete snapshot bytes before checking later workspace revision. It never regenerates an earlier export from later work. Failed native service or Merchant provider closure can retry the same owner; the source does not mark closure complete before the actual handle closes.
 
 The programme deliberately requires exact original request bytes on reopen. Change a case only through an explicit separately retained selection after reconciling its original operations. Preserve the private workspace, runtime, download files and step records together.
 
@@ -58,4 +64,4 @@ Internal desktop/mobile screenshots are for operator inspection. The final RESUL
 
 ## Validation status
 
-The two programme modules have passed JavaScript parsing and their native call seams were checked against the original source. The complete installed receiving operation is retained separately; its final RESULT.json is the completion record.
+The preparation, receiving and lifetime modules have passed JavaScript parsing. Exact source functions were exercised for unentered and uncertain dispatch, original cancellation, confirmed failed-launch closure, rejected inactive pending output, closure replay and preserved resume slots. The native cleanup/export methods were exercised separately for failure retention and replay after a later revision. These are source-level checks. The complete installed receiving operation is retained separately; its final RESULT.json is the completion record.

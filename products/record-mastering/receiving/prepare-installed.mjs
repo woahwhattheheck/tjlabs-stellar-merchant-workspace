@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // MIT. Prepare one original installed product and retain every native build/install outcome.
-import { mkdir, readFile, open, rename, lstat, cp, readdir, realpath } from 'node:fs/promises';
+import { mkdir, readFile, open, rename, lstat, cp, readdir, realpath, unlink } from 'node:fs/promises';
 import { existsSync, constants } from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -27,12 +27,26 @@ const root=request.directory,base='stellar/scf-starforge-20261009/distribution/'
 await mkdir(root,{mode:0o700,recursive:true});need(await realpath(root)===root&&((await lstat(root)).mode&0o077)===0,'Use a private real operation directory');
 const modulePath=p=>pathToFileURL(join(request.sourceDirectory,base+p)).href;
 const storage=await import(modulePath('runtime-workspace/storage.mjs')),lease=await storage.operationLease(join(root,'prepare.lock'));
+try{
 const owner=await storage.processIdentity();
 async function readJSON(path,optional=false){try{return JSON.parse(await readFile(path,'utf8'));}catch(e){if(optional&&e.code==='ENOENT')return null;throw e;}}
 async function atomic(path,value){
- const t=path+'.pending-'+randomUUID(),f=await open(t,'wx',0o600);
- try{await f.writeFile(typeof value==='string'?value:json(value));await f.sync();}finally{await f.close();}
- await rename(t,path);const d=await open(dirname(path),'r');try{await d.sync();}finally{await d.close();}
+ await mkdir(dirname(path),{recursive:true,mode:0o700});
+ const temporary=path+'.pending-'+randomUUID();let fd=null,parent=null,owned=false,primary=null;
+ const cleanup=[];
+ try{
+  fd=await open(temporary,'wx',0o600);owned=true;
+  await fd.writeFile(typeof value==='string'?value:json(value));await fd.sync();
+  await fd.close();fd=null;await rename(temporary,path);owned=false;
+ }catch(error){primary=error;}
+ finally{
+  if(fd)try{await fd.close();}catch(error){cleanup.push(error);}
+  if(owned)try{await unlink(temporary);}catch(error){if(error.code!=='ENOENT')cleanup.push(error);}
+  try{parent=await open(dirname(path),'r');await parent.sync();}catch(error){cleanup.push(error);}
+  finally{if(parent)try{await parent.close();}catch(error){cleanup.push(error);}}
+ }
+ if(primary){if(cleanup.length)primary.cleanupErrors=[...(primary.cleanupErrors??[]),...cleanup];throw primary;}
+ if(cleanup.length===1)throw cleanup[0];if(cleanup.length)throw new AggregateError(cleanup,'Original receiving file cleanup failed.');
 }
 let record=await readJSON(join(root,'preparation.json'),true);
 if(record)need(record.requestSha256===sha(original),'Retain the exact original preparation request');
@@ -93,5 +107,8 @@ try{
  else await atomic(casePath,receiving);
  record.state='READY';record.result={sourceBuild:built,runtimeDirectory,inspection:finalInspection,receivingCase:casePath};await persist();
  process.stdout.write(json({operation:request.operationId,state:'READY',sourceCommit:request.sourceCommit,runtimeDirectory,receivingCase:casePath}));
-}catch(e){record.state='INTERRUPTED';record.error={...failure(e),stack:e.stack};await persist();process.stderr.write(json({operation:request.operationId,state:record.state,error:record.error}));process.exitCode=1;}
-finally{await lease.close();}
+}catch(e){record.state='INTERRUPTED';record.error={...failure(e),stack:e.stack};
+ try{await persist();}catch(error){record.error.persistenceError=failure(error);}
+ try{process.stderr.write(json({operation:request.operationId,state:record.state,error:record.error}));}catch{}
+ process.exitCode=1;}
+}finally{await lease.close();}

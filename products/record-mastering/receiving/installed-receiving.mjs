@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 // MIT. One retained installed receiving case over the original product and native owners.
-import { readFile, writeFile, mkdir, stat, realpath, open, rename } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, stat, realpath, open, rename, unlink } from 'node:fs/promises';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
 import { setTimeout as pause } from 'node:timers/promises';
+import { createReceivingApplicationLifetime } from './application-lifetime.mjs';
 
 const CASE_SCHEMA='stellar-forge.record-mastering-installed-receiving.v1';
 const BASE='stellar/scf-starforge-20261009/';
@@ -27,15 +28,31 @@ need(await realpath(root)===root&&((await stat(root)).mode&0o077)===0,'Use a pri
 const source=path=>pathToFileURL(join(packageSource,path)).href;
 const storage=await import(source(BASE+'distribution/runtime-workspace/storage.mjs'));
 const lease=await storage.operationLease(join(root,'receiving.lock'));
-let browser=null,mcp=null,mcpTransport=null,nativeClient=null;
+let browser=null,mcp=null,mcpTransport=null,nativeClient=null,finish=null;
+let selectionBound=false,stopping=false;
+const stopReceiving=()=>{stopping=true;};
+process.on('SIGINT',stopReceiving);process.on('SIGTERM',stopReceiving);
+try{
 const infoPath=join(root,'receiving.json'),stepDirectory=join(root,'steps');
 await mkdir(stepDirectory,{mode:0o700,recursive:true});
 async function readJSON(path,optional=false){try{return JSON.parse(await readFile(path,'utf8'));}catch(e){if(optional&&e.code==='ENOENT')return null;throw e;}}
 async function atomic(path,value){
  await mkdir(dirname(path),{recursive:true,mode:0o700});
- const temporary=path+'.pending-'+randomUUID(),fd=await open(temporary,'wx',0o600);
- try{await fd.writeFile(typeof value==='string'?value:json(value));await fd.sync();}finally{await fd.close();}
- await rename(temporary,path);const parent=await open(dirname(path),'r');try{await parent.sync();}finally{await parent.close();}
+ const temporary=path+'.pending-'+randomUUID();let fd=null,parent=null,owned=false,primary=null;
+ const cleanup=[];
+ try{
+  fd=await open(temporary,'wx',0o600);owned=true;
+  await fd.writeFile(typeof value==='string'?value:json(value));await fd.sync();
+  await fd.close();fd=null;await rename(temporary,path);owned=false;
+ }catch(error){primary=error;}
+ finally{
+  if(fd)try{await fd.close();}catch(error){cleanup.push(error);}
+  if(owned)try{await unlink(temporary);}catch(error){if(error.code!=='ENOENT')cleanup.push(error);}
+  try{parent=await open(dirname(path),'r');await parent.sync();}catch(error){cleanup.push(error);}
+  finally{if(parent)try{await parent.close();}catch(error){cleanup.push(error);}}
+ }
+ if(primary){if(cleanup.length)primary.cleanupErrors=[...(primary.cleanupErrors??[]),...cleanup];throw primary;}
+ if(cleanup.length===1)throw cleanup[0];if(cleanup.length)throw new AggregateError(cleanup,'Original receiving file cleanup failed.');
 }
 let record=await readJSON(infoPath,true);
 if(record){need(record.schema===CASE_SCHEMA&&record.selectionSha256===sha(caseBytes),'Keep the exact original receiving selection');}
@@ -44,8 +61,10 @@ else{
   selection,createdAt:new Date().toISOString(),state:'RUNNING',completed:[]};
  await atomic(join(root,'case.json'),caseBytes.toString('utf8'));await atomic(infoPath,record);
 }
+selectionBound=true;
 async function checkpoint(){record.owner=await storage.processIdentity();record.updatedAt=new Date().toISOString();await atomic(infoPath,record);}
 async function step(name,request,action){
+ need(!stopping,'The original receiving course is stopping before another step.');
  const path=join(stepDirectory,name+'.json');let saved=await readJSON(path,true);
  if(saved?.state==='COMPLETE')return saved.result;
  if(!saved){const input=typeof request==='function'?await request():request;
@@ -89,17 +108,26 @@ async function mcpStep(name,toolName,request){return step(name,request,q=>tool(t
 async function status(){return Product.masteringProductStatus({directory:product});}
 async function waitFor(label,predicate,maximum=180000){
  const started=Date.now();let last=null;
- while(Date.now()-started<maximum){last=await predicate();if(last.done)return last.value;await pause(500);}
+ while(Date.now()-started<maximum){need(!stopping,'The original receiving course is stopping.');last=await predicate();if(last.done)return last.value;await pause(500);}
  throw Object.assign(Error('Retained '+label+' is still incomplete'),{code:'RECEIVING_WAIT_TIMEOUT',last:last?.summary});
 }
-async function ensureApplication(slot){
+const productAPI={PRODUCT_SCHEMA:'stellar-forge.record-mastering-product.v1'};
+for(const method of ['masteringProductStatus','startMasteringProduct','stopMasteringProduct'])productAPI[method]=async input=>{
+ Product??=await import(source('products/record-mastering/workspace.mjs'));return Product[method](input);
+};
+const lifetime=createReceivingApplicationLifetime({root,selection,stepDirectory,product,Product:productAPI,readJSON,
+ saveJSON:storage.saveJSON,operationId:storage.operationId,openRuntimeWorkspace:async input=>{const m=await import(source(BASE+'distribution/runtime-workspace/model.mjs'));return m.openRuntimeWorkspace(input);},
+ need,pause,sha,json,shouldStop:()=>stopping});
+async function ensureApplication(baseSlot){
+ const slot=await lifetime.chooseSlot(baseSlot);
  const readyPath=join(root,'application-'+slot+'-ready.json');
  const stopped=await readJSON(join(stepDirectory,'application-'+slot+'-stop.json'),true);
  if(stopped?.state==='COMPLETE'){
   const retained=await readJSON(readyPath);
-  need(retained.operationId===stopped.request.operationId,'Keep the original stopped application identity');return retained;
+  need(retained.operationId===stopped.request.operationId,'Keep the original stopped application identity');
+  await lifetime.closeRun(slot,retained.operationId);return{...retained,slot};
  }
- const selected=await step('application-'+slot+'-start',()=>({directory:product,requestId:randomUUID()}),q=>Product.startMasteringProduct(q));
+ const selected=await step('application-'+slot+'-start',()=>({directory:product,requestId:randomUUID()}),q=>{lifetime.enter(slot,q);return Product.startMasteringProduct(q);});
  const id=selected.operationId??selected.requestId;need(typeof id==='string','Original start did not return an operation identity');
  const startedRecord=await readJSON(join(stepDirectory,'application-'+slot+'-start.json'));
  record.application={applicationId:(await status()).saved.applicationId,operationId:id,slot};await checkpoint();
@@ -109,13 +137,15 @@ async function ensureApplication(slot){
  const result=await waitFor('original application '+id,async()=>{
   const value=await status(),run=value.application?.runs?.find(x=>x.id===id);
   if(run?.result&&(['FAILED','CANCELLED'].includes(run.phase)||(!run.active&&['EXITED','LAUNCH_FAILED'].includes(run.result.state))))throw Object.assign(Error('Original application ended: '+JSON.stringify(run.result)),{code:'APPLICATION_RECEIVING_FAILED',applicationRun:{operationId:id,phase:run.phase,result:run.result}});
-  return{done:Boolean(run?.active&&run.privateUrl),value:{operationId:id,applicationId:value.saved.applicationId,url:run?.privateUrl,status:value},summary:run};
+  return{done:Boolean(run?.active&&run.privateUrl),value:{operationId:id,applicationId:value.saved.applicationId,url:run?.privateUrl,status:value,slot},summary:run};
  });
  await atomic(readyPath,result);await atomic(join(root,'current-application.json'),result);return result;
 }
 async function stopApplication(slot,id){
- await step('application-'+slot+'-stop',{directory:product,operationId:id},q=>Product.stopMasteringProduct(q));
- return waitFor('original application stop '+id,async()=>{const s=await status(),run=s.application?.runs?.find(x=>x.id===id);return{done:!run?.active,value:s,summary:run};});
+ const proof=await lifetime.closeRun(slot,id);
+ need(proof&&proof.operationId===id,'Retain the original positive application closure.');
+ await step('application-'+slot+'-stop',{directory:product,operationId:id},async()=>proof);
+ return status();
 }
 async function archiveRead(name,manifest){
  const final=join(root,'downloads',name),chunks=join(root,'download-parts',name);await mkdir(chunks,{recursive:true,mode:0o700});
@@ -139,6 +169,31 @@ async function openBrowser(url){
   args:['--no-sandbox','--disable-dev-shm-usage','--renderer-process-limit=1'],headless:true,viewport:{width:1280,height:900},reducedMotion:'reduce'});
  const page=browser.pages()[0]??await browser.newPage();await page.goto(url,{waitUntil:'networkidle'});await page.getByRole('heading',{name:'Record mastering',exact:true}).waitFor();return page;
 }
+// Closure retains the receiving lease until every actual owned resource ends.
+let finishing=null;
+finish=()=>{
+ if(finishing)return finishing;
+ const report=value=>{try{process.stderr.write(json(value));}catch{}};
+ finishing=(async()=>{
+  const closeOwned=async(label,read,clear)=>{
+   if(!read())return;
+   for(;;)try{await read().close();clear();break;}
+    catch(error){report({operation:selection.operationId,state:label+'_CLOSE_PENDING',error:{code:error.code,message:error.message}});await pause(500);}
+  };
+  for(;;){
+   const outcomes=await Promise.allSettled([
+    closeOwned('BROWSER',()=>browser,()=>{browser=null;}),
+    closeOwned('MCP_CLIENT',()=>mcp,()=>{mcp=null;}),
+    closeOwned('MCP_TRANSPORT',()=>mcpTransport,()=>{mcpTransport=null;}),
+    closeOwned('NATIVE_CLIENT',()=>nativeClient,()=>{nativeClient=null;}),
+    selectionBound?lifetime.close():Promise.resolve()
+   ]);
+   const failures=outcomes.filter(x=>x.status==='rejected');if(!failures.length)return;
+   for(const x of failures)report({operation:selection.operationId,state:'OWNED_CLOSE_PENDING',message:x.reason?.message??String(x.reason)});
+   await pause(500);
+  }
+ })().finally(()=>{finishing=null;});return finishing;
+};
 try{
  if(record.state==='COMPLETE'){process.stdout.write(json({operation:selection.operationId,state:'COMPLETE',result:join(root,'RESULT.json'),reopened:true}));}
  else{
@@ -204,7 +259,7 @@ try{
   need(prep.phase==='REVIEWED'||prep.phase==='SAVED','Original product review incomplete');
   const saved=await step('product-save',{directory:product},q=>Product.saveMasteringProduct(q));
   await step('product-connect',{directory:product},q=>Product.connectMasteringProduct(q));
-  await waitFor('original runtime adoption',async()=>{const s=await status();return{done:Boolean(s.application?.release),value:s,summary:s.application?.adoption};});
+  await waitFor('original runtime adoption',async()=>{const s=await status();return{done:Boolean(s.application?.release)&&s.application.connectionReady===true,value:s,summary:s.application?.adoption};});
   const live=await ensureApplication('first');
   await step('browser-use',{entityId:merged.entityId,note:'Received through the original installed Applications browser.'},async q=>{
    const before=await tool('merchant_mastering_query',{workspace:alias,action:'entity',input:{entityId:q.entityId}});
@@ -255,7 +310,7 @@ try{
    need(replayed.sha256===workspaceExport.sha256&&replayed.bytes===workspaceExport.bytes,'Same export request no longer returns its original package');return replayed;
   });
   if(mcp)await mcp.close();mcp=null;mcpTransport=null;
-  await stopApplication('first',live.operationId);
+  await stopApplication(live.slot??'first',live.operationId);
   const reopened=await ensureApplication('reopen');
   await step('cold-browser-reopen',{},async()=>{const page=await openBrowser(reopened.url);await page.getByRole('button',{name:'Mara Ellis',exact:true}).click();
    const note=await page.getByLabel('Working note',{exact:true}).inputValue();need(note==='Later sender work remains separate from the exported edition.','Cold browser did not reopen later work');
@@ -277,7 +332,7 @@ try{
    }finally{c.close();}
   });
   if(mcp)await mcp.close();mcp=null;mcpTransport=null;
-  const stopped=await stopApplication('reopen',reopened.operationId);
+  const stopped=await stopApplication(reopened.slot??'reopen',reopened.operationId);
   const final={schema:CASE_SCHEMA+'.result',operationId:selection.operationId,completedAt:new Date().toISOString(),
    sourceCommit:selection.sourceCommit,sourceSelection:'record-mastering-workspace',originalBinding,
    applicationId:stopped.saved.applicationId,applicationRuns:[live.operationId,reopened.operationId],
@@ -288,10 +343,13 @@ try{
   process.stdout.write(json({operation:selection.operationId,state:'COMPLETE',steps:record.completed.length,result:join(root,'RESULT.json')}));
  }
 }catch(e){
- record.state='INTERRUPTED';record.error={code:e.code??'RECEIVING_ERROR',message:e.message,stack:e.stack,...(e.applicationRun?{applicationRun:e.applicationRun}:{})};await checkpoint();
- process.stderr.write(json({operation:selection.operationId,state:record.state,error:record.error,result:infoPath}));process.exitCode=1;
+ record.state='INTERRUPTED';record.error={code:e.code??'RECEIVING_ERROR',message:e.message,stack:e.stack,...(e.applicationRun?{applicationRun:e.applicationRun}:{})};
+ try{await checkpoint();}catch(persistError){record.error.persistenceError={code:persistError.code,message:persistError.message};}
+ try{process.stderr.write(json({operation:selection.operationId,state:record.state,error:record.error,result:infoPath}));}catch{}
+ process.exitCode=1;
+}finally{await finish();}
 }finally{
- if(browser)await browser.close().catch(()=>{});
- if(mcp)await mcp.close().catch(()=>{});else if(mcpTransport)await mcpTransport.close().catch(()=>{});
- if(nativeClient)nativeClient.close();await lease.close();
+ process.off('SIGINT',stopReceiving);process.off('SIGTERM',stopReceiving);
+ if(finish)await finish();
+ await lease.close();
 }

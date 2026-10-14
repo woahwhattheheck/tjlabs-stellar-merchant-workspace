@@ -1,5 +1,5 @@
 // MIT. Original workspace operations, configured file aliases and complete receiving.
-import { readFileSync, writeFileSync, mkdirSync, realpathSync, statSync, readdirSync, existsSync, renameSync, openSync, readSync, closeSync, linkSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, realpathSync, statSync, readdirSync, existsSync, renameSync, openSync, readSync, closeSync, linkSync, rmSync, fsyncSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { RecordMasteringClient } from './client.mjs';
@@ -7,6 +7,20 @@ import { workspaceFile, hashFile, deliveryPacket, receiveWorkspaceFile, createFi
 import { ensure, sha256, SCHEMA } from './core.mjs';
 import { READ_ACTIONS, WRITE_ACTIONS, recordMasteringTools } from './mcp-tools.mjs';
 export { recordMasteringTools };
+
+// Always attempt every owned cleanup and preserve the original failure object.
+function finishOwnedCleanup(primary, actions) {
+    const failures = [];
+    for (const action of actions) { try { action(); } catch (error) { failures.push(error); } }
+    if (primary) {
+        if (failures.length && (typeof primary === 'object' || typeof primary === 'function')) {
+            try { Object.defineProperty(primary, 'cleanupErrors', { value: [...(primary.cleanupErrors ?? []), ...failures], configurable: true }); } catch {}
+        }
+        throw primary;
+    }
+    if (failures.length) { const first = failures.shift(); if (failures.length && first && (typeof first === 'object' || typeof first === 'function')) { try { Object.defineProperty(first, 'cleanupErrors', { value: [...(first.cleanupErrors ?? []), ...failures], configurable: true }); } catch {} } throw first; }
+}
+
 const CONFIG = SCHEMA + '.connection', alias = /^[a-z0-9][a-z0-9_-]{0,63}$/, hash = /^[a-f0-9]{64}$/;
 const plain = x => x !== null && typeof x === 'object' && !Array.isArray(x), json = x => JSON.stringify(x) + '\n';
 const stable = x => Array.isArray(x) ? '[' + x.map(stable).join(',') + ']' : plain(x) ? '{' + Object.keys(x).sort().map(k => JSON.stringify(k) + ':' + stable(x[k])).join(',') + '}' : JSON.stringify(x);
@@ -29,7 +43,15 @@ export function readMasteringConfiguration(file) {
     }
     return { schema: CONFIG, workspaces };
 }
-function saveRecord(path, value) { const temporary = path + '.' + randomUUID(); writeFileSync(temporary, json(value), { flag: 'wx', mode: 0o600 }); renameSync(temporary, path); }
+function saveRecord(path, value) {
+    const temporary = path + '.' + randomUUID(); let fd, owned = false, primary;
+    try {
+        fd = openSync(temporary, 'wx', 0o600); owned = true;
+        writeFileSync(fd, json(value)); fsyncSync(fd); closeSync(fd); fd = undefined;
+        renameSync(temporary, path); owned = false;
+    } catch(error) { primary = error; }
+    finally { finishOwnedCleanup(primary, [()=>{if(fd!==undefined)closeSync(fd);},()=>{if(owned)rmSync(temporary,{force:true});}]); }
+}
 function configuredInput(entry, name, expected, readBytes=true) { ensure(Object.hasOwn(entry.inputs, name), 'INPUT_UNKNOWN', 'Choose an input alias from the original connection.'); const input = entry.inputs[name], bytes = readBytes?readFileSync(input.path):null, file=bytes?{bytes:bytes.length,sha256:sha256(bytes)}:hashFile(input.path), digest=file.sha256; ensure((!input.sha256 || input.sha256 === digest) && (!expected || expected === digest), 'INPUT_CHANGED', 'The configured file differs from the inspected source.', 409); return { path:input.path, bytes, sha256: digest, size: file.bytes }; }
 const definitions = new Map(recordMasteringTools((name, description, properties, required) => ({ name, properties, required })).map(d => [d.name, d]));
 export class MerchantRecordMastering {
@@ -82,39 +104,68 @@ export class MerchantRecordMastering {
         mkdirSync(entry.exportsDirectory, { recursive: true, mode: 0o700 });
         const requestFile = join(entry.exportsDirectory, 'request-' + sha256(args.requestId) + '.json');
         let request = existsSync(requestFile) ? JSON.parse(readFileSync(requestFile, 'utf8')) : null;
-        if (request) {
-            ensure(request.inputSha256 === inputSha256, 'REQUEST_ID_REUSED', 'The export request ID was used with different input.', 409);
-            if (request.file) {
-                const saved = hashFile(join(entry.exportsDirectory, request.file.sha256 + '.bin'));
-                ensure(saved.sha256 === request.file.sha256, 'EXPORT_CHANGED', 'The original exported bytes changed.');
-                return { ...request.file, replayed: true };
+        const validateFile = file => {
+            ensure(file?.schema === SCHEMA + '.export' && file.kind === wanted.kind && file.workspaceId === wanted.workspace &&
+                file.revision === wanted.expectedRevision && (file.deliveryId ?? null) === (wanted.kind === 'delivery' ? wanted.deliveryId : null) &&
+                hash.test(file.sha256) && Number.isSafeInteger(file.bytes) && file.bytes > 0,
+                'EXPORT_CHANGED', 'The retained export description differs from its original request.');
+            return file;
+        };
+        const validateBytes = (path, file) => {
+            const saved = hashFile(path);
+            ensure(saved.sha256 === file.sha256 && saved.bytes === file.bytes, 'EXPORT_CHANGED', 'The original exported bytes changed.');
+        };
+        const completePrepared = () => {
+            const prepared = request.prepared, result = validateFile(prepared?.file);
+            ensure(typeof prepared.temporary === 'string' && /^\.export-[a-f0-9-]{36}\.gz$/.test(prepared.temporary),
+                'EXPORT_CHANGED', 'The retained export staging name changed.');
+            const temporary = join(entry.exportsDirectory, prepared.temporary), path = join(entry.exportsDirectory, result.sha256 + '.bin');
+            if (existsSync(path)) validateBytes(path, result);
+            else {
+                validateBytes(temporary, result);
+                try { linkSync(temporary, path); }
+                catch(error) { if (error.code !== 'EEXIST') throw error; validateBytes(path, result); }
             }
+            // The exact prepared bytes are recoverable before this publication and receipt save.
+            saveRecord(requestFile, { ...request, prepared: undefined, file: result });
+            rmSync(temporary, { force: true });
+            return result;
+        };
+        if (request) {
+            ensure(request.schema === SCHEMA + '.export-request' && request.inputSha256 === inputSha256 &&
+                stable(request.input) === stable(wanted), 'REQUEST_ID_REUSED', 'The export request ID was used with different input.', 409);
+            if (request.file) {
+                const result = validateFile(request.file);
+                validateBytes(join(entry.exportsDirectory, result.sha256 + '.bin'), result);
+                return { ...result, replayed: true };
+            }
+            // Recovery belongs to the frozen original snapshot, even after later workspace edits.
+            if (request.prepared) return { ...completePrepared(), replayed: true };
         }
         ensure(client.workspace.meta().revision === args.expectedRevision, 'REVISION_CHANGED', 'Refresh the workspace before exporting.', 409);
         if (!request) {
             request = { schema: SCHEMA + '.export-request', inputSha256, input: wanted };
             createFile(requestFile, Buffer.from(json(request)));
         }
-        let digest, size;
-        if(args.kind==='workspace') {
-            const temporary=join(entry.exportsDirectory,'.export-'+randomUUID()+'.gz');
-            try {
-                const saved=workspaceFile(client.workspace,temporary,{expectedRevision:args.expectedRevision});
-                digest=saved.sha256;size=saved.bytes;
-                const path=join(entry.exportsDirectory,digest+'.bin');
-                if(existsSync(path))ensure(hashFile(path).sha256===digest,'EXPORT_CHANGED','The retained export file changed.');
-                else linkSync(temporary,path);
-            } finally {rmSync(temporary,{force:true});}
-        } else {
-            const bytes=deliveryPacket(client.workspace,args.deliveryId);digest=sha256(bytes);size=bytes.length;
-            const path=join(entry.exportsDirectory,digest+'.bin');
-            if(existsSync(path))ensure(hashFile(path).sha256===digest,'EXPORT_CHANGED','The retained export file changed.');
-            else createFile(path,bytes);
+        const temporaryName = '.export-' + randomUUID() + '.gz', temporary = join(entry.exportsDirectory, temporaryName);
+        let retained = false, created = false, primary;
+        try {
+            let saved;
+            if (args.kind === 'workspace')
+                saved = workspaceFile(client.workspace, temporary, { expectedRevision: args.expectedRevision });
+            else
+                saved = createFile(temporary, deliveryPacket(client.workspace, args.deliveryId));
+            created = true;
+            const result = { schema: SCHEMA + '.export', kind: args.kind, sha256: saved.sha256, bytes: saved.bytes, workspaceId: wanted.workspace,
+                revision: args.expectedRevision, ...(args.kind === 'delivery' ? { deliveryId: args.deliveryId } : {}) };
+            request = { ...request, prepared: { temporary: temporaryName, file: result } };
+            saveRecord(requestFile, request); retained = true;
+            return completePrepared();
+        } catch(error) { primary = error; }
+        finally {
+            // A prepared file remains available for the same request until its final receipt is durable.
+            finishOwnedCleanup(primary, [() => { if (created && !retained) rmSync(temporary, { force: true }); }]);
         }
-        const result={schema:SCHEMA+'.export',kind:args.kind,sha256:digest,bytes:size,workspaceId:wanted.workspace,
-            revision:args.expectedRevision,...(args.kind==='delivery'?{deliveryId:args.deliveryId}:{})};
-        saveRecord(requestFile, { ...request, file: result });
-        return result;
     }
     async #call(name, args) {
         if (name === 'merchant_mastering_workspaces')
@@ -197,6 +248,12 @@ export class MerchantRecordMastering {
         task.finally(() => this.#tasks.delete(task)).catch(() => { });
         return task;
     }
-    async close() { this.#closed = true; await Promise.allSettled([...this.#tasks]); for (const client of this.#clients.values())
-        client.close(); this.#clients.clear(); }
+    async close() {
+        this.#closed = true;
+        await Promise.allSettled([...this.#tasks]);
+        finishOwnedCleanup(null, [...this.#clients].map(([name, client]) => () => {
+            client.close();
+            this.#clients.delete(name);
+        }));
+    }
 }
