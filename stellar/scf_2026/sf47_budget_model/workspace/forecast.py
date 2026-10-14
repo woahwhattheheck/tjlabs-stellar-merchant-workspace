@@ -17,6 +17,7 @@ import zipfile
 import operations_domain as domain
 import forecast_currency as currency
 import forecast_customer_funding as customer_funding
+import forecast_bridge_funding as bridge_funding
 from model import canonical, csv_bytes, digest, short_id, text
 
 SCHEMA = "stellar-forge.sf47-operating-forecast.v1"
@@ -80,7 +81,7 @@ def source_identity(context):
 
 def normalize(context, raw):
     raw = obj(deepcopy(raw), "Forecast", ("name", "asOfDate", "calendarStart", "openingCash",
-              "packageOverrides", "invoiceOverrides", "grantReceipts", "commercial", "capacity", "note", "fxRates", "customerFunding"))
+              "packageOverrides", "invoiceOverrides", "grantReceipts", "commercial", "capacity", "note", "fxRates", "customerFunding", "bridgeFunding"))
     as_of = domain.calendar(raw.get("asOfDate"), "Forecast as-of date")
     fx_rates = currency.normalize_rates(context, raw.get("fxRates", []), as_of)
     rate_map = {row["id"]: row for row in fx_rates}
@@ -265,7 +266,9 @@ def normalize(context, raw):
             "capacity": capacity, "note": text(raw.get("note", ""), "Forecast decisions / assumptions", 12000),
             **({"fxRates": fx_rates} if "fxRates" in raw or any("nativePricing" in row for row in commercial) else {}),
             **({"customerFunding": customer_funding.normalize(context, raw["customerFunding"], commercial, opening, as_of)}
-               if "customerFunding" in raw else {})}
+               if "customerFunding" in raw else {}),
+            **({"bridgeFunding": bridge_funding.normalize(context, raw["bridgeFunding"], as_of, last.isoformat())}
+               if "bridgeFunding" in raw else {})}
 
 
 def split_amount(amount, weights, places=2):
@@ -599,6 +602,8 @@ def build(context, inputs):
         **({"currencyValuation": currency_coverage} if native_mode else {})}
     if "customerFunding" in inputs:
         report["customerFunding"] = customer_funding.build(report, inputs["customerFunding"])
+    if "bridgeFunding" in inputs:
+        report["bridgeFunding"] = bridge_funding.build(report, inputs["bridgeFunding"])
     return report
 
 
@@ -716,6 +721,7 @@ def export(value):
             for row in report["eventTiming"]["projects"] for receipt in row["receipts"]])
     files.update(currency.export_files(report))
     files.update(customer_funding.export_files(report))
+    files.update(bridge_funding.export_files(report))
     manifest = {"schema": SCHEMA + ".bundle", "forecastId": value["id"], "forecastSha256": value["sha256"],
                 "files": [{"path": name, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()} for name, raw in sorted(files.items())]}
     files["MANIFEST.json"] = (canonical(manifest) + "\n").encode()

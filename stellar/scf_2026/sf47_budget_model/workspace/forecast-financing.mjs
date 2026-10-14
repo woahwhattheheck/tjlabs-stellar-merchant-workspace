@@ -118,15 +118,19 @@ export function financingMetrics(preview){
     combinedGap:s.commercial.gapAfterOpeningCashUsd,combinedPeak:s.commercial.peakNeedDate,endBalance:s.commercial.endBalanceUsd,
     protectedNeed:f?.enabled?f.summary.maximumRequiredStartingCashUsd:null,protectedGap:f?.enabled?f.summary.extraFundingAfterOpeningUsd:null,
     protectedEnabled:!!f?.enabled,weeklyHours:c.weeklyHours,peakWeekly:c.peakWeeklyEquivalentHours,overloadedDays:c.overloadedDays,
-    issueCount:r.issues.length,undatedCost:r.eventTiming?.undatedDeliveryCostUsd??null,currencyComplete:r.currencyValuation?.datedCashComplete??true};
+    bridgeEnabled:!!r.bridgeFunding,financedNeed:r.bridgeFunding?.scenarios.commercial.additionalCashNeededUsd??null,
+    financedGap:r.bridgeFunding?.scenarios.commercial.gapAfterOpeningCashUsd??null,financedEnd:r.bridgeFunding?.scenarios.commercial.endBalanceUsd??null,
+    endingPrincipal:r.bridgeFunding?.endingPrincipalUsd??null,financingExpense:r.bridgeFunding?.datedFinancingExpenseUsd??null,
+    bridgeFeasibility:r.bridgeFunding?.creditFeasibility??null,
+    issueCount:r.issues.length+(r.bridgeFunding?.issues.length||0),undatedCost:r.eventTiming?.undatedDeliveryCostUsd??null,currencyComplete:r.currencyValuation?.datedCashComplete??true};
 }
 function cents(v){return typeof v==='string'&&/^-?\d+\.\d{2}$/.test(v)?BigInt(v.replace('.','')):null;}
 export function financingMoneyDelta(before,after){const a=cents(before),b=cents(after);if(a===null||b===null)return null;const n=b-a,abs=n<0n?-n:n;return (n<0n?'-':'')+(abs/100n)+'.'+String(abs%100n).padStart(2,'0');}
 export function financingCsv(state){
   const c=state.comparisons.find(x=>x.id===state.selectedComparisonId);need(c,'Calculate and select a complete comparison first.');
-  const header=['option_id','option','case_version','as_of_date','grant_required_starting_usd','combined_required_starting_usd','combined_extra_after_opening_usd','combined_peak_date','end_cash_usd','protected_required_starting_usd','protected_extra_after_opening_usd','protection_enabled','peak_weekly_equivalent_hours','available_weekly_hours','overloaded_days','open_issues'];
+  const header=['option_id','option','case_version','as_of_date','grant_required_starting_usd','combined_required_starting_usd','combined_extra_after_opening_usd','combined_peak_date','end_cash_usd','protected_required_starting_usd','protected_extra_after_opening_usd','protection_enabled','peak_weekly_equivalent_hours','available_weekly_hours','overloaded_days','open_issues','bridge_enabled','financed_combined_starting_usd','financed_combined_gap_usd','financed_end_cash_usd','ending_principal_usd','explicit_dated_financing_expense_usd','entered_facility_feasibility'];
   const quote=v=>{let t=v===null||v===undefined?'':String(v);if(/^[ \t\r\n]*[=+\-@]/.test(t))t="'"+t;return '"'+t.replaceAll('"','""')+'"';};
-  const rows=c.result.options.map(o=>{const m=financingMetrics(o.preview);return[o.id,o.name,c.result.source.version,o.preview.inputs.asOfDate,m.grantNeed,m.combinedNeed,m.combinedGap,m.combinedPeak,m.endBalance,m.protectedNeed,m.protectedGap,m.protectedEnabled,m.peakWeekly,m.weeklyHours,m.overloadedDays,m.issueCount];});
+  const rows=c.result.options.map(o=>{const m=financingMetrics(o.preview);return[o.id,o.name,c.result.source.version,o.preview.inputs.asOfDate,m.grantNeed,m.combinedNeed,m.combinedGap,m.combinedPeak,m.endBalance,m.protectedNeed,m.protectedGap,m.protectedEnabled,m.peakWeekly,m.weeklyHours,m.overloadedDays,m.issueCount,m.bridgeEnabled,m.financedNeed,m.financedGap,m.financedEnd,m.endingPrincipal,m.financingExpense,m.bridgeFeasibility];});
   return '\uFEFF'+[header,...rows].map(r=>r.map(quote).join(',')).join('\r\n')+'\r\n';
 }
 export async function completeFinancingSources(state,current,fetchBytes){

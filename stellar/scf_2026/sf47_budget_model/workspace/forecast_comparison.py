@@ -117,6 +117,12 @@ def build(before, after, case_identity):
     ):
         if any("eventTiming" in item["report"] for item in (before, after)):
             metrics.append(_metric("eventTiming." + field, label, unit, before, after, ("report", "eventTiming", field)))
+    if any("bridgeFunding" in item["report"] for item in (before, after)):
+        for field, label in (("openingPrincipalUsd", "Opening borrowed principal"), ("endingPrincipalUsd", "Ending borrowed principal")):
+            metrics.append(_metric("bridgeFunding." + field, label, "USD", before, after, ("report", "bridgeFunding", field)))
+        for curve, label in CURVES:
+            for field, title in (("additionalCashNeededUsd", "Financed starting cash"), ("gapAfterOpeningCashUsd", "Financed gap after opening"), ("endBalanceUsd", "Financed ending cash")):
+                metrics.append(_metric("bridgeFunding." + curve + "." + field, label + " — " + title, "USD", before, after, ("report", "bridgeFunding", "scenarios", curve, field)))
     days = []
     daily = [_index(item["report"]["days"], "date") for item in (before, after)]
     for stamp in sorted(set(daily[0]) | set(daily[1])):
@@ -132,6 +138,12 @@ def build(before, after, case_identity):
     groups = {key: _paired(_index(before["report"][key], field), _index(after["report"][key], field))
               for key, field in (("packages", "id"), ("invoices", "id"), ("commercial", "id"), ("grants", "tranche"))}
     groups["cashEvents"] = _paired(_occurrences(before["report"]["events"]), _occurrences(after["report"]["events"]))
+    if any("bridgeFunding" in item["report"] for item in (before, after)):
+        bridges = [item["report"].get("bridgeFunding", {}) for item in (before, after)]
+        groups["bridgeFacilities"] = _paired(_index(bridges[0].get("facilities", []), "id"), _index(bridges[1].get("facilities", []), "id"))
+        groups["bridgeCashEvents"] = _paired(*[{canonical([row["facilityId"], row["id"]]): deepcopy(row) for row in b.get("events", [])} for b in bridges])
+        groups["bridgeFinancedDays"] = _paired(_index(bridges[0].get("days", []), "date"), _index(bridges[1].get("days", []), "date"))
+        groups["bridgePrincipalDays"] = _paired(*[{canonical([row["facilityId"], row["date"]]): deepcopy(row) for row in b.get("principalDays", [])} for b in bridges])
     source_groups = {}
     records = [item["snapshot"]["records"] for item in (before, after)]
     for kind in sorted(set(records[0]) | set(records[1])):
@@ -180,6 +192,8 @@ def build(before, after, case_identity):
                           "capacity": deepcopy(report["capacity"]),
                           "openingCash": deepcopy(report["openingCash"]),
                           "actual": deepcopy(report["actual"])}
+        if "bridgeFunding" in report:
+            coverage[side]["bridgeFunding"] = deepcopy(report["bridgeFunding"])
         if report.get("currencyValuation", {}).get("complete") is False:
             notices.append({"code": side + ".valuation", "message": side.capitalize() + " has incomplete original-currency valuation. Unknown totals remain unknown; known valued portions are shown separately."})
     result = {"schema": SCHEMA, "case": deepcopy(case_identity),

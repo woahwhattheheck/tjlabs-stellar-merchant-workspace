@@ -220,3 +220,8 @@ The complete forecast ZIP adds `event-dependent-timing.json`, `event-dependent-w
 ## Protect customer delivery funding
 
 The optional [Customer funding guide](./FORECAST_CUSTOMER_FUNDING.md) explains explicit unspent opening attribution, included invoices counted once, unknown-versus-zero values, full protected/unreserved daily results, and original saved working-file/workbook/case receiving. Use the existing Forecast controls, preview and native save; no separate account or payment is created. Older saved Forecasts with no optional input retain their original calculations and identities.
+
+
+## Explicit bridge funding
+
+The optional [Bridge funding guide](./FORECAST_BRIDGE_FUNDING.md) covers named USD facilities, opening principal, dated draws, principal repayments, explicit interest and fees, unfinanced-versus-financed cash, original workbook return, financing limits and complete export/reopen. Existing saved Forecasts without this optional input keep their exact original calculation and identity.

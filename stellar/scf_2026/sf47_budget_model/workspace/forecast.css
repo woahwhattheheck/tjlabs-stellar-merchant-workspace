@@ -92,3 +92,10 @@
  .forecast-currency-credits,.forecast-currency-coverage,.forecast-currency-project{padding:.7rem!important}
  .forecast-currency-entry{padding:.8rem 0}
 }
+
+/* Explicit facility and principal rows retain the original monochrome layout. */
+.operating-forecast [data-forecast-bridge],.operating-forecast [data-forecast-bridge-event]{min-width:0}
+.forecast-bridge-report{margin-top:1.5rem;border-top:2px solid #555;padding-top:1rem}
+.forecast-bridge-report .forecast-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+.forecast-bridge-report .forecast-stats strong{overflow-wrap:anywhere}
+@media(max-width:800px){.forecast-bridge-report .forecast-stats{grid-template-columns:1fr}.operating-forecast [data-forecast-bridge-event]{padding:.7rem}}

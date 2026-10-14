@@ -1,3 +1,4 @@
+import {validateBridgeDraft} from './forecast-bridge-funding.mjs';
 // MIT. Original Forecast workbook source, preview and interrupted-request continuation.
 import { signature, validateForecastWorkbookReturn, reconcileForecastWorkbook, receiveForecastWorkbook } from './forecast-workbook.mjs';
 
@@ -79,6 +80,7 @@ export function validateForecastDraftInputs(value){
       seen.add(row.commercialId);
     }
   }
+  if(Object.hasOwn(value,'bridgeFunding'))validateBridgeDraft(value.bridgeFunding);
   if(value.fxRates!==undefined){
     check(array(value,'fxRates')&&value.fxRates.length<=5000,'Retain the original exchange-rate drafts.');
     for(const row of value.fxRates)check(object(row)&&strings(row,['id','baseCurrency','quoteCurrency','rate','observationDate',

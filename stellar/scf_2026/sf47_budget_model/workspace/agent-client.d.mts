@@ -2561,18 +2561,36 @@ export interface GrantForecastSource extends GrantObject {
   businessSha256: string;
   factsSha256: string;
 }
+/** Explicit optional USD borrowing schedules; no lending or payment action is implied. */
+export interface GrantBridgeEvent {
+  id: string; kind: 'DRAW' | 'REPAYMENT' | 'INTEREST' | 'FEE';
+  amountUsd: string | null; date: GrantCivilDate | null; note: string;
+}
+export interface GrantBridgeFacility {
+  id: string; name: string; currency: 'USD';
+  openingPrincipalUsd: string | null; creditLimitUsd: string | null;
+  availableDate: GrantCivilDate | null; maturityDate: GrantCivilDate | null;
+  termsBasis: 'NOT_ENTERED' | 'DOCUMENTED_TERMS' | 'PLANNING_ASSUMPTION';
+  sourceIds: string[]; note: string; events: GrantBridgeEvent[];
+}
+export interface GrantBridgeFunding {
+  facilities: GrantBridgeFacility[]; note: string;
+}
+export interface GrantForecastInputs extends GrantObject {
+  bridgeFunding?: GrantBridgeFunding;
+}
 export interface GrantForecastPreview extends GrantObject {
   schema: 'stellar-forge.sf47-operating-forecast.v1';
   engineVersion: 1;
   source: GrantForecastSource;
-  inputs: GrantObject;
+  inputs: GrantForecastInputs;
   report: GrantObject;
   previewSha256: string;
 }
 export interface GrantForecastFinancingOption {
   id: string;
   name: string;
-  inputs: GrantObject;
+  inputs: GrantForecastInputs;
 }
 export interface GrantForecastFinancingPreview {
   schema: 'stellar-forge.forecast-financing-preview.v1';
