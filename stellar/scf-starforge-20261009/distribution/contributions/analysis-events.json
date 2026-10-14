@@ -50,7 +50,8 @@
       "types": "./source/stellar-forge/mcp-paid-agent/native-analysis-events-mapping.d.mts",
       "import": "./source/stellar-forge/mcp-paid-agent/native-analysis-events-mapping.mjs"
     },
-    "./buyer/event-mapping-review": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-review.mjs"
+    "./buyer/event-mapping-review": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-review.mjs",
+    "./buyer/event-mapping-native-workspace": "./source/stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-native-workspace.mjs"
   },
   "supportFiles": [
     "stellar-forge/mcp-paid-agent/ANALYSIS_EVENTS.md",
@@ -71,6 +72,11 @@
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_COLLEAGUE.md",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-native-check.mjs",
     "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-native-source-ui.mjs",
-    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_NATIVE_SOURCE.md"
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_NATIVE_SOURCE.md",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-native-workspace.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-native-workspace.css",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-native-runtime.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/event-feed/mapping-native-parser.mjs",
+    "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/python/EVENT_MAPPING_NATIVE_WORKSPACE.md"
   ]
 }
