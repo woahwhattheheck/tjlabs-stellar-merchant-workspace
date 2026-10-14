@@ -40,6 +40,13 @@ for(const [id,prior,start,end] of [['week-three','week-two','2026-10-15','2026-1
 w=(await api.plan(w,{operationId:'plan-'+id,expectedRevision:w.revision,id,label:id,start,end,previousPeriodId:prior})).workspace;
 await capture(id,'source-'+id,[item('13.25',{priceBasis:'unknown',extractionAttention:['purchase_basis_unreviewed']})]);}
 r=await api.report(w,'week-four');check(r.rows[0].state==='READY'&&r.rows[0].reason==='carried review','Reviewed product terms continue through three successive periods');
+
+const packed=await api.pack(w),restored=await api.unpack(JSON.parse(JSON.stringify(packed)));
+check(JSON.stringify(restored)===JSON.stringify(w),'Content-addressed storage restores the exact complete logical history');
+const damaged=JSON.parse(JSON.stringify(packed));damaged.records[0][1]='Changed source record';await expectError(()=>api.open(damaged),'CATALOG_STORAGE');check(true,'Changed content-addressed source is rejected');
+const continued=await api.plan(packed,{operationId:'plan-packed-continuation',expectedRevision:packed.revision,id:'week-five',label:'Fifth week',start:'2026-10-29',end:'2026-11-04',previousPeriodId:'week-four'});
+check(continued.workspace.revision===w.revision+1&&(await api.open(await api.pack(continued.workspace))).periods.length===5,'A compact saved workspace continues through the original operation API');
+
 return {checks,workspace:w,report:r};
 }
 

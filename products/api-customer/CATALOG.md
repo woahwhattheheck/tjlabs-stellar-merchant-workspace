@@ -128,9 +128,9 @@ starforge catalog-workflow report \
   --directory /private/catalog/period-2026-10-week-3
 ~~~
 
-Open catalog-review.html in a current browser. Select a period, search the full catalog or filter attention rows, inspect candidates and complete original response, and save a decision. Browser edits save under the workspace identity. **Save complete workspace** and **Save current workbench** create ordinary files for transfer; **Restore browser save** explicitly reopens retained state.
+Open catalog-review.html in a current browser. Select a period, search the full catalog or filter attention rows, inspect candidates and complete original response, and save a decision. Browser edits save the complete compact workspace in IndexedDB under the workspace identity. **Browse browser saves** lists the current save and preserved branches; **Open saved version** explicitly reopens the chosen revision. An edit from a stale tab preserves its own complete branch instead of overwriting newer work. Earlier localStorage saves remain available in that same chooser. **Save complete workspace** and **Save current workbench** create ordinary portable files; **Export expanded workspace** produces a fully expanded JSON edition for direct inspection.
 
-The report command writes seven complete files: catalog.csv, changes.csv, attention.csv, catalog-report.json, catalog-report.html, catalog-workspace.json and catalog-review.html. Identical outputs reopen after interrupted publication.
+The JSON report contains the complete catalog rows and period summary, and points to catalog-workspace.json for every original capture and operation. The report command writes seven complete files: catalog.csv, changes.csv, attention.csv, catalog-report.json, catalog-report.html, catalog-workspace.json and catalog-review.html. Identical outputs reopen after interrupted publication.
 
 ## Comparability
 
@@ -151,3 +151,19 @@ Preserve the full event workspace. Each operation links the previous operation h
 After native call interruption, use the original API-pass request and recovery controls. After catalog edit interruption, reopen the complete workspace or original browser save. After replacing a source, review its current terms again. Older periods keep their original target populations.
 
 Provider usage reconciles by original workspace/profile/call. Several variant rows can share one response. Actual provider billing points and the account statement determine incurred usage; catalog row counts do not imply paid call counts.
+
+## Shared source storage and larger catalogs
+
+The portable storage envelope keeps repeated response bodies, original source text, extractor functions and large structured values once, addressed by SHA-256. It reconstructs the exact logical workspace before the original event-history checks. Existing expanded files continue to open. Operation identities, revisions, original source strings and logical hashes stay unchanged; packing makes no provider request.
+
+All CLI mutations save this compact form. The same command and browser accept either form. To produce a directly readable complete expanded file:
+
+~~~sh
+starforge catalog-workflow unpack --workspace /private/catalog/workspace.json --out /private/catalog/workspace-expanded.json
+~~~
+
+Library consumers can use engine.pack(workspace) and engine.unpack(workspace). The create/open/plan/capture/decide/report interfaces keep their ordinary logical results. Pass the packed workspace to catalogReviewHtml when publishing a portable workbench.
+
+Browser saves use transactional IndexedDB. A current revision replaces the saved head only when its prior logical identity still matches; a conflicting tab keeps a separate recoverable branch. Subsequent edits can continue that selected branch. Browser quotas and private browsing policies vary. If storage is unavailable or full, the current complete revision stays open and the screen asks for a complete-file download. The ordinary downloaded workspace carries all original data independently of browser storage.
+
+The CLI accepts complete source/workspace files up to 256 MiB. Runtime memory and source-response sizes determine practical catalog capacity in addition to target count. Share native calls across variants, retain the complete provider originals, and review actual file sizes when agreeing a large customer population. Compact storage reduces repeated source copies; expanded exports intentionally include the full logical representation.
