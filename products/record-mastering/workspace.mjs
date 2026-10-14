@@ -242,14 +242,15 @@ export async function startMasteringProduct({ directory, requestId }) {
       need(app?.revision === saved.saved.revision, 'MASTERING_PRODUCT_APPLICATION_CHANGED',
         'Review the current saved application before creating another product setup.');
       const review = await model.applicationsStartReview({ applicationId: app.id });
-      started = { schema: PRODUCT_SCHEMA + '.start', request: { applicationId: app.id, requestId, reviewId: review.id }, review };
+      started = { schema: PRODUCT_SCHEMA + '.start', request: { applicationId: app.id, requestId, reviewId: review.id }, review, dispatch: 'selected' };
       await saveJSON(path, started);
     }
     need(started.schema === PRODUCT_SCHEMA + '.start' && started.request.requestId === requestId &&
       started.request.applicationId === saved.saved.applicationId, 'MASTERING_PRODUCT_START_CHANGED');
     if (started.result) return { ...started.result, replayed: true };
+    started.dispatch = 'dispatching'; await saveJSON(path, started, true);
     const result = await model.applicationsStart(started.request);
-    started.result = result; started.dispatchedAt = new Date().toISOString();
+    started.result = result; started.dispatch = 'entered'; started.dispatchedAt = new Date().toISOString();
     await saveJSON(path, started, true); return result;
   });
 }

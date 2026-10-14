@@ -187,12 +187,12 @@
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
     "description": "Receive source lists, review master-record decisions, operate the original browser and merchant tools, and deliver exact datasets with independently editable customer workspaces.",
-    "readme": "products/record-mastering/OPERATING.md",
+    "readme": "products/record-mastering/PACKAGE_README.md",
     "bin": {
       "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs"
     },
     "repository": {
-      "url": "https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace",
+      "url": "https://github.com/woahwhattheheck/public-commons-sprint-2026",
       "directory": ""
     }
   }
