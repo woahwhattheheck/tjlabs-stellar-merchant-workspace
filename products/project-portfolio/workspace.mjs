@@ -12,8 +12,8 @@ export const PRODUCT_SCHEMA='stellar-forge.project-portfolio-product.v1';
 export const SELECTION_SCHEMA='stellar-forge.project-portfolio-selection.v1';
 export const READY_SCHEMA='stellar-forge.project-portfolio-ready.v1';
 export const CONNECTION_SCHEMA='stellar-forge.project-portfolio-connection.v1';
-export const SOURCE_COMMIT='bb1214f14e6df3068784845c589242713d21242a';
-export const SOURCE_TREE='3851466b3b489ed1d6e3aae1654ae1d04436ff27';
+export const SOURCE_COMMIT='2f54dcabe790af0af23cccde2064fa0a82a46864';
+export const SOURCE_TREE='d44a15111bd02cb7fd40a50e98d850e6c1187487';
 export const PRODUCT_DIRECTORY=fileURLToPath(new URL('./',import.meta.url));
 export const HASH=/^[a-f0-9]{64}$/;
 export const ALIAS=/^[a-z][a-z0-9-]{0,63}$/;
@@ -141,7 +141,7 @@ export async function inspectProjectPortfolioSelection({workspaceDirectory,profi
  const executionSourceDirectory=await realpath(PRODUCT_DIRECTORY),root=await realpath(fullPath(sourceDirectory));
  const adoption=await readJson(join(root,'SOURCE_ADOPTION.json'));
  need(adoption.schema==='stellar-forge.project-portfolio-source-adoption.v1'&&adoption.commit===SOURCE_COMMIT&&
-  adoption.productTree===SOURCE_TREE&&Array.isArray(adoption.files)&&adoption.files.length===63,
+  adoption.productTree===SOURCE_TREE&&Array.isArray(adoption.files)&&adoption.files.length===81,
  'PROJECT_PORTFOLIO_SOURCE_SELECTION');
  const files=[];
  for(const item of adoption.files){

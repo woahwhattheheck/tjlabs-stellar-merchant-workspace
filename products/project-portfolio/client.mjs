@@ -1,3 +1,4 @@
+import {loadPublication,comparePublications} from './source/archive/web/comparison.mjs';
 // SPDX-License-Identifier: MIT
 // Customer client for the unchanged authenticated Project Portfolio operator.
 import {constants} from 'node:fs';
@@ -198,6 +199,12 @@ export class ProjectPortfolioClient {
  archiveFields(editions){need(Array.isArray(editions)&&editions.length>0,'PROJECT_PORTFOLIO_EDITIONS');
   return this.requestJson('/api/archive-fields',{query:{editions:editions.map(value=>identity(value))}});}
  archiveTable(query){return this.requestJson('/api/archive-table',{query});}
+ async archiveComparison({left,right,project_pairs}){
+  const read=path=>{const route=new URL(path,'http://portfolio.invalid');return this.requestJson(route.pathname,{query:Object.fromEntries(route.searchParams)});};
+  const a=await loadPublication(read,left.cohort_id,left.publication_id);
+  const b=await loadPublication(read,right.cohort_id,right.publication_id);
+  return comparePublications(a,b,project_pairs);
+ }
  archiveQuery(body){return this.requestJson('/api/archive-query',{method:'POST',body});}
  companions(editionId){return this.requestJson('/api/companion-sources',{query:{edition_id:identity(editionId)}});}
  companionCapture(query){return this.requestJson('/api/companion-capture',{query});}
