@@ -137,6 +137,8 @@ class Console:
                               "/style.css": ("style.css", "text/css; charset=utf-8")}
                     extra_static = extension_static_routes()
                     extra_static["/awards-exchange-core.mjs"] = ("awards-exchange-core.mjs", "text/javascript; charset=utf-8")
+                    extra_static["/awards-import-session-core.mjs"] = ("awards-import-session-core.mjs", "text/javascript; charset=utf-8")
+                    extra_static["/awards-import-hash.mjs"] = ("awards-import-hash.mjs", "text/javascript; charset=utf-8")
                     extra_static["/governance-exchange-core.mjs"] = ("governance-exchange-core.mjs", "text/javascript; charset=utf-8")
                     extra_static["/stellar-expert/exact-json.mjs"] = (HERE.parent / "stellar-expert" / "exact-json.mjs", "text/javascript; charset=utf-8")
                     extra_static["/recipient-project-core.mjs"] = ("recipient-project-core.mjs", "text/javascript; charset=utf-8")

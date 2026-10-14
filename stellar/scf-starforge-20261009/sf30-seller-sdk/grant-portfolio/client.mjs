@@ -7,6 +7,8 @@ import { createHash, randomUUID } from 'node:crypto';
 export const GRANT_PORTFOLIO_SCHEMA = 'stellar-forge.grant-portfolio.v1';
 export const GRANT_PORTFOLIO_MAX_PACKET_BYTES = 4 * 1024 * 1024 * 1024;
 export const GRANT_PORTFOLIO_MAX_ACTION_BYTES = 1024 * 1024;
+// Complete portfolio reads include both definition and projected model bodies.
+export const GRANT_PORTFOLIO_MAX_JSON_BYTES = 512 * 1024 * 1024;
 const HASH = /^[0-9a-f]{64}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const OPERATION = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/;
@@ -117,7 +119,7 @@ export class GrantPortfolioClient {
     });
   }
   async #response(response) {
-    const value = await boundedJson(response, response.ok ? 16 * 1024 * 1024 : 65536);
+    const value = await boundedJson(response, response.ok ? GRANT_PORTFOLIO_MAX_JSON_BYTES : 65536);
     need(plain(value), 'RESPONSE', 'The original console returned an incomplete object response.');
     if (!response.ok) {
       const native = plain(value.error) ? value.error : value;
@@ -148,7 +150,7 @@ export class GrantPortfolioClient {
   launch(options) { return this.#json('/api/launch', undefined, options); }
   source(id, options) { return this.#json('/api/source?' + query({id:checked(id, HASH, 'source SHA-256')}), undefined, options); }
   portfolio(id, {revision:selected, ...options} = {}) {
-    return this.#json('/api/portfolio?' + query({id:checked(id, UUID, 'portfolio ID'), revision:revision(selected)}), undefined, options);
+    return this.#json('/api/portfolio?' + query({id:checked(id, UUID, 'portfolio ID'), revision:selected === undefined ? undefined : revision(selected)}), undefined, options);
   }
   async rows(input, options) {
     exact(input, ['portfolioId','revision','table','offset','limit','search','status','standard','entityKey'],

@@ -4,6 +4,8 @@ function GrantAwardsExchange(H){
   const {state,node,button,field,panel,table,api,response,runOriginal,failure,showDialog,currentEdit,rawDetails}=H;
   let corePromise;
   const core=()=>corePromise??=import("/awards-exchange-core.mjs");
+  let sessionsPromise;
+  const sessions=()=>sessionsPromise??=import("/awards-import-session-core.mjs");
   const current=()=>state().portfolio;
   const need=(value,message)=>{if(!value)throw new Error(message);};
   const utf8=text=>new TextEncoder().encode(text);
@@ -96,7 +98,8 @@ function GrantAwardsExchange(H){
     const module=await core();
     const I={portfolio,module,step:"file",bytes:null,parsed:null,filename:"",roundId,actor:portfolio.review.reviewer||"",
       status:"draft",mapping:{profile:{},answers:Object.create(null)},identities:{applications:Object.create(null),partners:Object.create(null),projects:Object.create(null)},
-      operationId:"award-csv-"+crypto.randomUUID(),documentId:crypto.randomUUID(),plan:null,resuming:false,busy:false,error:""};
+      operationId:"award-csv-"+crypto.randomUUID(),documentId:crypto.randomUUID(),plan:null,resuming:false,busy:false,error:"",
+      session:null,batch:null,observation:null,batchRows:1000,sessionId:crypto.randomUUID(),batchDocumentIds:Array.from({length:25000},()=>crypto.randomUUID())};
     const root=node("div",null,"awards-intake"),error=node("p","","awards-intake-error"),body=node("div");
     error.setAttribute("role","alert");root.append(error,body);
     const attempt=fn=>async()=>{
@@ -113,7 +116,7 @@ function GrantAwardsExchange(H){
       f.input.addEventListener("change",()=>{if(f.input.value)map[key]=f.input.value;else delete map[key];});
       return f.wrapper;
     };
-    const clearPlan=()=>{I.plan=null;I.resuming=false;};
+    const clearPlan=()=>{I.plan=null;I.resuming=false;I.session=null;I.batch=null;I.observation=null;};
     function filePage(){
       body.replaceChildren(node("h3","1. Select the original CSV"));
       body.append(node("p","Import applications into a published funding round. The complete original CSV and its reviewed column mapping are saved with the applications."));
@@ -126,10 +129,10 @@ function GrantAwardsExchange(H){
         const selected=file.input.files[0];if(selected)filename.input.value=selected.name.replace(/[^A-Za-z0-9._-]/g,"_").replace(/^[^A-Za-z0-9]+/,"")||"Applications.csv";
       });
       body.append(file.wrapper,filename.wrapper,round.wrapper,actor.wrapper,status.wrapper);
-      body.append(node("p","Use UTF-8 CSV up to 8 MiB and 2,000 rows. Quoted commas, line breaks and decimal strings are retained. Submitted applications require a mapped submission date.","small"));
+      body.append(node("p","Use complete UTF-8 CSV up to 64 MiB and 25,000 rows. Sources over 2,000 rows support up to 50 columns and use reviewed batches. Quoted commas, line breaks and decimal strings stay in the original. Submitted applications require a mapped submission date.","small"));
       const load=async()=>{
         currentSelection(portfolio);
-        const selected=file.input.files[0];need(selected&&selected.size>0&&selected.size<=8*1024*1024,"Select the complete original application CSV, up to 8 MiB.");
+        const selected=file.input.files[0];need(selected&&selected.size>0&&selected.size<=64*1024*1024,"Select the complete original application CSV, up to 64 MiB.");
         I.bytes=module.originalAwardCsvBytes(new Uint8Array(await selected.arrayBuffer()));
         I.parsed=module.parseAwardCsvText(new TextDecoder("utf-8",{fatal:true}).decode(I.bytes));
         I.filename=filename.input.value;I.roundId=round.input.value;I.actor=actor.input.value;I.status=status.input.value;
@@ -139,14 +142,26 @@ function GrantAwardsExchange(H){
         await load();need(I.roundId&&I.actor.trim(),"Choose the funding round and recording actor.");
         clearPlan();I.step="mapping";mappingPage();
       }),"primary"));
-      const resume=panel("Resume a saved import","Select the original CSV above and the complete import plan downloaded before saving."),
+      const resume=panel("Resume a saved import","Select the original CSV above and your complete session with reviewed batch, or the original single-import plan. Standalone batch plans are for inspection and the CLI."),
         planFile=field("Saved import plan","file");
       planFile.input.accept=".json,application/json";
       resume.append(planFile.wrapper,button("Review original saved import",attempt(async()=>{
-        const selected=planFile.input.files[0];need(selected&&selected.size<=2*1024*1024,"Choose the complete saved import plan, up to 2 MiB.");
-        const csv=file.input.files[0];need(csv&&csv.size>0&&csv.size<=8*1024*1024,"Select the complete original application CSV above.");
+        const selected=planFile.input.files[0];need(selected&&selected.size<=64*1024*1024,"Choose the complete saved import plan or session, up to 64 MiB.");
+        const csv=file.input.files[0];need(csv&&csv.size>0&&csv.size<=64*1024*1024,"Select the complete original application CSV above.");
         const bytes=module.originalAwardCsvBytes(new Uint8Array(await csv.arrayBuffer()));
         const saved=JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(await selected.arrayBuffer()));
+        if(saved.schema==="stellar-forge.awards-csv-import-session.v1"||
+          saved.schema==="stellar-forge.awards-browser-session.v1"){
+          const selectedSession=saved.schema==="stellar-forge.awards-browser-session.v1"?saved.session:saved;
+          need(selectedSession.portfolio?.id===current()?.id,"Open the portfolio named by this saved session.");
+          I.bytes=bytes;I.session=selectedSession;I.batch=saved.reviewedBatch??null;I.filename=selectedSession.source.filename;
+          const engine=await sessions();I.observation=await engine.inspectAwardCsvImportSession(sessionClient,I.session,I.bytes);
+          if(I.batch){
+            const actual=await engine.reviewAwardCsvSessionBatch(sessionClient,I.session,I.bytes,I.batch.index);
+            need(exact(actual.batch,I.batch),"The saved batch needs an explicit new review against its original request and history.");
+          }
+          sessionPage();return;
+        }
         const checked=await verifiedPlan(module,saved,bytes);
         I.bytes=bytes;I.plan=checked.plan;I.portfolio=checked.basis;I.resuming=true;I.step="review";reviewPage();
       })));
@@ -180,10 +195,15 @@ function GrantAwardsExchange(H){
         const round=portfolio.definition.awards.records.rounds.find(r=>r.id===I.roundId);
         for(const c of round.criteria)need(I.status!=="submitted"||!c.required||I.mapping.answers[c.id],"Map the required answer: "+c.title);
         const refs=I.parsed.rows.map(row=>row[I.mapping.reference]);
-        need(refs.every(r=>r.trim())&&new Set(refs).size===refs.length,"Application references must be nonempty and distinct.");
+        need(refs.every(r=>r.trim()&&r===r.trim())&&new Set(refs).size===refs.length,"Application references must be nonempty, distinct and free of surrounding whitespace. Correct the original source explicitly; references are never silently trimmed.");
         const previous=I.identities.applications;I.identities.applications=Object.create(null);
+        const draftReferences=new Map();
+        for(const row of portfolio.definition.awards.records.applications)
+          if(!row.archived&&row.roundId===I.roundId&&row.status==="draft"){
+            const list=draftReferences.get(row.reference)||[];list.push(row);draftReferences.set(row.reference,list);
+          }
         for(const ref of refs){
-          const drafts=portfolio.definition.awards.records.applications.filter(r=>!r.archived&&r.roundId===I.roundId&&r.reference===ref&&r.status==="draft");
+          const drafts=draftReferences.get(ref)||[];
           I.identities.applications[ref]=previous[ref]|| (drafts.length===1?drafts[0].id:crypto.randomUUID());
         }
         clearPlan();I.step="identities";identitiesPage();
@@ -214,8 +234,14 @@ function GrantAwardsExchange(H){
         f.input.addEventListener("change",()=>{I.identities.applications[reference]=f.input.value==="new"?fresh:f.input.value;idText.textContent=I.identities.applications[reference];});
         return [reference,f.wrapper,idText];
       },{searchText:row=>row[I.mapping.reference]+" "+row[I.mapping.title]});
-      body.append(apps,button("Back to columns",()=>mappingPage()),button("Review complete import",attempt(async()=>{
+      const batchRows=field("Maximum rows per reviewed batch","number",String(I.batchRows));
+      batchRows.input.min="1";batchRows.input.max="2000";
+      batchRows.input.addEventListener("input",()=>{I.batchRows=Number(batchRows.input.value);});
+      body.append(apps,batchRows.wrapper,
+        button("Prepare reviewed batches",attempt(prepareBatches)),
+        button("Back to columns",()=>mappingPage()),button("Review complete import",attempt(async()=>{
         currentSelection(portfolio);
+        if(I.parsed.rows.length>2000){await prepareBatches();return;}
         const sourceSha=await hash(I.bytes);
         const plan=module.prepareAwardCsvImportStructure(portfolio,{
           operationId:I.operationId,csv:I.bytes,filename:I.filename,documentId:I.documentId,roundId:I.roundId,actor:I.actor,
@@ -225,6 +251,97 @@ function GrantAwardsExchange(H){
         currentSelection(portfolio);I.resuming=false;I.step="review";reviewPage();
       }),"primary"));
     }
+
+    // The same portable session engine drives CLI and browser. Writes remain in
+    // the original runOriginal route, retaining the workspace's pending action.
+    const sessionClient={
+      state:()=>api("/api/state"),
+      portfolio:(id,{revision}={})=>api("/api/portfolio?"+new URLSearchParams({id,...(revision===undefined?{}:{revision})})),
+      request:async id=>{
+        try{return await api("/api/request?id="+encodeURIComponent(id));}
+        catch(error){if(error.code==="NOT_FOUND"){error.status=404;error.nativeCode="NOT_FOUND";}throw error;}
+      },
+      uploadProgrammeDocument:({body,sha256})=>api("/api/programme/upload",{method:"POST",
+        headers:{"Content-Type":"application/octet-stream","X-Content-SHA256":sha256},body}),
+      action:async action=>{
+        need(!state().pending||state().pending.operationId===action.operationId,"Continue the other original pending operation first.");
+        await runOriginal(action);
+        return api("/api/request?id="+encodeURIComponent(action.operationId));
+      },
+      resume:async id=>{
+        const original=await api("/api/request?id="+encodeURIComponent(id));
+        need(original.state==="FAILED"&&original.error?.retryable===true,"Only the original retryable failed request may resume.");
+        need(!state().pending||state().pending.operationId===id,"Continue the other original pending operation first.");
+        await api("/api/resume",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({operationId:id})});
+        await runOriginal(original.input);
+        return api("/api/request?id="+encodeURIComponent(id));
+      }
+    };
+    function savedSession(){
+      return {schema:"stellar-forge.awards-browser-session.v1",session:I.session,reviewedBatch:I.batch};
+    }
+    function downloadSession(){
+      download(utf8(JSON.stringify(savedSession(),null,2)+"\n"),"Award_Session_"+I.session.sessionId+".json","application/json");
+    }
+    async function prepareBatches(){
+      currentSelection(portfolio);
+      need(Number.isSafeInteger(I.batchRows)&&I.batchRows>=1&&I.batchRows<=2000,"Choose a maximum batch size from 1 to 2,000 rows.");
+      const engine=await sessions(),workspace=await sessionClient.state();
+      const common={csv:I.bytes,filename:I.filename,roundId:I.roundId,actor:I.actor,
+        mapping:I.mapping,identities:I.identities,status:I.status};
+      const batches=engine.proposeAwardCsvImportBatches(portfolio,common,{
+        operationPrefix:I.operationId,documentIds:I.batchDocumentIds,maxRows:I.batchRows});
+      I.session=engine.prepareAwardCsvImportSession(portfolio,{...common,sessionId:I.sessionId,
+        workspaceId:workspace.workspaceId,batches});
+      I.batch=null;I.observation=await engine.inspectAwardCsvImportSession(sessionClient,I.session,I.bytes);
+      currentSelection(portfolio);sessionPage();
+    }
+    function sessionPage(){
+      const session=I.session,observation=I.observation,enginePromise=sessions();
+      body.replaceChildren(node("h3","4. Review the complete import session"));
+      body.append(node("p",session.sourceRows+" original rows in "+session.batches.length+" separately reviewed batches · "+
+        (observation?.completedRows||0)+" rows recorded"),
+        node("p",session.source.filename+" · "+session.source.bytes+" original bytes · SHA-256 "+session.source.sha256,"small"),
+        node("p","Keep the original CSV and download this complete session before saving a batch. Each batch retains the same full source. Completed batches stay recorded when you close or reopen the session."));
+      body.append(button("Download complete session and reviewed batch",downloadSession),
+        button("Inspect original operations",attempt(async()=>{
+          I.observation=await (await enginePromise).inspectAwardCsvImportSession(sessionClient,session,I.bytes);
+          sessionPage();
+        })));
+      const batchList=panel("Original batches");
+      pagedRows(batchList,["Batch","Original CSV rows","Original operation","State","Review"],session.batches,selected=>{
+        const actual=observation?.batches.find(row=>row.index===selected.index),ranges=module.awardCsvRowRanges(selected.rowIndexes);
+        const rangeLabel=ranges.map(([a,b])=>(a+1)+"–"+b).join(", ");
+        return [String(selected.index+1),rangeLabel,selected.operationId,actual?.state||"NOT_ADMITTED",
+          button("Review batch "+(selected.index+1),attempt(async()=>{
+            const reviewed=await (await enginePromise).reviewAwardCsvSessionBatch(sessionClient,session,I.bytes,selected.index);
+            I.batch=reviewed.batch;sessionPage();
+          }))];
+      },{searchText:row=>row.operationId+" "+(row.index+1),pageSize:10});
+      body.append(batchList);
+      if(!I.batch)return;
+      const batch=I.batch,plan=batch.plan,changes=plan.action.payload.awards.changes;
+      const selected=panel("Reviewed batch "+(batch.index+1),changes.length+" applications · portfolio revision "+plan.portfolio.revision);
+      pagedRows(selected,["Reference","Title / identity","Requested amount","Original answers"],changes,c=>[
+        c.fields.reference,c.fields.title+" · "+c.id,c.fields.requestedAmount?
+          c.fields.requestedAmount.value+" "+c.fields.requestedAmount.currency:"—",
+        rawDetails("Profile, answers and source",c.fields)],{searchText:c=>c.fields.reference+" "+c.fields.title,pageSize:20});
+      selected.append(button("Download this original batch plan",()=>download(utf8(JSON.stringify(batch,null,2)+"\n"),
+        "Award_Batch_"+plan.action.operationId+".json","application/json")));
+      const actual=observation?.batches.find(row=>row.index===batch.index);
+      if(actual?.state!=="COMPLETED"){
+        selected.append(button(actual?.state==="FAILED"?"Resume original failed batch":
+          actual?.state==="RUNNING"?"Read running batch":"Save reviewed batch",attempt(async()=>{
+          const engine=await enginePromise;
+          const request=await engine.submitAwardCsvSessionBatch(sessionClient,session,batch,I.bytes,{
+            resumeFailed:actual?.state==="FAILED"});
+          I.observation=await engine.inspectAwardCsvImportSession(sessionClient,session,I.bytes);
+          sessionPage();showDialog("Application CSV intake",[root]);
+        }),"primary"));
+      }else selected.append(node("p","This original batch is recorded. Its complete plan and source remain available."));
+      body.append(selected);
+    }
+
     function reviewPage(){
       const plan=I.plan,changes=plan.action.payload.awards.changes,
         updated=changes.filter(c=>c.expectedRevision>0).length,

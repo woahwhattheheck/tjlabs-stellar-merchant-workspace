@@ -116,6 +116,7 @@ export interface GrantPortfolioError extends Error {
 export declare const GRANT_PORTFOLIO_SCHEMA:'stellar-forge.grant-portfolio.v1';
 export declare const GRANT_PORTFOLIO_MAX_PACKET_BYTES:number;
 export declare const GRANT_PORTFOLIO_MAX_ACTION_BYTES:number;
+export declare const GRANT_PORTFOLIO_MAX_JSON_BYTES:number;
 
 /** Borrows a live authenticated console; dispose aborts only this client's HTTP work. */
 export declare class GrantPortfolioClient {
@@ -126,7 +127,8 @@ export declare class GrantPortfolioClient {
   state(options?:RequestOptions):Promise<PortfolioState>;
   launch(options?:RequestOptions):Promise<JsonObject>;
   source(id:Sha256, options?:RequestOptions):Promise<JsonObject>;
-  portfolio(id:PortfolioId, options:{revision:number}&RequestOptions):Promise<JsonObject>;
+  /** Omitting revision reads the latest retained edition; explicit revisions remain exact. */
+  portfolio(id:PortfolioId, options?:{revision?:number}&RequestOptions):Promise<JsonObject>;
   rows<Row = JsonObject>(input:RowsInput, options?:RequestOptions):Promise<RowPage<Row>>;
   pages<Row = JsonObject>(input:RowsInput, options?:RequestOptions & {
     onPage?:(page:RowPage<Row>)=>void|Promise<void>;

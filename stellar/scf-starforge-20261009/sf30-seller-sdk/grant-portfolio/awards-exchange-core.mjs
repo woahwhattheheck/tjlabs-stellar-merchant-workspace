@@ -1,6 +1,8 @@
 // MIT. Shared application exchange rules for the native client and browser.
 // Hashes are computed by the caller with its native SHA-256 implementation.
 const GRANT_PORTFOLIO_MAX_ACTION_BYTES=1024*1024;
+export const AWARD_CSV_MAX_SOURCE_BYTES=64*1024*1024;
+export const AWARD_CSV_MAX_ROWS=25000;
 const utf8=text=>new TextEncoder().encode(text);
 const SCHEMA='stellar-forge.awards-csv-import-plan.v1';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -12,8 +14,8 @@ const exact=(value,keys,required=[])=>need(plain(value)&&Object.keys(value).ever
   'Use the declared complete exchange fields.');
 const id=value=>{need(typeof value==='string'&&UUID.test(value),'Use a supplied stable record UUID.');return value;};
 export function originalAwardCsvBytes(value){
-  need(value instanceof Uint8Array&&value.byteLength>0&&value.byteLength<=8*1024*1024,
-    'Select the complete application CSV, from one byte to 8 MiB.');
+  need(value instanceof Uint8Array&&value.byteLength>0&&value.byteLength<=AWARD_CSV_MAX_SOURCE_BYTES,
+    'Select the complete application CSV, from one byte to 64 MiB.');
   return new Uint8Array(value);
 }
 /** RFC 4180 quoting, exact string cells, UTF-8 text and explicit header identities. */
@@ -22,7 +24,7 @@ export function parseAwardCsvText(input){
   const text=input.charCodeAt(0)===0xfeff?input.slice(1):input;
   let field='',row=[],quoted=false,closed=false;const rows=[];
   const cell=()=>{row.push(field);field='';closed=false;need(row.length<=1000,'The original CSV exceeds 1,000 columns.');};
-  const line=()=>{cell();rows.push(row);row=[];need(rows.length<=2001,'One original import supports at most 2,000 application rows.');};
+  const line=()=>{cell();rows.push(row);row=[];need(rows.length<=AWARD_CSV_MAX_ROWS+1,'One complete original source supports at most 25,000 application rows.');};
   for(let i=0;i<text.length;i++){
     const c=text[i];
     if(quoted){
@@ -40,6 +42,7 @@ export function parseAwardCsvText(input){
   if(field!==''||row.length||closed)line();
   need(rows.length>1,'Supply one header row and at least one complete application.');
   const headers=rows.shift();
+  need(rows.length<=2000||headers.length<=50,'Sources over 2,000 application rows support at most 50 original columns.');
   need(headers.every(h=>h.trim())&&new Set(headers).size===headers.length,'CSV headers must be nonempty and distinct.');
   need(rows.every(r=>r.length===headers.length),'Every original CSV record must have exactly the declared columns.');
   return {headers,rows:rows.map(values=>Object.fromEntries(headers.map((key,i)=>[key,values[i]])))};
@@ -58,7 +61,7 @@ function programmeRecord(portfolio,name,ident){
  * Prepare a reviewable complete saved action. All IDs and column meanings come
  * from the caller; this function does not allocate identities or submit work.
  */
-export function prepareAwardCsvImportStructure(portfolio,input,sourceSha256){
+function prepareStructure(portfolio,input,sourceSha256,cache){
   need(HASH.test(sourceSha256||''),'Supply the computed SHA-256 of the complete original CSV bytes.');
   exact(input,['operationId','csv','filename','documentId','roundId','actor','mapping','identities','status','rowIndexes'],
     ['operationId','csv','filename','documentId','roundId','actor','mapping','identities']);
@@ -71,7 +74,7 @@ export function prepareAwardCsvImportStructure(portfolio,input,sourceSha256){
   const status=input.status??'draft';need(['draft','submitted'].includes(status),'Select imported draft or actual submitted applications.');
   const round=portfolio.definition.awards?.records.rounds.find(r=>r.id===id(input.roundId));
   need(round&&!round.archived&&['published','closed'].includes(round.status)&&round.publication,'Select the original published funding round.');
-  const documentId=id(input.documentId),parsed=csvInput(input.csv),hash=sourceSha256;
+  const documentId=id(input.documentId),parsed=cache?.parsed??csvInput(input.csv),hash=sourceSha256;
   const map=input.mapping;
   exact(map,['reference','title','legalName','partnerKey','projectKey','profile','amount','currency','answers','notes','submittedDate'],
     ['reference','title','legalName','partnerKey','answers']);
@@ -93,16 +96,34 @@ export function prepareAwardCsvImportStructure(portfolio,input,sourceSha256){
     selected.every((index,position)=>Number.isSafeInteger(index)&&index>=0&&index<parsed.rows.length&&
       (position===0||selected[position-1]<index)),
     'Review nonempty, distinct CSV data-row indexes in their original increasing order (zero based).');
-  const selectedRows=selected===undefined?null:new Set(selected);
-  const current=portfolio.definition.awards.records.applications,seen=new Set(),ids=new Set(),changes=[];
-  for(const [rowIndex,original] of parsed.rows.entries()){
-    const reference=original[map.reference];need(reference.trim()&&!seen.has(reference),'CSV application references must be nonempty and distinct.');
-    seen.add(reference);const ident=lookup('applications',reference);need(!ids.has(ident),'Different applications cannot share one record identity.');ids.add(ident);
-    if(selectedRows&&!selectedRows.has(rowIndex))continue;
-    const partnerId=lookup('partners',original[map.partnerKey]);programmeRecord(portfolio,'partners',partnerId);
+  need((selected?.length??parsed.rows.length)<=2000,
+    'Review the complete source through explicit batches of at most 2,000 applications.');
+  const seen=new Set(),ids=new Set(),changes=[];
+  if(!cache?.referencesValidated){
+    for(const original of parsed.rows){
+      const reference=original[map.reference];
+      need(parsed.rows.length<=2000||reference===reference.trim(),
+        'A large-source reference contains surrounding whitespace. Correct the original explicitly; references are never silently trimmed.');
+      need(reference.trim()&&!seen.has(reference),'CSV application references must be nonempty and distinct.');
+      seen.add(reference);const ident=lookup('applications',reference);
+      need(!ids.has(ident),'Different applications cannot share one record identity.');ids.add(ident);
+    }
+    if(cache)cache.referencesValidated=true;
+  }
+  const current=cache?.applications??new Map(portfolio.definition.awards.records.applications.map(r=>[r.id,r]));
+  const programmes=cache?.programmes??Object.fromEntries(['partners','nodes','documents'].map(name=>[name,
+    new Map(portfolio.definition.programme.records[name].map(r=>[r.id,r]))]));
+  const selectedProgramme=(name,ident)=>{
+    const row=programmes[name].get(ident);
+    need(row&&!row.archived,'Choose the original active programme '+name+' record.');return row;
+  };
+  const indexes=selected??Array.from({length:parsed.rows.length},(_,i)=>i);
+  for(const rowIndex of indexes){
+    const original=parsed.rows[rowIndex],reference=original[map.reference],ident=lookup('applications',reference);
+    const partnerId=lookup('partners',original[map.partnerKey]);selectedProgramme('partners',partnerId);
     const projectId=map.projectKey&&original[map.projectKey]?lookup('projects',original[map.projectKey]):null;
-    if(projectId)need(programmeRecord(portfolio,'nodes',projectId).kind==='project','Select the actual applicant project.');
-    const before=current.find(r=>r.id===ident);
+    if(projectId)need(selectedProgramme('nodes',projectId).kind==='project','Select the actual applicant project.');
+    const before=current.get(ident);
     need(!before||!before.archived&&before.status==='draft'&&before.roundId===round.id&&before.reference===reference,
       'An import can create an application or update its exact original draft. Recorded editions use a following record.');
     const applicantProfile={legalName:original[map.legalName],summary:''};
@@ -123,12 +144,13 @@ export function prepareAwardCsvImportStructure(portfolio,input,sourceSha256){
     changes.push({collection:'applications',id:ident,expectedRevision:before?.revision||0,fields});
   }
   const descriptor={sha256:hash,bytes:parsed.bytes.length,filename:input.filename,contentType:'text/csv'};
-  const document=portfolio.definition.programme.records.documents.find(r=>r.id===documentId);
+  const document=programmes.documents.get(documentId);
   need(!document||!document.archived&&document.nodeId===round.programmeNodeId&&document.object&&
     Object.keys(descriptor).every(k=>document.object[k]===descriptor[k]),'The selected original import document ID has different bytes or programme scope.');
   const mappingEvidence={schema:SCHEMA,operationId:input.operationId,roundId:round.id,roundRevision:round.revision,
     roundSha256:round.sha256,columns:map,rows:parsed.rows.length,source:{sha256:hash,bytes:parsed.bytes.length,filename:input.filename},
-    ...(selected===undefined?{}:{selectedRowIndexes:[...selected],selectedRows:changes.length})};
+    ...(selected===undefined?{}:parsed.rows.length<=2000?{selectedRowIndexes:[...selected],selectedRows:changes.length}:
+      {rowSelectionSchema:'stellar-forge.csv-row-ranges.v1',selectedRowRanges:awardCsvRowRanges(selected),selectedRows:changes.length})};
   const mappingText=JSON.stringify(mappingEvidence,null,2);
   need(mappingText.length<=16000,'The complete column mapping must fit the original programme document content field.');
   need(!document||document.content===mappingText,'Reuse the exact original import plan, or choose a new document ID for a new mapping operation.');
@@ -146,7 +168,33 @@ export function prepareAwardCsvImportStructure(portfolio,input,sourceSha256){
     'The complete mapped action exceeds the original request limit. Prepare separate explicit import operations with retained source evidence.');
   return {schema:SCHEMA,portfolio:{id:portfolio.id,revision:portfolio.revision,snapshot:portfolio.snapshot},
     source:descriptor,documentId,round:{id:round.id,revision:round.revision,sha256:round.sha256},
-    rows:changes.length,mapping:map,...(selected===undefined?{}:{sourceRows:parsed.rows.length,rowIndexes:[...selected]}),action};
+    rows:changes.length,mapping:JSON.parse(JSON.stringify(map)),...(selected===undefined?{}:{sourceRows:parsed.rows.length,rowIndexes:[...selected]}),action};
+}
+/** Exact half-open data-row ranges. The full source and saved plan keep every row. */
+export function awardCsvRowRanges(indexes){
+  const ranges=[];
+  for(const index of indexes){
+    const previous=ranges[ranges.length-1];
+    if(previous&&previous[1]===index)previous[1]=index+1;else ranges.push([index,index+1]);
+  }
+  return ranges;
+}
+/** A detached, synchronous planning scope parses and indexes one full source once.
+ * Every plan still validates its exact supplied operation, row selection and basis. */
+export function createAwardCsvImportPlanner(portfolio,input,sourceSha256){
+  const basis=JSON.parse(JSON.stringify(portfolio)),csv=originalAwardCsvBytes(input.csv);
+  const {csv:ignored,...fields}=input,common=JSON.parse(JSON.stringify(fields));
+  const cache={parsed:csvInput(csv),applications:new Map(basis.definition.awards.records.applications.map(r=>[r.id,r])),
+    programmes:Object.fromEntries(['partners','nodes','documents'].map(name=>[name,
+      new Map(basis.definition.programme.records[name].map(r=>[r.id,r]))])),referencesValidated:false};
+  return Object.freeze({rows:cache.parsed.rows.length,headers:Object.freeze([...cache.parsed.headers]),
+    plan(selection={}){
+      exact(selection,['operationId','documentId','rowIndexes']);
+      return prepareStructure(basis,{...common,...selection,csv},sourceSha256,cache);
+    }});
+}
+export function prepareAwardCsvImportStructure(portfolio,input,sourceSha256){
+  return prepareStructure(portfolio,input,sourceSha256);
 }
 function csvCell(value,spreadsheetSafe){
   let text=value===null||value===undefined?'':String(value);

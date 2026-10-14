@@ -9,15 +9,15 @@ import {pathToFileURL} from 'node:url';
 import {connectGrantPortfolio,saveGrantPortfolioFile} from '../../client.mjs';
 import {prepareAwardCsvImport,exportAwardApplications} from '../../awards-exchange.mjs';
 import {prepareAwardCsvImportSession,reviewAwardCsvSessionBatch,submitAwardCsvSessionBatch,
-  inspectAwardCsvImportSession} from '../../awards-import-session.mjs';
+  inspectAwardCsvImportSession,proposeAwardCsvImportBatches} from '../../awards-import-session.mjs';
 import {ordinary,readJson,retainedJson} from '../../awards-import-session-cli.mjs';
 
 const OPERATION='AWARDS-CSV-SESSION-INTERNAL-RECEIVING-7DE2-20261013';
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
 const json=value=>Buffer.from(JSON.stringify(value,null,2)+'\n');
-const canonical=value=>Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?
-  Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])):value;
-const same=(a,b)=>assert.deepEqual(canonical(a),canonical(b));
+// deepEqual compares object fields irrespective of insertion order without cloning
+// both complete portfolio definitions and projected models.
+const same=(a,b)=>assert.deepEqual(a,b);
 const row=(collection,id,fields)=>({collection,id,expectedRevision:0,fields});
 async function optional(path){try{return await readJson(path);}catch(error){if(error.code==='ENOENT')return null;throw error;}}
 async function privateDir(path){
@@ -32,6 +32,22 @@ async function file(path,bytes){
   try{await parent.sync();}finally{await parent.close();}
   return {path:result.path,bytes:bytes.length,sha256:sha(bytes)};
 }
+async function fileIdentity(path,maximum){
+  assert.equal(path,resolve(path));
+  const handle=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW|constants.O_NONBLOCK);
+  try{
+    const before=await handle.stat();assert(before.isFile()&&before.size>0&&before.size<=maximum);
+    const hash=createHash('sha256'),buffer=Buffer.alloc(1024*1024);let bytes=0;
+    for(;;){
+      const read=await handle.read(buffer,0,buffer.length,null);if(!read.bytesRead)break;
+      bytes+=read.bytesRead;assert(bytes<=maximum);hash.update(buffer.subarray(0,read.bytesRead));
+    }
+    const after=await handle.stat(),attached=await lstat(path);
+    for(const key of ['dev','ino','size','mtimeMs','ctimeMs'])assert.equal(after[key],before[key]);
+    assert.equal(attached.dev,before.dev);assert.equal(attached.ino,before.ino);assert.equal(bytes,before.size);
+    return {path,bytes,sha256:hash.digest('hex')};
+  }finally{await handle.close();}
+}
 async function originalRequest(client,id){
   try{return await client.request(id);}
   catch(error){if(error.status===404&&error.nativeCode==='NOT_FOUND')return null;throw error;}
@@ -44,13 +60,19 @@ export async function runReceiving({phase,sourceConnection,recipientConnection,o
   let ids=await optional(join(out,'selection.json'));
   if(!ids){
     assert.equal(phase,'import','Start this original course with its internal import phase.');
-    ids={schema:'stellar-forge.awards-import-session-receiving-selection.v1',operation:OPERATION,actor,
+    ids={schema:'stellar-forge.awards-import-session-receiving-selection.v2',operation:OPERATION,actor,
+      sourceRows:25000,sourceColumns:50,maxBatchRows:1000,
       run:randomUUID(),portfolio:randomUUID(),programme:randomUUID(),partner:randomUUID(),round:randomUUID(),
-      session:randomUUID(),documents:[randomUUID(),randomUUID()],
-      applications:Array.from({length:240},()=>randomUUID())};
+      session:randomUUID(),documents:Array.from({length:128},()=>randomUUID()),
+      applications:Array.from({length:25000},()=>randomUUID())};
     await retainedJson(join(out,'selection.json'),ids);
   }
   assert.equal(ids.operation,OPERATION);assert.equal(ids.actor,actor);
+  const large=ids.schema==='stellar-forge.awards-import-session-receiving-selection.v2';
+  assert(large||ids.schema==='stellar-forge.awards-import-session-receiving-selection.v1');
+  const sourceRows=large?25000:240;
+  assert.equal(ids.applications.length,sourceRows);
+  if(large){assert.equal(ids.sourceRows,25000);assert.equal(ids.sourceColumns,50);assert.equal(ids.maxBatchRows,1000);}
   let source,recipient;
   try{
     source=await connectGrantPortfolio({consoleUrlFile:sourceConnection,timeoutMs:900000});
@@ -83,9 +105,9 @@ export async function runReceiving({phase,sourceConnection,recipientConnection,o
       const request=await action(client,key,'portfolio.export',async()=>({portfolioId:portfolio.id,revision:portfolio.revision}));
       const path=join(out,'exports',key+'.zip');
       await client.downloadExport(request.result.sha256,path,{bytes:request.result.bytes});
-      const raw=await ordinary(path,4*1024*1024*1024);
-      assert.equal(sha(raw),request.result.sha256);assert.equal(raw.length,request.result.bytes);
-      return {path,sha256:sha(raw),bytes:raw.length,requestId:request.id};
+      const actual=await fileIdentity(path,4*1024*1024*1024);
+      assert.equal(actual.sha256,request.result.sha256);assert.equal(actual.bytes,request.result.bytes);
+      return {...actual,requestId:request.id};
     }
     async function compareHistory(reference,target,final){
       const revisions=[];
@@ -93,10 +115,16 @@ export async function runReceiving({phase,sourceConnection,recipientConnection,o
         const expected=await reference.portfolio(final.id,{revision}),actual=await target.portfolio(final.id,{revision});
         same(actual,expected);revisions.push({revision,snapshot:actual.snapshot,tableSha256:actual.tableSha256});
         for(const table of Object.keys(expected.tableSha256)){
-          const a=[],b=[];
-          for await(const page of reference.pages({portfolioId:final.id,revision,table,limit:250}))a.push(...page.rows);
-          for await(const page of target.pages({portfolioId:final.id,revision,table,limit:250}))b.push(...page.rows);
-          same(a,b);
+          // Compare full rows in their original order without retaining every page.
+          const selection={portfolioId:final.id,revision,table,limit:250};
+          const a=reference.pages(selection),b=target.pages(selection);
+          try{
+            for(;;){
+              const left=await a.next(),right=await b.next();assert.equal(left.done,right.done);
+              if(left.done)break;
+              same(right.value,left.value);
+            }
+          }finally{await a.return();await b.return();}
         }
       }
       return revisions;
@@ -107,8 +135,8 @@ export async function runReceiving({phase,sourceConnection,recipientConnection,o
         assert.equal(complete.sourceWorkspaceId,sourceState.workspaceId);
         const final=await source.portfolio(complete.portfolio.id);
         same(final,complete.portfolio);
-        const archive=await ordinary(complete.archive.path,4*1024*1024*1024);
-        assert.equal(sha(archive),complete.archive.sha256);
+        const archive=await fileIdentity(complete.archive.path,4*1024*1024*1024);
+        assert.equal(archive.sha256,complete.archive.sha256);assert.equal(archive.bytes,complete.archive.bytes);
         return complete;
       }
       const initial=await action(source,'fixture-programme','portfolio.save',async()=>({
@@ -132,25 +160,35 @@ export async function runReceiving({phase,sourceConnection,recipientConnection,o
       });
       const basis=round.result;
       const cell=value=>'"'+String(value).replace(/"/g,'""')+'"';
+      const headers=['Reference','Title','Legal name','Partner','Amount','Currency','Answer',
+        ...(large?Array.from({length:43},(_,index)=>'Original extra '+index):[])];
       const rows=ids.applications.map((id,index)=>[
         'INTERNAL-'+index,'Internal application '+index,'Internal fictional applicant','INTERNAL',
-        '9007199254740993.0100','GBP','Synthetic internal source '+index+' '+('x'.repeat(4400)),
+        '9007199254740993.0100','GBP',large?'Synthetic original '+index+', café\r\nComplete second line':
+          'Synthetic internal source '+index+' '+('x'.repeat(4400)),
+        ...(large?Array.from({length:43},(_,column)=>'Original '+index+':'+column):[]),
       ]);
-      const csv=Buffer.from([['Reference','Title','Legal name','Partner','Amount','Currency','Answer'],...rows]
+      const csv=Buffer.from((large?'\ufeff':'')+[headers,...rows]
         .map(record=>record.map(cell).join(',')).join('\r\n')+'\r\n','utf8');
+      assert(csv.length<=64*1024*1024);assert.equal(headers.length,large?50:7);
       const originalFile=await file(join(out,'original-applications.csv'),csv);
       const common={filename:'original-applications.csv',roundId:ids.round,actor,status:'draft',
         mapping:{reference:'Reference',title:'Title',legalName:'Legal name',partnerKey:'Partner',amount:'Amount',currency:'Currency',
           answers:{evidence:'Answer'}},
         identities:{applications:Object.fromEntries(ids.applications.map((id,index)=>['INTERNAL-'+index,id])),
           partners:{INTERNAL:ids.partner}}};
-      assert.throws(()=>prepareAwardCsvImport(basis,{...common,csv,operationId:'oversized-'+ids.run,documentId:randomUUID()}),
+      // The legacy course demonstrates action-size overflow. Large sources must
+      // explicitly select bounded rows; their complete 25k body remains attached.
+      if(!large)assert.throws(()=>prepareAwardCsvImport(basis,{...common,csv,operationId:'oversized-'+ids.run,documentId:randomUUID()}),
         /exceeds the original request limit/);
       let session=await optional(join(out,'session.json'));
       if(!session){
-        session=prepareAwardCsvImportSession(basis,{...common,csv,sessionId:ids.session,workspaceId:sourceState.workspaceId,
-          batches:[0,1].map(index=>({operationId:'csv-batch-'+ids.run+'-'+index,documentId:ids.documents[index],
-            rowIndexes:Array.from({length:120},(_,n)=>index*120+n)}))});
+        const batches=large?proposeAwardCsvImportBatches(basis,{...common,csv},
+          {operationPrefix:'csv-batch-'+ids.run,documentIds:ids.documents,maxRows:ids.maxBatchRows}):
+          [0,1].map(index=>({operationId:'csv-batch-'+ids.run+'-'+index,documentId:ids.documents[index],
+            rowIndexes:Array.from({length:120},(_,n)=>index*120+n)}));
+        session=prepareAwardCsvImportSession(basis,{...common,csv,sessionId:ids.session,
+          workspaceId:sourceState.workspaceId,batches});
         await retainedJson(join(out,'session.json'),session);
       }
       assert.equal(session.source.sha256,originalFile.sha256);
@@ -159,7 +197,28 @@ export async function runReceiving({phase,sourceConnection,recipientConnection,o
       const mutated=Buffer.from(csv);mutated[mutated.length-3]^=1;
       await assert.rejects(()=>reviewAwardCsvSessionBatch(source,session,mutated,0),/same complete original CSV/);
       const returns=[];
-      for(let index=0;index<2;index++){
+      for(let index=0;index<session.batches.length;index++){
+        if(large&&index===session.batches.length-1){
+          const coldPath=join(out,'evidence','before-last-cold.json');
+          let checkpoint=await optional(coldPath);
+          if(!checkpoint){
+            checkpoint={schema:'stellar-forge.awards-session-cold-boundary.v1',operation:OPERATION,
+              sessionSha256:session.sha256,launch:await launch(source),state:await source.state()};
+            await retainedJson(coldPath,checkpoint);
+            return {operation:OPERATION,phase,state:'AWAITING_COLD_REOPEN',nextBatch:index,
+              completedRows:session.batches.slice(0,index).reduce((count,item)=>count+item.rowIndexes.length,0),
+              instructions:'Cold reopen this original source Console and rerun import with its actual new connection file.'};
+          }
+          const proofPath=join(out,'evidence','before-last-cold-reopened.json');
+          if(!await optional(proofPath)){
+            const current=await launch(source);assert.equal(current.workspaceId,checkpoint.launch.workspaceId);
+            assert.notEqual(current.pid,checkpoint.launch.pid,'Cold reopen the original source Console before its final batch.');
+            assert.equal(checkpoint.sessionSha256,session.sha256);
+            const state=await source.state();assert.equal(state.revision,checkpoint.state.revision);
+            await retainedJson(proofPath,{operation:OPERATION,sessionSha256:session.sha256,
+              before:checkpoint.launch,after:current,workspaceRevision:state.revision});
+          }
+        }
         let batch=await optional(join(out,'batch-'+index+'.json'));
         if(!batch){
           ({batch}=await reviewAwardCsvSessionBatch(source,session,csv,index));
@@ -174,22 +233,33 @@ export async function runReceiving({phase,sourceConnection,recipientConnection,o
         const recovered=await submitAwardCsvSessionBatch(source,session,batch,csv);
         same(recovered,request);assert.equal((await source.state()).revision,revision);
         await retainedJson(join(out,'actions','batch-'+index+'.complete.json'),recovered);
-        returns.push({id:request.id,inputSha256:request.inputSha256,bytes:Buffer.byteLength(JSON.stringify(batch.plan.action))});
+        const actionBytes=Buffer.byteLength(JSON.stringify(batch.plan.action));assert(actionBytes<=1024*1024);
+        returns.push({id:request.id,inputSha256:request.inputSha256,bytes:actionBytes});
+        if(large&&index===0&&!await optional(join(out,'evidence','first-batch-resume.json'))){
+          const first=await inspectAwardCsvImportSession(source,session,csv);
+          assert.equal(first.completedRows,session.batches[0].rowIndexes.length);
+          await retainedJson(join(out,'evidence','first-batch-resume.json'),{
+            operation:OPERATION,sessionSha256:session.sha256,requestId:request.id,
+            workspaceRevision:revision,observation:first,launch:await launch(source)});
+          return {operation:OPERATION,phase,state:'AWAITING_CONTINUATION',nextBatch:1,
+            completedRows:first.completedRows,instructions:'Rerun import in this same directory; it recovers the first original operation before proceeding.'};
+        }
       }
       const observation=await inspectAwardCsvImportSession(source,session,csv);
-      assert.equal(observation.state,'COMPLETE');assert.equal(observation.completedRows,240);
+      assert.equal(observation.state,'COMPLETE');assert.equal(observation.completedRows,sourceRows);
       await retainedJson(join(out,'evidence','session-complete.json'),observation);
       const final=await source.portfolio(basis.id);
-      assert.equal(final.definition.awards.records.applications.length,240);
+      assert.equal(final.definition.awards.records.applications.length,sourceRows);
       for(const application of final.definition.awards.records.applications)
         assert.equal(application.requestedAmount.value,'9007199254740993.0100');
-      const documents=final.definition.programme.records.documents.filter(record=>ids.documents.includes(record.id));
-      assert.equal(documents.length,2);
+      const selectedDocuments=session.batches.map(item=>item.documentId);
+      const documents=final.definition.programme.records.documents.filter(record=>selectedDocuments.includes(record.id));
+      assert.equal(documents.length,session.batches.length);
       for(const document of documents){
         assert.equal(document.object.sha256,originalFile.sha256);
         const opened=await source.openProgrammeDocument({portfolioId:final.id,revision:final.revision,id:document.id});
         await saveGrantPortfolioFile(opened,join(out,'evidence',document.id+'.csv'));
-        assert.equal(sha(await ordinary(join(out,'evidence',document.id+'.csv'),8*1024*1024)),originalFile.sha256);
+        assert.equal((await fileIdentity(join(out,'evidence',document.id+'.csv'),64*1024*1024)).sha256,originalFile.sha256);
       }
       const applicationFiles=[];
       for(const format of ['json','csv']){
@@ -200,7 +270,8 @@ export async function runReceiving({phase,sourceConnection,recipientConnection,o
       complete={schema:'stellar-forge.awards-import-session-receiving.v1',operation:OPERATION,phase,state:'COMPLETE',
         sourceWorkspaceId:sourceState.workspaceId,sourceLaunch:await launch(source),portfolio:final,originalFile,
         requests:returns,sessionSha256:session.sha256,archive,applicationFiles,
-        meaning:'240 internal draft records imported; no actual application, funding award, payment or customer acceptance.'};
+        sourceRows,sourceColumns:headers.length,batches:session.batches.length,
+        meaning:sourceRows+' internal draft records imported; no actual application, funding award, payment or customer acceptance.'};
       await retainedJson(join(out,'import-complete.json'),complete);return complete;
     }
     const imported=await readJson(join(out,'import-complete.json'));
@@ -213,14 +284,14 @@ export async function runReceiving({phase,sourceConnection,recipientConnection,o
       const received=await action(recipient,'receive-complete','portfolio.receive',async()=>({object:uploaded.sha256}));
       assert.equal(received.result.snapshot,imported.portfolio.snapshot);
       const revisions=await compareHistory(source,recipient,imported.portfolio);
-      const original=await ordinary(imported.originalFile.path,8*1024*1024);
-      for(const documentId of ids.documents){
+      const original=await ordinary(imported.originalFile.path,64*1024*1024);
+      const session=await readJson(join(out,'session.json'));
+      for(const documentId of session.batches.map(item=>item.documentId)){
         const response=await recipient.openProgrammeDocument({portfolioId:imported.portfolio.id,
           revision:imported.portfolio.revision,id:documentId});
         const path=join(out,'evidence','received-'+documentId+'.csv');
-        await saveGrantPortfolioFile(response,path);assert.equal(sha(await ordinary(path,8*1024*1024)),sha(original));
+        await saveGrantPortfolioFile(response,path);assert.equal((await fileIdentity(path,64*1024*1024)).sha256,sha(original));
       }
-      const session=await readJson(join(out,'session.json'));
       await assert.rejects(()=>inspectAwardCsvImportSession(recipient,session,original),/original workspace/);
       const before=(await recipient.state()).revision;
       await action(recipient,'receive-complete','portfolio.receive',async()=>({object:uploaded.sha256}));
@@ -236,15 +307,16 @@ export async function runReceiving({phase,sourceConnection,recipientConnection,o
     assert.notEqual(recipientLaunch.pid,received.recipientLaunch.pid,'Cold reopen the original receiving Console before this phase.');
     assert.equal(recipientLaunch.workspaceId,received.recipientLaunch.workspaceId);
     const revisions=await compareHistory(source,recipient,imported.portfolio);
-    const csv=await ordinary(imported.originalFile.path,8*1024*1024),session=await readJson(join(out,'session.json'));
+    const csv=await ordinary(imported.originalFile.path,64*1024*1024),session=await readJson(join(out,'session.json'));
     const state=await inspectAwardCsvImportSession(source,session,csv);assert.equal(state.state,'COMPLETE');
     const before=(await source.state()).revision;
-    same(await submitAwardCsvSessionBatch(source,session,await readJson(join(out,'batch-1.json')),csv),
-      await readJson(join(out,'actions','batch-1.complete.json')));
+    const last=session.batches.length-1;
+    same(await submitAwardCsvSessionBatch(source,session,await readJson(join(out,'batch-'+last+'.json')),csv),
+      await readJson(join(out,'actions','batch-'+last+'.complete.json')));
     assert.equal((await source.state()).revision,before);
     const complete={schema:'stellar-forge.awards-import-session-receiving.v1',operation:OPERATION,phase,state:'COMPLETE',
       sourceLaunch,recipientLaunch,revisions,session:state,sourceArchive:imported.archive,recipientArchive:received.reexport,
-      selectedSourceRows:240,originalAmount:'9007199254740993.0100'};
+      selectedSourceRows:sourceRows,sourceColumns:large?50:7,batches:session.batches.length,originalAmount:'9007199254740993.0100'};
     await retainedJson(join(out,'complete.json'),complete);return complete;
   }finally{await source?.dispose();await recipient?.dispose();}
 }

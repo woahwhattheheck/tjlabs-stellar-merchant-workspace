@@ -5,9 +5,9 @@ import {open,lstat,realpath} from 'node:fs/promises';
 import {resolve,dirname} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
-import {connectGrantPortfolio,saveGrantPortfolioFile} from './client.mjs';
+import {connectGrantPortfolio,saveGrantPortfolioFile,GRANT_PORTFOLIO_MAX_JSON_BYTES} from './client.mjs';
 import {prepareAwardCsvImportSession,reviewAwardCsvSessionBatch,submitAwardCsvSessionBatch,
-  inspectAwardCsvImportSession} from './awards-import-session.mjs';
+  inspectAwardCsvImportSession,proposeAwardCsvImportBatches} from './awards-import-session.mjs';
 
 const need=(ok,message)=>{if(!ok)throw new Error(message);};
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -25,14 +25,14 @@ export async function ordinary(path,maximum){
     return bytes;
   }finally{await handle.close();}
 }
-export async function readJson(path){return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await ordinary(path,64*1024*1024)));}
+export async function readJson(path){return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await ordinary(path,GRANT_PORTFOLIO_MAX_JSON_BYTES)));}
 export async function retainedJson(path,value){
   need(typeof path==='string'&&path===resolve(path),'Use an absolute output path in a private operator directory.');
   const parent=dirname(path),info=await lstat(parent);
   need(info.isDirectory()&&!info.isSymbolicLink()&&await realpath(parent)===parent&&!(info.mode&0o077)&&
     (process.getuid===undefined||info.uid===process.getuid()),'Keep the saved import in a real private operator-owned directory.');
   const bytes=jsonBytes(value);
-  need(bytes.length<=64*1024*1024,'The complete original return exceeds this retained JSON limit.');
+  need(bytes.length<=GRANT_PORTFOLIO_MAX_JSON_BYTES,'The complete original return exceeds this retained JSON limit.');
   const result=await saveGrantPortfolioFile({descriptor:{bytes:bytes.length,sha256:sha(bytes)},
     response:new Response(bytes)},path);
   const handle=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW);
@@ -44,12 +44,13 @@ export async function retainedJson(path,value){
 function argumentsOf(argv){
   const [command,...pairs]=argv;
   const allowed={
+    propose:['connection','portfolio','input','csv','out'],
     prepare:['connection','portfolio','input','csv','out'],
     review:['connection','session','csv','index','out'],
     submit:['connection','session','csv','batch','out','resume-failed'],
     inspect:['connection','session','csv','out'],
   };
-  need(Object.hasOwn(allowed,command),'Choose prepare, review, submit or inspect.');
+  need(Object.hasOwn(allowed,command),'Choose propose, prepare, review, submit or inspect.');
   need(pairs.length%2===0,'Pass each named option once with its value.');
   const values={};
   for(let i=0;i<pairs.length;i+=2){
@@ -70,16 +71,25 @@ export async function main(argv=process.argv.slice(2)){
   process.on('SIGINT',stopped);process.on('SIGTERM',stopped);
   let client;
   try{
-    const csv=await ordinary(values.csv,8*1024*1024);
+    const csv=await ordinary(values.csv,64*1024*1024);
     client=await connectGrantPortfolio({consoleUrlFile:values.connection});
     const options={signal:controller.signal};
     let result;
-    if(command==='prepare'){
+    if(command==='prepare'||command==='propose'){
       const input=await readJson(values.input);
       need(!Object.hasOwn(input,'csv')&&!Object.hasOwn(input,'workspaceId'),
         'The original source file and actual connected workspace are supplied separately.');
       const state=await client.state(options),portfolio=await client.portfolio(values.portfolio,options);
-      result=prepareAwardCsvImportSession(portfolio,{...input,csv,workspaceId:state.workspaceId});
+      if(command==='propose'){
+        const {proposal,...selection}=input;
+        need(proposal&&typeof proposal==='object'&&!Array.isArray(proposal)&&
+          Object.keys(proposal).every(key=>['operationPrefix','documentIds','maxRows'].includes(key))&&
+          !Object.hasOwn(selection,'batches'),'Supply one complete proposal with retained operation prefix and document IDs.');
+        const {sessionId,...common}=selection;
+        const batches=proposeAwardCsvImportBatches(portfolio,{...common,csv},proposal);
+        // Retain a complete ordinary prepare input. Proposal never dispatches a batch.
+        result={...selection,batches};
+      }else result=prepareAwardCsvImportSession(portfolio,{...input,csv,workspaceId:state.workspaceId});
     }else{
       const session=await readJson(values.session);
       if(command==='review'){
