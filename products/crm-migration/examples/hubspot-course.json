@@ -1,0 +1,484 @@
+{
+  "schema": "crm-migration.hubspot-course.v1",
+  "provenance": "Authored receiving example; no customer or live portal data.",
+  "state": {
+    "schema": "crm-migration.hubspot-capture.v1",
+    "id": "receiving-example",
+    "connection": "example",
+    "portalId": "123456",
+    "workspaceId": "crm-example",
+    "plan": {
+      "schema": "crm-migration.hubspot-plan.v1",
+      "apiVersion": "2026-09",
+      "recordScope": "active",
+      "propertySensitivity": "non_sensitive",
+      "objects": [
+        {
+          "type": "contacts",
+          "properties": [
+            "email"
+          ]
+        },
+        {
+          "type": "companies",
+          "properties": [
+            "name"
+          ]
+        }
+      ],
+      "associations": [
+        {
+          "from": "contacts",
+          "to": "companies"
+        }
+      ]
+    },
+    "planSha256": "4175702f894df956c74502d81e01afb8a3bac3069bf636fa76796509ff8bfc6c",
+    "startedAt": "2026-10-14T12:00:00.000Z",
+    "updatedAt": "2026-10-14T12:00:08.000Z",
+    "completedAt": "2026-10-14T12:00:08.000Z",
+    "revision": 8,
+    "phase": "complete",
+    "objectIndex": 0,
+    "familyIndex": 1,
+    "after": null,
+    "seenCursors": [],
+    "properties": {
+      "contacts": [
+        {
+          "name": "email",
+          "archived": false,
+          "dataSensitivity": "non_sensitive"
+        }
+      ],
+      "companies": [
+        {
+          "name": "name",
+          "archived": false,
+          "dataSensitivity": "non_sensitive"
+        }
+      ]
+    },
+    "labels": {
+      "contacts-companies": [
+        {
+          "category": "HUBSPOT_DEFINED",
+          "typeId": 279,
+          "label": null
+        },
+        {
+          "category": "HUBSPOT_DEFINED",
+          "typeId": 1,
+          "label": "Primary"
+        }
+      ]
+    },
+    "objects": {
+      "contacts": [
+        {
+          "id": "9007199254740993",
+          "properties": {
+            "email": "one@example.invalid"
+          },
+          "createdAt": "2026-10-01T12:00:00Z",
+          "updatedAt": "2026-10-14T12:00:00Z",
+          "archived": false
+        },
+        {
+          "id": "2",
+          "properties": {
+            "email": null
+          },
+          "createdAt": "2026-10-01T12:00:00Z",
+          "updatedAt": "2026-10-14T12:00:00Z",
+          "archived": false
+        }
+      ],
+      "companies": [
+        {
+          "id": "10",
+          "properties": {
+            "name": "Example A"
+          },
+          "createdAt": "2026-10-01T12:00:00Z",
+          "updatedAt": "2026-10-14T12:00:00Z",
+          "archived": false
+        },
+        {
+          "id": "11",
+          "properties": {
+            "name": "Example B"
+          },
+          "createdAt": "2026-10-01T12:00:00Z",
+          "updatedAt": "2026-10-14T12:00:00Z",
+          "archived": false
+        }
+      ]
+    },
+    "associations": {
+      "contacts-companies": [
+        {
+          "from_id": "9007199254740993",
+          "to_id": "10",
+          "category": "HUBSPOT_DEFINED",
+          "type_id": "279",
+          "label": ""
+        },
+        {
+          "from_id": "9007199254740993",
+          "to_id": "10",
+          "category": "HUBSPOT_DEFINED",
+          "type_id": "1",
+          "label": "Primary"
+        },
+        {
+          "from_id": "9007199254740993",
+          "to_id": "11",
+          "category": "HUBSPOT_DEFINED",
+          "type_id": "279",
+          "label": ""
+        }
+      ]
+    },
+    "queue": null,
+    "accepted": [
+      {
+        "sha256": "ed2afc5aa24270060bca61745f6f1573d4619bbda02d08bf3bf4ee36f95ced8a",
+        "kind": "properties",
+        "at": "2026-10-14T12:00:01.000Z"
+      },
+      {
+        "sha256": "4df3187be8bd33d3c996ae369b40e7ab3edf28e194f4d44e8326f9afe741e69d",
+        "kind": "properties",
+        "at": "2026-10-14T12:00:02.000Z"
+      },
+      {
+        "sha256": "f516468ef74959f86cb85648ce184842c0e4852e13bb8bda9017a304ac96d54f",
+        "kind": "labels",
+        "at": "2026-10-14T12:00:03.000Z"
+      },
+      {
+        "sha256": "63a7aa0e29f9b269fe21e7f7eeb5120f1daf458c0045645cef5b2e9cf6c2cc35",
+        "kind": "objects",
+        "at": "2026-10-14T12:00:04.000Z"
+      },
+      {
+        "sha256": "8f94d1bc574a40d1872674ec88fd4d1a9e9351721f478b50d3e87ee8027ccc56",
+        "kind": "objects",
+        "at": "2026-10-14T12:00:05.000Z"
+      },
+      {
+        "sha256": "1a5c6f69eda16cd6fbf9fb0f20a21cee668ab4b14b87360f7c4a3860e0537b58",
+        "kind": "objects",
+        "at": "2026-10-14T12:00:06.000Z"
+      },
+      {
+        "sha256": "a59801c9accdd826ede51b3d5e26865a10a858b00ad0b4575c66b8be05b50796",
+        "kind": "associations",
+        "at": "2026-10-14T12:00:07.000Z"
+      },
+      {
+        "sha256": "65e1b0a820427997003396a518ea1e1083d2ea107ac779f5e0a05dfc6fae674f",
+        "kind": "associations",
+        "at": "2026-10-14T12:00:08.000Z"
+      }
+    ],
+    "lastError": null,
+    "notBefore": null
+  },
+  "responses": [
+    {
+      "request": {
+        "kind": "properties",
+        "object": "contacts",
+        "method": "GET",
+        "path": "/crm/properties/2026-09/contacts?archived=false&dataSensitivity=non_sensitive"
+      },
+      "data": {
+        "results": [
+          {
+            "name": "email",
+            "archived": false,
+            "dataSensitivity": "non_sensitive"
+          }
+        ]
+      },
+      "at": "2026-10-14T12:00:01.000Z"
+    },
+    {
+      "request": {
+        "kind": "properties",
+        "object": "companies",
+        "method": "GET",
+        "path": "/crm/properties/2026-09/companies?archived=false&dataSensitivity=non_sensitive"
+      },
+      "data": {
+        "results": [
+          {
+            "name": "name",
+            "archived": false,
+            "dataSensitivity": "non_sensitive"
+          }
+        ]
+      },
+      "at": "2026-10-14T12:00:02.000Z"
+    },
+    {
+      "request": {
+        "kind": "labels",
+        "family": "contacts-companies",
+        "method": "GET",
+        "path": "/crm/associations/2026-09/contacts/companies/labels"
+      },
+      "data": {
+        "results": [
+          {
+            "category": "HUBSPOT_DEFINED",
+            "typeId": 279,
+            "label": null
+          },
+          {
+            "category": "HUBSPOT_DEFINED",
+            "typeId": 1,
+            "label": "Primary"
+          }
+        ]
+      },
+      "at": "2026-10-14T12:00:03.000Z"
+    },
+    {
+      "request": {
+        "kind": "objects",
+        "object": "contacts",
+        "after": null,
+        "method": "GET",
+        "path": "/crm/objects/2026-09/contacts?limit=100&archived=false&properties=email"
+      },
+      "data": {
+        "results": [
+          {
+            "id": "9007199254740993",
+            "properties": {
+              "email": "one@example.invalid"
+            },
+            "createdAt": "2026-10-01T12:00:00Z",
+            "updatedAt": "2026-10-14T12:00:00Z",
+            "archived": false
+          }
+        ],
+        "paging": {
+          "next": {
+            "after": "contacts+2/="
+          }
+        }
+      },
+      "at": "2026-10-14T12:00:04.000Z"
+    },
+    {
+      "request": {
+        "kind": "objects",
+        "object": "contacts",
+        "after": "contacts+2/=",
+        "method": "GET",
+        "path": "/crm/objects/2026-09/contacts?limit=100&archived=false&properties=email&after=contacts%2B2%2F%3D"
+      },
+      "data": {
+        "results": [
+          {
+            "id": "2",
+            "properties": {
+              "email": null
+            },
+            "createdAt": "2026-10-01T12:00:00Z",
+            "updatedAt": "2026-10-14T12:00:00Z",
+            "archived": false
+          }
+        ]
+      },
+      "at": "2026-10-14T12:00:05.000Z"
+    },
+    {
+      "request": {
+        "kind": "objects",
+        "object": "companies",
+        "after": null,
+        "method": "GET",
+        "path": "/crm/objects/2026-09/companies?limit=100&archived=false&properties=name"
+      },
+      "data": {
+        "results": [
+          {
+            "id": "10",
+            "properties": {
+              "name": "Example A"
+            },
+            "createdAt": "2026-10-01T12:00:00Z",
+            "updatedAt": "2026-10-14T12:00:00Z",
+            "archived": false
+          },
+          {
+            "id": "11",
+            "properties": {
+              "name": "Example B"
+            },
+            "createdAt": "2026-10-01T12:00:00Z",
+            "updatedAt": "2026-10-14T12:00:00Z",
+            "archived": false
+          }
+        ]
+      },
+      "at": "2026-10-14T12:00:06.000Z"
+    },
+    {
+      "request": {
+        "kind": "associations",
+        "family": "contacts-companies",
+        "method": "POST",
+        "path": "/crm/associations/2026-09/contacts/companies/batch/read",
+        "body": {
+          "inputs": [
+            {
+              "id": "9007199254740993"
+            },
+            {
+              "id": "2"
+            }
+          ]
+        }
+      },
+      "data": {
+        "status": "COMPLETE",
+        "results": [
+          {
+            "from": {
+              "id": "9007199254740993"
+            },
+            "to": [
+              {
+                "toObjectId": "10",
+                "associationTypes": [
+                  {
+                    "category": "HUBSPOT_DEFINED",
+                    "typeId": 279,
+                    "label": null
+                  },
+                  {
+                    "category": "HUBSPOT_DEFINED",
+                    "typeId": 1,
+                    "label": "Primary"
+                  }
+                ]
+              }
+            ],
+            "paging": {
+              "next": {
+                "after": "one+next/="
+              }
+            }
+          },
+          {
+            "from": {
+              "id": "2"
+            },
+            "to": []
+          }
+        ]
+      },
+      "at": "2026-10-14T12:00:07.000Z"
+    },
+    {
+      "request": {
+        "kind": "associations",
+        "family": "contacts-companies",
+        "method": "POST",
+        "path": "/crm/associations/2026-09/contacts/companies/batch/read",
+        "body": {
+          "inputs": [
+            {
+              "id": "9007199254740993",
+              "after": "one+next/="
+            }
+          ]
+        }
+      },
+      "data": {
+        "status": "COMPLETE",
+        "results": [
+          {
+            "from": {
+              "id": "9007199254740993"
+            },
+            "to": [
+              {
+                "toObjectId": "11",
+                "associationTypes": [
+                  {
+                    "category": "HUBSPOT_DEFINED",
+                    "typeId": 279,
+                    "label": null
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "at": "2026-10-14T12:00:08.000Z"
+    }
+  ],
+  "files": {
+    "contacts.csv": "\"record_id\",\"email\",\"created_at\",\"updated_at\",\"archived\",\"portal_id\"\r\n\"9007199254740993\",\"one@example.invalid\",\"2026-10-01T12:00:00Z\",\"2026-10-14T12:00:00Z\",\"false\",\"123456\"\r\n\"2\",\"\",\"2026-10-01T12:00:00Z\",\"2026-10-14T12:00:00Z\",\"false\",\"123456\"\r\n",
+    "companies.csv": "\"record_id\",\"name\",\"created_at\",\"updated_at\",\"archived\",\"portal_id\"\r\n\"10\",\"Example A\",\"2026-10-01T12:00:00Z\",\"2026-10-14T12:00:00Z\",\"false\",\"123456\"\r\n\"11\",\"Example B\",\"2026-10-01T12:00:00Z\",\"2026-10-14T12:00:00Z\",\"false\",\"123456\"\r\n",
+    "contacts-companies.csv": "\"from_id\",\"to_id\",\"category\",\"type_id\",\"label\",\"portal_id\"\r\n\"9007199254740993\",\"10\",\"HUBSPOT_DEFINED\",\"279\",\"\",\"123456\"\r\n\"9007199254740993\",\"10\",\"HUBSPOT_DEFINED\",\"1\",\"Primary\",\"123456\"\r\n\"9007199254740993\",\"11\",\"HUBSPOT_DEFINED\",\"279\",\"\",\"123456\"\r\n"
+  },
+  "summary": {
+    "id": "receiving-example",
+    "connection": "example",
+    "workspaceId": "crm-example",
+    "portalId": "123456",
+    "plan": {
+      "schema": "crm-migration.hubspot-plan.v1",
+      "apiVersion": "2026-09",
+      "recordScope": "active",
+      "propertySensitivity": "non_sensitive",
+      "objects": [
+        {
+          "type": "contacts",
+          "properties": [
+            "email"
+          ]
+        },
+        {
+          "type": "companies",
+          "properties": [
+            "name"
+          ]
+        }
+      ],
+      "associations": [
+        {
+          "from": "contacts",
+          "to": "companies"
+        }
+      ]
+    },
+    "planSha256": "4175702f894df956c74502d81e01afb8a3bac3069bf636fa76796509ff8bfc6c",
+    "sha256": "0ea1b10530e9decbcb3cab6113b12fc17be45e83fc2887e275b0b5a858970fbb",
+    "revision": 8,
+    "phase": "complete",
+    "startedAt": "2026-10-14T12:00:00.000Z",
+    "updatedAt": "2026-10-14T12:00:08.000Z",
+    "completedAt": "2026-10-14T12:00:08.000Z",
+    "notBefore": null,
+    "lastError": null,
+    "acceptedResponses": 8,
+    "records": {
+      "contacts": 2,
+      "companies": 2
+    },
+    "associations": {
+      "contacts-companies": 3
+    },
+    "pendingAssociationSources": 0
+  }
+}

@@ -2,6 +2,7 @@
 const text=(max=120)=>({type:'string',minLength:1,maxLength:max}),hash={type:'string',pattern:'^[a-f0-9]{64}$'},integer=(max=Number.MAX_SAFE_INTEGER)=>({type:'integer',minimum:0,maximum:max});
 export function crmTools(tool){const scoped=p=>({workspace:text(64),...p}),read={readOnly:true,idempotent:true};
  return [
+ tool('merchant_crm_hubspot','Capture the declared HubSpot active-record scope through the existing host writer. list/status show exact continuation; start uses a stable capture ID; advance retains one full page and per-record cursors; adopt imports the complete exact capture; adoption recovers the saved original adoption; export retains all raw responses and derived CSVs.',scoped({action:{type:'string',enum:['list','status','start','advance','adopt','adoption','export']},id:text(48),connection:text(48),expectedSha256:hash,baseSha256:hash,actor:text(240),at:text(40)}),['workspace','action'],{idempotent:true}),
  tool('merchant_crm_status','List configured original workspaces or read the current connected workspace summary.',scoped({}),[],read),
  tool('merchant_crm_connect','Authenticate the existing Applications-owned workspace and instance.',scoped({instanceId:text()}),['workspace'],{idempotent:true}),
  tool('merchant_crm_disconnect','Close this client attachment; Applications retains the server and writer.',scoped({}),['workspace'],{idempotent:true}),

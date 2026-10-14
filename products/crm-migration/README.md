@@ -58,3 +58,7 @@ native/ — receiving CLI.
 examples/ — all authored originals, configuration editions and complete workspace.
 docs/ — receiving, source/target contract, operations, cutover, production scope.
 All files in this package are the reusable CRM operating product and its authored fictional receiving course.
+
+## Direct HubSpot target acquisition
+
+The installed desk includes **Capture HubSpot**: declared portal/property scope, complete retained responses, resumable object and per-source association pagination, atomic target intake and original capture download. See [HUBSPOT.md](HUBSPOT.md) for the host declaration, native and customer-agent operations, actual API contracts and receiving course.

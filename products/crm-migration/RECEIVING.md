@@ -2,7 +2,7 @@
 
 Use the exact selected source edition and the same saved receiving directory when continuing. The original authored course is examples/receiving-course.workspace.json. Actual expected baseline is 18 original CSVs, 40 operations, first16 findings and corrected0.
 
-1. Build the crm-migration selection from its full commit and install the original archive with the maintained runtime installer. Open registrations; confirm crm-migration, crm-managed, one CRM application provider and nine CRM tools.
+1. Build the crm-migration selection from its full commit and install the original archive with the maintained runtime installer. Open registrations; confirm crm-migration, crm-managed, one CRM application provider and ten CRM tools.
 2. Run crm-migration course in an owned private directory, inspect, export its workspace JSON and complete ZIP, and generate an offline desk. Read every ZIP member and confirm all original CSV bytes, mappings, both full reports and operation history. Receive workspace.json into a second original directory, reopen and continue one new mapping/comparison there.
 3. Open the first directory through Applications. Verify Start/Open/Stop and reopen preserve its original ID. An unauthenticated GET of the shell must contain no original customer archive; an unauthenticated API call must reject.
 4. Actually operate the complete browser at desktop and 390px. Look at the resulting views/screenshots. Use original CSV import, normal mapping forms, both rehearsal reports, original row disclosures, finding search, review/decision controls, complete downloads and offline reopen. Inspect populated/empty/error states and every applicable outgoing file.
@@ -14,3 +14,7 @@ Use the exact selected source edition and the same saved receiving directory whe
 The producer must personally open/run/render the exact outgoing version and LOOK at it as a recipient would, including desktop/screenshare and narrow views, controls, downloaded files, all applicable reports, archives and reopened projects. Source reading or tests do not replace this. Fix concrete readability or interaction defects and continue delivery. Use plain industrial styling. No hosted Actions are required.
 
 Use the original receiving thread for actual host/source/argv, native outputs, full generated files and rendered results. Keep customer state and credentials private.
+
+## HubSpot capture receiving
+
+Run the maintained authored planner with `node products/crm-migration/examples/hubspot-course.cjs`. On the actual private host, configure the intended portal and token environment using HUBSPOT.md, then open Capture HubSpot at desktop and 390 px width. Read the selected scope, start capture, pause after a page, close/reopen Applications and continue the same capture. Inspect all object counts and directed-family counts, download and reopen the originals archive, and import the complete target edition. Keep an uncertain adoption request and use Recover original intake to reconcile it; a later unrelated workspace operation must remain present after an identical committed retry. Export the ordinary working bundle and confirm its capture responses and original workspace are both retained. Preserve the actual receiving result in the existing CRM work thread.

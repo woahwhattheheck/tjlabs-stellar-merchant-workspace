@@ -10,23 +10,23 @@
     },
     {
       "path": "browser/crm-desk.cjs",
-      "bytes": 40139,
-      "sha256": "c3b4578461ccda113297de328a0e472200cea6c27a3d1da888188c41cc5d3930"
+      "bytes": 47371,
+      "sha256": "c62c6348d2dd67f4ac33ba2a7c75060dca399b1dc30847f50d528771d9e05c24"
     },
     {
       "path": "browser/render-desk.cjs",
-      "bytes": 7201,
-      "sha256": "1a36787c157671b3e272da191c67914d366498fe3a1f95d024fc1d4d38659dad"
+      "bytes": 7252,
+      "sha256": "98599127986fb2de71724d8094341720b08df5ec850a9a03880b07a53283343b"
     },
     {
       "path": "cli.mjs",
-      "bytes": 2918,
-      "sha256": "59532b0e85092efefe6a811bd95062497e62783325db9710cc37cae684029e13"
+      "bytes": 4793,
+      "sha256": "0592834387f6064e4f73743de0eb5d33908d26a1f9868443189685e89329a34c"
     },
     {
       "path": "CRM_Migration_Desk.html",
-      "bytes": 261179,
-      "sha256": "33a97d1eac74bef403aa46bcdb4b8968a1864c8b1686f11c9f5eaf9a510417d1"
+      "bytes": 280161,
+      "sha256": "f7b468fbafd32d85658b6a7dba2dc046db7e09da4903a886e50d2124104c6328"
     },
     {
       "path": "docs/CUTOVER.md",
@@ -159,14 +159,34 @@
       "sha256": "b18684306b732598c12530abc241bb6b263623f364a7b923ba5d7867f34d4943"
     },
     {
+      "path": "examples/hubspot-course.cjs",
+      "bytes": 2590,
+      "sha256": "8737d6b10a4ae0b72f14e5d770a9242464e244936a165f4241ade16d26f4f306"
+    },
+    {
+      "path": "examples/hubspot-course.json",
+      "bytes": 13022,
+      "sha256": "51e46ac3da09319fc411df43a59ef9a50158b33b2debea52a1b0875547e9626d"
+    },
+    {
+      "path": "examples/hubspot-host.example.json",
+      "bytes": 1124,
+      "sha256": "d76a93d4febc63ae272ca651cd79b0a9c857be7e05ce15928a931307386d9565"
+    },
+    {
       "path": "examples/receiving-course.workspace.json",
       "bytes": 137441,
       "sha256": "f06eda1da3fd26d8365ed7d4aaf10f57b0a1c8b49a1a109df9df4781c1ba8def"
     },
     {
       "path": "host/client.mjs",
-      "bytes": 4063,
-      "sha256": "755eb126bf3234ec0a17d434f19c336b69dd0753f4055ecad4cc07cfaefe994a"
+      "bytes": 4176,
+      "sha256": "51d43f8a120883ba577bdb631b3b74f6e1cd56fb2345cdb6571f940712d5562c"
+    },
+    {
+      "path": "host/hubspot.mjs",
+      "bytes": 13665,
+      "sha256": "778caab661b0d8e8c6d448880d47fc369ce74f104abee66d970e77e98b9061a1"
     },
     {
       "path": "host/io.mjs",
@@ -175,13 +195,18 @@
     },
     {
       "path": "host/server.mjs",
-      "bytes": 7517,
-      "sha256": "4afe2c6eb7a4c5150d2042d79f250608c0b043e243395a38be0da960d82cfab6"
+      "bytes": 8008,
+      "sha256": "45b5810316f447f7b5e0c16b40bd16b523b750d1777a359997243bb5ffc00b21"
     },
     {
       "path": "host/store.mjs",
-      "bytes": 5512,
-      "sha256": "d05da7ea72689dc6c5fb259ce1c6f2eb0015e55f21981d230fbd01b58b42c847"
+      "bytes": 6565,
+      "sha256": "22aaa30c10d8e8d166357c2f389718df5ea701dcb489b6f265747191e806f17e"
+    },
+    {
+      "path": "HUBSPOT.md",
+      "bytes": 9022,
+      "sha256": "25e1462114ae8e25d6119cafb521b5e0d61fe304ebc676b809c851a355f6b805"
     },
     {
       "path": "LICENSE",
@@ -195,8 +220,8 @@
     },
     {
       "path": "mcp.mjs",
-      "bytes": 7884,
-      "sha256": "87e64be193d5003b74989685275778aeefc9ee22c2af7700b22badef639008d8"
+      "bytes": 8231,
+      "sha256": "d016a94e191969769ae33c2362bce714273c14df4af04ff6a5733c9a774d7dbb"
     },
     {
       "path": "merchant-provider.mjs",
@@ -210,8 +235,8 @@
     },
     {
       "path": "OPERATING.md",
-      "bytes": 11564,
-      "sha256": "ba4b16978114887b14db33c0e58af0a7396c256b4ebac16e63bf854b95e9978a"
+      "bytes": 11895,
+      "sha256": "490d46c50a63fc244024c50954d651f3a99648eecc7dfcf27ec54820acd32181"
     },
     {
       "path": "package.json",
@@ -220,13 +245,13 @@
     },
     {
       "path": "README.md",
-      "bytes": 7234,
-      "sha256": "1833a3fdc76bd49ddb2dae3bdc5e326b6e602661a578cbd7d2e90088c15e5a98"
+      "bytes": 7627,
+      "sha256": "52b08ae5e390c50e365b6ad21af37488c0f80a2ed287789069889ba37d5e160e"
     },
     {
       "path": "RECEIVING.md",
-      "bytes": 3421,
-      "sha256": "f29f3d08f74e4cd3151b34588b030b2569fadc67912a498d6d946c8b208768b3"
+      "bytes": 4317,
+      "sha256": "d503e2f360caea0fffb4fa929617fef9e27a7560cfa335f9a5c4b3c2483ac22d"
     },
     {
       "path": "runtime/connected_gzip.cjs",
@@ -264,6 +289,11 @@
       "sha256": "234482db4371b6a967ebd8cf4adc544899438f0796ffbf98d93206ff478c590b"
     },
     {
+      "path": "runtime/hubspot-capture.cjs",
+      "bytes": 11030,
+      "sha256": "299e9ca29c7f78fcc0bd427163d56f9de6df77826a712bd5f0a3fbf14035f651"
+    },
+    {
       "path": "runtime/migration-codec.js",
       "bytes": 16743,
       "sha256": "4d0126c246d081328f889e952e52f767c0a508ccd7b5e05c2a776835ac63920a"
@@ -280,8 +310,8 @@
     },
     {
       "path": "SOURCE_AND_API.md",
-      "bytes": 2791,
-      "sha256": "9b49a94a867046e6c27b0cbb09dcbaace7ab04291a7705005e0c8a67dfdeead1"
+      "bytes": 3397,
+      "sha256": "34ec840bf8fc079f68203ae09b81a313e5e601509579035c7ba77af202275349"
     },
     {
       "path": "source-history/generic-base.gzip.json",
@@ -290,8 +320,8 @@
     },
     {
       "path": "tools.mjs",
-      "bytes": 3023,
-      "sha256": "93a6edd0c3d9176df52100b8ef6f9e3f1fdea4822ab1017ab59bbd8ec66c5e7d"
+      "bytes": 3641,
+      "sha256": "c65065cb1c674bbfe2064f260744e364891914f0130f1da7d2870bedec12b655"
     },
     {
       "path": "validation/actual-v8-results.json",
@@ -302,6 +332,11 @@
       "path": "validation/distribution-composition.json",
       "bytes": 694,
       "sha256": "3d3e817e4c2c52995084d3922eace06f548922800daf2fe7b2a2df4817698600"
+    },
+    {
+      "path": "validation/hubspot-host-receiving.json",
+      "bytes": 641,
+      "sha256": "5beaf01f1532378a16bbe21c80f45710ebd9a98fa4cf080bd4e04d3619afbaee"
     },
     {
       "path": "validation/integrated-store-course.json",

@@ -19,3 +19,7 @@ Existing CSV/codec and ZIP/gzip implementations are retained whole. CRM comparis
 ## Installed composition
 
 The complete original generic source is retained in source-history/generic-base.gzip.json. The comparison, workspace, CSV/codec, reports, ZIP/gzip, examples and original file CLI remain complete. Current browser and renderer add the managed original-host path while retaining standalone use. host/ supplies private storage, one writer, authenticated local server and typed client; managed.mjs and application-provider.mjs join Applications; mcp.mjs, tools.mjs, setup.mjs and merchant-provider.mjs join the original merchant host. SOURCE_MANIFEST.json identifies every current file. package.json explicitly retains CommonJS semantics for the original .js/.cjs modules beneath the surrounding ESM distribution.
+
+## HubSpot acquisition modules
+
+runtime/hubspot-capture.cjs owns the current versioned read plan, page transitions, precise identifiers, response replay and complete CSV derivation. host/hubspot.mjs attaches response custody and resumable capture to the existing store serial writer. host/store.mjs exposes hubspot(action,args) and captureExport(id,expectedSha256); host/client.mjs exposes hubspot(action,args). The existing server, CLI, browser and merchant_crm_hubspot customer-agent operation all use those same paths. HUBSPOT.md contains the complete declared API contract and receiving instructions.

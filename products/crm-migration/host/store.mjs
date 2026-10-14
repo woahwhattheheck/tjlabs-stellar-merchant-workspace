@@ -1,5 +1,6 @@
 // MIT. One source-owned writer; original CRM operations remain the engine.
 import {join} from 'node:path';
+import {attachHubSpot} from './hubspot.mjs';
 import {acquirePrivateDirectoryWriter} from '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/operations/history.mjs';
 import runtime from '../runtime/crm-runtime.cjs';
 import {privateDirectory,readJSON,writeJSON,writeBytes,json,sha,need} from './io.mjs';
@@ -22,7 +23,10 @@ export async function openStore(directory){
  async function save(next){model.validate(next);need(next.id===ws.id,'CRM_WORKSPACE_CHANGED','Keep the original workspace identity.',409);
  const archive=model.archive(next);await originalDirectory();await writeJSON(join(directory,'editions',archive.sha256+'.json'),archive);
  await originalDirectory();await writeJSON(join(directory,'workspace.json'),archive,{replace:true});ws=next;return archive;}
+ const hubspot=attachHubSpot({directory,workspaceId:originalId,guard:originalDirectory,current:reload,save});
  return {directory,identity,get id(){return ws.id;},
+ hubspot:(action,args)=>run(async()=>{await reload();need(['list','status','start','advance','adopt','adoption','configure'].includes(action),'HUBSPOT_ACTION','Choose a declared capture operation.');return hubspot[action](args);}),
+ captureExport:(id,expectedSha256)=>run(async()=>{await reload();const status=await hubspot.status(id);need(status.sha256===expectedSha256,'HUBSPOT_CAPTURE_CHANGED','Select the exact retained capture.',409);const files=await hubspot.files(id),packed=Buffer.from(runtime.zipper.zip(files)),hash=sha(packed);await originalDirectory();const written=await writeBytes(join(directory,'exports',hash+'.zip'),packed);return {schema:'crm-migration.retained-export.v1',workspaceId:ws.id,captureId:id,captureSha256:expectedSha256,fileId:hash,sha256:hash,bytes:written.bytes,filename:id+'-hubspot-capture.zip',contentType:'application/zip'};}),
  state:()=>run(async()=>model.archive(await reload())),summary:()=>run(async()=>summary(await reload())),
  action:(op,{baseSha256}={})=>run(async()=>{await reload();
  const earlier=ws.operations.find(x=>x.id===op?.id);let next;
@@ -30,7 +34,7 @@ export async function openStore(directory){
  const archive=earlier?model.archive(ws):await save(next);
  return {archive,receipt:ws.operations.find(x=>x.id===op.id),reused:Boolean(earlier)};}),
  export:expected=>run(async()=>{await reload();need(expected===comparison.digest(ws),'CRM_REVISION_CHANGED','Select the complete current workspace hash for export.',409);
- const archive=model.archive(ws),files=exportFiles(ws),all={...files};
+ const archive=model.archive(ws),files={...exportFiles(ws),...await hubspot.allFiles()},all={...files};
  all['EXPORT_MANIFEST.json']=json({schema:'crm-migration.customer-files.v1',workspace:ws.id,revision:ws.revision,workspaceSha256:archive.sha256,
  files:Object.entries(files).map(([path,text])=>({path,bytes:Buffer.byteLength(text),sha256:sha(Buffer.from(text))}))});
  const packed=Buffer.from(runtime.zipper.zip(all)),hash=sha(packed);await originalDirectory();const written=await writeBytes(join(directory,'exports',hash+'.zip'),packed);
