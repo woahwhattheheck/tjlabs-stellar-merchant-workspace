@@ -1,0 +1,365 @@
+[
+  {
+    "id": "authored-1",
+    "type": "source.add",
+    "actor": "TJLabs authored software course",
+    "at": "2026-10-14T16:30:00.000Z",
+    "input": {
+      "name": "native-results.fixture.json",
+      "role": "results",
+      "mediaType": "application/json",
+      "text": "{\n  \"config\": {\n    \"run_name\": \"TJLABS SOFTWARE FIXTURE — NOT A TONIC EVALUATION\",\n    \"format\": \"native\",\n    \"overlap_threshold\": 0.5,\n    \"judge_model\": \"fixture-only\",\n    \"judge_provider\": \"none\",\n    \"n_rows\": 1,\n    \"tier\": \"entity\",\n    \"labels\": [\n      \"PERSON\"\n    ]\n  },\n  \"timings_sec\": {},\n  \"metrics\": {\n    \"judge_skipped\": false,\n    \"overall\": {\n      \"gold\": 3,\n      \"detected\": 2,\n      \"coherent\": 1,\n      \"incoherent\": 0,\n      \"skipped\": 1,\n      \"ner_recall\": 0.6666666666666666,\n      \"synthesis_accuracy\": 0.5000,\n      \"combined_accuracy\": 0.3333333333333333\n    },\n    \"by_label\": {\n      \"PERSON\": {\n        \"gold\": 3,\n        \"detected\": 2,\n        \"coherent\": 1,\n        \"incoherent\": 0,\n        \"skipped\": 1,\n        \"ner_recall\": 0.6666666666666666,\n        \"synthesis_accuracy\": 0.5000,\n        \"combined_accuracy\": 0.3333333333333333\n      }\n    },\n    \"by_kind\": {\n      \"documents\": {\n        \"gold\": 3,\n        \"detected\": 2,\n        \"coherent\": 1,\n        \"incoherent\": 0,\n        \"skipped\": 1,\n        \"ner_recall\": 0.6666666666666666,\n        \"synthesis_accuracy\": 0.5000,\n        \"combined_accuracy\": 0.3333333333333333\n      }\n    },\n    \"per_character\": {\n      \"fixture/person~1\": {\n        \"by_label\": {\n          \"PERSON\": {\n            \"gold\": 3,\n            \"detected\": 2,\n            \"coherent\": 1,\n            \"incoherent\": 0,\n            \"skipped\": 1\n          }\n        }\n      }\n    },\n    \"per_org_group\": {\n      \"fixture-org\": {\n        \"by_label\": {\n          \"ORG\": {\n            \"gold\": 0,\n            \"detected\": 0,\n            \"coherent\": 0,\n            \"incoherent\": 0,\n            \"skipped\": 0\n          }\n        }\n      }\n    },\n    \"identity_examples\": [],\n    \"identity_by_surface\": []\n  },\n  \"native_join\": {\n    \"fixture\": true\n  },\n  \"detail\": {\n    \"fixture\": \"Authored software input only; no evaluator, provider model, customer or privacy claim.\"\n  }\n}\n"
+    }
+  },
+  {
+    "id": "authored-2",
+    "type": "selection.save",
+    "actor": "TJLabs authored software course",
+    "at": "2026-10-14T16:30:00.000Z",
+    "input": {
+      "label": "Original authored result selection",
+      "resultId": "source-3ae92ad763aeac58ff00ac582dc89c01b1fa03c0af53b7075628669ed0197fff",
+      "originalBindings": [],
+      "dataset": {
+        "id": "TJLABS-SOFTWARE-FIXTURE-NOT-TONIC-DATA",
+        "revision": "fixture-v1"
+      },
+      "cohortRef": "software-fixture-001",
+      "protocol": {
+        "questionId": "training-question-privacybench-intake",
+        "title": "Software receiving fixture — original native result intake",
+        "purpose": "Exercise exact original result preservation. No benchmark or customer model was run.",
+        "scope": "One authored native-shaped JSON input for software receiving.",
+        "criteria": [
+          {
+            "id": "privacybench.gold",
+            "label": "gold",
+            "kind": "MEASURED",
+            "unit": "span_count",
+            "direction": "DESCRIPTIVE",
+            "description": "Original count of in-scope gold spans in this group."
+          },
+          {
+            "id": "privacybench.detected",
+            "label": "detected",
+            "kind": "MEASURED",
+            "unit": "span_count",
+            "direction": "DESCRIPTIVE",
+            "description": "Original count of gold spans detected with the matching entity label and native-coordinate overlap."
+          },
+          {
+            "id": "privacybench.coherent",
+            "label": "coherent",
+            "kind": "MEASURED",
+            "unit": "span_count",
+            "direction": "DESCRIPTIVE",
+            "description": "Original count of detected gold spans with a changed replacement judged coherent."
+          },
+          {
+            "id": "privacybench.incoherent",
+            "label": "incoherent",
+            "kind": "MEASURED",
+            "unit": "span_count",
+            "direction": "DESCRIPTIVE",
+            "description": "Original count of detected gold spans left identical or judged incoherent."
+          },
+          {
+            "id": "privacybench.skipped",
+            "label": "skipped",
+            "kind": "MEASURED",
+            "unit": "span_count",
+            "direction": "DESCRIPTIVE",
+            "description": "Original count of detected changed spans lacking a usable judge verdict; these remain in the detected denominator."
+          },
+          {
+            "id": "privacybench.ner_recall",
+            "label": "ner recall",
+            "kind": "MEASURED",
+            "unit": "fraction",
+            "direction": "HIGHER",
+            "description": "Original detected/gold rate. Detection requires the producer label and native-coordinate overlap contract."
+          },
+          {
+            "id": "privacybench.synthesis_accuracy",
+            "label": "synthesis accuracy",
+            "kind": "MEASURED",
+            "unit": "fraction",
+            "direction": "HIGHER",
+            "description": "Original coherent/detected rate. Identity mappings and unjudged detected spans do not become successful synthesis."
+          },
+          {
+            "id": "privacybench.combined_accuracy",
+            "label": "combined accuracy",
+            "kind": "MEASURED",
+            "unit": "fraction",
+            "direction": "HIGHER",
+            "description": "Original coherent/gold rate. This includes detection misses in its original gold-span denominator."
+          }
+        ],
+        "sourceRefs": []
+      },
+      "candidate": {
+        "name": "Authored intake fixture",
+        "kind": "PLATFORM",
+        "version": "fixture-v1",
+        "description": "No provider model was executed.",
+        "configuration": {
+          "fixture": true
+        },
+        "sourceRefs": []
+      },
+      "run": {
+        "externalRunId": "training-privacybench-original-001",
+        "kind": "TRAINING_FIXTURE",
+        "status": "SUCCEEDED",
+        "startedAt": "2026-10-13T18:30:00.000Z",
+        "finishedAt": "2026-10-13T18:30:00.000Z",
+        "elapsedMs": 0,
+        "engine": {
+          "name": "TJLabs authored software fixture",
+          "version": "1",
+          "command": [],
+          "runtime": {},
+          "configuration": {
+            "fixture": true
+          }
+        },
+        "input": {
+          "cohortId": "software-fixture-001",
+          "protocolId": "fixture-v1",
+          "definition": {
+            "fixture": true
+          },
+          "sourceRefs": []
+        },
+        "limitations": [
+          "Authored software receiving input; timestamps are fixture metadata, not an observed evaluation."
+        ]
+      },
+      "reviewer": "TJLabs software receiving fixture",
+      "reviewedAt": "2026-10-13T18:30:00.000Z",
+      "parentId": null,
+      "previewSha256": "683f244bd8b327cbb5d4e102db43aa1dce8916aa27dc35d2a8caa95d1cc62b5f"
+    }
+  },
+  {
+    "id": "authored-3",
+    "type": "edition.save",
+    "actor": "TJLabs authored software course",
+    "at": "2026-10-14T16:30:00.000Z",
+    "input": {
+      "label": "Original authored result edition",
+      "selectionId": "selection-152a3dd5aa74da42de536ed4ccfbcae915647e7d70b55b93e6f30d37b836c356",
+      "parentId": null,
+      "previewSha256": "ec9efc1fe2e9799824a3d95f0cd4912989ad8e6c94f9bf9069d8d49600c446db"
+    }
+  },
+  {
+    "id": "authored-4",
+    "type": "source.add",
+    "actor": "TJLabs authored software course",
+    "at": "2026-10-14T16:30:00.000Z",
+    "input": {
+      "name": "native-results.successor.fixture.json",
+      "role": "results",
+      "mediaType": "application/json",
+      "text": "{\n  \"config\": {\n    \"run_name\": \"TJLabs authored successor fixture\",\n    \"format\": \"native\",\n    \"overlap_threshold\": 0.5,\n    \"judge_model\": \"fixture-only\",\n    \"judge_provider\": \"none\",\n    \"n_rows\": 1,\n    \"tier\": \"entity\",\n    \"labels\": [\n      \"PERSON\"\n    ]\n  },\n  \"timings_sec\": {},\n  \"metrics\": {\n    \"judge_skipped\": false,\n    \"overall\": {\n      \"gold\": 3,\n      \"detected\": 2,\n      \"coherent\": 2,\n      \"incoherent\": 0,\n      \"skipped\": 0,\n      \"ner_recall\": 0.6666666666666666,\n      \"synthesis_accuracy\": 1,\n      \"combined_accuracy\": 0.6666666666666666\n    },\n    \"by_label\": {\n      \"PERSON\": {\n        \"gold\": 3,\n        \"detected\": 2,\n        \"coherent\": 2,\n        \"incoherent\": 0,\n        \"skipped\": 0,\n        \"ner_recall\": 0.6666666666666666,\n        \"synthesis_accuracy\": 1,\n        \"combined_accuracy\": 0.6666666666666666\n      }\n    },\n    \"by_kind\": {\n      \"documents\": {\n        \"gold\": 3,\n        \"detected\": 2,\n        \"coherent\": 2,\n        \"incoherent\": 0,\n        \"skipped\": 0,\n        \"ner_recall\": 0.6666666666666666,\n        \"synthesis_accuracy\": 1,\n        \"combined_accuracy\": 0.6666666666666666\n      }\n    },\n    \"per_character\": {\n      \"fixture/person~1\": {\n        \"by_label\": {\n          \"PERSON\": {\n            \"gold\": 3,\n            \"detected\": 2,\n            \"coherent\": 2,\n            \"incoherent\": 0,\n            \"skipped\": 0\n          }\n        }\n      }\n    },\n    \"per_org_group\": {\n      \"fixture-org\": {\n        \"by_label\": {\n          \"ORG\": {\n            \"gold\": 0,\n            \"detected\": 0,\n            \"coherent\": 0,\n            \"incoherent\": 0,\n            \"skipped\": 0\n          }\n        }\n      }\n    },\n    \"identity_examples\": [],\n    \"identity_by_surface\": []\n  },\n  \"native_join\": {\n    \"fixture\": true\n  },\n  \"detail\": {\n    \"fixture\": \"Authored software input only; no evaluator, provider model, customer or privacy claim.\"\n  }\n}\n"
+    }
+  },
+  {
+    "id": "authored-5",
+    "type": "selection.save",
+    "actor": "TJLabs authored software course",
+    "at": "2026-10-14T16:30:00.000Z",
+    "input": {
+      "label": "Authored successor selection",
+      "resultId": "source-c15d30c899bfb51ced60a62ee4ccfa031ec00ebe70215bddf27d499e1df70791",
+      "originalBindings": [],
+      "dataset": {
+        "id": "TJLABS-SOFTWARE-FIXTURE-NOT-TONIC-DATA",
+        "revision": "fixture-v1"
+      },
+      "cohortRef": "software-fixture-001",
+      "protocol": {
+        "questionId": "training-question-privacybench-intake",
+        "title": "Software receiving fixture — original native result intake",
+        "purpose": "Exercise exact original result preservation. No benchmark or customer model was run.",
+        "scope": "One authored native-shaped JSON input for software receiving.",
+        "criteria": [
+          {
+            "id": "privacybench.gold",
+            "label": "gold",
+            "kind": "MEASURED",
+            "unit": "span_count",
+            "direction": "DESCRIPTIVE",
+            "description": "Original count of in-scope gold spans in this group."
+          },
+          {
+            "id": "privacybench.detected",
+            "label": "detected",
+            "kind": "MEASURED",
+            "unit": "span_count",
+            "direction": "DESCRIPTIVE",
+            "description": "Original count of gold spans detected with the matching entity label and native-coordinate overlap."
+          },
+          {
+            "id": "privacybench.coherent",
+            "label": "coherent",
+            "kind": "MEASURED",
+            "unit": "span_count",
+            "direction": "DESCRIPTIVE",
+            "description": "Original count of detected gold spans with a changed replacement judged coherent."
+          },
+          {
+            "id": "privacybench.incoherent",
+            "label": "incoherent",
+            "kind": "MEASURED",
+            "unit": "span_count",
+            "direction": "DESCRIPTIVE",
+            "description": "Original count of detected gold spans left identical or judged incoherent."
+          },
+          {
+            "id": "privacybench.skipped",
+            "label": "skipped",
+            "kind": "MEASURED",
+            "unit": "span_count",
+            "direction": "DESCRIPTIVE",
+            "description": "Original count of detected changed spans lacking a usable judge verdict; these remain in the detected denominator."
+          },
+          {
+            "id": "privacybench.ner_recall",
+            "label": "ner recall",
+            "kind": "MEASURED",
+            "unit": "fraction",
+            "direction": "HIGHER",
+            "description": "Original detected/gold rate. Detection requires the producer label and native-coordinate overlap contract."
+          },
+          {
+            "id": "privacybench.synthesis_accuracy",
+            "label": "synthesis accuracy",
+            "kind": "MEASURED",
+            "unit": "fraction",
+            "direction": "HIGHER",
+            "description": "Original coherent/detected rate. Identity mappings and unjudged detected spans do not become successful synthesis."
+          },
+          {
+            "id": "privacybench.combined_accuracy",
+            "label": "combined accuracy",
+            "kind": "MEASURED",
+            "unit": "fraction",
+            "direction": "HIGHER",
+            "description": "Original coherent/gold rate. This includes detection misses in its original gold-span denominator."
+          }
+        ],
+        "sourceRefs": []
+      },
+      "candidate": {
+        "name": "Authored intake fixture",
+        "kind": "PLATFORM",
+        "version": "fixture-v1",
+        "description": "No provider model was executed.",
+        "configuration": {
+          "fixture": true
+        },
+        "sourceRefs": []
+      },
+      "run": {
+        "externalRunId": "training-privacybench-successor-001",
+        "kind": "TRAINING_FIXTURE",
+        "status": "SUCCEEDED",
+        "startedAt": "2026-10-13T18:30:00.000Z",
+        "finishedAt": "2026-10-13T18:30:00.000Z",
+        "elapsedMs": 0,
+        "engine": {
+          "name": "TJLabs authored software fixture",
+          "version": "1",
+          "command": [],
+          "runtime": {},
+          "configuration": {
+            "fixture": true
+          }
+        },
+        "input": {
+          "cohortId": "software-fixture-001",
+          "protocolId": "fixture-v1",
+          "definition": {
+            "fixture": true
+          },
+          "sourceRefs": []
+        },
+        "limitations": [
+          "Authored software receiving input; timestamps are fixture metadata, not an observed evaluation."
+        ]
+      },
+      "reviewer": "TJLabs software receiving fixture",
+      "reviewedAt": "2026-10-13T18:30:00.000Z",
+      "parentId": "selection-152a3dd5aa74da42de536ed4ccfbcae915647e7d70b55b93e6f30d37b836c356",
+      "previewSha256": "ecb79a12505e059144a3599876133021a6a1af4d95f8f2352aeb8a6da0445dc7"
+    }
+  },
+  {
+    "id": "authored-6",
+    "type": "edition.save",
+    "actor": "TJLabs authored software course",
+    "at": "2026-10-14T16:30:00.000Z",
+    "input": {
+      "label": "Authored successor result edition",
+      "selectionId": "selection-5b54586bfed4ddd6e96f6f8713ac5e1cb57e3b2a22803f8b8d3e6b035cee0afd",
+      "parentId": "edition-dfec9585c9f64ef6f7f808360c9d199c89049a47d46c3288644760c466491085",
+      "previewSha256": "a35cfd47f29300dca3bbe5354d88088d35bfa31111d2836bdd1b6cddf7bc6776"
+    }
+  },
+  {
+    "id": "authored-7",
+    "type": "comparison.save",
+    "actor": "TJLabs authored software course",
+    "at": "2026-10-14T16:30:00.000Z",
+    "input": {
+      "label": "Authored original and successor",
+      "leftId": "edition-dfec9585c9f64ef6f7f808360c9d199c89049a47d46c3288644760c466491085",
+      "rightId": "edition-aa06e6b55a4dde3c92fff1bc407895b8df04c289642dedeed34c23c5629a8a93",
+      "basis": {
+        "dataset": "same",
+        "cohort": "same",
+        "protocol": "same",
+        "judge": "same",
+        "rationale": "Both inputs are authored software fixtures with explicit identical contexts. No provider evaluation was run."
+      },
+      "reviewer": "TJLabs authored course",
+      "note": "Compare preserved provider-shaped values and denominator contexts; do not infer privacy acceptance.",
+      "previewSha256": "460aa99f8a860e9d256ce0d7ddf5edbc60c67aceeb490de71fa7c920893ae462"
+    }
+  },
+  {
+    "id": "authored-8",
+    "type": "review.save",
+    "actor": "TJLabs authored software course",
+    "at": "2026-10-14T16:30:00.000Z",
+    "input": {
+      "subject": "comparison",
+      "subjectId": "comparison-aad4bb952c9481842a26c39302943f12d3b74856349d4f1bb3f580fec12f2200",
+      "target": "pair-be7008c4e7bf89d634360583b5ea2948c51de0336dc91fc0e219795a61bb18b7",
+      "status": "investigate",
+      "owner": "Named software reviewer",
+      "note": "Review the changed original value and retained detected denominator.",
+      "reviewer": "TJLabs authored reviewer",
+      "parentId": null
+    }
+  },
+  {
+    "id": "authored-9",
+    "type": "review.save",
+    "actor": "TJLabs authored software course",
+    "at": "2026-10-14T16:30:00.000Z",
+    "input": {
+      "subject": "comparison",
+      "subjectId": "comparison-aad4bb952c9481842a26c39302943f12d3b74856349d4f1bb3f580fec12f2200",
+      "target": "pair-be7008c4e7bf89d634360583b5ea2948c51de0336dc91fc0e219795a61bb18b7",
+      "status": "defer",
+      "owner": "Named software reviewer",
+      "note": "Retain both editions for the explicitly named next review; no acceptance inferred.",
+      "reviewer": "TJLabs authored reviewer",
+      "parentId": "review-6d538285fcb0ed8f50196dfc05fffabde550131f77d6d5f9975feee4f29c27e0"
+    }
+  }
+]

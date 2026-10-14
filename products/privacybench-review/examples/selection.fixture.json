@@ -1,0 +1,127 @@
+{
+  "schema": "sf88-privacybench-preparation/v1",
+  "dataset": {
+    "id": "TJLABS-SOFTWARE-FIXTURE-NOT-TONIC-DATA",
+    "revision": "fixture-v1"
+  },
+  "cohortRef": "software-fixture-001",
+  "results": {
+    "file": "native-results.fixture.json",
+    "bytes": 1932,
+    "sha256": "c79c69b2d277f6af2e75c63a7845dcdf0de4feee117eab75491be97993eb9ec6"
+  },
+  "originals": [],
+  "protocol": {
+    "questionId": "training-question-privacybench-intake",
+    "title": "Software receiving fixture — original native result intake",
+    "purpose": "Exercise exact original result preservation. No benchmark or customer model was run.",
+    "scope": "One authored native-shaped JSON input for software receiving.",
+    "criteria": [
+      {
+        "id": "privacybench.gold",
+        "label": "gold",
+        "kind": "MEASURED",
+        "unit": "span_count",
+        "direction": "DESCRIPTIVE",
+        "description": "Original count of in-scope gold spans in this group."
+      },
+      {
+        "id": "privacybench.detected",
+        "label": "detected",
+        "kind": "MEASURED",
+        "unit": "span_count",
+        "direction": "DESCRIPTIVE",
+        "description": "Original count of gold spans detected with the matching entity label and native-coordinate overlap."
+      },
+      {
+        "id": "privacybench.coherent",
+        "label": "coherent",
+        "kind": "MEASURED",
+        "unit": "span_count",
+        "direction": "DESCRIPTIVE",
+        "description": "Original count of detected gold spans with a changed replacement judged coherent."
+      },
+      {
+        "id": "privacybench.incoherent",
+        "label": "incoherent",
+        "kind": "MEASURED",
+        "unit": "span_count",
+        "direction": "DESCRIPTIVE",
+        "description": "Original count of detected gold spans left identical or judged incoherent."
+      },
+      {
+        "id": "privacybench.skipped",
+        "label": "skipped",
+        "kind": "MEASURED",
+        "unit": "span_count",
+        "direction": "DESCRIPTIVE",
+        "description": "Original count of detected changed spans lacking a usable judge verdict; these remain in the detected denominator."
+      },
+      {
+        "id": "privacybench.ner_recall",
+        "label": "ner recall",
+        "kind": "MEASURED",
+        "unit": "fraction",
+        "direction": "HIGHER",
+        "description": "Original detected/gold rate. Detection requires the producer label and native-coordinate overlap contract."
+      },
+      {
+        "id": "privacybench.synthesis_accuracy",
+        "label": "synthesis accuracy",
+        "kind": "MEASURED",
+        "unit": "fraction",
+        "direction": "HIGHER",
+        "description": "Original coherent/detected rate. Identity mappings and unjudged detected spans do not become successful synthesis."
+      },
+      {
+        "id": "privacybench.combined_accuracy",
+        "label": "combined accuracy",
+        "kind": "MEASURED",
+        "unit": "fraction",
+        "direction": "HIGHER",
+        "description": "Original coherent/gold rate. This includes detection misses in its original gold-span denominator."
+      }
+    ],
+    "sourceRefs": []
+  },
+  "candidate": {
+    "name": "Authored intake fixture",
+    "kind": "PLATFORM",
+    "version": "fixture-v1",
+    "description": "No provider model was executed.",
+    "configuration": {
+      "fixture": true
+    },
+    "sourceRefs": []
+  },
+  "run": {
+    "externalRunId": "training-privacybench-original-001",
+    "kind": "TRAINING_FIXTURE",
+    "status": "SUCCEEDED",
+    "startedAt": "2026-10-13T18:30:00.000Z",
+    "finishedAt": "2026-10-13T18:30:00.000Z",
+    "elapsedMs": 0,
+    "engine": {
+      "name": "TJLabs authored software fixture",
+      "version": "1",
+      "command": [],
+      "runtime": {},
+      "configuration": {
+        "fixture": true
+      }
+    },
+    "input": {
+      "cohortId": "software-fixture-001",
+      "protocolId": "fixture-v1",
+      "definition": {
+        "fixture": true
+      },
+      "sourceRefs": []
+    },
+    "limitations": [
+      "Authored software receiving input; timestamps are fixture metadata, not an observed evaluation."
+    ]
+  },
+  "reviewer": "TJLabs software receiving fixture",
+  "reviewedAt": "2026-10-13T18:30:00.000Z"
+}

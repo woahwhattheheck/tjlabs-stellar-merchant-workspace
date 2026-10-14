@@ -1,0 +1,49 @@
+{
+  "schema": "tjlabs.privacybench-review-return.v1",
+  "workspaceId": "privacybench-authored-example",
+  "subject": "comparison",
+  "subjectId": "comparison-aad4bb952c9481842a26c39302943f12d3b74856349d4f1bb3f580fec12f2200",
+  "subjectSha256": "28cbbe81db466c2b5685523004eca1082bb3265035b69b0eb7a6046790173e2f",
+  "reviews": [
+    {
+      "id": "review-6d538285fcb0ed8f50196dfc05fffabde550131f77d6d5f9975feee4f29c27e0",
+      "body": {
+        "subject": "comparison",
+        "subjectId": "comparison-aad4bb952c9481842a26c39302943f12d3b74856349d4f1bb3f580fec12f2200",
+        "target": "pair-be7008c4e7bf89d634360583b5ea2948c51de0336dc91fc0e219795a61bb18b7",
+        "status": "investigate",
+        "owner": "Named software reviewer",
+        "note": "Review the changed original value and retained detected denominator.",
+        "reviewer": "TJLabs authored reviewer",
+        "parentId": null
+      }
+    },
+    {
+      "id": "review-6bff82835e05a958ca65cea4224b06529a7f726ae739fdc4bb52b5a345c2a7f3",
+      "body": {
+        "subject": "comparison",
+        "subjectId": "comparison-aad4bb952c9481842a26c39302943f12d3b74856349d4f1bb3f580fec12f2200",
+        "target": "pair-be7008c4e7bf89d634360583b5ea2948c51de0336dc91fc0e219795a61bb18b7",
+        "status": "defer",
+        "owner": "Named software reviewer",
+        "note": "Retain both editions for the explicitly named next review; no acceptance inferred.",
+        "reviewer": "TJLabs authored reviewer",
+        "parentId": "review-6d538285fcb0ed8f50196dfc05fffabde550131f77d6d5f9975feee4f29c27e0"
+      }
+    },
+    {
+      "id": "review-dbc553c87374fcac4427ea8a0b6e42bddf16ffc7fc03bef97ec87b0544dde66d",
+      "body": {
+        "subject": "comparison",
+        "subjectId": "comparison-aad4bb952c9481842a26c39302943f12d3b74856349d4f1bb3f580fec12f2200",
+        "target": "pair-6e465ee75aafd18a9e57bd0e667f69962e5aad88ea49e52fd79b56ff2eec16c9",
+        "status": "investigate",
+        "owner": "Authored reviewer",
+        "note": "Review original counts without interpreting a change as privacy acceptance.",
+        "reviewer": "Authored independent reviewer",
+        "parentId": null
+      }
+    }
+  ],
+  "sha256": "f3e05f771a45df247c53c72c4d3e24b83525f692b2b5b24ec2cd43eabd052e5a"
+}

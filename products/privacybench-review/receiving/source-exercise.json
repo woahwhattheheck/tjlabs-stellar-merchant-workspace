@@ -1,0 +1,108 @@
+{
+  "schema": "tjlabs.privacybench-source-exercise.v1",
+  "environment": "Actual production JavaScript in V8 with explicit maintained bytes adapters; no native browser, evaluator or provider run claimed.",
+  "native": {
+    "revision": 9,
+    "rows": 34,
+    "runExact": true,
+    "reopen": true,
+    "comparisonRows": 34,
+    "researchFiles": 10,
+    "researchOriginalRun": "b9154345d459a7905bdbd7623fc522c4fc9b9d6b5b73551fbb744a9b2baf42b2",
+    "comparison": [
+      {
+        "measure": "gold",
+        "left": "3",
+        "right": "3",
+        "change": "equal",
+        "delta": "0",
+        "comparable": true
+      },
+      {
+        "measure": "detected",
+        "left": "2",
+        "right": "2",
+        "change": "equal",
+        "delta": "0",
+        "comparable": true
+      },
+      {
+        "measure": "coherent",
+        "left": "1",
+        "right": "2",
+        "change": "increased",
+        "delta": "1",
+        "comparable": true
+      },
+      {
+        "measure": "incoherent",
+        "left": "0",
+        "right": "0",
+        "change": "equal",
+        "delta": "0",
+        "comparable": true
+      },
+      {
+        "measure": "skipped",
+        "left": "1",
+        "right": "0",
+        "change": "decreased",
+        "delta": "-1",
+        "comparable": true
+      },
+      {
+        "measure": "ner_recall",
+        "left": "0.6666666666666666",
+        "right": "0.6666666666666666",
+        "change": "equal",
+        "delta": "0",
+        "comparable": true
+      },
+      {
+        "measure": "synthesis_accuracy",
+        "left": "0.5000",
+        "right": "1",
+        "change": "increased",
+        "delta": "0.5",
+        "comparable": true
+      },
+      {
+        "measure": "combined_accuracy",
+        "left": "0.3333333333333333",
+        "right": "0.6666666666666666",
+        "change": "increased",
+        "delta": "0.3333333333333333",
+        "comparable": true
+      }
+    ]
+  },
+  "reviewReturn": {
+    "added": 1,
+    "alreadyPresent": 2,
+    "exactOriginalReview": true,
+    "reopen": true,
+    "exactReplay": true
+  },
+  "failures": [
+    {
+      "name": "changed original bytes",
+      "rejected": true,
+      "code": "WORKING_CHECKSUM"
+    },
+    {
+      "name": "stale preview",
+      "rejected": true,
+      "code": "EDITION_PREVIEW_CHANGED"
+    },
+    {
+      "name": "conflicting original operation ID",
+      "rejected": true,
+      "code": "OPERATION_ID_CONFLICT"
+    },
+    {
+      "name": "divergent return parent",
+      "rejected": true,
+      "code": "REVIEW_PARENT_CHANGED"
+    }
+  ]
+}

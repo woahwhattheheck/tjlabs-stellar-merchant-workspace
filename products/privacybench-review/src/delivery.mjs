@@ -1,0 +1,5 @@
+export function renderStandalone(delivery,working){
+const get=path=>{const f=delivery.files.find(x=>x.path===path);if(!f)throw Error("Complete source is missing "+path);return f.content;},safe=x=>JSON.stringify(x).replace(/</g,"\\u003c").replace(/\u2028/g,"\\u2028").replace(/\u2029/g,"\\u2029");
+return get("web/index.html").replace("<!--STYLE-->",()=>"<style>"+get("web/app.css")+"</style>").replace("<!--DELIVERY_DATA-->",()=>'<script id="delivery-data" type="application/json">'+safe(delivery)+'</script><script id="working-data" type="application/json">'+safe(working)+"</script>").replace("<!--SCRIPTS-->",()=>"<script>"+get("web/standalone-bootstrap.js").replace(/<\/script/gi,"<\\/script")+"</script>");
+}
+export function createInitialWorking(delivery){const f=delivery.files.find(x=>x.path==="examples/authored-working.json");if(!f)throw Error("Complete authored reference is missing.");return{schema:"tjlabs.privacybench-editable.v1",working:JSON.parse(f.content),draft:null,page:"Overview"};}

@@ -1,0 +1,292 @@
+{
+  "schema": "tjlabs.privacybench-source-manifest.v1",
+  "files": [
+    {
+      "path": "src/codec.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 27651,
+      "sha256": "89f88fd456de6e180e6743f3eb66bbc31fc4449e8cc0259e199587ebc327d121"
+    },
+    {
+      "path": "src/io.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 4791,
+      "sha256": "7dd0d8a6e0d2ca28050459bab820967487b9af56fadf333fc2e756fb8fa294fa"
+    },
+    {
+      "path": "web/app.css",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 3957,
+      "sha256": "81cd96097bc6a8c531c7e4ae73bec26caa188b46448368e4c72e7d0fefeffeb7"
+    },
+    {
+      "path": "web/index.html",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 516,
+      "sha256": "b60cc355177284ecf4e1f507ca4b08fe8e17a0db6ad0d92f11d8d362bb33eadc"
+    },
+    {
+      "path": "native/materialize-source.py",
+      "mode": "100755",
+      "encoding": "utf8",
+      "bytes": 12386,
+      "sha256": "9cc6c880215307aeaace710c2d8f73cdf141449e2fc96450500541d0c2bbca27"
+    },
+    {
+      "path": "src/report.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 5042,
+      "sha256": "10aa8630bbdad6f24d879ba484efbe8a4f8623a1052eb30b49a13e85a31df20f"
+    },
+    {
+      "path": "src/delivery.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 1004,
+      "sha256": "009b9b4ac655988929870df3a6cafff20d6abbc56027e6b8d70287d199965b7d"
+    },
+    {
+      "path": "src/controller.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 16280,
+      "sha256": "3a8735f536e64b72e6c8e4ae4d565dfd4e0e565806eb21e88da4db1cff48f3b5"
+    },
+    {
+      "path": "web/app.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 39488,
+      "sha256": "4fcdbb970b009988ac75f51af08a5bc1259bba2d723482f18138a59694d0f085"
+    },
+    {
+      "path": "build.mjs",
+      "mode": "100755",
+      "encoding": "utf8",
+      "bytes": 5022,
+      "sha256": "de39dfb0f57c9d2e81527c1603ed2252bc3f7b5ae49fb31ca77f17b0aa05e7d6"
+    },
+    {
+      "path": "WORKBENCH_GUIDE.md",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 11404,
+      "sha256": "a3493173b01028032a5c1666e2106d481cd960644a3a5974200513f6dfa16fec"
+    },
+    {
+      "path": "README.md",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 3862,
+      "sha256": "0acbb6e37c529b160c658523e6c1e4db4959d7fe48180ad2a0e15acbaec5dc2e"
+    },
+    {
+      "path": "src/native-privacybench.js",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 19289,
+      "sha256": "991bbef44d1038521c7cf3d81555a1af8087c674e16fd5e9d0b7ed761ed1e4a0"
+    },
+    {
+      "path": "src/privacybench-workspace.js",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 28781,
+      "sha256": "7728ca8397c2b07933ef0d815845943b7cf8b9f697fe5de8deb22e8239a5760d"
+    },
+    {
+      "path": "src/native-research.js",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 34340,
+      "sha256": "077144c4f6f889ecf03c57ea36e4921118ef02aa038d5f4765ac80c0a9669880"
+    },
+    {
+      "path": "integration/PRIVACYBENCH_WORKSPACE_API.md",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 13051,
+      "sha256": "c30496fbd4156159b6ab4c862e964e82cf3702710e62cc43a5ca30a269ac8da9"
+    },
+    {
+      "path": "examples/complete-authored-workspace.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 43172,
+      "sha256": "bd044491a390e03a9c6b9c21ec85429de082dd005e0f64986680e48d4a587639"
+    },
+    {
+      "path": "examples/reviewer-return.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 2253,
+      "sha256": "ba19236898fb663529cc6b0992b08478acd7f424faa9dc5afdd21be5f9f56cd4"
+    },
+    {
+      "path": "examples/returned-adopted-workspace.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 51929,
+      "sha256": "5d74dd2f3e52d927f1ab6bda6c0bf25084135cb4ca0228196b3f5bd266532306"
+    },
+    {
+      "path": "receiving/source-exercise.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 2560,
+      "sha256": "da2907676e96992e8bf664099cafee14ac45d3d96701e14eac43aa459b23391f"
+    },
+    {
+      "path": "examples/complete-authored-requests.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 17975,
+      "sha256": "04da9dfd62ecac21a1f3e5aa75c46fe79d4adb1d3735acf5215d648868d77b00"
+    },
+    {
+      "path": "integration/research-factory-template.js",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 3571,
+      "sha256": "fce065fd991b4cd334bf9f644381e1bb75a6977bb0280fa457c45f7d3471e228"
+    },
+    {
+      "path": "integration/build-research-factory.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 1842,
+      "sha256": "18a6d82dfd7890309f70bb865960e9733dd6d126f22eb92a67e0c47329d79ecb"
+    },
+    {
+      "path": "source/research-dossiers/comparison/contracts.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 11787,
+      "sha256": "544db911683a77ecdb955d2966c8d95261e40a3f4916ecd9791a3100ff4cfd56"
+    },
+    {
+      "path": "source/research-dossiers/comparison/original-output/prepare.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 16395,
+      "sha256": "87d51a11487d038273fd0764979bfc4e4095cae392eb658c8fe7236b97bc2a24"
+    },
+    {
+      "path": "source/research-dossiers/comparison/original-output/review.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 7148,
+      "sha256": "e1e491ebb389deee0d2dc9d43eba6527dce563d2adb1a5a80ec024b49d44cdeb"
+    },
+    {
+      "path": "source/node/store.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 15563,
+      "sha256": "dbaac9e39164422318839eb8b6e0de6e362f8d0c687c5d6e2b555c93fc72be04"
+    },
+    {
+      "path": "examples/authored-working.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 43172,
+      "sha256": "bd044491a390e03a9c6b9c21ec85429de082dd005e0f64986680e48d4a587639"
+    },
+    {
+      "path": "source-build.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 1746,
+      "sha256": "b2969087602c835c1d76f0df5007e03083ebe8056173163e4ba24d007cbf86ac"
+    },
+    {
+      "path": "web/standalone-bootstrap.js",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 177566,
+      "sha256": "1a9b1a815cf685e050f0d43d1287d2f73755d609d38454f5ae1f2568441e7275"
+    },
+    {
+      "path": "native/privacybench-workspace.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 5047,
+      "sha256": "31caa9575a08e25f3298bdd7f46ae8ef24a637f3a34960297a9b9aecc76f393b"
+    },
+    {
+      "path": "commissioning/receive-privacybench-domain.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 3441,
+      "sha256": "5e2c408794b49e7cce2011e687e220c003ea92cff55f1bbcf64330375349b698"
+    },
+    {
+      "path": "integration/build-native-privacybench.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 2717,
+      "sha256": "ee14dd42ba84a26a3ab7c10f4ba9785fcb1cdf4143ab98aab14738c79e03545e"
+    },
+    {
+      "path": "receiving/native-context-and-cache-exercise.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 816,
+      "sha256": "9fbbe439fbcd84a0fd697191c18a15aa305eeb6690ffe684f16c180ebf65e515"
+    },
+    {
+      "path": "examples/operator-edited-returned-working.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 73974,
+      "sha256": "80360161627539e28ff6cdb8f08b201765138bf65cae06fab74a17e352f93760"
+    },
+    {
+      "path": "commissioning/COMPLETE_RECEIVING_COURSE.md",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 5810,
+      "sha256": "f842221e1366647c13b718ce0a059ff315613576759b3489f5af6083d1558a74"
+    },
+    {
+      "path": "source/research-dossiers/comparison/original-output/privacybench.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 21352,
+      "sha256": "98bb7c4499531f5401aa0b6e90ba1e229a545f64422b8221714c4f746f35d1ae"
+    },
+    {
+      "path": "examples/reference-native-run.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 113290,
+      "sha256": "b9154345d459a7905bdbd7623fc522c4fc9b9d6b5b73551fbb744a9b2baf42b2"
+    },
+    {
+      "path": "examples/native-results.fixture.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 1932,
+      "sha256": "c79c69b2d277f6af2e75c63a7845dcdf0de4feee117eab75491be97993eb9ec6"
+    },
+    {
+      "path": "examples/selection.fixture.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 4231,
+      "sha256": "cacd0a73372cf00737ee0cc4ee42adc820ce3ddd575c9fcb6dcfd251358b9e1d"
+    },
+    {
+      "path": "LICENSE",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 1091,
+      "sha256": "2c961cd561150af9a4f94f3f48f0bad7bf271acd0f9cdaa1d354c511b94e84d8"
+    }
+  ]
+}

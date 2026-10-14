@@ -1,0 +1,86 @@
+{
+  "config": {
+    "run_name": "TJLABS SOFTWARE FIXTURE — NOT A TONIC EVALUATION",
+    "format": "native",
+    "overlap_threshold": 0.5,
+    "judge_model": "fixture-only",
+    "judge_provider": "none",
+    "n_rows": 1,
+    "tier": "entity",
+    "labels": [
+      "PERSON"
+    ]
+  },
+  "timings_sec": {},
+  "metrics": {
+    "judge_skipped": false,
+    "overall": {
+      "gold": 3,
+      "detected": 2,
+      "coherent": 1,
+      "incoherent": 0,
+      "skipped": 1,
+      "ner_recall": 0.6666666666666666,
+      "synthesis_accuracy": 0.5000,
+      "combined_accuracy": 0.3333333333333333
+    },
+    "by_label": {
+      "PERSON": {
+        "gold": 3,
+        "detected": 2,
+        "coherent": 1,
+        "incoherent": 0,
+        "skipped": 1,
+        "ner_recall": 0.6666666666666666,
+        "synthesis_accuracy": 0.5000,
+        "combined_accuracy": 0.3333333333333333
+      }
+    },
+    "by_kind": {
+      "documents": {
+        "gold": 3,
+        "detected": 2,
+        "coherent": 1,
+        "incoherent": 0,
+        "skipped": 1,
+        "ner_recall": 0.6666666666666666,
+        "synthesis_accuracy": 0.5000,
+        "combined_accuracy": 0.3333333333333333
+      }
+    },
+    "per_character": {
+      "fixture/person~1": {
+        "by_label": {
+          "PERSON": {
+            "gold": 3,
+            "detected": 2,
+            "coherent": 1,
+            "incoherent": 0,
+            "skipped": 1
+          }
+        }
+      }
+    },
+    "per_org_group": {
+      "fixture-org": {
+        "by_label": {
+          "ORG": {
+            "gold": 0,
+            "detected": 0,
+            "coherent": 0,
+            "incoherent": 0,
+            "skipped": 0
+          }
+        }
+      }
+    },
+    "identity_examples": [],
+    "identity_by_surface": []
+  },
+  "native_join": {
+    "fixture": true
+  },
+  "detail": {
+    "fixture": "Authored software input only; no evaluator, provider model, customer or privacy claim."
+  }
+}

@@ -111,3 +111,17 @@ The installed Research comparison desk now includes a complete [PrivacyBench nat
 Source selection, producer configuration and named intake review are retained in complete browser working copies. A generated plan continues through the existing candidate/import requests, original response recovery, comparison reports, named judgments and returned-work adoption. Full editable dossier export and the original adoption handover retain the original provider files and source-defined metrics for another recipient. The installed `comparison privacybench catalog|profile|prepare` commands use the same maintained adapter and source contract.
 
 The [operator guide](../../stellar/scf-starforge-20261009/sf88-operator-buyer-cli/research-dossiers/comparison/original-output/PRIVACYBENCH_DESK.md) covers the entire source-to-review course, exact saved protocol selection, working-copy recovery, native limits and the original receiving operation. Actual producer metadata stays distinct from the adapter's supported format profile; authored software fixtures remain explicitly identified in the saved run.
+
+## Portable PrivacyBench review application
+
+The [complete offline PrivacyBench Review Workspace](../privacybench-review/README.md) provides a self-contained operator for original results, explicit protocol/candidate/run selection, immutable editions, paired and unmatched metric comparisons, named reviews and returned-review adoption. It retains complete original files, exact metric values and denominators, comparison bases and unfinished forms in editable JSON and HTML. Independent browser copies save as separate branches.
+
+The application uses the maintained Research preparation and validation source and the existing native PrivacyBench output contract. The [complete operating guide](../privacybench-review/WORKBENCH_GUIDE.md) covers its nine views and original-file, CSV, report, reviewer-return, Research and whole-project exports. [Native and browser receiving](../privacybench-review/commissioning/COMPLETE_RECEIVING_COURSE.md) covers actual operation and reopening of every outgoing artifact.
+
+From the repository root, build all five portable delivery files into a new directory:
+
+```sh
+node products/privacybench-review/build.mjs --out /absolute/privacybench-delivery
+```
+
+The [native workspace CLI](../privacybench-review/native/privacybench-workspace.mjs) operates the same saved working records. Source includes the original Research modules, reproducible native factory generators, complete authored examples and the MIT license; the source manifest binds every shipped member. Exact original output, dataset, cohort, protocol and judge settings remain explicit throughout review.
