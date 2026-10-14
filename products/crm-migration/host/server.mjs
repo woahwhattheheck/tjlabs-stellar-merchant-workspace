@@ -49,6 +49,8 @@ export async function startServer({directory,workspaceId,port=0}){
   need(req.headers['x-crm-instance']===instanceId,'CRM_INSTANCE_CHANGED','Reconnect the original current application instance.',409);
   need(!req.headers.origin||req.headers.origin===origin,'CRM_ORIGIN','Use the same local application origin.',403);
   if(req.method==='GET'&&url.pathname==='/api/status')return send(res,200,{schema:CONNECTION_SCHEMA,instanceId,workspaceId:store.id,...await store.summary()});
+  if(req.method==='GET'&&url.pathname==='/api/hubspot')return send(res,200,await store.hubspot('list'));
+  if(req.method==='POST'&&url.pathname==='/api/hubspot'){const input=await body(req);need(['status','start','advance','adopt','adoption','export'].includes(input.action),'HUBSPOT_ACTION','Choose a declared capture operation.');return send(res,200,input.action==='export'?await store.captureExport(input.args.id,input.args.expectedSha256):await store.hubspot(input.action,input.args));}
   if(req.method==='GET'&&url.pathname==='/api/workspace')return send(res,200,await store.state());
   if(req.method==='POST'&&url.pathname==='/api/action'){
    const input=await body(req);if(input?.schema==='crm-migration.managed-action.v1'){need(/^[a-f0-9]{64}$/.test(input.baseSha256||''),'CRM_BASE_HASH','Retain the original request base SHA.');return send(res,200,await store.action(input.operation,{baseSha256:input.baseSha256}));}
