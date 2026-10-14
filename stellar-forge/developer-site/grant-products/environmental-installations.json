@@ -204,7 +204,7 @@
       "kind": "blob",
       "required": false,
       "path": "products/measurement-workspace/OPERATOR.md",
-      "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
+      "commit": "b2223043084c0d0ceea0517677263b511c331acd",
       "editions": [
         {
           "commit": "fa4fb0b30105387f24fbe072019314cd7d156857",
@@ -223,6 +223,12 @@
           "bytes": 20220,
           "sha256": "8c37a0282c616ecc55125cebd9e61a80211993f891d340ed994dc7d262b415f2",
           "git_blob": "ce35f9a27886890b8157649fc9ad8506a3d524f8"
+        },
+        {
+          "commit": "b2223043084c0d0ceea0517677263b511c331acd",
+          "bytes": 22953,
+          "sha256": "809f1e236e2f9bd29847a6db2e96d78fdd9be08232d71f44f2174e84de4b29cf",
+          "git_blob": "a1033bfa456fe7f9167d5972fcc45b2f7fd1c103"
         }
       ]
     },
@@ -296,24 +302,30 @@
       "kind": "blob",
       "required": false,
       "path": "products/measurement-workspace/connection.mjs",
-      "commit": "fa4fb0b30105387f24fbe072019314cd7d156857",
+      "commit": "b2223043084c0d0ceea0517677263b511c331acd",
       "editions": [
         {
           "commit": "fa4fb0b30105387f24fbe072019314cd7d156857",
           "bytes": 9121,
           "sha256": "9b8d78d89e1dffcf2b4ac602fd74adb92323d5f1707d0529c95ce6da893a25d5",
           "git_blob": "e83ac87944ab8c37bbd429f6ae82143ffa4d7260"
+        },
+        {
+          "commit": "b2223043084c0d0ceea0517677263b511c331acd",
+          "bytes": 9289,
+          "sha256": "5d4c163c021827e2fb2149fb3637b60f9609ae04ea3fa87a6a3e5f79a9caa4bb",
+          "git_blob": "3a0a0ee73dccdf3de37dbe5be1a25abbad4182ad"
         }
       ]
     },
     {
       "id": "environment-measurements-source-manifest",
-      "label": "Complete 142-member original scientific source manifest",
+      "label": "Complete original scientific source manifest",
       "repository": "woahwhattheheck/public-commons-sprint-2026",
       "kind": "blob",
       "required": false,
       "path": "products/measurement-workspace/original-source.json",
-      "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
+      "commit": "b2223043084c0d0ceea0517677263b511c331acd",
       "editions": [
         {
           "commit": "fa4fb0b30105387f24fbe072019314cd7d156857",
@@ -332,6 +344,12 @@
           "bytes": 40208,
           "sha256": "231bc76a317dbd9ff4230abb18b4a31a21657cab499be5c2a5a673f4ce7731eb",
           "git_blob": "2965ef094d13bb4acc3ac119f06e9e3e4920b49b"
+        },
+        {
+          "commit": "b2223043084c0d0ceea0517677263b511c331acd",
+          "bytes": 42441,
+          "sha256": "144d5b69130b8d1f276da003e00573b33e4965f0423de77e16b619734b98b4f7",
+          "git_blob": "fb12a8254be32a6ea274e34f8093ad8bf0d00ca7"
         }
       ]
     },
@@ -510,7 +528,7 @@
       "kind": "blob",
       "required": false,
       "path": "stellar/scf-starforge-20261009/distribution/contributions/measurement-workspace.json",
-      "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
+      "commit": "b2223043084c0d0ceea0517677263b511c331acd",
       "editions": [
         {
           "commit": "fa4fb0b30105387f24fbe072019314cd7d156857",
@@ -529,6 +547,12 @@
           "bytes": 19316,
           "sha256": "5d74c996af522bf2538d20db92ed88e31d985042212c36cb8ff421d4451fd4bd",
           "git_blob": "98c8173e7841741e31de623fc1e9fb65da9a5373"
+        },
+        {
+          "commit": "b2223043084c0d0ceea0517677263b511c331acd",
+          "bytes": 20131,
+          "sha256": "c5a670b7416e6e610c63a9d53b10e26753d4bbf957f84a3c3aa97e407730f096",
+          "git_blob": "668526126a3c202dbcc8dbcf83ed5c5adb17ce16"
         }
       ]
     },
@@ -539,7 +563,7 @@
       "kind": "blob",
       "required": false,
       "path": "stellar/scf-starforge-20261009/distribution/selections/measurement-workspace.json",
-      "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
+      "commit": "b2223043084c0d0ceea0517677263b511c331acd",
       "editions": [
         {
           "commit": "fa4fb0b30105387f24fbe072019314cd7d156857",
@@ -558,6 +582,12 @@
           "bytes": 25029,
           "sha256": "1175f9ff826aa78fe41c6b32e9094a1f654b51eff85188517302bc20687c9483",
           "git_blob": "8e94b6e792bb7141fb66f6ac96bce86e25558bdc"
+        },
+        {
+          "commit": "b2223043084c0d0ceea0517677263b511c331acd",
+          "bytes": 25844,
+          "sha256": "0faf2a36621119b59c86091aa9ec44342d3cbdf6590dd60239e245af905ba82c",
+          "git_blob": "9b841cbd1108acb48fd5694e9001142c35345374"
         }
       ]
     },
@@ -585,13 +615,19 @@
       "kind": "blob",
       "required": false,
       "path": "opportunities/upstate_forever_2026/measurement_workspace/engine/normalise.mjs",
-      "commit": "fa4fb0b30105387f24fbe072019314cd7d156857",
+      "commit": "865bdab55773ea146edfdc644047df90e22830b8",
       "editions": [
         {
           "commit": "fa4fb0b30105387f24fbe072019314cd7d156857",
           "bytes": 24314,
           "sha256": "29c76f3147cda502ab12661767abb84c742ea5434062825e310c0ef02d032d80",
           "git_blob": "c00476c58ca6b56f171ddedd70cd3a118fae9d3b"
+        },
+        {
+          "commit": "865bdab55773ea146edfdc644047df90e22830b8",
+          "bytes": 25256,
+          "sha256": "71790f9402d2dddb3c76d6f0bffca8cffaf7315ba386c6b5b48988b2e1c193dd",
+          "git_blob": "491c0aa7cd3fb094806a1123309f6319b37d7376"
         }
       ]
     },
@@ -602,7 +638,7 @@
       "kind": "blob",
       "required": false,
       "path": "opportunities/upstate_forever_2026/measurement_workspace/engine/intake.mjs",
-      "commit": "aea1e7d5bcf69c1e74c0676253426bf3dc522310",
+      "commit": "865bdab55773ea146edfdc644047df90e22830b8",
       "editions": [
         {
           "commit": "fa4fb0b30105387f24fbe072019314cd7d156857",
@@ -615,6 +651,12 @@
           "bytes": 20283,
           "sha256": "45f21a92ba58865ab71feac1326f215bc245fadc0e3be681f8db92faac81e794",
           "git_blob": "ebffde2b5401f565ca7ebf14537743573d232d98"
+        },
+        {
+          "commit": "865bdab55773ea146edfdc644047df90e22830b8",
+          "bytes": 20771,
+          "sha256": "864f99f9b7ef4a106d8acb7ac2fa757021a19fa73f7b72fb96f2c2510e2aff50",
+          "git_blob": "b81ea34da75bbf60b5c7211833bddc0a67a566b4"
         }
       ]
     },
@@ -625,13 +667,19 @@
       "kind": "blob",
       "required": false,
       "path": "opportunities/upstate_forever_2026/measurement_workspace/engine/source_lineage.mjs",
-      "commit": "fa4fb0b30105387f24fbe072019314cd7d156857",
+      "commit": "865bdab55773ea146edfdc644047df90e22830b8",
       "editions": [
         {
           "commit": "fa4fb0b30105387f24fbe072019314cd7d156857",
           "bytes": 9101,
           "sha256": "f0208ea12a2a87ba5874382d38f0513f9430d7461b471941e080eb66b1167f95",
           "git_blob": "97a1af505a911bfc1551a333709f0a9387d6b330"
+        },
+        {
+          "commit": "865bdab55773ea146edfdc644047df90e22830b8",
+          "bytes": 9343,
+          "sha256": "e2be6ccdcce15178ba9516cf44f8462bd1253cbcbcd812400ecbe3acb563ed01",
+          "git_blob": "eb3a035085f929347e27914646e0b3b0757ed7fb"
         }
       ]
     },
@@ -659,13 +707,19 @@
       "kind": "blob",
       "required": false,
       "path": "opportunities/upstate_forever_2026/measurement_workspace/engine/benchmark_workspace.mjs",
-      "commit": "fa4fb0b30105387f24fbe072019314cd7d156857",
+      "commit": "865bdab55773ea146edfdc644047df90e22830b8",
       "editions": [
         {
           "commit": "fa4fb0b30105387f24fbe072019314cd7d156857",
           "bytes": 27122,
           "sha256": "ddaacf48dda75079262c3e580f90376fe2db8f0ce7232177d18086d3b667656d",
           "git_blob": "07ff0ac272ae01094ac68c7987e4f35defb5d629"
+        },
+        {
+          "commit": "865bdab55773ea146edfdc644047df90e22830b8",
+          "bytes": 27315,
+          "sha256": "4172a85dfc85d47680e2ce76a890df7f8e80679e0fa82e4f0c097f3cd392f9be",
+          "git_blob": "3767b243f4599767acf143f60bc99cad36abff76"
         }
       ]
     },
@@ -693,7 +747,7 @@
       "kind": "blob",
       "required": false,
       "path": "opportunities/upstate_forever_2026/measurement_workspace/engine/workspace.mjs",
-      "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
+      "commit": "865bdab55773ea146edfdc644047df90e22830b8",
       "editions": [
         {
           "commit": "fa4fb0b30105387f24fbe072019314cd7d156857",
@@ -712,6 +766,12 @@
           "bytes": 24381,
           "sha256": "5f8943af96e650d5712744e163f3f5d38f78c3db43083b822826613cbefc6acb",
           "git_blob": "64574fcddb5721035b1ada4cc6a57957d8a10ea1"
+        },
+        {
+          "commit": "865bdab55773ea146edfdc644047df90e22830b8",
+          "bytes": 24587,
+          "sha256": "1b0571971af602cc79defd9280122ae2dc0464ca0e4d61301d771e4434990575",
+          "git_blob": "a048e72433cfa794d251e21979989a098211575f"
         }
       ]
     },
@@ -739,7 +799,7 @@
       "kind": "blob",
       "required": false,
       "path": "opportunities/upstate_forever_2026/measurement_workspace/engine/source_handback.mjs",
-      "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
+      "commit": "865bdab55773ea146edfdc644047df90e22830b8",
       "editions": [
         {
           "commit": "fa4fb0b30105387f24fbe072019314cd7d156857",
@@ -752,6 +812,12 @@
           "bytes": 32261,
           "sha256": "7c7fb777aea899a035303c6ab57c4c7e6ea6cea313d1192266cf2aad8eff285f",
           "git_blob": "ec38eb69caeee7af24d1d14b3d4af2dfaf90b773"
+        },
+        {
+          "commit": "865bdab55773ea146edfdc644047df90e22830b8",
+          "bytes": 32443,
+          "sha256": "b4515381419217fd86386c43f565979b02203f20a04bfa1cc07f92f2c8c54c8f",
+          "git_blob": "f473786e72f9bc19ce22f8c22b1be205b3b96f69"
         }
       ]
     },
@@ -779,7 +845,7 @@
       "kind": "blob",
       "required": false,
       "path": "opportunities/upstate_forever_2026/measurement_workspace/engine/large_delivery.mjs",
-      "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
+      "commit": "865bdab55773ea146edfdc644047df90e22830b8",
       "editions": [
         {
           "commit": "fa4fb0b30105387f24fbe072019314cd7d156857",
@@ -792,6 +858,12 @@
           "bytes": 30784,
           "sha256": "cc4b520482905c59d9302adb03e7caac2a6fcbfab3ad557ef5598f0b12899ebe",
           "git_blob": "79afa5c00cb2a281b951fb10ef9ff26e384a43aa"
+        },
+        {
+          "commit": "865bdab55773ea146edfdc644047df90e22830b8",
+          "bytes": 32702,
+          "sha256": "fb6544512c93917033b31f374bd2be9276a4d563613dbed3a7f299b469b9e823",
+          "git_blob": "bb838d184cf4bc52ac39c58b6aace989754fadc1"
         }
       ]
     },
@@ -870,7 +942,7 @@
       "kind": "blob",
       "required": false,
       "path": "opportunities/upstate_forever_2026/measurement_workspace/engine/large_intake.mjs",
-      "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
+      "commit": "865bdab55773ea146edfdc644047df90e22830b8",
       "editions": [
         {
           "commit": "aea1e7d5bcf69c1e74c0676253426bf3dc522310",
@@ -883,6 +955,12 @@
           "bytes": 26218,
           "sha256": "a64ab3f2ebac1a6cac9ccec6dd7815bfd51476fe502c8d3f34887adb834def26",
           "git_blob": "5d7b263e92f9cac5e57d69088265c24c6a76c3cd"
+        },
+        {
+          "commit": "865bdab55773ea146edfdc644047df90e22830b8",
+          "bytes": 27152,
+          "sha256": "cd27095d822770c1acb823fdda6029f09762158cb5e097ca99000eb4221a5d59",
+          "git_blob": "90f83767a4159dc5f2176c218be79b85221fe4cf"
         }
       ]
     },
@@ -927,7 +1005,7 @@
       "kind": "blob",
       "required": false,
       "path": "opportunities/upstate_forever_2026/measurement_workspace/engine/large_http.mjs",
-      "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
+      "commit": "865bdab55773ea146edfdc644047df90e22830b8",
       "editions": [
         {
           "commit": "aea1e7d5bcf69c1e74c0676253426bf3dc522310",
@@ -940,6 +1018,12 @@
           "bytes": 2728,
           "sha256": "92e0a739d6524d14195690f0951cfca7b3c5ac1bf28b1ee03779c802dad42318",
           "git_blob": "9bc818c1c93258890edd3690ea95dcca1c6bca21"
+        },
+        {
+          "commit": "865bdab55773ea146edfdc644047df90e22830b8",
+          "bytes": 2865,
+          "sha256": "001f3da92784c9fc0c4360e35e7f5c84064f85c72a3428a2eb0b5505a80cf7af",
+          "git_blob": "dcc6f91fd87d68faa67394f6eafef7a8a753733d"
         }
       ]
     },
@@ -1058,13 +1142,19 @@
       "kind": "blob",
       "required": false,
       "path": "opportunities/upstate_forever_2026/measurement_workspace/engine/sediment_workspace.mjs",
-      "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
+      "commit": "865bdab55773ea146edfdc644047df90e22830b8",
       "editions": [
         {
           "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
           "bytes": 30944,
           "sha256": "41aba5c9cbb48941828b08a5731b1aa3efe109444ccd3e8b8c8db1e193be9806",
           "git_blob": "63120c7e1d9be8f7cc465fedd738f3983c3bbc72"
+        },
+        {
+          "commit": "865bdab55773ea146edfdc644047df90e22830b8",
+          "bytes": 31137,
+          "sha256": "e4ae2d6af7fa6022cb5bd19c4e8a1e433d880e6fb8a8bf64ec1c2b5c1c74e55a",
+          "git_blob": "0ddb1e85f11e29655ac875923ed1475aba06b19f"
         }
       ]
     },
@@ -1143,13 +1233,19 @@
       "kind": "blob",
       "required": false,
       "path": "opportunities/upstate_forever_2026/measurement_workspace/engine/chiques_nutrient_workspace.mjs",
-      "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
+      "commit": "865bdab55773ea146edfdc644047df90e22830b8",
       "editions": [
         {
           "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
           "bytes": 4959,
           "sha256": "0fa338a365ad81ea5c284402d32f6a783c09731711952bd275170a4abf077ec8",
           "git_blob": "c2407619073cb2588bc0207ec9250b33fa782b4e"
+        },
+        {
+          "commit": "865bdab55773ea146edfdc644047df90e22830b8",
+          "bytes": 5028,
+          "sha256": "921f80e6c51d9eb396a48ef3698bb5b75f1d871a1d3d021e06d82a3a179f48f0",
+          "git_blob": "7661d7b19453e74e8afb13097cb165201648fa05"
         }
       ]
     },
@@ -1160,13 +1256,19 @@
       "kind": "blob",
       "required": false,
       "path": "opportunities/upstate_forever_2026/measurement_workspace/engine/chiques_nutrients.mjs",
-      "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
+      "commit": "865bdab55773ea146edfdc644047df90e22830b8",
       "editions": [
         {
           "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
           "bytes": 17806,
           "sha256": "829d1cacfc8b46163a1a04d97fd2d463ed00f9fbfb05e104c2c4cf6792da942e",
           "git_blob": "c7c3c868c4fd628dbaa205fdf535fac9e612ebd4"
+        },
+        {
+          "commit": "865bdab55773ea146edfdc644047df90e22830b8",
+          "bytes": 17933,
+          "sha256": "299716c171d93f6fe62b62a246e10b7f9fc1a248d26e3b146f11eb1d21c86bfb",
+          "git_blob": "6e5ac80a97a00182a530e35fca3d102377a5630c"
         }
       ]
     },
@@ -1177,13 +1279,19 @@
       "kind": "blob",
       "required": false,
       "path": "opportunities/upstate_forever_2026/measurement_workspace/engine/intake_comparison.mjs",
-      "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
+      "commit": "865bdab55773ea146edfdc644047df90e22830b8",
       "editions": [
         {
           "commit": "a3d269e53cd5fc962aa3326a015b2bd93ac28b38",
           "bytes": 6524,
           "sha256": "54f117e78cc0f53af46a1fb629df3577beee9b3586f96d1bbf4b9042d514794a",
           "git_blob": "79c9a8b2ce83f16bd715430b08ca995320fe07b8"
+        },
+        {
+          "commit": "865bdab55773ea146edfdc644047df90e22830b8",
+          "bytes": 6838,
+          "sha256": "6f8037838e33a8d2fc37ebbb545d89c4b0f196c9ed4e8d934e806a29c5f1397e",
+          "git_blob": "8d8eb1a150a0410e2ddedec5a6228ef80966b912"
         }
       ]
     },
@@ -1303,6 +1411,57 @@
           "bytes": 3209,
           "sha256": "07e00254fce2107da6629e83e594f9ba32bdce326940f3febdc65523874a9a1e",
           "git_blob": "39caacd544e473e8b86e498234d48f573d7f44d1"
+        }
+      ]
+    },
+    {
+      "id": "environment-measurements-distribution-builder",
+      "label": "Complete selected-source distribution builder",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "required": false,
+      "path": "stellar/scf-starforge-20261009/distribution/build.mjs",
+      "commit": "b2223043084c0d0ceea0517677263b511c331acd",
+      "editions": [
+        {
+          "commit": "b2223043084c0d0ceea0517677263b511c331acd",
+          "bytes": 33962,
+          "sha256": "b52b154c63a5ec08f77cc6f1801a7113dab9384d0686b148f32c8ea34b04d3ac",
+          "git_blob": "800ef2c45de727dd7bd2b03375b5ee1775011555"
+        }
+      ]
+    },
+    {
+      "id": "environment-measurements-pinned-source",
+      "label": "Exact scientific source inventory validation",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "required": false,
+      "path": "stellar/scf-starforge-20261009/distribution/pinned-source.mjs",
+      "commit": "b2223043084c0d0ceea0517677263b511c331acd",
+      "editions": [
+        {
+          "commit": "b2223043084c0d0ceea0517677263b511c331acd",
+          "bytes": 3148,
+          "sha256": "5037e04105ad9809b28d332d3ed1d030e8d223d751502fcf5671467b5502ec3b",
+          "git_blob": "b7a53023ebca66103ecd5df129ce4f3ce09d8c58"
+        }
+      ]
+    },
+    {
+      "id": "environment-measurements-workbook-returns",
+      "label": "Complete original-workbook review and source-line return",
+      "repository": "woahwhattheheck/public-commons-sprint-2026",
+      "kind": "blob",
+      "required": false,
+      "path": "opportunities/upstate_forever_2026/measurement_workspace/engine/source_workbook_returns.mjs",
+      "commit": "865bdab55773ea146edfdc644047df90e22830b8",
+      "editions": [
+        {
+          "commit": "865bdab55773ea146edfdc644047df90e22830b8",
+          "bytes": 9772,
+          "sha256": "0fe11794cfaca5a6a3554518ffad47bfd5d313cacedbfe3ae5db63c3614425ff",
+          "git_blob": "88691146a0f6bdc9a380c81c960b3247fd8537aa"
         }
       ]
     }
