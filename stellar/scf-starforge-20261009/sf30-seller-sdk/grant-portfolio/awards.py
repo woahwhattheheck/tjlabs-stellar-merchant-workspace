@@ -631,7 +631,7 @@ def apply_awards(previous, incoming, *, context, programme, entities, financial,
     model["records"] = {name: sorted(rows.values(), key=lambda row: row["id"]) for name, rows in idx.items()}
     require(sum(len(rows) for rows in model["records"].values()) <= 100000,
             "The complete award administration exceeds 100,000 records")
-    require(len(canonical(model)) <= 32 * 1024 * 1024, "The complete awards definition exceeds 32 MiB")
+    require(len(canonical(model)) <= 128 * 1024 * 1024, "The complete awards definition exceeds 128 MiB")
     return model
 
 

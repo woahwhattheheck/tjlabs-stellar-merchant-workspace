@@ -31,3 +31,8 @@ export declare function submitAwardCsvSessionBatch(client:GrantPortfolioClient,s
   csv:Uint8Array,options?:RequestOptions&{resumeFailed?:boolean}):Promise<RetainedRequest>;
 export declare function inspectAwardCsvImportSession(client:GrantPortfolioClient,session:AwardImportSession,csv:Uint8Array,
   options?:RequestOptions):Promise<AwardImportSessionObservation>;
+
+/** Proposed complete partition; caller retains the supplied identities and reviews before prepare/submit. */
+export declare function proposeAwardCsvImportBatches(portfolio:JsonObject,
+  input:Omit<AwardCsvImportInput,'operationId'|'documentId'|'rowIndexes'>,
+  selection:{operationPrefix:string;documentIds:string[];maxRows?:number}):Array<{operationId:string;documentId:string;rowIndexes:number[]}>;

@@ -4,6 +4,8 @@ from __future__ import annotations
 from contextlib import contextmanager
 import fcntl
 import hashlib
+import io
+import json
 import os
 from pathlib import Path, PurePosixPath
 import re
@@ -90,6 +92,119 @@ def immutable(path, data):
         sync_dir(path.parent)
     finally:
         Path(name).unlink(missing_ok=True)
+
+
+def immutable_chunks(path, chunks, expected_sha256=None):
+    """Write one complete original member with bounded memory and atomic custody."""
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    fd, name = tempfile.mkstemp(prefix=".write-", dir=path.parent)
+    try:
+        hasher, count = hashlib.sha256(), 0
+        with os.fdopen(fd, "wb") as output:
+            for block in chunks:
+                require(isinstance(block, bytes), "Retain complete original byte chunks")
+                output.write(block)
+                hasher.update(block)
+                count += len(block)
+            output.flush()
+            os.fsync(output.fileno())
+        descriptor = {"bytes": count, "sha256": hasher.hexdigest()}
+        require(expected_sha256 is None or descriptor["sha256"] == expected_sha256,
+                "Saved portfolio table changed")
+        os.chmod(name, 0o600)
+        if path.exists():
+            require(path.is_file() and not path.is_symlink() and file_info(path) == descriptor,
+                    "Retained original bytes differ: " + path.name, "RETAINED_FILE_CHANGED", 409)
+        else:
+            os.link(name, path)
+            sync_dir(path.parent)
+        return descriptor
+    finally:
+        Path(name).unlink(missing_ok=True)
+
+
+def canonical_array_chunks(values):
+    """Same canonical JSON-array bytes, retaining only one complete value at a time."""
+    yield b"["
+    first = True
+    for value in values:
+        if not first:
+            yield b","
+        first = False
+        yield canonical(value)[:-1]
+    yield b"]\n"
+
+
+def canonical_rows_digest(rows):
+    hasher = hashlib.sha256()
+    for row in rows:
+        hasher.update(canonical(row))
+    return hasher.hexdigest()
+
+
+def json_array_values(stream):
+    """Read one original JSON-array value at a time with the standard decoder."""
+    def bad(token):
+        raise InputError("Non-finite JSON number: " + token)
+
+    decoder = json.JSONDecoder(object_pairs_hook=pairs, parse_constant=bad)
+    chunk = 1024 * 1024
+    with io.TextIOWrapper(stream, encoding="utf-8", errors="strict") as text:
+        buffer, at, ended = "", 0, False
+
+        def more(size=chunk):
+            nonlocal buffer, at, ended
+            buffer = buffer[at:]
+            at = 0
+            try:
+                value = text.read(size)
+            except UnicodeError as error:
+                raise InputError("Invalid UTF-8 JSON: " + str(error)) from error
+            ended = not value
+            buffer += value
+            return bool(value)
+
+        def token():
+            nonlocal at
+            while True:
+                while at < len(buffer) and buffer[at] in " \t\r\n":
+                    at += 1
+                if at < len(buffer):
+                    return buffer[at]
+                if ended or not more():
+                    return None
+
+        require(token() == "[", "Retain the complete original JSON array")
+        at += 1
+        if token() == "]":
+            at += 1
+        else:
+            while True:
+                require(token() == "{", "Every original history or request entry must be an object")
+                size = chunk
+                while True:
+                    try:
+                        value, end = decoder.raw_decode(buffer, at)
+                        break
+                    except json.JSONDecodeError as error:
+                        if ended or not more(size):
+                            raise InputError("Invalid UTF-8 JSON: " + str(error)) from error
+                        size = min(size * 2, 64 * chunk)
+                require(isinstance(value, dict), "Retain complete original history and request objects")
+                at = end
+                yield value
+                delimiter = token()
+                require(delimiter in (",", "]"), "The complete original JSON array has an invalid separator")
+                at += 1
+                if delimiter == "]":
+                    break
+                require(token() != "]", "The complete original JSON array has a trailing comma")
+        require(token() is None, "The complete original JSON array has trailing content")
+
+
+def retained_json_array(path):
+    with Path(path).open("rb") as stream:
+        yield from json_array_values(stream)
 
 
 def rows_file(path):
@@ -224,18 +339,26 @@ class Workspace:
 
     def state(self):
         with self.reader() as db:
-            sources = [parse(x[0]) for x in db.execute("SELECT body FROM sources ORDER BY id")]
-            portfolios = [parse(x[0]) for x in db.execute(
-                "SELECT p.body FROM portfolios p JOIN (SELECT id,MAX(revision) r FROM portfolios GROUP BY id) h "
-                "ON p.id=h.id AND p.revision=h.r ORDER BY p.id")]
-            requests = [parse(x[0]) for x in db.execute("SELECT body FROM requests ORDER BY rowid DESC")]
+            # Project each original row before reading its successor. A completed
+            # request retains its whole portfolio result; the summary must not
+            # retain every historical result together merely to list statuses.
+            sources = [source_summary(parse(row[0])) for row in db.execute(
+                "SELECT body FROM sources ORDER BY id")]
+            portfolios = []
+            for raw in db.execute(
+                    "SELECT p.body FROM portfolios p JOIN (SELECT id,MAX(revision) r FROM portfolios GROUP BY id) h "
+                    "ON p.id=h.id AND p.revision=h.r ORDER BY p.id"):
+                value = parse(raw[0])
+                portfolios.append({key: value[key] for key in
+                    ("id", "revision", "snapshot", "name", "review", "counts", "updatedAt")})
+            requests = []
+            for raw in db.execute("SELECT body FROM requests ORDER BY rowid DESC"):
+                value = parse(raw[0])
+                requests.append({key: value[key] for key in
+                    ("id", "state", "action", "inputSha256", "updatedAt", "error") if key in value})
             return {"schema": SCHEMA, "workspaceId": self.marker["workspaceId"],
                     "revision": self.current_revision(db),
-                    "sources": [source_summary(source) for source in sources],
-                    "portfolios": [{k: x[k] for k in ("id", "revision", "snapshot", "name", "review", "counts", "updatedAt")}
-                                   for x in portfolios],
-                    "requests": [{k: x[k] for k in ("id", "state", "action", "inputSha256", "updatedAt", "error")
-                                  if k in x} for x in requests]}
+                    "sources": sources, "portfolios": portfolios, "requests": requests}
 
     def source(self, ident, db=None):
         sha(ident)
@@ -609,7 +732,7 @@ class Workspace:
                 "sourceReplacements": replacements, "decisions": decisions,
                 "counts": {table: len(rows) for table, rows in tables.items()},
                 "financialTotals": financial_totals(financial),
-                "tableSha256": {table: digest(b"".join(canonical(row) for row in rows)) for table, rows in tables.items()},
+                "tableSha256": {table: canonical_rows_digest(rows) for table, rows in tables.items()},
                 "edit": {"action": action, "payload": edit_payload, "at": request["createdAt"],
                          "portfolioId": ident, "decisionIds": [row["id"] for row in edit_payload.get("decisions", [])]},
                 "operationId": request["id"]}
@@ -670,13 +793,15 @@ class Workspace:
             where += " AND instr(search,?)>0"
             args.append(search.casefold())
         with self.reader() as db:
-            portfolio = self.portfolio(ident, version, db)
+            portfolio = db.execute("SELECT revision,snapshot FROM portfolios WHERE id=? AND revision=?",
+                                   (ident, version)).fetchone()
+            require(portfolio is not None, "Portfolio revision was not found", "NOT_FOUND", 404)
             total = db.execute("SELECT COUNT(*) FROM derived WHERE " + where, args).fetchone()[0]
             result = [parse(row[0]) for row in db.execute("SELECT body FROM derived WHERE " + where
                         + " ORDER BY row_key LIMIT ? OFFSET ?", [*args, limit, offset])]
             return {"rows": result, "total": total, "offset": offset,
                     "nextOffset": offset + len(result) if offset + len(result) < total else None,
-                    "revision": version, "snapshot": portfolio["snapshot"]}
+                    "revision": version, "snapshot": portfolio[1]}
 
     def detail(self, ident, version, source_id, entity_key_value):
         sha(source_id), sha(entity_key_value)
@@ -740,9 +865,25 @@ class Workspace:
                     else:
                         for source in prepared["sources"].values():
                             self._commit_source(source)
-                        for item in prepared["history"]:
+                        for retained in prepared["history"]:
+                            data = retained["path"].read_bytes()
+                            require(len(data) == retained["bytes"] and digest(data) == retained["sha256"],
+                                    "The staged complete portfolio revision changed", "RETAINED_FILE_CHANGED", 409)
+                            item = parse(data)
+                            data = None
                             self._commit_revision(item)
-                        for original in prepared["originalRequests"]:
+                            item = None
+                        retained_requests = prepared["originalRequests"]
+                        requests_hasher, requests_bytes, first_request = hashlib.sha256(b"["), 1, True
+                        for original in retained_json_array(retained_requests["path"]):
+                            if not first_request:
+                                requests_hasher.update(b",")
+                                requests_bytes += 1
+                            first_request = False
+                            block = canonical(original)
+                            requests_hasher.update(memoryview(block)[:-1])
+                            requests_bytes += len(block) - 1
+                            block = None
                             origin, record = original["origin"], original["request"]
                             prior = self.db.execute("SELECT body FROM original_requests WHERE origin=? AND id=?",
                                                     (origin, record["id"])).fetchone()
@@ -750,6 +891,11 @@ class Workspace:
                                     "The retained original request history conflicts", "ORIGINAL_REQUEST_CONFLICT", 409)
                             self.db.execute("INSERT OR IGNORE INTO original_requests VALUES(?,?,?,?)",
                                 (origin, record["id"], record["inputSha256"], canonical(record).decode()))
+                        requests_hasher.update(b"]\n")
+                        requests_bytes += 2
+                        require({"bytes": requests_bytes, "sha256": requests_hasher.hexdigest()} ==
+                                {key: retained_requests[key] for key in ("bytes", "sha256")},
+                                "The staged original request history changed", "RETAINED_FILE_CHANGED", 409)
                         result = prepared["result"]
                     self.db.execute("UPDATE meta SET value=CAST(value AS INTEGER)+1 WHERE key='revision'")
                     request.update(state="COMPLETED", updatedAt=now(), result=result,
@@ -770,7 +916,9 @@ class Workspace:
 
     def _prepare_export(self, payload):
         shape(payload, ("portfolioId", "revision"), ("portfolioId", "revision"))
-        selected = self.portfolio(payload["portfolioId"], payload["revision"])
+        original = self.portfolio(payload["portfolioId"], payload["revision"])
+        selected = {key: original[key] for key in ("id", "revision", "snapshot")}
+        original = None
         folder = self.root / "exports" / selected["snapshot"]
         folder.mkdir(mode=0o700, exist_ok=True)
         final = folder / "grant-portfolio-complete.zip"
@@ -780,46 +928,72 @@ class Workspace:
                     + str(selected["revision"]) + ".zip", "portfolioId": selected["id"],
                     "revision": selected["revision"], "snapshot": selected["snapshot"]}
         with self.reader() as db:
-            history = [parse(row[0]) for row in db.execute(
-                "SELECT body FROM portfolios WHERE id=? AND revision<=? ORDER BY revision",
-                (selected["id"], selected["revision"]))]
-            source_ids = sorted({source for item in history for source in item["sources"]})
-            source_rows = [self.source(ident, db) for ident in source_ids]
-            operation_ids = {item["operationId"] for item in history}
-            requests = []
-            originals = [(self.marker["workspaceId"], parse(row[0]))
-                         for row in db.execute("SELECT body FROM requests ORDER BY id")]
-            originals.extend((row["origin"], parse(row["body"]))
-                             for row in db.execute("SELECT origin,body FROM original_requests ORDER BY origin,id"))
-            seen_requests = set()
-            for origin, request in originals:
-                if request["state"] == "COMPLETED" and (request["id"] in operation_ids or
-                    (request["action"] == "source.receive" and request["result"]["id"] in source_ids)):
-                    key = (origin, request["id"])
-                    if key not in seen_requests:
-                        requests.append({"origin": origin, "request": request})
-                        seen_requests.add(key)
-            requests.sort(key=lambda item: (item["origin"], item["request"]["id"]))
+            def history():
+                for raw in db.execute(
+                        "SELECT body FROM portfolios WHERE id=? AND revision<=? ORDER BY revision",
+                        (selected["id"], selected["revision"])):
+                    yield parse(raw[0])
+
+            source_ids, operation_ids, history_tables, documents = set(), set(), [], {}
+            for item in history():
+                source_ids.update(item["sources"])
+                operation_ids.add(item["operationId"])
+                history_tables.append((item["id"], item["revision"], item["tableSha256"]))
+                for object_id, descriptor in portfolio_documents([item]).items():
+                    require(object_id not in documents or documents[object_id] == descriptor,
+                            "The original award document descriptor conflicts with its programme edition")
+                    documents[object_id] = descriptor
+            source_ids = sorted(source_ids)
+            item = None
+
+            def requests():
+                # Sort only original identities. The complete result is read
+                # once it is selected for emission, never into a sort buffer.
+                references = [(self.marker["workspaceId"], raw["id"], 0)
+                              for raw in db.execute("SELECT id FROM requests ORDER BY id")]
+                references.extend((raw["origin"], raw["id"], 1) for raw in db.execute(
+                    "SELECT origin,id FROM original_requests ORDER BY origin,id"))
+                references.sort()
+                seen = set()
+                for origin, ident, retained in references:
+                    if retained:
+                        request = parse(db.execute(
+                            "SELECT body FROM original_requests WHERE origin=? AND id=?",
+                            (origin, ident)).fetchone()[0])
+                    else:
+                        request = self.request(ident, db)
+                    if request["state"] == "COMPLETED" and (request["id"] in operation_ids or
+                        (request["action"] == "source.receive" and request["result"]["id"] in source_ids)):
+                        key = (origin, request["id"])
+                        if key not in seen:
+                            seen.add(key)
+                            yield {"origin": origin, "request": request}
+
             files = {}
             def save(name, data):
                 path = folder / "files" / PurePosixPath(name)
                 immutable(path, data)
                 files[name] = path
-            save("history.json", canonical(history))
-            save("requests.json", canonical(requests))
-            for source in source_rows:
+            def save_chunks(name, chunks, expected_sha256=None):
+                path = folder / "files" / PurePosixPath(name)
+                immutable_chunks(path, chunks, expected_sha256)
+                files[name] = path
+
+            save_chunks("history.json", canonical_array_chunks(history()))
+            save_chunks("requests.json", canonical_array_chunks(requests()))
+            for source_id in source_ids:
+                source = self.source(source_id, db)
                 prefix = "sources/" + source["id"] + "/"
                 save(prefix + "descriptor.json", canonical(source))
                 files[prefix + "source-packet.zip"] = self.object(source["object"]["sha256"])
-            for item in history:
-                for table in item["tableSha256"]:
-                    name = "rows/" + str(item["revision"]) + "/" + table + ".jsonl"
-                    data = b"".join(row[0].encode() for row in db.execute(
+            for ident, version, hashes in history_tables:
+                for table, expected_sha256 in hashes.items():
+                    name = "rows/" + str(version) + "/" + table + ".jsonl"
+                    chunks = (row[0].encode() for row in db.execute(
                         "SELECT body FROM derived WHERE portfolio_id=? AND revision=? AND table_name=? ORDER BY row_key",
-                        (item["id"], item["revision"], table)))
-                    require(digest(data) == item["tableSha256"][table], "Saved portfolio table changed")
-                    save(name, data)
-        for object_id, descriptor in portfolio_documents(history).items():
+                        (ident, version, table)))
+                    save_chunks(name, chunks, expected_sha256)
+        for object_id, descriptor in documents.items():
             original = self.object(object_id)
             require(file_info(original) == descriptor, "The original programme document changed")
             files["programme/documents/" + object_id] = original
@@ -834,13 +1008,24 @@ class Workspace:
                     "revision": selected["revision"], "snapshot": selected["snapshot"],
                     "files": {name: file_info(path) for name, path in sorted(files.items())}}
         pending = folder / "grant-portfolio-complete.pending"
-        with zipfile.ZipFile(pending, "w", allowZip64=True) as archive:
-            for name, path in sorted(files.items()):
-                info = zipfile.ZipInfo(name)
-                info.external_attr = 0o100600 << 16
-                with archive.open(info, "w", force_zip64=True) as output, path.open("rb") as source:
-                    shutil.copyfileobj(source, output, 1024 * 1024)
-            archive.writestr("manifest.json", canonical(manifest))
+        # Keep every previously possible stored archive unchanged. Only a complete
+        # handoff whose original members already exceed 4 GiB needs deflate.
+        compression = (zipfile.ZIP_DEFLATED if sum(path.stat().st_size for path in files.values()) > MAX_PACKET
+                       else zipfile.ZIP_STORED)
+        def write_archive(method):
+            with zipfile.ZipFile(pending, "w", compression=method, allowZip64=True) as archive:
+                for name, path in sorted(files.items()):
+                    info = zipfile.ZipInfo(name)
+                    info.compress_type = method
+                    info.external_attr = 0o100600 << 16
+                    with archive.open(info, "w", force_zip64=True) as output, path.open("rb") as source:
+                        shutil.copyfileobj(source, output, 1024 * 1024)
+                archive.writestr("manifest.json", canonical(manifest))
+        write_archive(compression)
+        # ZIP headers and the manifest can also take a near-limit stored packet
+        # over the bound. Preserve stored bytes whenever they actually fit.
+        if compression == zipfile.ZIP_STORED and pending.stat().st_size > MAX_PACKET:
+            write_archive(zipfile.ZIP_DEFLATED)
         require(pending.stat().st_size <= MAX_PACKET, "The complete handoff exceeds 4 GiB")
         self._verify_packet(pending)
         with pending.open("rb") as stream:
@@ -911,13 +1096,23 @@ class Workspace:
         with zipfile.ZipFile(packet) as archive:
             required = {"history.json", "requests.json", "README.md"}
             require(required <= set(manifest["files"]), "The complete history or receiving guide is missing")
-            history = parse(archive.read("history.json"))
-            requests = parse(archive.read("requests.json"))
-            require(isinstance(history, list) and len(history) == manifest["revision"] and isinstance(requests, list),
-                    "Retain the complete portfolio revision and request sequence")
-            source_ids = sorted({source for item in history for source in item["sources"]})
+            def history():
+                with archive.open("history.json") as stream:
+                    yield from json_array_values(stream)
+
+            source_ids, documents, history_count = set(), {}, 0
+            for original in history():
+                history_count += 1
+                source_ids.update(original["sources"])
+                for object_id, descriptor in portfolio_documents([original]).items():
+                    require(object_id not in documents or documents[object_id] == descriptor,
+                            "The original award document descriptor conflicts with its programme edition")
+                    documents[object_id] = descriptor
+            original = None
+            require(history_count == manifest["revision"], "Retain the complete portfolio revision sequence")
+            source_ids = sorted(source_ids)
             expected_data = set(required)
-            for object_id, descriptor in portfolio_documents(history).items():
+            for object_id, descriptor in documents.items():
                 name = "programme/documents/" + object_id
                 expected_data.add(name)
                 require(manifest["files"].get(name) == descriptor,
@@ -943,8 +1138,8 @@ class Workspace:
                 require(all(prepared["source"][key] == source[key] for key in stable),
                         "The original source does not reconstruct its complete native records")
                 prepared_sources[ident] = prepared
-            previous = None
-            for version, original in enumerate(history, 1):
+            previous, operation_results = None, {}
+            for version, original in enumerate(history(), 1):
                 require(original["id"] == manifest["portfolioId"] and original["revision"] == version
                         and original["schema"] == SCHEMA, "The complete portfolio history has an invalid sequence")
                 require(original["snapshot"] == digest({k: v for k, v in original.items() if k != "snapshot"}),
@@ -961,12 +1156,24 @@ class Workspace:
                 for table in rebuilt["tables"]:
                     name = "rows/" + str(version) + "/" + table + ".jsonl"
                     expected_data.add(name)
-                    require(name in manifest["files"] and digest(b"".join(canonical(row) for row in rebuilt["tables"][table]))
+                    hasher = hashlib.sha256()
+                    for row in rebuilt["tables"][table]:
+                        hasher.update(canonical(row))
+                    require(name in manifest["files"] and hasher.hexdigest()
                             == manifest["files"][name]["sha256"] == original["tableSha256"][table],
                             "A complete receiving portfolio table differs: " + table)
-                prepared_history.append(rebuilt)
+                operation_results.setdefault(original["operationId"], set()).add(digest(original))
+                # Commit needs only the preceding revision identity. The complete
+                # preceding original remains in the verified original history.
+                rebuilt["previous"] = ({key: previous[key] for key in ("revision", "snapshot")}
+                                       if previous else None)
+                path = folder / "prepared" / ("revision-" + str(version) + ".json")
+                descriptor = immutable_chunks(path, (canonical(rebuilt),))
+                prepared_history.append({"path": path, **descriptor})
                 previous = original
+                rebuilt = None
             require(previous["snapshot"] == manifest["snapshot"], "The original final revision differs")
+            previous = original = None
             source_manifest_name = "runtime/sf30-seller-sdk/grant-portfolio/source-files.json"
             require(source_manifest_name in manifest["files"], "The incoming original source manifest is missing")
             original_source = parse(archive.read(source_manifest_name))
@@ -986,32 +1193,38 @@ class Workspace:
                     "Retain every file declared by the incoming original source closure")
             require({name for name in manifest["files"] if not name.startswith("runtime/")} == expected_data,
                     "The complete handoff has missing or undeclared domain members")
-            request_keys = set()
-            retained_ids = set()
-            for original in requests:
-                shape(original, ("origin", "request"), ("origin", "request"))
-                identifier(original["origin"])
-                request = original["request"]
-                require(request["inputSha256"] == digest(request["input"]) and request["state"] == "COMPLETED",
-                        "The retained original request input or result differs")
-                operation(request["id"])
-                require(request["input"]["operationId"] == request["id"], "The original operation id differs")
-                key = (original["origin"], request["id"])
-                require(key not in request_keys, "The original request history repeats an identity")
-                request_keys.add(key)
-                if request["id"] in {item["operationId"] for item in history}:
-                    require(request["action"] in {"portfolio.save", "review.save"}
-                            and request["result"] in history, "An original portfolio operation result differs")
-                    retained_ids.add(request["id"])
-                else:
-                    require(request["action"] == "source.receive" and request["result"]["id"] in source_ids,
-                            "An unrelated operation was included in this handoff")
-            require({item["operationId"] for item in history} <= retained_ids,
+            request_keys, retained_ids = set(), set()
+
+            def requests():
+                with archive.open("requests.json") as stream:
+                    for original in json_array_values(stream):
+                        shape(original, ("origin", "request"), ("origin", "request"))
+                        identifier(original["origin"])
+                        request = original["request"]
+                        require(request["inputSha256"] == digest(request["input"]) and request["state"] == "COMPLETED",
+                                "The retained original request input or result differs")
+                        operation(request["id"])
+                        require(request["input"]["operationId"] == request["id"], "The original operation id differs")
+                        key = (original["origin"], request["id"])
+                        require(key not in request_keys, "The original request history repeats an identity")
+                        request_keys.add(key)
+                        if request["id"] in operation_results:
+                            require(request["action"] in {"portfolio.save", "review.save"}
+                                    and digest(request["result"]) in operation_results[request["id"]],
+                                    "An original portfolio operation result differs")
+                            retained_ids.add(request["id"])
+                        else:
+                            require(request["action"] == "source.receive" and request["result"]["id"] in source_ids,
+                                    "An unrelated operation was included in this handoff")
+                        yield original
+
+            # Retain the same complete canonical original request array on disk.
+            original_requests = folder / "original-requests.json"
+            requests_descriptor = immutable_chunks(original_requests, canonical_array_chunks(requests()))
+            require(set(operation_results) <= retained_ids,
                     "The complete original portfolio operation history is missing")
-            # Preserve the entire archive and original request history under its original identity.
             immutable(folder / "manifest.json", canonical(manifest))
-            immutable(folder / "original-requests.json", canonical(requests))
-        return {"sources": prepared_sources, "history": prepared_history, "originalRequests": requests,
+        return {"sources": prepared_sources, "history": prepared_history, "originalRequests": {"path": original_requests, **requests_descriptor},
                 "result": {"schema": SCHEMA + ".received", "object": payload["object"],
                     "sourceWorkspaceId": manifest["workspaceId"], "workspaceId": self.marker["workspaceId"],
                     "portfolioId": manifest["portfolioId"], "revision": manifest["revision"],

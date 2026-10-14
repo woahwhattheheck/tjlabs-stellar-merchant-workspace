@@ -120,6 +120,14 @@ Normal stop requests are forwarded to the original main child. There is no elaps
 
 The immutable closed-attempt receipt may precede publication of current.json. Recovery adopts that exact original closure before considering another invocation. A failed attempt with positively closed main/family may continue the same action journals. The frozen closure and completion postimages do not change when another stop is observed.
 
+## Complete source-sized CSV session continuation
+
+The existing CSV-session chapter is `import-session-receiving.mjs`, documented in `../../AWARDS_IMPORT_SESSIONS.md`. It borrows the original source and recipient Console connections. A fresh chapter selection retains 25,000 application IDs and a 50-column original CSV, proposes bounded reviewed batches, stops after the first recovered original result, and requires a real source Console cold reopen before its final batch. Its `import`, `receive` and `reopen` phases retain the same operation, workspaces and output directory. Original v1 selections remain 240-row/two-batch continuations.
+
+The accepting producer must actually open the resulting source and received portfolios in the maintained Awards UI, inspect the first and last imported application and exact amount, open the retained complete CSV documents, operate the application JSON/CSV downloads, and reopen the resulting complete files. View the actual screens at desktop and 390 px width, including current batch progress, completed and error/recovery states. Inspect every delivered attachment and both independently received and cold-reopened workspaces. Retain the actual screenshots, complete downloads, original request outcomes and existing process-closure result with the chapter directory. Source publication and the script's assertions describe a course; the producing worker's actual rendered operation establishes the delivered experience.
+
+Follow the existing owner .4 direction and the own-data intake direction: preserve complete original source bytes, mappings, manually chosen identities and prior revisions. Internal generated applications remain clearly identified as internal receiving material. The same maintained API and browser controls support an operator's own complete source file without claiming a real funding decision or customer acceptance.
+
 ## Required completion and delivery
 
 The Node result is `complete.json`; the outer result is `foreground-complete.json`. Complete native receiving requires both:
