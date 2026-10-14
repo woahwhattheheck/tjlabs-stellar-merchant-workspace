@@ -33,6 +33,13 @@ const publicText='{"product":"Original direct public source"}';
 w=(await api.capture(w,{operationId:'public-source',expectedRevision:w.revision,periodId:'week-two',targetId:'coffee',id:'public-source',responseText:JSON.stringify({info:{statusCode:null,finalUrl:null},extractor:{result:{items:[item('13.25')]}}}),providerStatus:null,requestUrl:targets[0].url,source:{kind:'public-source',url:'https://example.com/coffee.json',originalText:publicText,originalSha256:await sha256(publicText)},replaceCaptureId:'source-unknown-basis'})).workspace;
 r=await api.report(w,'week-two');check(r.rows[0].state==='READY'&&r.rows[0].providerStatus===null&&r.rows[0].targetStatus===null,'Original public source analysis retains absent transport statuses');
 const csv=catalogCsv({...r,rows:[{...r.rows[0],label:'=HYPERLINK("https://example.com")',product:{...r.rows[0].product,name:'=HYPERLINK("https://example.com")'}}]});check(csv.includes("'=HYPERLINK"),'Ordinary CSV protects spreadsheet formulas');
+await capture('week-two','source-recurring-chain',[item('13.25',{priceBasis:'unknown',extractionAttention:['purchase_basis_unreviewed']})],'public-source');
+const current=(await api.open(w)).periods.find(p=>p.id==='week-two'),last=current.captures.at(-1);
+w=(await api.decide(w,{operationId:'review-recurring-chain',expectedRevision:w.revision,periodId:'week-two',targetId:'coffee',captureId:last.id,action:'select',identity:last.candidates[0].identity,pack:targets[0].pack,priceBasis:'one-time',reason:'Retained reviewed source and exact pack for continuing periods.'})).workspace;
+for(const [id,prior,start,end] of [['week-three','week-two','2026-10-15','2026-10-21'],['week-four','week-three','2026-10-22','2026-10-28']]){
+w=(await api.plan(w,{operationId:'plan-'+id,expectedRevision:w.revision,id,label:id,start,end,previousPeriodId:prior})).workspace;
+await capture(id,'source-'+id,[item('13.25',{priceBasis:'unknown',extractionAttention:['purchase_basis_unreviewed']})]);}
+r=await api.report(w,'week-four');check(r.rows[0].state==='READY'&&r.rows[0].reason==='carried review','Reviewed product terms continue through three successive periods');
 return {checks,workspace:w,report:r};
 }
 
