@@ -11,6 +11,7 @@ import {prepareAwardCsvImport,exportAwardApplications} from '../../awards-exchan
 import {prepareAwardCsvImportSession,reviewAwardCsvSessionBatch,submitAwardCsvSessionBatch,
   inspectAwardCsvImportSession,proposeAwardCsvImportBatches} from '../../awards-import-session.mjs';
 import {ordinary,readJson,retainedJson} from '../../awards-import-session-cli.mjs';
+import {runAwardRowReviewReceiving} from './row-review-receiving.mjs';
 
 const OPERATION='AWARDS-CSV-SESSION-INTERNAL-RECEIVING-7DE2-20261013';
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -53,7 +54,7 @@ async function originalRequest(client,id){
   catch(error){if(error.status===404&&error.nativeCode==='NOT_FOUND')return null;throw error;}
 }
 export async function runReceiving({phase,sourceConnection,recipientConnection,out,actor}){
-  assert(['import','receive','reopen'].includes(phase));
+  assert(['import','receive','reopen','row-review'].includes(phase));
   assert(typeof actor==='string'&&actor.trim()&&actor.length<=240);
   assert(out===resolve(out));await privateDir(out);
   for(const name of ['actions','evidence','exports'])await privateDir(join(out,name));
@@ -129,6 +130,8 @@ export async function runReceiving({phase,sourceConnection,recipientConnection,o
       }
       return revisions;
     }
+    if(phase==='row-review')return await runAwardRowReviewReceiving({source,recipient,out,actor,run:ids.run,
+      action,downloadExport,compareHistory,file,fileIdentity,launch});
     if(phase==='import'){
       let complete=await optional(join(out,'import-complete.json'));
       if(complete){

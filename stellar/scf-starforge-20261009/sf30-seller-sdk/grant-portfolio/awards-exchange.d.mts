@@ -2,6 +2,7 @@
 import type {GrantPortfolioClient,JsonObject,OperationId,PortfolioId,PortfolioSaveInput,
   RequestOptions,RetainedRequest,Sha256} from "./client.mjs";
 import type {AwardId} from "./awards-client.mjs";
+import type {AwardCsvRowReview} from "./awards-import-row-review.mjs";
 export interface AwardCsvMapping {
   reference:string;title:string;legalName:string;partnerKey:string;projectKey?:string;
   profile?:Partial<Record<'organisationIdentifier'|'contactName'|'contactEmail'|'country'|'summary',string>>;
@@ -15,13 +16,17 @@ export interface AwardCsvImportInput {
   mapping:AwardCsvMapping;identities:AwardCsvIdentities;status?:'draft'|'submitted';
   /** Optional explicit zero-based data-row selection; the complete CSV stays attached. */
   rowIndexes?:number[];
+  /** Sealed complete original-row accounting; v2 only. */
+  rowReview?:AwardCsvRowReview;reviewDocumentId?:AwardId;
 }
 export interface AwardCsvImportPlan {
-  schema:'stellar-forge.awards-csv-import-plan.v1';
+  schema:'stellar-forge.awards-csv-import-plan.v1'|'stellar-forge.awards-csv-import-plan.v2';
   portfolio:{id:PortfolioId;revision:number;snapshot:Sha256};
   source:{sha256:Sha256;bytes:number;filename:string;contentType:'text/csv'};
   documentId:AwardId;round:{id:AwardId;revision:number;sha256:Sha256};
   rows:number;mapping:AwardCsvMapping;actionSha256:Sha256;sourceRows?:number;rowIndexes?:number[];
+  rowReview?:{sha256:Sha256;documentId:AwardId;object:{sha256:Sha256;bytes:number;filename:string;contentType:'application/json'};
+    counts:{total:number;accepted:number;exception:number;non_application:number}};
   action:{operationId:OperationId;action:'portfolio.save';payload:PortfolioSaveInput};
 }
 export interface AwardApplicationExchange {
@@ -32,6 +37,6 @@ export interface AwardApplicationExchange {
 export declare function parseAwardCsvText(text:string):{headers:string[];rows:Record<string,string>[]};
 export declare function prepareAwardCsvImport(portfolio:JsonObject,input:AwardCsvImportInput):AwardCsvImportPlan;
 export declare function submitAwardCsvImport(client:GrantPortfolioClient,plan:AwardCsvImportPlan,csv:Uint8Array,
-  options?:RequestOptions):Promise<RetainedRequest>;
+  options?:RequestOptions&{rowReview?:AwardCsvRowReview}):Promise<RetainedRequest>;
 export declare function exportAwardApplications(portfolio:JsonObject,
   options?:{roundId?:AwardId;format?:'json'|'csv';spreadsheetSafe?:boolean}):AwardApplicationExchange;

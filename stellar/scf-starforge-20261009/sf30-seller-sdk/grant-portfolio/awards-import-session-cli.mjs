@@ -8,6 +8,7 @@ import {createHash} from 'node:crypto';
 import {connectGrantPortfolio,saveGrantPortfolioFile,GRANT_PORTFOLIO_MAX_JSON_BYTES} from './client.mjs';
 import {prepareAwardCsvImportSession,reviewAwardCsvSessionBatch,submitAwardCsvSessionBatch,
   inspectAwardCsvImportSession,proposeAwardCsvImportBatches} from './awards-import-session.mjs';
+import {prepareAwardCsvRowReview} from './awards-import-row-review.mjs';
 
 const need=(ok,message)=>{if(!ok)throw new Error(message);};
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -44,13 +45,14 @@ export async function retainedJson(path,value){
 function argumentsOf(argv){
   const [command,...pairs]=argv;
   const allowed={
-    propose:['connection','portfolio','input','csv','out'],
-    prepare:['connection','portfolio','input','csv','out'],
+    'review-rows':['connection','portfolio','input','csv','out'],
+    propose:['connection','portfolio','input','csv','out','row-review','review-document'],
+    prepare:['connection','portfolio','input','csv','out','row-review','review-document'],
     review:['connection','session','csv','index','out'],
     submit:['connection','session','csv','batch','out','resume-failed'],
     inspect:['connection','session','csv','out'],
   };
-  need(Object.hasOwn(allowed,command),'Choose propose, prepare, review, submit or inspect.');
+  need(Object.hasOwn(allowed,command),'Choose review-rows, propose, prepare, review, submit or inspect.');
   need(pairs.length%2===0,'Pass each named option once with its value.');
   const values={};
   for(let i=0;i<pairs.length;i+=2){
@@ -59,10 +61,12 @@ function argumentsOf(argv){
       'Use each declared command option exactly once.');
     values[key]=pairs[i+1];
   }
-  for(const key of allowed[command].filter(key=>key!=='resume-failed'))
+  for(const key of allowed[command].filter(key=>!['resume-failed','row-review','review-document'].includes(key)))
     need(Object.hasOwn(values,key),'Missing --'+key+'.');
   need(values['resume-failed']===undefined||values['resume-failed']==='true',
     'Use --resume-failed true only for the original retryable failed request.');
+  need((values['row-review']===undefined)===(values['review-document']===undefined),
+    'Select both the complete row-review file and its stable native evidence document UUID.');
   return {command,values};
 }
 export async function main(argv=process.argv.slice(2)){
@@ -75,12 +79,17 @@ export async function main(argv=process.argv.slice(2)){
     client=await connectGrantPortfolio({consoleUrlFile:values.connection});
     const options={signal:controller.signal};
     let result;
-    if(command==='prepare'||command==='propose'){
+    if(command==='prepare'||command==='propose'||command==='review-rows'){
       const input=await readJson(values.input);
+      if(values['row-review']){
+        need(!Object.hasOwn(input,'rowReview')&&!Object.hasOwn(input,'reviewDocumentId'),'Select one complete row review once.');
+        input.rowReview=await readJson(values['row-review']);input.reviewDocumentId=values['review-document'];
+      }
       need(!Object.hasOwn(input,'csv')&&!Object.hasOwn(input,'workspaceId'),
         'The original source file and actual connected workspace are supplied separately.');
       const state=await client.state(options),portfolio=await client.portfolio(values.portfolio,options);
-      if(command==='propose'){
+      if(command==='review-rows')result=prepareAwardCsvRowReview(portfolio,{...input,csv});
+      else if(command==='propose'){
         const {proposal,...selection}=input;
         need(proposal&&typeof proposal==='object'&&!Array.isArray(proposal)&&
           Object.keys(proposal).every(key=>['operationPrefix','documentIds','maxRows'].includes(key))&&
