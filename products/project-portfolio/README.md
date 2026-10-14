@@ -165,3 +165,15 @@ original reporting workflow.
 - [Portfolio reporting and full receiving](source/archive/README.md)
 - [Exact source adoption](SOURCE_ADOPTION.json)
 - [Original MPXJ license](source/third_party/mpxj/LICENSE)
+
+## Compare saved reporting publications
+
+The installed Archive desk includes the complete paired-publication workflow. Select two saved publications, confirm business-project correspondence, inspect exact decimal changes with native currency/unit/period support, and download the complete comparison JSON, report HTML and every-row CSV. Independently received original ZIPs retain their source cohort identities. Open the JSON to verify and reopen the same pair.
+
+The installed command uses the same read-only workflow:
+
+```sh
+project-portfolio compare --connection /absolute/connection.json --arguments /absolute/publication-pair.json --output /absolute/publication-comparison.json
+```
+
+The explicit selection and complete native receiving chapter are in [archive/COMPARISON.md](source/archive/COMPARISON.md). Both original project ZIPs remain available through the existing authenticated downloads. This edition also retains the previously published commissioning desk and imported-plan source; their native owners and saved operations remain unchanged.

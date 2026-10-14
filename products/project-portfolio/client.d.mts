@@ -102,6 +102,7 @@ export class ProjectPortfolioClient {
  object(sha256:Identity):Promise<Json>;
  cohorts(query?:PageSelection):Promise<Document>;
  cohort(cohortId:Identity):Promise<Document>;
+ archiveComparison(selection:{left:PublicationSelection;right:PublicationSelection;project_pairs:Array<{left:string;right:string}>}):Promise<Document>;
  archiveFields(editions:Identity[]):Promise<Document>;
  archiveTable(query:PublicationSelection & {
   table:string;offset?:number;limit?:number;filter_column?:string;filter_text?:string

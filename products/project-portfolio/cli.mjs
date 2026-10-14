@@ -22,6 +22,7 @@ const HELP=[
  '  fields --edition ID --family project|tasks|resources|assignments',
  '  companions --edition ID [--ordinal 0] [--offset 0] [--limit 50]',
  '  archive-fields --arguments JSON   (JSON is the complete array of edition IDs)',
+ '  compare --arguments JSON         (left/right original publication selections and explicit project_pairs)',
  '  table --arguments JSON           (original cohort_id, publication_id, table and pagination)',
  '  query --arguments JSON           (original publication, SQL and parameters)',
  '  action --request ID --kind ACTION --arguments JSON',
@@ -95,7 +96,7 @@ export async function runProjectPortfolioCLI(argv=process.argv.slice(2)){
   status:['--cursor','--limit'],list:['--collection','--cursor','--limit'],
   read:['--kind','--id','--family','--offset','--limit'],fields:['--edition','--family'],
   companions:['--edition','--ordinal','--offset','--limit'],'archive-fields':['--arguments'],
-  table:['--arguments'],query:['--arguments'],action:['--request','--kind','--arguments'],
+  compare:['--arguments'],table:['--arguments'],query:['--arguments'],action:['--request','--kind','--arguments'],
   request:['--request'],resume:['--request','--retry-failed'],wait:['--request','--timeout-ms','--interval-ms'],
   pause:['--deployment','--request'],upload:['--file','--archive','--sha256'],
   download:['--sha256','--request','--expected-sha256','--bytes','--filename']
@@ -107,6 +108,10 @@ export async function runProjectPortfolioCLI(argv=process.argv.slice(2)){
  const stop=()=>{void client.close();};for(const name of ['SIGINT','SIGTERM','SIGHUP'])process.on(name,stop);
  try{
   const output=absolute(args['--output']);
+  if(command==='compare'){
+   required(args,'--arguments');const selection=await readJson(absolute(args['--arguments']),8*1024*1024);
+   await emit(await client.archiveComparison(selection),output);return 0;
+  }
   if(command==='upload'){
    required(args,'--file');await emit(await client.uploadFile(absolute(args['--file']),
     {archive:Boolean(args['--archive']),expectedSha256:args['--sha256']}),output);return 0;

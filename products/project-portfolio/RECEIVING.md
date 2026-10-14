@@ -17,7 +17,7 @@ and runtime-profile workflow to select the actual runtime dependencies, then
 install the selected Python requirements. The original runtime command reports
 MPXJ 16.10.0, JPype1 1.6.0, the actual JVM and its complete JAR identities.
 
-All 63 original source files are selected by SOURCE_ADOPTION.json. The installed
+All 81 original source files are selected by SOURCE_ADOPTION.json. The installed
 host verifies them together with its launcher, command line, typed client,
 Applications adapter and merchant interfaces. The original source directory is
 included in full, including the browser assets, native receiving programmes,
@@ -109,3 +109,15 @@ cohort. Existing workspaces retain their original editions, requests, archive
 manifests and target history. Review the changed installed source and target
 configuration through the existing Applications flow before starting the updated
 runtime.
+
+## Compare saved reporting publications
+
+The installed Archive desk includes the complete paired-publication workflow. Select two saved publications, confirm business-project correspondence, inspect exact decimal changes with native currency/unit/period support, and download the complete comparison JSON, report HTML and every-row CSV. Independently received original ZIPs retain their source cohort identities. Open the JSON to verify and reopen the same pair.
+
+The installed command uses the same read-only workflow:
+
+```sh
+project-portfolio compare --connection /absolute/connection.json --arguments /absolute/publication-pair.json --output /absolute/publication-comparison.json
+```
+
+The explicit selection and complete native receiving chapter are in [archive/COMPARISON.md](source/archive/COMPARISON.md). Both original project ZIPs remain available through the existing authenticated downloads. This edition also retains the previously published commissioning desk and imported-plan source; their native owners and saved operations remain unchanged.

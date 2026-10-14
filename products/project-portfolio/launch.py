@@ -18,8 +18,8 @@ import uuid
 HERE = Path(__file__).resolve().parent
 READY = "stellar-forge.project-portfolio-ready.v1"
 SELECTION = "stellar-forge.project-portfolio-selection.v1"
-SOURCE_COMMIT = "bb1214f14e6df3068784845c589242713d21242a"
-SOURCE_TREE = "3851466b3b489ed1d6e3aae1654ae1d04436ff27"
+SOURCE_COMMIT = "2f54dcabe790af0af23cccde2064fa0a82a46864"
+SOURCE_TREE = "d44a15111bd02cb7fd40a50e98d850e6c1187487"
 
 
 def need(value, message):
@@ -142,7 +142,7 @@ def verify_selection(envelope):
         "SOURCE_ADOPTION.json", "workspace.mjs", "launch.py", "client.mjs", "client.d.mts",
         "cli.mjs", "merchant-catalog.mjs", "merchant.mjs", "merchant-provider.mjs",
         "application-provider.mjs"))
-    need(seen == required and len(adoption["files"]) == 63,
+    need(seen == required and len(adoption["files"]) == 81,
          "Keep the entire original source and installed customer interfaces.")
     workspace = Path(selected["workspaceDirectory"])
     control = Path(selected["controlDirectory"])
