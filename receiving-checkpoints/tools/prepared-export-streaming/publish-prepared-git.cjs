@@ -1,5 +1,7 @@
 'use strict';
 const Stream = require('./prepared-stream.cjs'), H = require('./sha256.cjs');
+const {createStreamedArchiveSource}=require('./streamed-archive-source.cjs');
+const {readCompleteExportRanges}=require('./ordinary-zip-range.cjs');
 const HEX = /^[a-f0-9]{64}$/, GIT = /^[a-f0-9]{40}$/;
 const fields = ['path','bytes','sha256','decodedBytes','decodedSha256'];
 const copyPart = p => Object.fromEntries([...fields,'gitBlob'].map(k => [k,p[k]]));
@@ -17,6 +19,10 @@ function gitSha(value,operation) {
 /**
  * api: getHead(branch), treeOf(commit), createBlob(text), createTree(tree,entries),
  * createCommit(parent,tree,message), updateRef(branch,expectedHead,nextHead).
+ * Optional verification:'ordinary' also requires readBlob(gitBlob), returning the
+ * exact acknowledged blob's UTF-8 base64 text. It reopens those provider bytes
+ * before publishing the complete manifest. The default verification:'full'
+ * preserves original-member verification during prepared emission.
  * All writes are awaited; updateRef returns true only after provider acceptance.
  * readObject supplies the exact prepared-index objects. An interrupted caller may
  * retain error.publicationState and pass it as options.resumeState on replay.
@@ -24,6 +30,9 @@ function gitSha(value,operation) {
 async function publishPreparedToGit(index,readObject,api,options={}) {
   for (const key of ['getHead','treeOf','createBlob','createTree','createCommit','updateRef'])
     if (typeof api?.[key] !== 'function') throw TypeError('Missing Git publication operation '+key);
+  const verification=options.verification??'full';
+  if(verification!=='full'&&verification!=='ordinary')throw Error('Choose full or ordinary archive verification');
+  if(verification==='ordinary'&&typeof api.readBlob!=='function')throw TypeError('Ordinary verification requires immutable Git blob reads');
   const {branch,directory,sourceIndex,sourceIndexHead}=options;
   if (typeof branch!=='string'||!branch || typeof directory!=='string'||
       !directory.endsWith('/')||directory.startsWith('/')||directory.includes('\\')||
@@ -34,9 +43,10 @@ async function publishPreparedToGit(index,readObject,api,options={}) {
   if(!Number.isSafeInteger(partBytes)||partBytes<1||partBytes>16*1024*1024||
      !Number.isSafeInteger(commitParts)||commitParts<1||commitParts>1000)
     throw Error('Choose bounded archive parts and publication batches');
-  let head=gitSha(options.head,'Initial publication head'),committedParts=0,verifiedMembers=0,pendingPublication=null,alreadyComplete=false;
+  let head=gitSha(options.head,'Initial publication head'),committedParts=0,verifiedMembers=0,emittedMembers=0,pendingPublication=null,alreadyComplete=false;
   const prior=options.resumeState??null,retained=[],parts=[];
   if(prior){
+    if((prior.verification??'full')!==verification)throw Error('Publication verification mode changed from the retained publication');
     if(prior.schema!=='commons.git-archive-publisher-state.v1'||prior.head!==head||
        prior.branch!==branch||prior.directory!==directory||prior.sourceIndex!==sourceIndex||
        prior.sourceIndexHead!==sourceIndexHead||prior.identity!==index.identity||prior.partBytes!==partBytes||
@@ -66,7 +76,7 @@ async function publishPreparedToGit(index,readObject,api,options={}) {
       throw Error('Complete publication replay requires its original companion identity');
   }
   const snapshot=()=>({schema:'commons.git-archive-publisher-state.v1',branch,directory,head,
-    sourceIndex,sourceIndexHead,identity:index.identity,extraFilesSha256,partBytes,committedParts,verifiedMembers,complete:alreadyComplete,pendingPublication:pendingPublication?{...pendingPublication}:null,
+    sourceIndex,sourceIndexHead,identity:index.identity,extraFilesSha256,verification,partBytes,committedParts,emittedMembers,verifiedMembers,complete:alreadyComplete,pendingPublication:pendingPublication?{...pendingPublication}:null,
     parts:[...parts,...retained.slice(parts.length)].map(copyPart)});
   let writing=false;
   async function settlePending(){
@@ -91,7 +101,7 @@ async function publishPreparedToGit(index,readObject,api,options={}) {
   async function publish(files,complete){
     const entries=parts.slice(committedParts).map(p=>({path:directory+p.path,mode:'100644',type:'blob',sha:p.gitBlob}));
     const progress={schema:'commons.streaming-archive-publication.v1',sourceIndex,sourceIndexHead,
-      identity:index.identity,extraFilesSha256,partBytes,parts:parts.map(copyPart),complete};
+      identity:index.identity,extraFilesSha256,verification,partBytes,parts:parts.map(copyPart),complete};
     entries.push({path:directory+'progress.json',mode:'100644',type:'blob',content:JSON.stringify(progress,null,2)+'\n'});
     for(const [path,content]of Object.entries(files))
       entries.push({path:directory+path,mode:'100644',type:'blob',content});
@@ -120,24 +130,53 @@ async function publishPreparedToGit(index,readObject,api,options={}) {
         if(parts.length-committedParts>=commitParts)await publish({},false);
       } finally {writing=false;}
     },{partBytes});
-    const receipt=await Stream.streamPreparedExport(index,readObject,sink.write,{
+    const emit=verification==='ordinary'?Stream.streamPreparedPayloads:Stream.streamPreparedExport;
+    let receipt=await emit(index,readObject,sink.write,{
       ...(options.streamOptions??{}),
       observeMember:async member=>{
-        verifiedMembers++;
-        if(options.observeMember)await options.observeMember(member,{verifiedMembers,parts:parts.length});
+        emittedMembers++;
+        if(verification==='full'){
+          verifiedMembers++;
+          if(options.observeMember)await options.observeMember(member,{verifiedMembers,emittedMembers,parts:parts.length});
+        }
       }
     });
     const stored=await sink.finish(receipt);
     if(parts.length<retained.length||stored.parts.length!==parts.length||
        stored.parts.some((p,i)=>!samePart(p,parts[i])))
       throw Error('Complete output differs from retained part sequence');
-    const manifest={...stored,parts:parts.map(copyPart),sourceIndex,sourceIndexHead,extraFilesSha256};
+    let ordinaryReadback;
+    if(verification==='ordinary'){
+      const source=createStreamedArchiveSource({...stored,parts:parts.map(copyPart)},
+        part=>api.readBlob(part.gitBlob),
+        {maxBytes:receipt.bytes,maxPartBytes:Math.ceil(partBytes/3)*4,cacheParts:2});
+      ordinaryReadback=await readCompleteExportRanges(source,{
+        expectedSha256:receipt.sha256,maxBytes:receipt.bytes,
+        maxUncompressedBytes:receipt.uncompressedBytes,maxEntries:receipt.members,
+        maxCapturedEntryBytes:32*1024*1024,
+        visitEntry:async member=>{
+          verifiedMembers++;
+          if(options.observeMember)await options.observeMember(
+            {name:member.name,bytes:member.bytes,sha256:member.sha256},
+            {verifiedMembers,emittedMembers,parts:parts.length});
+        }
+      });
+      if(ordinaryReadback.members.length!==receipt.members||
+         ordinaryReadback.uncompressedBytes!==receipt.uncompressedBytes)
+        throw Error('Reopened Git archive differs from its prepared member totals');
+      const {members,...observed}=ordinaryReadback;
+      receipt={...receipt,emissionMemberVerification:receipt.memberVerification,
+        memberVerification:'ordinary-zip-crc32-sha256-and-export-manifest',
+        requiresOrdinaryReadback:false,
+        ordinaryReadback:{...observed,members:members.length,sourceStats:source.stats()}};
+    }
+    const manifest={...stored,receipt,parts:parts.map(copyPart),sourceIndex,sourceIndexHead,extraFilesSha256,verification};
     if(alreadyComplete){
       if(committedParts!==parts.length)throw Error('Recovered complete commit has a different part count');
       if(options.onProgress)await options.onProgress({...snapshot(),complete:true});
     } else await publish({...extra,'manifest.json':JSON.stringify(manifest,null,2)+'\n',
       'receipt.json':JSON.stringify(receipt,null,2)+'\n'},true);
-    return {head,manifest,receipt,state:snapshot()};
+    return {head,manifest,receipt,state:snapshot(),...(ordinaryReadback?{ordinaryReadback}: {})};
   } catch(error) {
     error.publicationState=snapshot();
     if(options.onInterrupted){
