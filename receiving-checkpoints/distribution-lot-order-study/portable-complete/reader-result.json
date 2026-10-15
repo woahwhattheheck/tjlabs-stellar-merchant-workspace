@@ -1,0 +1,24 @@
+{
+  "setup": [
+    {
+      "collection": "operatingRecords",
+      "total": 0,
+      "operatingStatus": "setup_required"
+    },
+    {
+      "collection": "fulfilmentUnits",
+      "total": 0,
+      "operatingStatus": "setup_required"
+    }
+  ],
+  "unresolvedOrder": {
+    "order_record_id": "ORDER-1",
+    "complete": false,
+    "issues": [
+      "ORDER_SOURCE_UNRESOLVED"
+    ]
+  },
+  "actualAuthoredCourse": true,
+  "executionReaderSourceHead": "710bfa6703031892daed620b1fd880aa6c124f81",
+  "strictSuccessorPeerHead": "dd4aec1c8963c224f1d0db48e16b5e4ebd12c7c4"
+}

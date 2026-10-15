@@ -1,0 +1,47 @@
+{
+  "schema": "installed-portable-complete-checkpoint/v1",
+  "executionSourceHead": "710bfa6703031892daed620b1fd880aa6c124f81",
+  "currentReaderSuccessor": "dd4aec1c8963c224f1d0db48e16b5e4ebd12c7c4",
+  "checks": [
+    "Every ordinary distribution lot and order section renders through assembled production handlers",
+    "Complete authored physical-lot stock, certificate and QA decisions, allocations, dispatches, costs and recurring work results remain exact",
+    "Complete pending physical lot CSV retains BOM and CRLF",
+    "Actual mapped physical lot import retains the entire original",
+    "Ordinary distribution decision-input correction retains the exact whole distribution decision-input preimage",
+    "Binary supporting source bytes remain exact",
+    "Exact release-input helper retains its complete source-bound draft",
+    "Document chronology correction retains prior metadata",
+    "Current configured operations or QA review binds the exact source",
+    "Competing complete saved head detected",
+    "Explicit adoption retains complete competing distribution lot and order preimage",
+    "Continued editing and portable actor/session reopen"
+  ],
+  "surface": "Actual assembled production HTML and handlers, injected DOM and atomic IndexedDB",
+  "bytes": 2252461,
+  "sha256": "c3e22b9819bb0001646866601e1601279cca2adfe51dfc15e2788e743da0f111",
+  "expandedBytes": 6652052,
+  "expandedSha256": "12436622f711d8e0d1f88b2d3c6bd70ad1f70dc5266464f11263b7b5101bb691",
+  "elapsedMs": 1100247,
+  "parts": [
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/portable-complete/part-000.jsonpart",
+      "bytes": 650000,
+      "sha256": "53f2b6d1ea1ce76aabee114d637f876c822a306f02407e24ea4dcdcaff550726"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/portable-complete/part-001.jsonpart",
+      "bytes": 650000,
+      "sha256": "d67337fec7acac34f1a565b683302843ea02d01891b22d5c0c35a0cd17e74378"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/portable-complete/part-002.jsonpart",
+      "bytes": 650000,
+      "sha256": "c7613f41a44cd7e2dc76980022fc6d5e42c9daa52eed4503fc99deb8c3bfddc5"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/portable-complete/part-003.jsonpart",
+      "bytes": 302461,
+      "sha256": "2c7050b62e1356ff71229b9fff9aaf0dab082e963951bde1b7cc9f7880f89f86"
+    }
+  ]
+}
