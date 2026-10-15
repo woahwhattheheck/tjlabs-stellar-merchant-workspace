@@ -36,15 +36,23 @@
     "surface": "Actual Merchant dispatcher, declared original reads and production model; filesystem/listener injected"
   },
   "sourcePreservation": {
-    "originalDomainUnchanged": true,
+    "originalDomainUnchanged": false,
     "genericFixtures": "Regenerated complete command journal with provider-neutral authored labels",
-    "originalUIChange": "Retain full pending editor before switching output mappings"
+    "originalUIChange": "Retain full pending editor before switching output mappings",
+    "originalDomainExtension": {
+      "members": 27,
+      "originalMs": 6175,
+      "cachedMs": 317,
+      "everyContentExact": true,
+      "extension": "Original exportFiles accepts replay option default true; validated wrapper uses false after exact full-content validation"
+    }
   },
   "pendingOriginal": {
     "schema": "shipment.installed-pending-original-course.v1",
     "surface": "Actual assembled generated handlers with original file read and retry",
     "checks": [
       "Rejected original intake retains exact bytes, full metadata, read time and failure",
+      "Failed original persists and reopens from the atomic browser store",
       "Pending original downloads byte-exact after file control is cleared",
       "Ordinary correction and retry commits exact original while retaining the failed preimage"
     ]

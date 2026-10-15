@@ -27,7 +27,7 @@ Standalone native writer commands require Applications to be closed. Connected c
 6. **Effort:** enter performer, phase, actual interval, active seconds and comparability conditions. One performer's overlapping intervals are refused. Comparisons require the same frozen case, matching recorded phase coverage and comparable measurements.
 7. **Handover:** save the complete working file, editable HTML or all-source handover. The managed handover includes every original request and retained saved edition.
 
-Changing a reference requires renewed approval while earlier runs retain their frozen reference. Changing a mapping never changes an earlier capture's mapping. Source identifiers and numeric literal spelling remain exact. The domain's original command journal replays on first validation; a bounded complete-content cache reuses only an identical validated journal or a successor produced by the original immutable apply function.
+Changing a reference requires renewed approval while earlier runs retain their frozen reference. Changing a mapping never changes an earlier capture's mapping. Source identifiers and numeric literal spelling remain exact. The domain's original command journal replays on first validation. The original export function accepts an optional replay flag, defaulting to its full original validation; the cached adapter uses structural validation only after an exact complete journal has already passed replay. All exported member content matches the original exporter byte for byte. A bounded complete-content cache reuses only an identical validated journal or a successor produced by the original immutable apply function.
 
 ## Drafts and recovery
 
