@@ -15,3 +15,8 @@ python3 -m http.server 8765 --bind 127.0.0.1
 Open the worked and blank applications at the printed localhost origin. Source and record intervals are canonical integer frames at one declared rational rate; this workbench admits explicit 1:1 intervals. Keep original application exports and the normalization notes. Existing editorial, sound and media tools perform actual native conform work.
 
 The complete authored case has eight cues, two immutable editions and 15 commands, including partial coverage, repeated-use choices, a superseded receiving note and unresolved replacement. Native receiving guidance is in [RECEIVING.md](RECEIVING.md). The repository's existing AGENTS.md and zero-spend policy apply.
+
+
+## Installed Applications workspace
+
+The complete original workbench is also available through Applications as **Turnover Workbench**. It uses a single private writer shared by the browser, native attachment and Merchant tools. See [INSTALLED_OPERATING.md](INSTALLED_OPERATING.md) for the complete source distribution, new/open/resume, exact three-file source intake, review corrections, receiving returns and complete handover.

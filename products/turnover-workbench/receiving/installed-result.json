@@ -1,0 +1,65 @@
+{
+  "schema": "stellar-forge.turnover-installed-receiving.v1",
+  "originalDomainChecks": 17,
+  "model": {
+    "schema": "stellar-forge.turnover-installed-course.v1",
+    "runtime": "Actual original core and production model in V8",
+    "checks": [
+      "Exact BOM/CRLF original preserved",
+      "Full unfinished editor retained before intake",
+      "Current receiving binds exact reviewed cue",
+      "Correction retains receiving and marks prior review superseded",
+      "Exact original retry preserves later correction",
+      "Pinned complete domain read editions",
+      "Pinned complete domain read commands",
+      "Pinned complete domain read backups",
+      "Pinned complete domain read draft",
+      "Pinned complete domain read requests",
+      "Pinned complete domain read original",
+      "Pinned complete domain read sourceRows",
+      "Pinned complete domain read events",
+      "Pinned complete domain read added",
+      "Pinned complete domain read cues",
+      "Pinned complete domain read cue",
+      "Pinned complete domain read mappings",
+      "Pinned complete domain read reviews",
+      "Pinned complete domain read receiving",
+      "Whole working carrier reopens exactly"
+    ],
+    "sequence": 4,
+    "sourceEditions": 3,
+    "backups": 4
+  },
+  "controller": {
+    "schema": "stellar-forge.turnover-controller-course.v1",
+    "runtime": "Actual installed controller with explicit DOM, download and storage adapters",
+    "checks": [
+      "Full JSON keeps invalid draft and incomplete review/return",
+      "Original intake creates whole comparison",
+      "Original receiving is current",
+      "Review correction preserves superseded receiving",
+      "New project retains complete earlier project",
+      "Full working import restores source and corrected history",
+      "Independent old unfinished source retained"
+    ],
+    "completePriorSessions": 7
+  },
+  "capacity": {
+    "schema": "stellar-forge.turnover-capacity-course.v1",
+    "completeSessionCapacity": 32078,
+    "acceptedCompleteBytes": 32062,
+    "oversizeFilePreservesWholeEditor": true,
+    "receiveRejectionPreservesOriginalDraft": true,
+    "productionDefaultBytes": 134217728
+  },
+  "browserStorage": {
+    "schema": "stellar-forge.turnover-managed-storage-course.v1",
+    "originalPendingRequestRetained": true,
+    "conflictRetained": true,
+    "selectedHeadUnchanged": true,
+    "coldExpandedRecoveryExact": true,
+    "immutableWorkspaceObjects": 5,
+    "expandedBytes": 532398,
+    "proposalMetadataBytes": 56111
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "turnover-workbench",
+  "description": "Complete original cut editions, source-bound cue reviews, receiving returns and recoverable working sessions",
+  "components": [
+    "products/turnover-workbench"
+  ],
+  "commands": {
+    "turnover-workspace": "products/turnover-workbench/cli.mjs",
+    "turnover-managed": "products/turnover-workbench/managed.mjs"
+  },
+  "commandDescriptions": {
+    "turnover-workspace": "Create, receive and export complete turnover sessions",
+    "turnover-managed": "Open the managed turnover workbench through Applications"
+  },
+  "exports": {
+    "./products/turnover": "./source/products/turnover-workbench/runtime.mjs",
+    "./products/turnover/client": "./source/products/turnover-workbench/host/client.mjs",
+    "./products/turnover/server": "./source/products/turnover-workbench/host/server.mjs"
+  },
+  "applicationProviders": {
+    "turnover-workbench": "products/turnover-workbench/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "turnover-workbench": "products/turnover-workbench/merchant-provider.mjs"
+  }
+}
