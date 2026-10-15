@@ -55,7 +55,7 @@
     {
       "path": "SOURCE_MANIFEST.json",
       "bytes": 204000,
-      "sha256": "b915adf09a5fbb934036ba429070b2940c6b5307915db10d3ebe6db50ebcd971"
+      "sha256": "00bb4bb337ace5a3a8d8fa7a475a3f2bea5b5095faecd3418d2357d062f67c6a"
     },
     {
       "path": "application-provider.mjs",
@@ -4394,8 +4394,8 @@
     },
     {
       "path": "operator/installed-desk.js",
-      "bytes": 61856,
-      "sha256": "6b8a9d181420447390275b98f1932abce944467b66bb926b67244f08bf424e87"
+      "bytes": 62315,
+      "sha256": "3985cd98ffae77dab68ada75fac7d932eb5448134c888f532b94904da21faa52"
     },
     {
       "path": "operator/native-course.cjs",
@@ -4475,7 +4475,7 @@
     {
       "path": "receiving/host-course.cjs",
       "bytes": 16980,
-      "sha256": "970691f9a53848afe1aa3e82df6feda563df24335f7fea12f898a5724f074cab"
+      "sha256": "09f10b5579cb57c6cc3789210444abeb4b72c13c816907d4a40ef2d4247c6309"
     },
     {
       "path": "receiving/portable-course.cjs",
