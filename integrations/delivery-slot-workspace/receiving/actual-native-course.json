@@ -1,0 +1,91 @@
+{
+  "schema": "tjlabs.delivery-slot-browser-native-receiving.v1",
+  "checks": [
+    {
+      "name": "Actual browser model adopts native current wrapper",
+      "passed": true
+    },
+    {
+      "name": "Every unfinished browser field survives native receive",
+      "passed": true
+    },
+    {
+      "name": "Original input BOM and CRLF remain byte-exact",
+      "passed": true
+    },
+    {
+      "name": "All eight complete received originals remain with current wrapper",
+      "passed": true
+    },
+    {
+      "name": "Accepted original revision source keeps BOM and CRLF",
+      "passed": true
+    },
+    {
+      "name": "Current full wrapper survives browser serialize and reopen",
+      "passed": true
+    },
+    {
+      "name": "Malformed bytes reject without changing accepted core or session",
+      "passed": true
+    },
+    {
+      "name": "Rejected original bytes remain in browser-portable native continuation",
+      "passed": true
+    },
+    {
+      "name": "Prior successful continuation and exact rejected command remain",
+      "passed": true
+    },
+    {
+      "name": "Rejected current wrapper reopens through actual browser model",
+      "passed": true
+    },
+    {
+      "name": "Existing native output cannot be overwritten",
+      "passed": true
+    },
+    {
+      "name": "Every original and output matches its full package manifest",
+      "passed": true
+    }
+  ],
+  "summary": {
+    "semanticChecks": 12,
+    "manifestMembers": 70,
+    "completedEditions": 2,
+    "rejectedEditions": 2
+  },
+  "completed": {
+    "exitCode": 0,
+    "attempt": {
+      "schema": "tjlabs.delivery-slot-native-attempt.v1",
+      "state": "completed",
+      "action": "receive",
+      "error": null
+    },
+    "operationId": "authored-bakery",
+    "editions": 2,
+    "files": 36,
+    "out": "/delivery-final/completed"
+  },
+  "rejected": {
+    "exitCode": 1,
+    "attempt": {
+      "schema": "tjlabs.delivery-slot-native-attempt.v1",
+      "state": "rejected",
+      "action": "receive",
+      "error": "order_revisions: archive_codec: invalid UTF-8 lead byte"
+    },
+    "operationId": "authored-bakery",
+    "editions": 2,
+    "files": 36,
+    "out": "/delivery-final/rejected"
+  },
+  "runtime": "Production native runner and actual current browser workspace model executed in V8 with explicit in-memory fs/path adapters. Equipped native/browser rendering continues through the existing receiver.",
+  "source": {
+    "coreSha256": "01cfc07bee4175c6fc3273d387d5a34681303a990d2892d16b3e2982fdffe201",
+    "nativeSha256": "2053b5b04ba42996f9eb990539cd2960017b490769c36b8b543714b3c3aaa473",
+    "browserModelSha256": "65353355498390012032639b0173d8bcbb5fe54910e544879e4b57cd688443a1"
+  }
+}
