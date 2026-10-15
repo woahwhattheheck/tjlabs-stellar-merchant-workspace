@@ -18,7 +18,7 @@ module.exports=async function completeArchiveReadback(B,files,bank,progress=()=>
  const inflateRaw=(packed,cfg)=>{const gzip=new Uint8Array(packed.length+18);gzip.set([31,139,8,0,0,0,0,0,0,255]);gzip.set(packed,10);const v=new DataView(gzip.buffer);v.setUint32(gzip.length-8,cfg.expected_crc32,true);v.setUint32(gzip.length-4,cfg.expected_bytes,true);return B.C.inflateGzip(gzip);};
  let manifest=null,expected=null,count=0,rawBytes=0,sources=0,requestCount=0,editionCount=0,workingCount=0,studyCount=0;
  const exact=(row,value)=>{if(JSON.stringify(JSON.parse(B.C.utf8Decode(row.data)))!==JSON.stringify(value))throw Error('Retained JSON differs '+row.name);};
- const rows=B.zip.readZip(bytes,{maxBytes:256*1024*1024,maxUncompressedBytes:512*1024*1024,maxEntries:60000,inflateRaw,visitEntry(row){
+ const rows=B.zip.readZip(bytes,{maxBytes:512*1024*1024,maxUncompressedBytes:1024*1024*1024,maxEntries:60000,inflateRaw,visitEntry(row){
   count++;rawBytes+=row.bytes;
   if(row.name==='EXPORT_MANIFEST.json'){manifest=JSON.parse(B.C.utf8Decode(row.data));expected=new Map(manifest.files.map(x=>[x.path,x]));if(expected.size!==manifest.files.length)throw Error('Duplicate manifest paths');return;}
   const e=expected?.get(row.name);if(!e||e.bytes!==row.bytes||e.sha256!==B.C.sha256Bytes(row.data))throw Error('Member integrity differs '+row.name);expected.delete(row.name);

@@ -106,11 +106,20 @@ function createChunkSink(writePart,options={}){
 }
 function chunkText(text,objects,partCharacters=650000){const parts=[];for(let at=0;at<text.length;){let end=Math.min(at+partCharacters,text.length);if(end<text.length&&text.charCodeAt(end-1)>=0xd800&&text.charCodeAt(end-1)<=0xdbff)end--;const content=text.slice(at,end);at=end;const d=H.sha256Utf8(content),path='objects/'+d.sha256+'.part';objects[path]=content;parts.push({path,...d});}return{...H.sha256Utf8(text),parts};}
 async function deriveSourceSuccessor(index,read,changes,options={}){
- if(!Array.isArray(changes)||!changes.length||typeof options.sourceVersion!=='string'||!options.sourceVersion)fail('Provide exact source successor and existing-member changes');
- const c=await open(index,read,options),job=c.checkpoint,records=new Map(c.layout.records.map(r=>[r.name,r])),seen=new Set(),replacements=[];
- for(const change of changes){const old=records.get(change?.name);if(!old||seen.has(change.name)||!HEX.test(change.expectedSha256)||change.expectedSha256!==old.sha256||!(change.name.startsWith('source/')||/^working\/[^/]+_Editable\.html$/.test(change.name))||typeof change.content!=='string')fail('Source successor preimage or path differs');seen.add(change.name);replacements.push({name:change.name,before:{bytes:old.bytes,sha256:old.sha256},after:H.sha256Utf8(change.content),content:change.content,mode:old.mode});}
+ if(!Array.isArray(changes)||!changes.length||typeof options.sourceVersion!=='string'||!options.sourceVersion)fail('Provide exact source successor and explicit source changes');
+ const c=await open(index,read,options),job=c.checkpoint,records=new Map(c.layout.records.map(r=>[r.name,r])),seen=new Set(),replacements=[],additions=[];
+ for(const change of changes){
+  if(!change||typeof change.name!=='string'||seen.has(change.name)||typeof change.content!=='string')fail('Source successor preimage or path differs');
+  const old=records.get(change.name),isSource=change.name.startsWith('source/'),isWorking=/^working\/[^/]+_Editable\.html$/.test(change.name);
+  if(old){if(!HEX.test(change.expectedSha256)||change.expectedSha256!==old.sha256||!(isSource||isWorking))fail('Source successor preimage or path differs');}
+  else if(!isSource||change.expectedSha256!==null)fail('New source member requires an explicit absent preimage');
+  pathBytes(change.name);seen.add(change.name);
+  const next={name:change.name,before:old?{bytes:old.bytes,sha256:old.sha256}:null,after:H.sha256Utf8(change.content),content:change.content,mode:old?old.mode:0o644};
+  replacements.push(next);if(!old)additions.push(next);
+ }
  const manifestRecord=records.get('EXPORT_MANIFEST.json'),manifest=await member(c,manifestRecord,async()=>{},true);checkManifest(manifest,job);
  const changed=new Map(replacements.map(x=>[x.name,x]));manifest.files=manifest.files.map(x=>changed.has(x.path)?{...x,...changed.get(x.path).after}:x);
+ for(const r of additions)manifest.files.push({path:r.name,...r.after});
  const manifestText=JSON.stringify(manifest,null,2)+'\n';
  replacements.push({name:'EXPORT_MANIFEST.json',before:{bytes:manifestRecord.bytes,sha256:manifestRecord.sha256},after:H.sha256Utf8(manifestText),content:manifestText,mode:manifestRecord.mode});
  const derivation={schema:'commons.source-successor-derivation.v1',parentIdentity:index.identity,parentIndexSha256:H.sha256Utf8(JSON.stringify(index)).sha256,sourceVersion:options.sourceVersion,compression:{engine:'pako',level:options.deflateLevel??1},changes:replacements.map(({content,mode,...x})=>x)};
@@ -118,11 +127,13 @@ async function deriveSourceSuccessor(index,read,changes,options={}){
  for(const r of replacements)builder.add({name:r.name,data:r.content,mode:r.mode});
  const prepared=builder.snapshot(),byName=new Map(prepared.entries.map(e=>[e.name,e])),objects={},oldToNew=new Map(),newToNew=new Map(),payloads=[];
  const newPayloads=prepared.payloads.map(t=>chunkText(t,objects));
- job.archive.entries=job.archive.entries.map(old=>{const replacement=byName.get(old.name),e=replacement||old,map=replacement?newToNew:oldToNew,refs=replacement?newPayloads:index.payloads;let target=map.get(e.payload_index);if(target===undefined){target=payloads.length;payloads.push(clone(refs[e.payload_index]));map.set(e.payload_index,target);}return{...e,payload_index:target};});
+ const archiveEntries=job.archive.entries.slice(0,-1).concat(additions.map(r=>byName.get(r.name)),job.archive.entries.slice(-1));
+ job.archive.entries=archiveEntries.map(old=>{const replacement=byName.get(old.name),e=replacement||old,map=replacement?newToNew:oldToNew,refs=replacement?newPayloads:index.payloads;let target=map.get(e.payload_index);if(target===undefined){target=payloads.length;payloads.push(clone(refs[e.payload_index]));map.set(e.payload_index,target);}return{...e,payload_index:target};});
  const replacementMap=new Map(replacements.map(x=>[x.name,x]));
- job.entries=job.entries.map(e=>replacementMap.has(e.name)?{...e,...replacementMap.get(e.name).after}:e);
+ if(additions.length){const key='source-successor:'+H.sha256Utf8(JSON.stringify(additions.map(x=>x.name))).sha256;if(job.groups.some(g=>g.key===key))fail('Source successor group already exists');job.groups.push({key,start:job.entries.length-1,count:additions.length});}
+ job.entries=job.entries.slice(0,-1).concat(additions.map(r=>({name:r.name,...r.after})),job.entries.slice(-1)).map(e=>replacementMap.has(e.name)?{...e,...replacementMap.get(e.name).after}:e);
  job.identity=H.sha256Utf8(JSON.stringify(derivation)).sha256;
- const successor={...clone(index),identity:job.identity,metadata:chunkText(JSON.stringify(job),objects),payloads,derivation};
+ const successor={...clone(index),identity:job.identity,completedGroups:job.groups.length,entries:job.entries.length,metadata:chunkText(JSON.stringify(job),objects),payloads,derivation};
  layout(job,successor);
  return{manifest:successor,objects,derivation};
 }

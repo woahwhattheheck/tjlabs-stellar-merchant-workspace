@@ -1,6 +1,7 @@
 // MIT. Exact complete source export, with resumable prepared compression.
 const completeExportCodecs=new WeakMap();
 function completeExportDeflate(files){const source=files['vendor/pako.cjs'];if(typeof source!=='string')throw Error('Complete export codec source is missing');const prior=completeExportCodecs.get(files);if(prior?.source===source)return prior.codec;const module={exports:{}};Function('module','exports',source)(module,module.exports);if(typeof module.exports.deflateRaw!=='function'||typeof module.exports.inflateRaw!=='function')throw Error('Complete export codec cannot process raw DEFLATE');completeExportCodecs.set(files,{source,codec:module.exports});return module.exports;}
+// Retained histories can exceed 512 MiB raw; bound the complete archive at 1 GiB raw / 512 MiB ZIP.
 // Complete exports advance by whole source groups. Persist checkpoint() between run() calls.
 export function createPreparedExportJob(groupFactory,{zip,zipOptions,identity,checkpoint=null,manifest,observeEntry,checkpointMetadata}){
  if(typeof groupFactory!=='function'||!identity||typeof identity!=='string'||typeof manifest!=='function')throw TypeError('Complete export job requires its exact identity, group factory and manifest');
@@ -81,7 +82,7 @@ export function createProcurementSavingsStudyExportJob(files,state,records=[],ed
   for(const r of records)yield{key:'managed/requests/'+r.id,create:()=>[{name:'managed/requests/'+r.id+'.json',value:r.value}]};
   for(const e of editions)yield{key:'managed/editions/'+e.id,create:()=>[{name:'managed/editions/'+e.id+'.json',value:e.value}]};
  }
- return createPreparedExportJob(groups,{zip,zipOptions:{timestamp:'2026-10-15T00:00:00Z',maxBytes:256*1024*1024,maxUncompressedBytes:512*1024*1024,maxEntries:60000,compression:'auto',deflateRaw:bytes=>codec.deflateRaw(bytes,{level:1}),inflateRaw:bytes=>codec.inflateRaw(bytes),codec:C},identity,checkpoint:options.checkpoint||null,observeEntry,checkpointMetadata:catalogSnapshot,manifest:entries=>({schema:'stellar-forge.procurement-savings-export.v1',installationId:state.installationId,editionSha256:state.sha256,sessionSha256:state.carrier.sha256,sequence:state.sequence,files:entries.map(e=>({path:e.name,bytes:e.bytes,sha256:e.sha256}))})});
+ return createPreparedExportJob(groups,{zip,zipOptions:{timestamp:'2026-10-15T00:00:00Z',maxBytes:512*1024*1024,maxUncompressedBytes:1024*1024*1024,maxEntries:60000,compression:'auto',deflateRaw:bytes=>codec.deflateRaw(bytes,{level:1}),inflateRaw:bytes=>codec.inflateRaw(bytes),codec:C},identity,checkpoint:options.checkpoint||null,observeEntry,checkpointMetadata:catalogSnapshot,manifest:entries=>({schema:'stellar-forge.procurement-savings-export.v1',installationId:state.installationId,editionSha256:state.sha256,sessionSha256:state.carrier.sha256,sequence:state.sequence,files:entries.map(e=>({path:e.name,bytes:e.bytes,sha256:e.sha256}))})});
 }
 export function buildProcurementSavingsStudyExport(files,state,records=[],editions=[],dependencies){
  // Ordinary callers already provide the complete in-memory inputs. The resumable

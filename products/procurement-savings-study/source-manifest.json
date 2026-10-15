@@ -2763,8 +2763,8 @@
     },
     {
       "path": "host/export-core.mjs",
-      "bytes": 13147,
-      "sha256": "552094ed1fdcf72f7cf036d5b8294b021b516b547442a9a9b155ca7c105d30f7"
+      "bytes": 13249,
+      "sha256": "e24f2e0062175fda001f15a15ec088e830039a1f80469bbac47120cd0cede5bd"
     },
     {
       "path": "host/export.mjs",
@@ -2923,8 +2923,8 @@
     },
     {
       "path": "receiving/complete-archive-readback.cjs",
-      "bytes": 5665,
-      "sha256": "ba82a260a3d7c6dcfae6d551732eea0aecda36765563e1bd4c2163d471899b50"
+      "bytes": 5666,
+      "sha256": "a3604920593a4b20aef4734b02ca8c05b636d763e1c489456dd8574770756e34"
     },
     {
       "path": "receiving/host-course.cjs",
@@ -2938,8 +2938,8 @@
     },
     {
       "path": "receiving/prepared-stream.cjs",
-      "bytes": 16041,
-      "sha256": "1b19289347d8f6e4306afff632abc88e3bf8e36171a32b731426257671741f55"
+      "bytes": 17023,
+      "sha256": "8f0c8427c71ffd7584638c5f56ee52c65eba58a1a90ced010327671fe3af45b7"
     },
     {
       "path": "receiving/resumable-archive.cjs",
@@ -2983,8 +2983,8 @@
     },
     {
       "path": "SOURCE_MANIFEST.json",
-      "bytes": 126626,
-      "sha256": "3a88ae9c45ebd6585ae083d2a9464fd92285308a732f5563ba20c40c572dfdde"
+      "bytes": 133825,
+      "sha256": "78a801d4f1945d4ee0266c5784384e5339e8398ca3ecf38633175334de922c60"
     },
     {
       "path": "source-view.cjs",
