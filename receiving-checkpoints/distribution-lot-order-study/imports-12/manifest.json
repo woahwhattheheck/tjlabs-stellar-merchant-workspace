@@ -1,0 +1,54 @@
+{
+  "schema": "installed-complete-course-checkpoint/v1",
+  "sourceHead": "710bfa6703031892daed620b1fd880aa6c124f81",
+  "phase": "imports-12",
+  "bytes": 4889723,
+  "sha256": "e325a2a365e78603fcf453b7abb5cb91177a3399b9318a1d3d911307df0d1358",
+  "expandedBytes": 81925827,
+  "expandedSha256": "636de6fcd6b0607de8d3b17d4615182594d805929dbd23c1db0a4b872a1b9481",
+  "checks": 12,
+  "requests": 12,
+  "editions": 13,
+  "parts": [
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-12/part-000.jsonpart",
+      "bytes": 650000,
+      "sha256": "2e8ebc670cf51b9d3587e0b9769e54bb54add6a69887952118a128f38f166762"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-12/part-001.jsonpart",
+      "bytes": 650000,
+      "sha256": "94441d499c6be34155c908c25353d8dbe828f6183c34f38d14e1266a28437939"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-12/part-002.jsonpart",
+      "bytes": 650000,
+      "sha256": "cac68ab7a9d2499cdcfd502a8ae752d52482931b2e152802ef017d40633c6d28"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-12/part-003.jsonpart",
+      "bytes": 650000,
+      "sha256": "c8f88e7665c4912de839f7b1afafab4b5df1552164145413e1f10d62c6c42125"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-12/part-004.jsonpart",
+      "bytes": 650000,
+      "sha256": "a943d7df48c52cd9b16f0e915e485a87fb8e8825bde5441ab2785d7e54961f0b"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-12/part-005.jsonpart",
+      "bytes": 650000,
+      "sha256": "610cefe9f39124fe46fd0a257938ad23ed7af48e600aac512302936a3cfceded"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-12/part-006.jsonpart",
+      "bytes": 650000,
+      "sha256": "28556a858b1760fe0d4d6a00d967b541badfbb2ca4c4b91489de6d7724c054b2"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-12/part-007.jsonpart",
+      "bytes": 339723,
+      "sha256": "0ca2e131c5fc2e209bafb37794071c0e8df49827804d2be121a91e3d53129200"
+    }
+  ]
+}
