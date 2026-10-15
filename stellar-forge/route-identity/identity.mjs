@@ -129,7 +129,10 @@ export function resolveCatalogIdentity(record) {
   const {canonicalURL,url}=resource;
   if(record.input.type==='mcp') {
     const name=record.input.toolName;
-    if(typeof name!=='string'||!/^[A-Za-z0-9_.\-]{1,128}$/.test(name)) {
+    // Bazaar defines toolName as an opaque non-empty string. Preserve it
+    // exactly in the implementation-private key; identifier-style filtering
+    // here would reject otherwise conforming MCP tools.
+    if(typeof name!=='string'||name.length===0) {
       return {status:'rejected',reason:'MCP_TOOL_NAME_INVALID'};
     }
     return {status:'accepted',kind:'mcp',resourceURL:canonicalURL,
