@@ -1,0 +1,125 @@
+{
+  "schema": "installed-complete-course-checkpoint/v1",
+  "sourceHead": "9b2453fe855ce3ad9fa8d057a1649265809ce7ee",
+  "phase": "complete-imports",
+  "bytes": 12420905,
+  "sha256": "0a79ef93717234bef4900c5f700ddd417d800057b6f4baa1ca063e3834f2be93",
+  "expandedBytes": 420463846,
+  "checks": 42,
+  "requests": 42,
+  "editions": 43,
+  "executionSources": [
+    {
+      "phase": "imports-1-through-24",
+      "sourceHead": "710bfa6703031892daed620b1fd880aa6c124f81",
+      "checkpointSha256": "62ce806cffc7936bf770744b06da92456746ceb928d9d7157cd33bf1d83b584a"
+    },
+    {
+      "phase": "imports-25-through-complete-imports",
+      "sourceHead": "9b2453fe855ce3ad9fa8d057a1649265809ce7ee"
+    }
+  ],
+  "identity": "Every original value and property order is retained by the complete compact node bank",
+  "parts": [
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-000.jsonpart",
+      "bytes": 650000,
+      "sha256": "d56bbe9cefbb2300eb79f84170d6f317dddba4ddc7af67529ac42d00ba9dec9c"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-001.jsonpart",
+      "bytes": 650000,
+      "sha256": "acc420f30b953d30f73336eb8dd98969bea38b98d0aa66995d42e368f975ba88"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-002.jsonpart",
+      "bytes": 650000,
+      "sha256": "cd7fd13f43f9853124aefa698080ac1492ee001282376a856330c250add8b13f"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-003.jsonpart",
+      "bytes": 650000,
+      "sha256": "8b66998df18d4a1e6b373daa2651598d3b83983eb4c6e2c1799c88f095abda0f"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-004.jsonpart",
+      "bytes": 650000,
+      "sha256": "8bc11f651453d8ba21f985e470f7da70c05e991fe8e10e4453a830d67bc6815f"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-005.jsonpart",
+      "bytes": 650000,
+      "sha256": "9c9e37f7d96eb19d8e3af48a98074b25f96ac892f9475a8574371f655096d934"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-006.jsonpart",
+      "bytes": 650000,
+      "sha256": "e514de511f082a3a8e1039ce85cb88833744b8a10e70f20322e7d68e29a1fc73"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-007.jsonpart",
+      "bytes": 650000,
+      "sha256": "8a4c6fadda785676aa13b3c0b7ca7a9af9804bfda104c1916d4d7323bf45332e"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-008.jsonpart",
+      "bytes": 650000,
+      "sha256": "f5824be000fcc130f06133678cb2b2f99dca877f294aa01e833e5fdff9b64ffb"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-009.jsonpart",
+      "bytes": 650000,
+      "sha256": "ef0e2610b411e633596ce84237d844df228d56f0b3b48805f907ececa2552a3d"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-010.jsonpart",
+      "bytes": 650000,
+      "sha256": "e19df88f799d6597c79a9c54e96d519a40c0c8eceab086c4fecbc64f62afe8bc"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-011.jsonpart",
+      "bytes": 650000,
+      "sha256": "7592c0e09863a34a6da1badacb979d10868a8b4b6b7a5f2f721ab57bcf099962"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-012.jsonpart",
+      "bytes": 650000,
+      "sha256": "460258e96169fd93ad8be4c12c9cf578a6eb5300760db3cd61555adc1d460c5b"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-013.jsonpart",
+      "bytes": 650000,
+      "sha256": "b5e9a14a17bed56cdd9fd83879fa9d21e2b67d79caff89d218fd4641fb9ed5f7"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-014.jsonpart",
+      "bytes": 650000,
+      "sha256": "30911fe7af52ec872cfff4911775ad3d1b3439acde359df74213674796cbe857"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-015.jsonpart",
+      "bytes": 650000,
+      "sha256": "4feb8bfd5362c16674650abacc971ceb2a1e48afd54ba175ce329495b9a84268"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-016.jsonpart",
+      "bytes": 650000,
+      "sha256": "17d5113cdf2934b8fecece44c99e9c7c318e52fda0214238219f2b58a2e78713"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-017.jsonpart",
+      "bytes": 650000,
+      "sha256": "e49d3c78e57e18846beb6d056fb50a04220b5c8ae86635a400b2b3c470fc2747"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-018.jsonpart",
+      "bytes": 650000,
+      "sha256": "eeaedfefffb0a982c28d0b3b703c8be0a2b1f9a49da09e2d174051051981bfdc"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/complete-imports/part-019.jsonpart",
+      "bytes": 70905,
+      "sha256": "c9cf37d6f344db1fb0b684e47088c9f77047d4fae78f894a8b884bbd51f898ac"
+    }
+  ]
+}
