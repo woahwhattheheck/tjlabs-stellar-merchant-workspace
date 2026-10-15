@@ -1,0 +1,75 @@
+{
+  "schema": "complete-export-base64-chunks/v1",
+  "product": "harvest-outcome-study",
+  "sourceMerge": "cc2a513a19e605adf68cccf6e11b478cdee1bbb7",
+  "sourceFiles": 159,
+  "requests": 3,
+  "editions": 4,
+  "members": 1122,
+  "uncompressedBytes": 27750964,
+  "bytes": 6059934,
+  "sha256": "87a141339da93a9115d1e6545cb8393f4b332f93694aaa3158248c8fbffc3f3d",
+  "buildMs": 38929,
+  "totalMs": 72959,
+  "allMemberCRCAndSHAExact": true,
+  "allSourcesAndManagedRecordsExact": true,
+  "execution": "Actual published exporter and retained source/session; independent existing gzip decoder plus member CRC/SHA checks in V8",
+  "encoding": "base64",
+  "parts": [
+    {
+      "path": "part-000.txt",
+      "gitBlob": "b9656b77d5c9c3323f9eb1b2291b8c6394d62f7f",
+      "characters": 750000
+    },
+    {
+      "path": "part-001.txt",
+      "gitBlob": "d7b1513f4c8bed5f991d3902f9a135ff7afb885e",
+      "characters": 750000
+    },
+    {
+      "path": "part-002.txt",
+      "gitBlob": "97280fa770e0d242fa5dd81f9b856945ddd480b7",
+      "characters": 750000
+    },
+    {
+      "path": "part-003.txt",
+      "gitBlob": "b184200db487a004c81c67cdb99e9011babf482b",
+      "characters": 750000
+    },
+    {
+      "path": "part-004.txt",
+      "gitBlob": "7752295ed82e259765bc6c4f8b6493accfa0847f",
+      "characters": 750000
+    },
+    {
+      "path": "part-005.txt",
+      "gitBlob": "007635c4002471145e90ba21e7ccf4dee8601c56",
+      "characters": 750000
+    },
+    {
+      "path": "part-006.txt",
+      "gitBlob": "33d07b4f8f934c5ae8da022bb5815b975f0c43ff",
+      "characters": 750000
+    },
+    {
+      "path": "part-007.txt",
+      "gitBlob": "78537ba5e76bc20e1191c18aafe78d7441bb5b32",
+      "characters": 750000
+    },
+    {
+      "path": "part-008.txt",
+      "gitBlob": "5cd9bdc3fdf2ad730263341b7fdbc4d4884c46a4",
+      "characters": 750000
+    },
+    {
+      "path": "part-009.txt",
+      "gitBlob": "3f72ab7c8d2f399d80347df1ad469dbabb614e9a",
+      "characters": 750000
+    },
+    {
+      "path": "part-010.txt",
+      "gitBlob": "dbebc73dfccfee1851345896054925a14f5dd70b",
+      "characters": 579912
+    }
+  ]
+}
