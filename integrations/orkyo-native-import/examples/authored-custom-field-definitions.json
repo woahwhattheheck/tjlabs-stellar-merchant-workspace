@@ -1,0 +1,5 @@
+{
+  "spindle_speed": "number",
+  "active": "boolean",
+  "serial": "text"
+}

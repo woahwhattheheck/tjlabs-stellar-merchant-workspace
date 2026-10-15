@@ -1,0 +1,418 @@
+{
+  "runtime": "functions V8 isolate; complete pinned TypeScript functions after explicit type erasure",
+  "requestPayloadsEqual": true,
+  "resourcePayloadsEqual": true,
+  "requestNative": [
+    {
+      "name": "WO-001",
+      "description": "Mill, inspect\nKeep exact source",
+      "status": "new",
+      "minimalDurationValue": 2,
+      "minimalDurationUnit": "hours",
+      "resourceIds": [
+        "mill-a"
+      ]
+    },
+    {
+      "name": "WO-002",
+      "status": "new",
+      "minimalDurationValue": 90,
+      "minimalDurationUnit": "minutes",
+      "resourceIds": [
+        "mill-a"
+      ]
+    }
+  ],
+  "resourceNative": [
+    {
+      "request": {
+        "resourceTypeKey": "machine",
+        "name": "Mill A",
+        "allocationMode": "Exclusive",
+        "baseAvailabilityPercent": 100,
+        "homeSiteId": "11111111-1111-4111-8111-111111111111",
+        "code": "M1",
+        "isPhysical": false,
+        "capacity": 1,
+        "customFields": {
+          "spindle_speed": 12000,
+          "active": true,
+          "serial": "00123"
+        }
+      },
+      "source": {
+        "id": "original-r1",
+        "name": " Mill A ",
+        "allocation_mode": "Exclusive",
+        "base_availability_percent": "100",
+        "home_site_id": "11111111-1111-4111-8111-111111111111",
+        "code": "M1",
+        "capacity": "1",
+        "is_physical": "false",
+        "meta.spindle_speed": "12000",
+        "meta.active": "true",
+        "meta.serial": "00123",
+        "notes": "",
+        "cross_site_allowed": ""
+      }
+    },
+    {
+      "request": {
+        "resourceTypeKey": "machine",
+        "name": "Gauge",
+        "allocationMode": "Fractional",
+        "baseAvailabilityPercent": 50,
+        "crossSiteAllowed": false,
+        "notes": "Store, return\ninspect",
+        "customFields": {
+          "serial": "00007"
+        }
+      },
+      "source": {
+        "id": "original-r2",
+        "name": "Gauge",
+        "allocation_mode": "Fractional",
+        "base_availability_percent": "50",
+        "home_site_id": "",
+        "code": "",
+        "capacity": "",
+        "is_physical": "",
+        "meta.spindle_speed": "",
+        "meta.active": "",
+        "meta.serial": "00007",
+        "notes": "Store, return\ninspect",
+        "cross_site_allowed": "false"
+      }
+    }
+  ],
+  "requestAdapter": {
+    "schema": "orkyo-import-adapter.v1",
+    "sourceCommit": "9b773566ecbfb0947f51f6e20ea925c03ddb2a22",
+    "source": {
+      "id": "authored-jobs",
+      "kind": "requests",
+      "format": "csv",
+      "text": "id,name,description,status,start_ts,end_ts,resource_id,resource_name,earliest_start_ts,latest_end_ts,min_duration_value,min_duration_unit,actual_duration_value,actual_duration_unit,requirements_count\nold-1,WO-001,\"Mill, inspect\nKeep exact source\",new,,,mill-a,,,,2.5,hours,,,2\nold-2,WO-002,,new,,,mill-a,,,,90,minutes,,,0\n"
+    },
+    "typeKey": "",
+    "customFieldTypes": {},
+    "headers": [
+      "id",
+      "name",
+      "description",
+      "status",
+      "start_ts",
+      "end_ts",
+      "resource_id",
+      "resource_name",
+      "earliest_start_ts",
+      "latest_end_ts",
+      "min_duration_value",
+      "min_duration_unit",
+      "actual_duration_value",
+      "actual_duration_unit",
+      "requirements_count"
+    ],
+    "rows": [
+      {
+        "occurrenceId": "authored-jobs:row:1",
+        "index": 1,
+        "line": 2,
+        "original": {
+          "id": "old-1",
+          "name": "WO-001",
+          "description": "Mill, inspect\nKeep exact source",
+          "status": "new",
+          "start_ts": "",
+          "end_ts": "",
+          "resource_id": "mill-a",
+          "resource_name": "",
+          "earliest_start_ts": "",
+          "latest_end_ts": "",
+          "min_duration_value": "2.5",
+          "min_duration_unit": "hours",
+          "actual_duration_value": "",
+          "actual_duration_unit": "",
+          "requirements_count": "2"
+        },
+        "values": {
+          "id": "old-1",
+          "name": "WO-001",
+          "description": "Mill, inspect\nKeep exact source",
+          "status": "new",
+          "start_ts": "",
+          "end_ts": "",
+          "resource_id": "mill-a",
+          "resource_name": "",
+          "earliest_start_ts": "",
+          "latest_end_ts": "",
+          "min_duration_value": "2.5",
+          "min_duration_unit": "hours",
+          "actual_duration_value": "",
+          "actual_duration_unit": "",
+          "requirements_count": "2"
+        },
+        "nativePayload": {
+          "name": "WO-001",
+          "description": "Mill, inspect\nKeep exact source",
+          "status": "new",
+          "minimalDurationValue": 2,
+          "minimalDurationUnit": "hours",
+          "resourceIds": [
+            "mill-a"
+          ]
+        },
+        "issues": [
+          {
+            "code": "id-ignored",
+            "message": "Import ignores id and creates a new request",
+            "blocking": false
+          },
+          {
+            "code": "duration-coercion",
+            "message": "Native import truncates or defaults minimal duration; use a positive whole number in the declared unit",
+            "blocking": true
+          },
+          {
+            "code": "requirements-not-imported",
+            "message": "The exported requirements count carries no requirement definitions; restore through the actual authorized workflow",
+            "blocking": true
+          },
+          {
+            "code": "structural-scope",
+            "message": "Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions",
+            "blocking": false
+          }
+        ],
+        "nativeDisposition": "create"
+      },
+      {
+        "occurrenceId": "authored-jobs:row:2",
+        "index": 2,
+        "line": 4,
+        "original": {
+          "id": "old-2",
+          "name": "WO-002",
+          "description": "",
+          "status": "new",
+          "start_ts": "",
+          "end_ts": "",
+          "resource_id": "mill-a",
+          "resource_name": "",
+          "earliest_start_ts": "",
+          "latest_end_ts": "",
+          "min_duration_value": "90",
+          "min_duration_unit": "minutes",
+          "actual_duration_value": "",
+          "actual_duration_unit": "",
+          "requirements_count": "0"
+        },
+        "values": {
+          "id": "old-2",
+          "name": "WO-002",
+          "description": "",
+          "status": "new",
+          "start_ts": "",
+          "end_ts": "",
+          "resource_id": "mill-a",
+          "resource_name": "",
+          "earliest_start_ts": "",
+          "latest_end_ts": "",
+          "min_duration_value": "90",
+          "min_duration_unit": "minutes",
+          "actual_duration_value": "",
+          "actual_duration_unit": "",
+          "requirements_count": "0"
+        },
+        "nativePayload": {
+          "name": "WO-002",
+          "status": "new",
+          "minimalDurationValue": 90,
+          "minimalDurationUnit": "minutes",
+          "resourceIds": [
+            "mill-a"
+          ]
+        },
+        "issues": [
+          {
+            "code": "id-ignored",
+            "message": "Import ignores id and creates a new request",
+            "blocking": false
+          },
+          {
+            "code": "structural-scope",
+            "message": "Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions",
+            "blocking": false
+          }
+        ],
+        "nativeDisposition": "create"
+      }
+    ],
+    "summary": {
+      "records": 2,
+      "creates": 2,
+      "skipped": 0,
+      "needsReview": 1
+    },
+    "notes": [
+      "This is a local import preview. The target service validates and creates records when its authorized operator imports.",
+      "Complete originals, row occurrences and unmapped fields remain in this result."
+    ]
+  },
+  "resourceAdapter": {
+    "schema": "orkyo-import-adapter.v1",
+    "sourceCommit": "9b773566ecbfb0947f51f6e20ea925c03ddb2a22",
+    "source": {
+      "id": "authored-resources",
+      "kind": "resources",
+      "format": "csv",
+      "text": "id,name,allocation_mode,base_availability_percent,home_site_id,code,capacity,is_physical,meta.spindle_speed,meta.active,meta.serial,notes,cross_site_allowed\noriginal-r1, Mill A ,Exclusive,100,11111111-1111-4111-8111-111111111111,M1,1,false,12000,true,00123,,\noriginal-r2,Gauge,Fractional,50,,,,,,,00007,\"Store, return\ninspect\",false\n"
+    },
+    "typeKey": "machine",
+    "customFieldTypes": {
+      "spindle_speed": "number",
+      "active": "boolean",
+      "serial": "text"
+    },
+    "headers": [
+      "id",
+      "name",
+      "allocation_mode",
+      "base_availability_percent",
+      "home_site_id",
+      "code",
+      "capacity",
+      "is_physical",
+      "meta.spindle_speed",
+      "meta.active",
+      "meta.serial",
+      "notes",
+      "cross_site_allowed"
+    ],
+    "rows": [
+      {
+        "occurrenceId": "authored-resources:row:1",
+        "index": 1,
+        "line": 2,
+        "original": {
+          "id": "original-r1",
+          "name": " Mill A ",
+          "allocation_mode": "Exclusive",
+          "base_availability_percent": "100",
+          "home_site_id": "11111111-1111-4111-8111-111111111111",
+          "code": "M1",
+          "capacity": "1",
+          "is_physical": "false",
+          "meta.spindle_speed": "12000",
+          "meta.active": "true",
+          "meta.serial": "00123",
+          "notes": "",
+          "cross_site_allowed": ""
+        },
+        "values": {
+          "id": "original-r1",
+          "name": " Mill A ",
+          "allocation_mode": "Exclusive",
+          "base_availability_percent": "100",
+          "home_site_id": "11111111-1111-4111-8111-111111111111",
+          "code": "M1",
+          "capacity": "1",
+          "is_physical": "false",
+          "meta.spindle_speed": "12000",
+          "meta.active": "true",
+          "meta.serial": "00123",
+          "notes": "",
+          "cross_site_allowed": ""
+        },
+        "nativePayload": {
+          "resourceTypeKey": "machine",
+          "name": "Mill A",
+          "allocationMode": "Exclusive",
+          "homeSiteId": "11111111-1111-4111-8111-111111111111",
+          "code": "M1",
+          "baseAvailabilityPercent": 100,
+          "capacity": 1,
+          "isPhysical": false,
+          "customFields": {
+            "spindle_speed": 12000,
+            "active": true,
+            "serial": "00123"
+          }
+        },
+        "issues": [
+          {
+            "code": "id-ignored",
+            "message": "Import ignores id and creates a new resource",
+            "blocking": false
+          }
+        ],
+        "nativeDisposition": "create"
+      },
+      {
+        "occurrenceId": "authored-resources:row:2",
+        "index": 2,
+        "line": 3,
+        "original": {
+          "id": "original-r2",
+          "name": "Gauge",
+          "allocation_mode": "Fractional",
+          "base_availability_percent": "50",
+          "home_site_id": "",
+          "code": "",
+          "capacity": "",
+          "is_physical": "",
+          "meta.spindle_speed": "",
+          "meta.active": "",
+          "meta.serial": "00007",
+          "notes": "Store, return\ninspect",
+          "cross_site_allowed": "false"
+        },
+        "values": {
+          "id": "original-r2",
+          "name": "Gauge",
+          "allocation_mode": "Fractional",
+          "base_availability_percent": "50",
+          "home_site_id": "",
+          "code": "",
+          "capacity": "",
+          "is_physical": "",
+          "meta.spindle_speed": "",
+          "meta.active": "",
+          "meta.serial": "00007",
+          "notes": "Store, return\ninspect",
+          "cross_site_allowed": "false"
+        },
+        "nativePayload": {
+          "resourceTypeKey": "machine",
+          "name": "Gauge",
+          "allocationMode": "Fractional",
+          "notes": "Store, return\ninspect",
+          "baseAvailabilityPercent": 50,
+          "crossSiteAllowed": false,
+          "customFields": {
+            "serial": "00007"
+          }
+        },
+        "issues": [
+          {
+            "code": "id-ignored",
+            "message": "Import ignores id and creates a new resource",
+            "blocking": false
+          }
+        ],
+        "nativeDisposition": "create"
+      }
+    ],
+    "summary": {
+      "records": 2,
+      "creates": 2,
+      "skipped": 0,
+      "needsReview": 0
+    },
+    "notes": [
+      "This is a local import preview. The target service validates and creates records when its authorized operator imports.",
+      "Complete originals, row occurrences and unmapped fields remain in this result."
+    ]
+  },
+  "nativeTransformation": "Pinned function extraction and explicit TypeScript type erasure; full originals retained. No native payload statement is rewritten."
+}
