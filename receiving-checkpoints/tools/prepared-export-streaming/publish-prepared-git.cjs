@@ -53,7 +53,7 @@ async function publishPreparedToGit(index,readObject,api,options={}) {
       throw Error('Invalid final archive companion file');
   const snapshot=()=>({schema:'commons.git-archive-publisher-state.v1',branch,directory,head,
     sourceIndex,sourceIndexHead,identity:index.identity,partBytes,committedParts,verifiedMembers,
-    parts:parts.map(copyPart)});
+    parts:[...parts,...retained.slice(parts.length)].map(copyPart)});
   let writing=false;
   async function publish(files,complete){
     const entries=parts.slice(committedParts).map(p=>({path:directory+p.path,mode:'100644',type:'blob',sha:p.gitBlob}));

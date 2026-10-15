@@ -23,3 +23,13 @@ The CLI pins exact index-file bytes, streams into an exclusive temporary file, h
 ## Complete default ZIP codec
 
 connected_gzip.cjs is the exact maintained, dependency-free raw DEFLATE/GZIP implementation required by connected_zip.cjs when callers use its ordinary default codec. The prepared streaming path retains its explicit Pako hooks. The included default-codec-result.json records actual default pack/read execution across the complete codec source, Unicode text, original binary bytes and an empty member.
+
+## Durable Git archive parts
+
+`publish-prepared-git.cjs` exports `publishPreparedToGit(index, readObject, api, options)`. It uses the same complete member stream and creates independently encoded base64 parts with the existing streamed archive schema. The injected Git adapter supplies `getHead`, `treeOf`, `createBlob`, `createTree`, `createCommit`, and `updateRef`. Every method returns its normalized SHA or acknowledged boolean. No credential is embedded.
+
+Choose the exact branch head, archive directory, complete source index path and source index commit in options. The default decoded part size is487500 bytes; sixteen acknowledged parts form each durable progress commit. Pass `extraFiles` for a plain README and reassembly command. The completed manifest and receipt are published only after the whole stream and output digest finish successfully.
+
+On interruption, retain `error.publicationState` and pass it as `resumeState` with the recorded head. Its part references distinguish provider-acknowledged immutable blobs from the subset already attached to a branch commit. Replay verifies the exact prefix and reuses those blobs. Failed reads during prefix replay retain the unvisited acknowledged references. A lost update-ref response is reconciled against the actual branch head; another writer is never force-overwritten. `onProgress` receives each durable state; `onInterrupted` can preserve the latest small state independently.
+
+The publisher does not replace the streaming core's complete original-member verification. Fresh final readback can reopen the resulting ordinary ZIP from its independently hashed parts using a range reader, or reassemble with the included native command.
