@@ -7,3 +7,7 @@ Run the ordinary authored browser/native commands in NATIVE.md for the full doma
 ## Native complete-source export
 
 The complete embedded source bank includes both source inventories. The lowercase native inventory lists all other source files including the uppercase inventory, while excluding itself and the generated outer HTML. `moduleSources()` verifies that inventory and returns the exact full embedded bank. The resumable native export uses this same source reader, then automatically streams the finished archive through `native/finish-prepared.mjs`. Pass `--finish false` only to separate preparation from finishing in a later native process. The original complete source, saved work, requests and editions remain together.
+
+## Offline native runtime
+
+The complete source bank includes the exact shared private-writer, Applications helper/storage and Merchant provider-contract modules under vendor/merchant-shared. Standalone native receiving and the direct study CLI reopen without a separate repository checkout. These shared source bodies retain their original implementation. The optional setup.mjs initializeMerchant operation still runs within the maintained full Merchant host repository: its release-store and configuration integration belongs to that host. Use the direct native receiving command for this standalone source package.

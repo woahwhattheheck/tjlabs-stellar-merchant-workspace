@@ -10,7 +10,7 @@ Upstream resumable source: F0C95V7RMAB edition complete-export-resumable-invento
 
 ## Whole-workload capacities
 
-The resumable API accepts optional archiveLimits with maxBytes, maxUncompressedBytes and maxEntries. The default capacities remain 256MiB ZIP,512MiB original bytes and60000members. Explicit capacities are validated against classic ZIP limits and included in the exact resume identity; changing them requires a new complete job. Select them from the full retained workload. Native flags are --max-archive-bytes, --max-uncompressed-bytes and --max-entries. Final member readback uses the same selected checkpoint capacities. Prepared streaming retains one input fragment/output part while processing archives larger than a second complete in-memory ZIP should be allocated.
+The resumable API accepts optional archiveLimits with maxBytes, maxUncompressedBytes and maxEntries. The default capacities are512MiB ZIP,1GiB original bytes and60000members. Explicit capacities are validated against classic ZIP limits and included in the exact resume identity; changing them requires a new complete job. Select them from the full retained workload. Native flags are --max-archive-bytes, --max-uncompressed-bytes and --max-entries. Final member readback uses the same selected checkpoint capacities. Prepared streaming retains one input fragment/output part while processing archives larger than a second complete in-memory ZIP should be allocated.
 
 ## Complete native source and streaming finish
 

@@ -1,5 +1,5 @@
 // MIT. Source-owned Merchant customer-agent lifecycle.
-import {defineMerchantProvider,MERCHANT_PROVIDER_SCHEMA} from '../../stellar-forge/mcp-merchant-operator/provider-contract.mjs';
+import {defineMerchantProvider,MERCHANT_PROVIDER_SCHEMA} from './vendor/merchant-shared/merchant/provider-contract.mjs';
 import {distributionLotOrderTools} from './tools.mjs';
 export default defineMerchantProvider({schema:MERCHANT_PROVIDER_SCHEMA,id:'distribution-lot-order-study',family:'distributionLotOrderStudy',title:'Distribution Lot and Order Study Desk',order:1420,catalogOrder:1420,configKey:'distributionLotOrderStudy',summary:true,dependencies:[],
  configuration:{input:'distributionLotOrderStudyConnection',privateExports:true,read:async(value,{hostPath})=>(await import('./mcp.mjs')).readDistributionLotOrderStudyConfiguration(hostPath(value))},
