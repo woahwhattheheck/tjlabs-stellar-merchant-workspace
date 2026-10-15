@@ -272,7 +272,7 @@ function bazaarContractError(info, schema) {
     }
     if (family === BODY_METHODS) {
       if (!BODY_TYPES.has(input.bodyType)) return 'INFO_HTTP_BODY_TYPE_INVALID';
-      if (!Object.hasOwn(input, 'body') || (!plain(input.body) && typeof input.body !== 'string'))
+      if (!Object.hasOwn(input, 'body') || !plain(input.body))
         return 'INFO_HTTP_BODY_INVALID';
       for (const [field, reason] of [
         ['bodyType', 'SCHEMA_HTTP_BODY_TYPE_NOT_REQUIRED'],
@@ -283,7 +283,7 @@ function bazaarContractError(info, schema) {
       }
       const bodyType = mustReject(witness => { witness.input.bodyType = '__invalid__'; }, 'SCHEMA_HTTP_BODY_TYPE_NOT_CONSTRAINED');
       if (bodyType) return bodyType;
-      for (const value of [null, []]) {
+      for (const value of ['not-an-object', null, []]) {
         const error = mustReject(witness => { witness.input.body = value; }, 'SCHEMA_HTTP_BODY_NOT_CONSTRAINED');
         if (error) return error;
       }
