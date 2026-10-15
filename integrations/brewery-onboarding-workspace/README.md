@@ -14,3 +14,7 @@ node native/receive.mjs new-receiving-output
 Both commands create new output directories. Native CLI uses create-only workspace and export paths. Browser storage retains competing proposals; complete JSON includes unfinished intake and per-exception review drafts. Original file receiving preserves UTF-8 BOM and line endings and rejects invalid bytes.
 
 The repository's AGENTS.md instructions apply. Keep hosted Actions disabled. Use the existing equipped product receiver for actual rendered desktop/mobile operation and retain that result with the received source version.
+
+## Maintained Applications installation
+
+The complete original reconciliation engine, operator and examples now also open through Applications with a private writer, full editor/programme recovery, native/MCP operations and complete source exports. Continue with [INSTALLED_OPERATING.md](INSTALLED_OPERATING.md) and the existing equipped operation in [INSTALLED_RECEIVING.md](INSTALLED_RECEIVING.md).

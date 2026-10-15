@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "brewery-onboarding-workspace",
+  "description": "Complete brewery source reconciliation, exception reviews, programme notes and recoverable working sessions",
+  "components": [
+    "integrations/brewery-onboarding-workspace"
+  ],
+  "commands": {
+    "brewery-workspace": "integrations/brewery-onboarding-workspace/cli.mjs",
+    "brewery-managed": "integrations/brewery-onboarding-workspace/managed.mjs"
+  },
+  "commandDescriptions": {
+    "brewery-workspace": "Create, receive and export complete brewery sessions",
+    "brewery-managed": "Open the managed brewery workbench through Applications"
+  },
+  "exports": {
+    "./products/brewery": "./source/integrations/brewery-onboarding-workspace/runtime.mjs",
+    "./products/brewery/client": "./source/integrations/brewery-onboarding-workspace/host/client.mjs",
+    "./products/brewery/server": "./source/integrations/brewery-onboarding-workspace/host/server.mjs"
+  },
+  "applicationProviders": {
+    "brewery-onboarding-workspace": "integrations/brewery-onboarding-workspace/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "brewery-onboarding-workspace": "integrations/brewery-onboarding-workspace/merchant-provider.mjs"
+  }
+}
