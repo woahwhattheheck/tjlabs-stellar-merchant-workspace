@@ -1,0 +1,15 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import {fileURLToPath} from "node:url";
+import {createArchiveCodec} from "../vendor/archive-codec.mjs";
+import {createStudioSessionCore} from "../studio-session-core.mjs";
+import {runStudioSessionCLI} from "../studio-session-native.mjs";
+import {receiveStudioNative} from "./native-course.mjs";
+const root=fileURLToPath(new URL("../",import.meta.url)),codec=createArchiveCodec(),core=createStudioSessionCore({codec});
+const source=await fs.readFile(path.join(root,"workbench/studio-workspace.js"),"utf8");
+const createWorkspace=new Function(source+";return createStudioSessionWorkspace;")();
+const workspaceAPI=createWorkspace(core,codec),desk=JSON.parse(await fs.readFile(path.join(root,"examples/worked-desk.json"),"utf8"));
+const directory=process.argv[2];if(!directory)throw Error("Pass a NEW output directory");
+const result=await receiveStudioNative({fs,path,codec,core,workspaceAPI,runCLI:runStudioSessionCLI,directory,desk});
+await fs.writeFile(path.join(directory,"RECEIVING_RESULT.json"),JSON.stringify(result,null,2)+"\n",{flag:"wx"});
+console.log(JSON.stringify({schema:result.schema,checks:result.checks,summary:result.summary},null,2));
