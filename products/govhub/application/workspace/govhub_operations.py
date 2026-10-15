@@ -10,7 +10,10 @@ import tempfile
 import threading
 
 
-class OperationsMixin:
+from target_expectations import TargetExpectationsMixin
+
+
+class OperationsMixin(TargetExpectationsMixin):
     @contextmanager
     def _native_storage_lease(self, exclusive=False):
         """Keep a native command and its journal in the same backup generation."""
@@ -183,8 +186,12 @@ class OperationsMixin:
                     raise GovHubError("CURRENT_REVIEW", "Complete the original comparison and reviewer approval for this exact cutover revision.", 409)
                 source = self._get(db, "snapshot", plan["candidate_id"] if operation_type == "CUTOVER" else plan["baseline_id"])
                 self._verify_snapshot(db, source)
+            expectation_pin = self._target_expectation_pin(db, payload, plan, source, target, profile, operation_type) if plan else {}
+            if not plan and payload.get("target_expectation_id"):
+                raise GovHubError("EXPECTATION_PURPOSE", "Target expectations belong to restore operations with a selected cohort.")
             timestamp = now()
             value = {"id": ident("operation-"), "type": operation_type, "state": "QUEUED", "plan_id": plan["id"] if plan else "", "plan_revision": plan["revision"] if plan else "", "plan": plan, "audit_id": audit["id"] if audit else None, "review_id": review["id"] if review else None, "environment_id": target["id"], "environment": target, "profile": profile, "source_snapshot_id": source["id"] if source else "", "source_snapshot": source, "source_snapshot_sha256": source["sha256"] if source else "", "authorization_reference": text(payload.get("authorization_reference", target["data"]["authorization_reference"]), 8000, True), "created_at": timestamp, "updated_at": timestamp, "author": actor["name"], "progress": {"completed": 0, "total": 1, "stage": "QUEUED", "detail": "Queued for the selected native environment"}, "error": None, "cancel_requested": False, "native_attempted": False, "checkpoint": None, "resume_checkpoint": None, "native_capture_file_id": None, "native_result": None, "result_snapshot_id": None, "actual_started_at": None, "actual_finished_at": None}
+            value.update(expectation_pin)
             value["native_action"] = native_action
             value["provider_environment_id"] = profile["config"]["environment_id"]
             selected = payload.get("agency_ids", plan["agency_ids"] if plan else [])
@@ -274,6 +281,7 @@ class OperationsMixin:
                 except ValueError as exc:
                     code = "CASTOR_CONTINUATION" if str(value.get("native_action", "")).startswith("castor-") else "UPSUN_CONTINUATION" if str(value.get("native_action", "")).startswith("upsun-") else "TUGBOAT_CONTINUATION" if str(value.get("native_action", "")).startswith("tugboat-") else "SKPR_CONTINUATION" if str(value.get("native_action", "")).startswith("skpr-") else "PANTHEON_CONTINUATION"
                     raise GovHubError(code, str(exc), 409) from exc
+            self._target_expectation_validate_pin(db, value, authority=True)
             value.update(state="QUEUED", cancel_requested=False, error=None)
             value["progress"] = dict(value["progress"], stage="QUEUED", detail="Continuing the retained native checkpoint")
             value = self._write_operation(db, value, actor, "Retained native operation resumed", {"reason": reason, "resume_checkpoint": value.get("resume_checkpoint"), "native_task_id": value.get("native_task_id"), "native_workflow_id": value.get("native_workflow_id"), "native_workflow_step": value.get("native_workflow_step"), "native_backup_selections": value.get("native_backup_selections"), "runtime_bindings": value.get("runtime_bindings"), "skpr_native_associations": value.get("skpr_native_associations"), "skpr_snapshot_selections": value.get("skpr_snapshot_selections"), "tugboat_job_association": value.get("tugboat_job_association"), "upsun_activity_association": value.get("upsun_activity_association"), "castor_command_receipt": value.get("castor_command_receipt")})
@@ -290,6 +298,7 @@ class OperationsMixin:
             return result
         cohort = set(value.get("agency_ids", value["plan"]["agency_ids"]))
         with self.connect(snapshot=True) as db:
+            self._target_expectation_validate_pin(db, value, authority=True)
             current = self._get(db, "snapshot", snapshot["id"])
             if current["sha256"] != snapshot["sha256"]:
                 raise GovHubError("OPERATION_SOURCE", "The selected source snapshot identity changed.", 409)
@@ -402,6 +411,7 @@ class OperationsMixin:
                              "native": {**{key: val for key, val in artifact.items() if key != "path"},
                                         "original_filename": raw.name}})
         envelope = {"format": "govhub-native-operation/1", "operation_id": value["id"], "plan_revision": value["plan_revision"], "source_snapshot_id": value["source_snapshot_id"], "source_snapshot_sha256": value["source_snapshot_sha256"], "environment_id": value["environment_id"], "provider_environment_id": value["profile"]["config"]["environment_id"], "config_sha256": value["profile"]["revision"], "actual_started_at": value["actual_started_at"], "actual_finished_at": value["actual_finished_at"], "result": native_result, "retained_artifacts": retained}
+        envelope.update(self._target_expectation_capture_fields(value))
         name = "native-result.json" if "native-result.json" not in used else f"native-result-{len(used) + 1:04d}.json"
         path = output_dir / name
         path.write_text(packed(envelope) + "\n", encoding="utf-8")
@@ -548,6 +558,8 @@ class OperationsMixin:
             if not isinstance(capture, dict) or capture.get("format") != "govhub-native-operation/1":
                 raise GovHubError("NATIVE_CAPTURE", "Select the retained govhub-native-operation/1 execution capture.")
             expected = {"operation_id": value["id"], "plan_revision": value["plan_revision"], "source_snapshot_id": value["source_snapshot_id"], "source_snapshot_sha256": value["source_snapshot_sha256"], "environment_id": value["environment_id"], "provider_environment_id": value["profile"]["config"]["environment_id"], "config_sha256": value["profile"]["revision"]}
+            self._target_expectation_validate_pin(db, value)
+            expected.update(self._target_expectation_capture_fields(value))
             if any(capture.get(key) != item for key, item in expected.items()):
                 raise GovHubError("NATIVE_CAPTURE_IDENTITY", "The execution capture belongs to a different operation, source revision, or native target.", 409)
             if not isinstance(capture.get("result"), dict) or capture["result"].get("status") != "COMPLETE":
@@ -568,11 +580,12 @@ class OperationsMixin:
             cohort = set(value.get("agency_ids", value["plan"]["agency_ids"]))
             before = {row["agency_id"]: row for row in source["rows"] if row["agency_id"] in cohort}
             after = {row["agency_id"]: row for row in restored["rows"] if row["agency_id"] in cohort}
-            summary = self.auditor.audit(before, after, {}, len(cohort))
-            missing = sorted(cohort - set(before) - set(after))
+            comparison = self._target_expectation_compare(value, before, after, cohort) if value.get("target_expectation") else None
+            summary = comparison["expected_target_summary"] if comparison else self.auditor.audit(before, after, {}, len(cohort))
+            missing = sorted((cohort - set(before)) | (cohort - set(after)))
             status = "PASS" if summary["status"] == "PASS" and not missing else "FAIL"
-            observation = self._object(db, "operation_observation", {"operation_id": value["id"], "capture_file_id": item["id"], "capture_sha256": item["sha256"], "restored_snapshot_id": restored["id"], "restored_snapshot_sha256": restored["sha256"], "actual_started_at": start, "actual_finished_at": end, "duration_seconds": (datetime.fromisoformat(end.replace("Z", "+00:00")) - datetime.fromisoformat(start.replace("Z", "+00:00"))).total_seconds(), "status": status, "summary": summary, "missing_declared_ids": missing, "notes": text(payload.get("notes", ""), 16000)}, parent=value["id"], actor=actor["name"])
-            value.update(state="COMPLETE" if status == "PASS" else "FAILED", result_snapshot_id=restored["id"], observation_id=observation["id"], native_capture_file_id=item["id"], actual_started_at=start, actual_finished_at=end, error=None if status == "PASS" else {"code": "RESTORED_DIFFERENCES", "message": "The actual observed result differs from the selected original source; inspect the per-site findings."})
+            observation = self._object(db, "operation_observation", {"operation_id": value["id"], "capture_file_id": item["id"], "capture_sha256": item["sha256"], "restored_snapshot_id": restored["id"], "restored_snapshot_sha256": restored["sha256"], "actual_started_at": start, "actual_finished_at": end, "duration_seconds": (datetime.fromisoformat(end.replace("Z", "+00:00")) - datetime.fromisoformat(start.replace("Z", "+00:00"))).total_seconds(), "status": status, "summary": summary, "missing_declared_ids": missing, "notes": text(payload.get("notes", ""), 16000), **({"target_comparison": comparison} if comparison else {})}, parent=value["id"], actor=actor["name"])
+            value.update(state="COMPLETE" if status == "PASS" else "FAILED", result_snapshot_id=restored["id"], observation_id=observation["id"], native_capture_file_id=item["id"], actual_started_at=start, actual_finished_at=end, error=None if status == "PASS" else {"code": "RESTORED_DIFFERENCES", "message": "The actual observed result differs from its reviewed target expectation or original source invariants; inspect the per-site findings." if comparison else "The actual observed result differs from the selected original source; inspect the per-site findings."})
             value["progress"] = {"completed": len(cohort) if status == "PASS" else len(set(before) & set(after)), "total": len(cohort), "stage": "COMPLETE" if status == "PASS" else "RECONCILE_RESULT", "detail": "Original native result inventory reconciled" if status == "PASS" else "Correct the actual result differences and retain a new observed inventory"}
             value = self._write_operation(db, value, actor, "Actual native result inventory reconciled", {"status": status, "observation_id": observation["id"]})
             return {"operation": value, "observation": observation}
@@ -583,4 +596,8 @@ class OperationsMixin:
             after = self._operation(db, payload.get("after_id"))
             a = self._get(db, "snapshot", before["result_snapshot_id"]) if before.get("result_snapshot_id") else before.get("source_snapshot")
             b = self._get(db, "snapshot", after["result_snapshot_id"]) if after.get("result_snapshot_id") else after.get("source_snapshot")
-            return {"before": self._operation_summary(before), "after": self._operation_summary(after), "before_basis": "result" if before.get("result_snapshot_id") else "source", "after_basis": "result" if after.get("result_snapshot_id") else "source", "comparison": self._compare_rows(a["rows"] if a else [], b["rows"] if b else [])}
+            result = {"before": self._operation_summary(before), "after": self._operation_summary(after), "before_basis": "result" if before.get("result_snapshot_id") else "source", "after_basis": "result" if after.get("result_snapshot_id") else "source", "comparison": self._compare_rows(a["rows"] if a else [], b["rows"] if b else [])}
+            if before.get("target_expectation") or after.get("target_expectation"):
+                result["target_expectations"] = {"before": before.get("target_expectation"), "after": after.get("target_expectation")}
+                result["target_observations"] = {"before": self._objects(db, "operation_observation", before["id"]), "after": self._objects(db, "operation_observation", after["id"])}
+            return result

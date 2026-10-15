@@ -2,7 +2,7 @@
   "schema": "govhub-application-source/v1",
   "package_root": "govhub-operations",
   "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
-  "source_commit": "021b5c218bc8b0e3cb857c2afff82709ce06a6e5",
+  "source_commit": "ad310fc33d939099affca11674993ab0973e16fc",
   "project_prefix": "products/govhub/application/",
   "files": [
     {
@@ -20,11 +20,18 @@
       "sha256": "f39b86e814ef4de32f7748c0e98ef42c51b1e9c26e912a6d2820e405d0a64327"
     },
     {
+      "path": "SOURCE_EDITION.json",
+      "mode": 420,
+      "git_blob_sha1": "bc9a0f03ef4b746599bddafed01f1c1a8640911c",
+      "bytes": 4129,
+      "sha256": "e487e431a6bc006c92c66b1e1dae2d135c4f43bf9b75e9ce26ad107f54a7e438"
+    },
+    {
       "path": "START_HERE.md",
       "mode": 420,
-      "git_blob_sha1": "81b02301488891b2798a39acf781eb2ad99855f2",
-      "bytes": 11656,
-      "sha256": "8d51a20076b2124235d31ae1c9cb9deb87bcc6dbbf1eaf0bc91ed018a0a48045"
+      "git_blob_sha1": "abd2609cb3bdd58e7e212d0cd6f035da140955d5",
+      "bytes": 12262,
+      "sha256": "787666066cf770b203e8db3653e34bb14c4fa08591ae57fe0061a6ebf65939a6"
     },
     {
       "path": "approvals.example.csv",
@@ -46,6 +53,76 @@
       "git_blob_sha1": "5800656de67569524560c84bdd437634f0c7f22a",
       "bytes": 11175,
       "sha256": "677dabb175d47ce4655a3ea0f511bde7b58ee51ecff0a4a4333377ffca5ff3a2"
+    },
+    {
+      "path": "history/original-241/APPLICATION_SOURCE.json",
+      "mode": 420,
+      "git_blob_sha1": "e6d5636adaefe0128007af47eb734f2efd9e32ae",
+      "bytes": 61937,
+      "sha256": "4093532f2fba501b4cf8c81127f0ea5672cffaaa3d1583d9f5333ca7d5a173d9"
+    },
+    {
+      "path": "history/original-241/START_HERE.md",
+      "mode": 420,
+      "git_blob_sha1": "81b02301488891b2798a39acf781eb2ad99855f2",
+      "bytes": 11656,
+      "sha256": "8d51a20076b2124235d31ae1c9cb9deb87bcc6dbbf1eaf0bc91ed018a0a48045"
+    },
+    {
+      "path": "history/original-241/outside-application/products/govhub/SOURCE.json",
+      "mode": 420,
+      "git_blob_sha1": "6b19ce7e2023dc94ef1c2dfcca82be1623c77d54",
+      "bytes": 70121,
+      "sha256": "c0b65e98aa0d1ed99b9519fbee7eca183879df22c76196232a378de424d3f04c"
+    },
+    {
+      "path": "history/original-241/workspace/DOMAIN.md",
+      "mode": 420,
+      "git_blob_sha1": "cda0424a29826a93f5940a0294cedf2d5f3e10dd",
+      "bytes": 17775,
+      "sha256": "24b84e7abcd6a366f99597e754e67b7bf5141fe92aeed2b67e1d1974adfcdddd"
+    },
+    {
+      "path": "history/original-241/workspace/README.md",
+      "mode": 420,
+      "git_blob_sha1": "dbf7a003b6e6331c7792c6968b5accd0e451e967",
+      "bytes": 24509,
+      "sha256": "910edf89b583845b9d2edb75b43e4a4b7ec2f0da89195b2fde81de12a90c1136"
+    },
+    {
+      "path": "history/original-241/workspace/build_application.py",
+      "mode": 420,
+      "git_blob_sha1": "fac33ccf4c9d01918fd170fd35572fd87b2e57b6",
+      "bytes": 24564,
+      "sha256": "06c5ef4db368fddc567a9e849065288d544fbce283735270f8614c80d5248ebc"
+    },
+    {
+      "path": "history/original-241/workspace/govhub.py",
+      "mode": 420,
+      "git_blob_sha1": "a82592344a7f8ec266c470be732c2d852be7593c",
+      "bytes": 60492,
+      "sha256": "ddfa2b45041373a2317ed25fd3f8d1636cd6b4c7287c93fa9074ef77f0acaa8c"
+    },
+    {
+      "path": "history/original-241/workspace/govhub_delivery.py",
+      "mode": 420,
+      "git_blob_sha1": "b8711e201185015d03cbbb01be33069c3444a245",
+      "bytes": 33986,
+      "sha256": "4ed3c8ba68307cc28906e3b1b90139beb5dd76c9c0d66330cd8d79e9b3764c13"
+    },
+    {
+      "path": "history/original-241/workspace/govhub_operations.py",
+      "mode": 420,
+      "git_blob_sha1": "38e58b7a04ff702b57d90ae3ff457585724f4fc0",
+      "bytes": 46806,
+      "sha256": "ae0ae500d265f5f95ed2de640d8d90f9cee20f7903b47864ba2702e3bf0657f3"
+    },
+    {
+      "path": "history/original-241/workspace/web/app.js",
+      "mode": 420,
+      "git_blob_sha1": "ace1016cd6e9223a0fbcab81b3332d40f78bfd12",
+      "bytes": 92500,
+      "sha256": "5cd0bddcefca6af6eb15a74bf383b36396a1694544c4a640fd9e77db594aab33"
     },
     {
       "path": "incumbent.example.csv",
@@ -78,9 +155,9 @@
     {
       "path": "workspace/DOMAIN.md",
       "mode": 420,
-      "git_blob_sha1": "cda0424a29826a93f5940a0294cedf2d5f3e10dd",
-      "bytes": 17775,
-      "sha256": "24b84e7abcd6a366f99597e754e67b7bf5141fe92aeed2b67e1d1974adfcdddd"
+      "git_blob_sha1": "f92929e0c7e216d788bd94cdc329bddd720defe6",
+      "bytes": 18263,
+      "sha256": "97a3fff710193a4e068398419eb36548684a20c1fcd134506d43eeec6bf5c840"
     },
     {
       "path": "workspace/LAGOON.md",
@@ -113,9 +190,9 @@
     {
       "path": "workspace/README.md",
       "mode": 420,
-      "git_blob_sha1": "dbf7a003b6e6331c7792c6968b5accd0e451e967",
-      "bytes": 24509,
-      "sha256": "910edf89b583845b9d2edb75b43e4a4b7ec2f0da89195b2fde81de12a90c1136"
+      "git_blob_sha1": "f703852754403e654c2c675020b4740fe777ee52",
+      "bytes": 24950,
+      "sha256": "ad92adee9f4de7988a27f3e0dcc427dfff581ee59ca4fae83e9e73d552a916e5"
     },
     {
       "path": "workspace/SKPR.md",
@@ -130,6 +207,13 @@
       "git_blob_sha1": "332edb2af639d5de0d30e47160f20eaa52aa0a92",
       "bytes": 16410,
       "sha256": "66ed1f514cec4821f0fa20439f7d29c868133f51751dbef4bfbcd4dcfc948b55"
+    },
+    {
+      "path": "workspace/TARGET_ENVIRONMENTS.md",
+      "mode": 420,
+      "git_blob_sha1": "1a7734a0b3ffe58c636c001818594e5750f11682",
+      "bytes": 11264,
+      "sha256": "d39bcf2295136176c88c505388da2cc4e350875886073c6f1158002740f8e493"
     },
     {
       "path": "workspace/TUGBOAT.md",
@@ -176,9 +260,9 @@
     {
       "path": "workspace/build_application.py",
       "mode": 420,
-      "git_blob_sha1": "fac33ccf4c9d01918fd170fd35572fd87b2e57b6",
-      "bytes": 24564,
-      "sha256": "06c5ef4db368fddc567a9e849065288d544fbce283735270f8614c80d5248ebc"
+      "git_blob_sha1": "b5f90a94998ad09ee177a514a5aac8a59ff5263e",
+      "bytes": 24738,
+      "sha256": "97b70ccd219efeb2a5a4299f1924ac9874cbe6e170ca44642e7c96bb15097792"
     },
     {
       "path": "workspace/castor_adapter.py",
@@ -771,23 +855,23 @@
     {
       "path": "workspace/govhub.py",
       "mode": 420,
-      "git_blob_sha1": "a82592344a7f8ec266c470be732c2d852be7593c",
-      "bytes": 60492,
-      "sha256": "ddfa2b45041373a2317ed25fd3f8d1636cd6b4c7287c93fa9074ef77f0acaa8c"
+      "git_blob_sha1": "5998c5334158786383e74fabef61f20014e1902c",
+      "bytes": 60965,
+      "sha256": "1b53c752fef2c2ea6b108291893a794e61b8d279f24f1d09f23cd0ec7e1df8dd"
     },
     {
       "path": "workspace/govhub_delivery.py",
       "mode": 420,
-      "git_blob_sha1": "b8711e201185015d03cbbb01be33069c3444a245",
-      "bytes": 33986,
-      "sha256": "4ed3c8ba68307cc28906e3b1b90139beb5dd76c9c0d66330cd8d79e9b3764c13"
+      "git_blob_sha1": "6e47e4a154ee1a96e7ceca8234d50452ebd8853c",
+      "bytes": 36250,
+      "sha256": "9ff3dc330b08816b4f66d10d4bf548e12483467fc3a38b3b3a7f642bff0b2741"
     },
     {
       "path": "workspace/govhub_operations.py",
       "mode": 420,
-      "git_blob_sha1": "38e58b7a04ff702b57d90ae3ff457585724f4fc0",
-      "bytes": 46806,
-      "sha256": "ae0ae500d265f5f95ed2de640d8d90f9cee20f7903b47864ba2702e3bf0657f3"
+      "git_blob_sha1": "8244205d5bbfbeeccb86b34a31ae193226e7dbe6",
+      "bytes": 48477,
+      "sha256": "400d514d426191ec7e6be74be0cdb89e567320788874f100cfd85e95a6171c37"
     },
     {
       "path": "workspace/govhub_schema.py",
@@ -1406,6 +1490,27 @@
       "sha256": "60639e966d235eb1ded391c6997ffb86716c4a23809b589496b7f012c80b7c49"
     },
     {
+      "path": "workspace/target-environment-course.example.json",
+      "mode": 420,
+      "git_blob_sha1": "fee146da3cdc264528289922a4a8d7ca695cb8a9",
+      "bytes": 677,
+      "sha256": "3658630bf1b47378182bdfd44d9df343952b9458fa2cde41420b58eaa5a96d47"
+    },
+    {
+      "path": "workspace/target_environment_course.py",
+      "mode": 420,
+      "git_blob_sha1": "94e6503e870814aaa6dc815d2fd552c1967d21b7",
+      "bytes": 14261,
+      "sha256": "2ec8606c9217b59820f84cd42c1ce52ff47a89206c206a2a1e30ada12e70703d"
+    },
+    {
+      "path": "workspace/target_expectations.py",
+      "mode": 420,
+      "git_blob_sha1": "8cb29dc45ed8475b1801381ee311882ff3562f8d",
+      "bytes": 17221,
+      "sha256": "045ad5841e412f60d4f89c233abdde17c92491932e6162f14c0c818e20c3f37c"
+    },
+    {
       "path": "workspace/tome_native.py",
       "mode": 420,
       "git_blob_sha1": "df4cb1b83d863d871d129676799963639827d25d",
@@ -1555,9 +1660,9 @@
     {
       "path": "workspace/web/app.js",
       "mode": 420,
-      "git_blob_sha1": "ace1016cd6e9223a0fbcab81b3332d40f78bfd12",
-      "bytes": 92500,
-      "sha256": "5cd0bddcefca6af6eb15a74bf383b36396a1694544c4a640fd9e77db594aab33"
+      "git_blob_sha1": "07f53acb9515c54af07450c041c140128eec599b",
+      "bytes": 106193,
+      "sha256": "e2a359dbb503237285f7250539bbb6bbf32670355fe1213df2b1e45a1951deb1"
     },
     {
       "path": "workspace/web/castor.css",
@@ -1642,5 +1747,11 @@
       "url": "https://github.com/pantheon-systems/terminus/releases/download/4.3.3/terminus.phar",
       "version": "4.3.3"
     }
-  ]
+  ],
+  "source_edition": {
+    "id": "reviewed-target-environments-2026-10-15",
+    "base_source_commit": "ad310fc33d939099affca11674993ab0973e16fc",
+    "provenance": "SOURCE_EDITION.json",
+    "meaning": "Prepared member lock: source_commit identifies the inspected base; exact member identities describe this additive edition. Regenerate with build_application.py lock --revision ACTUAL_FULL_COMMIT for a final-revision native package."
+  }
 }

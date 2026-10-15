@@ -1,0 +1,19 @@
+{
+  "format": "target-environment-course/1",
+  "name": "Example only — source to staging",
+  "plan_id": "REPLACE_WITH_RETAINED_PLAN_ID",
+  "environment_id": "REPLACE_WITH_REHEARSAL_ENVIRONMENT_ID",
+  "purpose": "REHEARSAL",
+  "urls": [
+    {
+      "agency_id": "REPLACE_WITH_ORIGINAL_COMPARISON_ID",
+      "canonical_url": "https://staging.example.org/",
+      "reason": "Replace with the actual approved staging URL and authority"
+    }
+  ],
+  "reason": "Replace all example identities with the selected original source and target.",
+  "authorization_reference": "REPLACE_WITH_ACTUAL_OPERATING_INSTRUCTION",
+  "agency_ids": [
+    "REPLACE_WITH_ORIGINAL_COMPARISON_ID"
+  ]
+}

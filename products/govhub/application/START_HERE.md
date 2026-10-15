@@ -143,3 +143,8 @@ presentation or workflow problems before calling this outgoing application ready
 Source checks and an unviewed screenshot capture do not replace that delivery.
 Use the current equipped owner's same account, workspace, operation and native
 lifetime; this feature does not allocate a second receiving host.
+
+
+## Reviewed target environment edition
+
+This source edition adds explicit reviewed source-to-target URL maps to the existing whole application. Open a cohort and choose **Review target expectations**. The full guide and continuing native course are in `workspace/TARGET_ENVIRONMENTS.md`. Original source, actual restored inventory, named decisions, native checkpoints and all old operations remain intact. `APPLICATION_SOURCE.json` pins this source edition; its `source_commit` identifies the retained base, while `source_edition` identifies the additive unpublished working edition and its exact files.

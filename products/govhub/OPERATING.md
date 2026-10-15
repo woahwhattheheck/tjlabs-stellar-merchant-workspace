@@ -78,3 +78,9 @@ Open, use and LOOK at the exact outgoing product as its recipient would. Inspect
 Source parsing, HTTP success, DOM counts and another worker's review are not substitutes for observed operation. Repair any clipped, unstyled, overflowing or unreadable output in the same maintained source. Keep this work focused on the actual remaining product risk; do not replace it with a broad test campaign.
 
 If the selected runtime is unavailable, retain this complete source edition and pending original operation for its existing equipped owner and inspect that owner's actual rendered return. Do not claim a native provider action, account access or final customer acceptance from source review alone. Preserve the existing zero-spend policy: no hosted Actions, paid runner or new provider account is introduced by this product.
+
+## Reviewed target environments
+
+For a staging or other explicitly selected environment whose canonical URLs differ from the source, open **Review target expectations** in the existing cohort. Prepare the exact per-comparison-ID URL map, save an immutable edition, obtain a named review, and select that approved edition when creating the existing native operation. The operation pins the source, plan revision, environment revision and native profile. Corrections create a new edition; old approvals and actual observations remain retained.
+
+Only canonical URLs can differ under this explicit map. Configuration-export and backup hashes, route counts, comparison-ID presence and actual HTTP success remain the original requirements. The UI and handover show original source, approved expectation and actual result together. An operation without a selected map retains its original behavior. Read [TARGET_ENVIRONMENTS.md](application/workspace/TARGET_ENVIRONMENTS.md) for full controls, API inputs and the same-operation native course.

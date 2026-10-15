@@ -97,3 +97,8 @@ All native data remains in the selected operator environment. Provider writes an
 A shared native-storage lease spans each worker claim and execution. Backup takes its exclusive side; actual active or unreconciled running work returns `409 BACKUP_NATIVE_ACTIVE` before creating the destination. The idle worker resumes claiming work after the copy releases its lease. Source or copy failure retains `BACKUP_INCOMPLETE`, which the original core refuses to open. Completed copies reopen at a new directory. `workspace_relocations:[{from,to}]` supplies the original private workspace roots to the native adapter; it resolves only private source/operation paths in memory when consuming existing records. Original command and source capture bytes, native target paths, profile identities, environment IDs, intent hashes and operation IDs remain unchanged. Accepted remote operations continue from their original notification after relocation.
 
 A cohort handover also includes the original CAPTURE operations referenced by its selected snapshot bindings, with their original events, result envelopes and artifacts, as well as that plan's restores and observations. Unrelated capture operations are excluded by their retained file and comparison-ID relationships.
+
+
+## Source-bound target expectation editions
+
+The additive API, exact object/request contracts, native pinning, observation rules and full handover are documented in [TARGET_ENVIRONMENTS.md](TARGET_ENVIRONMENTS.md). The current `operations.observe` behavior keeps the unchanged original source comparison and, only when an approved target map was explicitly selected before execution, reports actual-versus-expected URLs separately. There is no mutation of source or actual inventories.

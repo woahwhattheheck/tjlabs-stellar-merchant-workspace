@@ -317,3 +317,8 @@ presentation or workflow problems before calling this outgoing application ready
 Source checks and an unviewed screenshot capture do not replace that delivery.
 Use the current equipped owner's same account, workspace, operation and native
 lifetime; this feature does not allocate a second receiving host.
+
+
+## Reviewed staging target expectations
+
+The complete source now includes [TARGET_ENVIRONMENTS.md](TARGET_ENVIRONMENTS.md). From a cohort, open **Review target expectations** to retain and approve the explicit staging URL map. Source and actual restored observations remain unchanged; artifact/route/presence/HTTP requirements stay enforced. The complete native course continues the same authenticated workspace and original native queue.
