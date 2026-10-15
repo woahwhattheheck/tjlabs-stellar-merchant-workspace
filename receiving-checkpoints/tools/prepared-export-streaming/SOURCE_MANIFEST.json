@@ -106,6 +106,36 @@
       "path": "git-publication-companion-result.json",
       "bytes": 433,
       "sha256": "188b504167adb7570426b71d5d57982845ddc4c3d229a59619b79ce1cfe9ef2a"
+    },
+    {
+      "path": "ordinary-zip-range.cjs",
+      "bytes": 9833,
+      "sha256": "86c0ee5ddf471e7e3552da5d01215fccc7deb32896b2f372cb574d1322a7c990"
+    },
+    {
+      "path": "streamed-archive-source.cjs",
+      "bytes": 4108,
+      "sha256": "5ed5d330f9cdb0ece100a7fb63be637b37021b533f87c10d8b7cf0f8529af9b3"
+    },
+    {
+      "path": "read-streamed-archive.mjs",
+      "bytes": 1547,
+      "sha256": "2b4829c10c3fda16cd5543dac89275900d40dfc290ccad8ee3cc9ea7153a857d"
+    },
+    {
+      "path": "verify-ordinary-zip-range.cjs",
+      "bytes": 5775,
+      "sha256": "828d738bfddea7e5be9ae1b796c1e0aeed565f73708f88106b1cbd7c4952139b"
+    },
+    {
+      "path": "ORDINARY_ZIP_RANGE.md",
+      "bytes": 3931,
+      "sha256": "5b9474845be0dcaec83d355ee40ebd79bd5efdb4f0bf24352eed8adafd938a6b"
+    },
+    {
+      "path": "ordinary-zip-range-result.json",
+      "bytes": 2667,
+      "sha256": "810ba070719da84f383bd426eee386c63a620337d06dffd325653f14f8842a42"
     }
   ]
 }
