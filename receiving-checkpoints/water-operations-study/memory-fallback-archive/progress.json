@@ -1,0 +1,76 @@
+{
+  "schema": "commons.streaming-archive-publication.v1",
+  "sourceIndex": "receiving-checkpoints/water-operations-study/resumable-complete-export/checkpoint.json",
+  "sourceIndexHead": "0e965e4a33c34fe14250fa3400e974e9f77ba0fa",
+  "identity": "fef2fef8e78c1d676b66bab24df0a1d6e37db292fa47bdaabb7c41f3503b7284",
+  "extraFilesSha256": "a59243193ea98fa55033a5d280a6c137c8fe633ddeff724ba1a401720be41ad9",
+  "verification": "ordinary",
+  "partBytes": 1950000,
+  "parts": [
+    {
+      "path": "objects/5efb1cdf2c4dc0856f602e4c1fb7ead33287c567c3166b7036f01727801023cc.part",
+      "bytes": 2600000,
+      "sha256": "5efb1cdf2c4dc0856f602e4c1fb7ead33287c567c3166b7036f01727801023cc",
+      "decodedBytes": 1950000,
+      "decodedSha256": "2d302201e0454218b8dbe2f076395d44a90a40b2431d75aa45bec6380324d279",
+      "gitBlob": "5a381c69513407ef8a9a7e2505a5df7a165df8ff"
+    },
+    {
+      "path": "objects/2374e8da26f36ba05fc22e32eae2d50b3b4266b1df2a87a7f2dceb1c9a293502.part",
+      "bytes": 2600000,
+      "sha256": "2374e8da26f36ba05fc22e32eae2d50b3b4266b1df2a87a7f2dceb1c9a293502",
+      "decodedBytes": 1950000,
+      "decodedSha256": "c9fe4b95857e2e7f100afe2376c3842b3da98ffb0512fe87b40408bf7a0e5266",
+      "gitBlob": "f321f0fcb216371138180525137b5257d4fe1257"
+    },
+    {
+      "path": "objects/7ab4e65b9bce5936eebbc4d8bd11a45f5f6d20146fab2a417ef3ff6d46b1e5fd.part",
+      "bytes": 2600000,
+      "sha256": "7ab4e65b9bce5936eebbc4d8bd11a45f5f6d20146fab2a417ef3ff6d46b1e5fd",
+      "decodedBytes": 1950000,
+      "decodedSha256": "19fd87c8dff0ff38dde5f2c608fb125d9c0d31590e5a830c486cff0afd48ae71",
+      "gitBlob": "cf063b3c0364dd1781051c02d87fda90b0782ad8"
+    },
+    {
+      "path": "objects/9e3c7d8ad6e1d06c19814056b38f7fc0c4c5b05a0fc823ad7dc9bcead7fc840b.part",
+      "bytes": 2600000,
+      "sha256": "9e3c7d8ad6e1d06c19814056b38f7fc0c4c5b05a0fc823ad7dc9bcead7fc840b",
+      "decodedBytes": 1950000,
+      "decodedSha256": "39c1e4921d6a927ef23e3a692bd74abccc80da726a337922f0be29cfd16beb07",
+      "gitBlob": "3a281ad66dcc667083229b7e36634ffefe038e55"
+    },
+    {
+      "path": "objects/97ca870951498a61d665d229737b3d7fa10074216d229d8f6a55900adb3e924c.part",
+      "bytes": 2600000,
+      "sha256": "97ca870951498a61d665d229737b3d7fa10074216d229d8f6a55900adb3e924c",
+      "decodedBytes": 1950000,
+      "decodedSha256": "e636f6a01f79873d39776ff53ec73479e885c1d36cc4ebf7b828b821ca9e87d1",
+      "gitBlob": "02f9b889d930d654d92feab78abc8886beaf4872"
+    },
+    {
+      "path": "objects/129fb43ecb582dfb6a67406dd61229892952edb352882abdc64e7a45e1a0ae33.part",
+      "bytes": 2600000,
+      "sha256": "129fb43ecb582dfb6a67406dd61229892952edb352882abdc64e7a45e1a0ae33",
+      "decodedBytes": 1950000,
+      "decodedSha256": "2183e6b82bed2651ed5280f8d7512de3c430365a9fe39491f7cb7bc25294f14c",
+      "gitBlob": "073afac0ec79e5023ab10e83b09a8be8c9476758"
+    },
+    {
+      "path": "objects/d22fc2a602afd0f9c220806ff17e276a2625371972547ee3e1e609f5c8e297c9.part",
+      "bytes": 2600000,
+      "sha256": "d22fc2a602afd0f9c220806ff17e276a2625371972547ee3e1e609f5c8e297c9",
+      "decodedBytes": 1950000,
+      "decodedSha256": "a71121fd99e78fa4596b0ed5795611e06ad1de4783e19ab1264aae8a9d6cedac",
+      "gitBlob": "460e9f5071755071a7e4ebdfa85e843901407914"
+    },
+    {
+      "path": "objects/a366adc69148956a460f74c116e4f495e2d5a0f4a0607175c76f7b32682bdc68.part",
+      "bytes": 2600000,
+      "sha256": "a366adc69148956a460f74c116e4f495e2d5a0f4a0607175c76f7b32682bdc68",
+      "decodedBytes": 1950000,
+      "decodedSha256": "47585153cd2cc18dc0ec76ee06f8135107770626bb44cb6e9834da8f9fdb9dce",
+      "gitBlob": "48225d9f669d2de3a70a7bd81df6e2900168a584"
+    }
+  ],
+  "complete": false
+}
