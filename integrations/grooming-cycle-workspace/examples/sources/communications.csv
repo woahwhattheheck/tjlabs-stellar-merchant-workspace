@@ -1,0 +1,6 @@
+message_id,appointment_id,revision_id,kind,language,scheduled_for,sent_at,observed_at,outcome,recipient_reference,reference
+M-A1,VISIT-A,A1,reminder,en,2026-11-01T09:00:00-05:00,2026-11-01T13:00:00-05:00,2026-11-01T13:01:00-05:00,delivered,CLIENT-A/email-original,Authored original delivery record
+M-A1-DUP,VISIT-A,A1,reminder,en,2026-11-01T09:00:00-05:00,2026-11-01T13:00:00-05:00,2026-11-01T13:01:00-05:00,delivered,CLIENT-A/email-original,Authored original delivery record
+M-A2,VISIT-A,A2,confirmation,es,2026-11-01T12:20:00-05:00,2026-11-01T12:20:00-05:00,2026-11-01T12:21:00-05:00,delivered,CLIENT-A/email-original,Authored original delivery record
+M-PICKUP,VISIT-A,A2,ready_for_pickup,es,2026-11-02T10:50:00-05:00,2026-11-02T10:50:00-05:00,2026-11-02T10:51:00-05:00,sent,CLIENT-A/email-original,Authored original delivery record
+M-C,VISIT-C,C1,reminder,en,2026-11-02T08:00:00-05:00,,2026-11-02T09:00:00-05:00,queued,CLIENT-C/email-original,Authored original delivery record

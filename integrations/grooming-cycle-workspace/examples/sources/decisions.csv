@@ -1,0 +1,3 @@
+decision_id,appointment_id,revision_id,kind,decided_at,notice_received_at,authorization,reference
+D-A,VISIT-A,A1,reschedule,2026-11-01T12:10:00-05:00,2026-11-01T12:00:00-05:00,Customer requested new time; operator accepted without new charge,Authored recorded decision
+D-C,VISIT-C,C1,reschedule,2026-11-02T06:55:00-05:00,2026-11-01T15:00:00-05:00,Operator postponed; original deposit retained pending written replacement,Authored recorded decision

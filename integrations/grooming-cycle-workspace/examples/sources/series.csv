@@ -1,0 +1,4 @@
+series_id,client_id,pet_id,service_id,cadence_label,status,recorded_at,reference
+SER-A,CLIENT-A,PET-A,GROOM,Every four weeks at the recorded local time,active,2026-10-01T09:00:00-04:00,Original agreed series
+SER-B,CLIENT-B,PET-B,GROOM,Every six weeks,active,2026-10-01T09:00:00-04:00,Original agreed series
+SER-C,CLIENT-C,PET-C,GROOM,Every four weeks,active,2026-10-01T09:00:00-04:00,Original agreed series

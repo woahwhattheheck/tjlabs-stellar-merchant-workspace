@@ -1,0 +1,5 @@
+occurrence_id,series_id,sequence,expected_start_at,expected_end_at,recorded_at,reference
+O-A2,SER-A,2,2026-11-02T09:00:00-05:00,2026-11-02T10:30:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained
+O-A3,SER-A,3,2026-11-30T09:00:00-05:00,2026-11-30T10:30:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained
+O-B1,SER-B,1,2026-11-02T10:30:00-05:00,2026-11-02T12:00:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained
+O-C1,SER-C,1,2026-11-02T15:00:00-05:00,2026-11-02T16:00:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained

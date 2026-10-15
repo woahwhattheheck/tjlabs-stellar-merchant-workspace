@@ -1,0 +1,205 @@
+{
+  "schema": "tjlabs.groom-cycle-contract.v1",
+  "operation": "TJLABS-GROOMING-CYCLE-WORKSPACE",
+  "factory": "createGroomCycleCore({codec})",
+  "coreSchema": "tjlabs.groom-cycle-study.v1",
+  "wrapperSchema": "tjlabs.groom-cycle-desk.v1",
+  "columns": {
+    "resources": [
+      "resource_id",
+      "name",
+      "kind",
+      "reference"
+    ],
+    "availability": [
+      "window_id",
+      "resource_id",
+      "state",
+      "start_at",
+      "end_at",
+      "reference"
+    ],
+    "booking_revisions": [
+      "revision_id",
+      "appointment_id",
+      "revision",
+      "recorded_at",
+      "status",
+      "client_id",
+      "pet_id",
+      "location_id",
+      "groomer_id",
+      "station_id",
+      "start_at",
+      "end_at",
+      "groomer_before_minutes",
+      "groomer_after_minutes",
+      "station_before_minutes",
+      "station_after_minutes",
+      "series_id",
+      "occurrence_id",
+      "service_id",
+      "policy_id",
+      "policy_accepted_at",
+      "preferred_language",
+      "currency",
+      "authorization",
+      "reference"
+    ],
+    "quoted_lines": [
+      "line_id",
+      "revision_id",
+      "description",
+      "amount_minor",
+      "reference"
+    ],
+    "completions": [
+      "observation_id",
+      "appointment_id",
+      "status",
+      "groomer_id",
+      "station_id",
+      "started_at",
+      "finished_at",
+      "observed_at",
+      "authorization",
+      "reference"
+    ],
+    "invoice_lines": [
+      "line_id",
+      "invoice_id",
+      "appointment_id",
+      "currency",
+      "amount_minor",
+      "description",
+      "issued_at",
+      "reference"
+    ],
+    "payments": [
+      "payment_id",
+      "kind",
+      "parent_payment_id",
+      "currency",
+      "amount_minor",
+      "occurred_at",
+      "method",
+      "reference"
+    ],
+    "allocations": [
+      "allocation_id",
+      "payment_id",
+      "appointment_id",
+      "invoice_id",
+      "purpose",
+      "amount_minor",
+      "authorized_at",
+      "authorization",
+      "reference"
+    ],
+    "series": [
+      "series_id",
+      "client_id",
+      "pet_id",
+      "service_id",
+      "cadence_label",
+      "status",
+      "recorded_at",
+      "reference"
+    ],
+    "expected_visits": [
+      "occurrence_id",
+      "series_id",
+      "sequence",
+      "expected_start_at",
+      "expected_end_at",
+      "recorded_at",
+      "reference"
+    ],
+    "policy_versions": [
+      "policy_id",
+      "service_id",
+      "label",
+      "notice_basis",
+      "notice_minutes",
+      "recorded_at",
+      "terms",
+      "reference"
+    ],
+    "decisions": [
+      "decision_id",
+      "appointment_id",
+      "revision_id",
+      "kind",
+      "decided_at",
+      "notice_received_at",
+      "authorization",
+      "reference"
+    ],
+    "communications": [
+      "message_id",
+      "appointment_id",
+      "revision_id",
+      "kind",
+      "language",
+      "scheduled_for",
+      "sent_at",
+      "observed_at",
+      "outcome",
+      "recipient_reference",
+      "reference"
+    ]
+  },
+  "api": "create/reopen/receive/analyse/review/report/csv/hash/canonical/parseCSV/samples follow prior complete DetailDay API; preserved source-bound immutable editions and complete wrapper",
+  "semantics": {
+    "base": "Same independently checked full interval resources/availability/quotes/completions/invoices/payments/allocations with groomer, station, client, pet, appointment names.",
+    "series": "Stable source-defined client/pet/service identity, cadence_label is descriptive; active/paused/ended. No invented future appointments.",
+    "expected_visits": "Every expected occurrence is explicit original source with sequence and zoned timestamps/recorded_at. No recurrence expansion or UTC cadence inference. A skipped/cancelled occurrence remains visible; multiple active appointments linked to one occurrence get attention.",
+    "policy_versions": "Explicit service policy identity and retained terms; notice_basis elapsed_minutes, business_hours or manual. notice_minutes only supplied for explicit elapsed_minutes; others remain manual without business-calendar inference. Accepted policy version stays attached to exact booking revision.",
+    "booking_revisions": "series_id and occurrence_id both present or both empty; service_id always present. policy_id/accepted_at both present or empty; preferred_language explicit source language string. Series client/pet/service identity stable. Appointment recurrence identity stable across revisions; reschedule preserves original occurrence.",
+    "decisions": "Source observations kind cancel,reschedule,no_show,waive,transfer,other; exact appointment/revision binding. Declared notice_received_at optional, cannot follow decided_at; recorded authorization mandatory. Selected as-of hides future decisions. Attention compares elapsed notice against exact accepted policy when applicable and records operator decision. No automatic charge, refund or calendar mutation.",
+    "communications": "Exact appointment/revision-bound record. kind reminder,confirmation,ready_for_pickup,report_card,other. outcome queued,sent,delivered,failed,cancelled. sent_at optional unless sent/delivered; explicit observationtime governsasof. Missing preferred language stays unknown. Detect duplicates only samekind/revision/scheduled_for/recipient in actual sent/delivered records. Late messages tied to earlier changed/cancelled revision flagged without assumingwithdrawal.",
+    "completions": "Observed physical work independent of scheduled status. Original incomplete interval ends at observation time.",
+    "money": "Same exact minor-unit/parent refund/job matching. Deposit transfers require actual source allocations and authorization; policy and decision records never calculate or mutate money."
+  },
+  "analysisAdditions": [
+    "series",
+    "expectedVisits",
+    "policyVersions",
+    "decisions",
+    "communications",
+    "cycleSummary"
+  ],
+  "reviewTypes": [
+    "booking",
+    "resource",
+    "invoice",
+    "payment",
+    "allocation",
+    "series",
+    "occurrence",
+    "policy",
+    "decision",
+    "communication"
+  ],
+  "csvKinds": [
+    "bookings",
+    "resources",
+    "conflicts",
+    "invoices",
+    "payments",
+    "allocations",
+    "attention",
+    "revisions",
+    "series",
+    "expectedVisits",
+    "policyVersions",
+    "decisions",
+    "communications"
+  ],
+  "sampleSettings": {
+    "dayStart": "2026-11-02T08:00:00-05:00",
+    "dayEnd": "2026-11-02T18:00:00-05:00",
+    "asOf": "2026-11-02T14:00:00-05:00"
+  },
+  "status": "Complete engine checkpoint; same stable contract. Expected visits also report durationDeltaMinutes; duplicate message scheduled instants compare by actual timestamp."
+}
