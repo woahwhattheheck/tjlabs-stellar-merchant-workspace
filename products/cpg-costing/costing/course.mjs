@@ -1,0 +1,58 @@
+import {buildAuthoredExample} from "./example.mjs";
+export function runCostingCourse(api,runtime,originalInput){
+ const results=[],clone=x=>JSON.parse(JSON.stringify(x)),assert=(ok,label,detail)=>{if(!ok)throw Error("Commissioning failed: "+label);results.push({label,status:"passed",detail});};
+ const ex=buildAuthoredExample(api,runtime,originalInput),w=ex.workspace;
+ assert(w.editions[0].report.summary.contribution.exact.numerator==="440"&&w.editions[0].report.summary.contribution.exact.denominator==="3","Exact baseline contribution","440/3 across three recorded sales");
+ assert(w.editions[1].report.summary.contribution.value==="132","Candidate propagation","Single oat invoice 200→220 changes all dependent costs without changing retained baseline");
+ assert(api.importWorkspace(api.exportWorkspace(w).content).rootSha256===w.rootSha256,"Full source/edition/review reopen",w.rootSha256);
+ const replay=api.saveEdition(w,w.operations[1].payload,{operationId:"baseline",expectedRoot:w.operations[1].previousRoot,at:w.operations[1].at});
+ assert(replay.workspace.rootSha256===w.rootSha256,"Same operation replay","No duplicate edition");
+ function reject(fn,label){let rejected=false;try{fn();}catch{rejected=true;}assert(rejected,label,"Rejected without changing original workspace");}
+ reject(()=>api.saveEdition(w,{name:"stale",input:ex.baseline},{operationId:"stale",expectedRoot:w.operations[1].previousRoot,at:"2026-10-14T01:00:00Z"}),"Stale preview adoption");
+ const altered=clone(w);altered.sources[0].content_base64=runtime.toBase64(runtime.encode("altered"));
+ reject(()=>api.importWorkspace(JSON.stringify(altered)),"Changed original source rejects");
+ function runVariant(label,mutate){const v=clone(originalInput);mutate(v);let vW=api.createWorkspace({title:"AUTHORED COURSE — "+label,createdAt:"2026-10-14T00:00:00Z"});
+ const a=api.addSource(vW,{name:"Variant.json",mediaType:"application/json",content_base64:runtime.toBase64(runtime.encode(JSON.stringify(v)))},{operationId:"variant-source",expectedRoot:vW.rootSha256,at:"2026-10-14T00:00:00Z"});vW=a.workspace;for(const k of Object.keys(api.fields))v[k].forEach((r,i)=>r.sourceRefs=[{sourceId:a.sourceId,record:i+1,pointer:"/"+k+"/"+i}]);return {input:v,workspace:vW,report:api.analyse(v,vW)};}
+ let v=runVariant("Net realized",i=>{i.sales[0].revenue="145.5";i.sales[0].revenueBasis="net_realized";i.fees[0].treatment="already_in_revenue";});
+ assert(v.report.sales[0].contribution.value==="70.5"&&v.report.sales[0].contribution.status==="complete","Net revenue does not deduct reflected fees twice","Gross150 less4.5 processor less5 fulfillment equals net145.5 less5 fulfillment");
+ v=runVariant("Missing fees",i=>{i.sales[0].feesComplete="no";});
+ assert(v.report.sales[0].contribution.status==="incomplete"&&!v.report.summary.ready,"Unknown coverage is not zero","Known amount remains visible");
+ v=runVariant("Aggregate receipt consumption",i=>{i.consumption[2].quantity="30";});
+ assert(v.report.findings.some(f=>f.code==="OVERCONSUMED")&&!v.report.summary.ready,"Aggregate lot overdraw","Two batches jointly exceed100lb");
+ v=runVariant("Aggregate output allocation",i=>{i.sales[1].quantity="70";});
+ assert(v.report.findings.some(f=>f.code==="OVERALLOCATED_OUTPUT")&&v.report.sales[0].contribution.status==="incomplete","Aggregate channel overdraw","Multiple sales jointly exceed90 good units");
+ v=runVariant("Fee currency",i=>{i.fees[0].currency="EUR";});
+ assert(v.report.summary.errorCount>0&&!v.report.summary.ready,"Rate currency mismatch","No cross-currency combination");
+ v=runVariant("Unit conflict",i=>{i.unitConversions.push({id:"bad-uom",itemId:"oats",fromUnit:"kg",toUnit:"g",factor:"999"});});
+ assert(v.report.findings.some(f=>f.code==="UNIT_CONFLICT"),"Conflicting conversion paths","Built-in SI factor cannot be overridden silently");
+ v=runVariant("Future receipt",i=>{i.lots[0].receivedDate="2026-10-15";});
+ assert(v.report.summary.errorCount>0&&!v.report.summary.ready,"Future source date","Receipt after assessment date cannot produce complete costs");
+ v=runVariant("Wrong recipe period",i=>{i.bomRevisions[1].effectiveFrom="2026-10-06";});
+ assert(v.report.summary.errorCount>0&&!v.report.summary.ready,"Recipe effective date","Batch on Oct5 cannot use recipe starting Oct6");
+ v=runVariant("Malformed retained edition",i=>{delete i.bomRevisions[0].sku;});
+ let saved=api.saveEdition(v.workspace,{name:"Incomplete retained draft edition",input:v.input},{operationId:"error-edition",expectedRoot:v.workspace.rootSha256,at:"2026-10-14T00:00:01Z"});
+ assert(api.importWorkspace(api.exportWorkspace(saved.workspace).content).rootSha256===saved.workspace.rootSha256,"Incomplete edition remains reopenable","Error report is strict JSON and preserved");
+ const wrongRef=clone(ex.baseline);wrongRef.lots[0].sourceRefs[0].pointer="/lots/9000";
+ assert(api.analyse(wrongRef,w).findings.some(f=>f.code==="SOURCE_RESOLUTION"),"Original occurrence resolution","Invalid source pointer is a finding, not verified evidence");
+ const changed=clone(ex.baseline);changed.sales[0].quantity="29";
+ saved=api.saveEdition(w,{name:"Changed cohort",input:changed},{operationId:"changed-cohort",expectedRoot:w.rootSha256,at:"2026-10-14T00:00:05Z"});
+ assert(!api.compare(saved.workspace,ex.baselineId,saved.editionId).rows.find(x=>x.table==="sales"&&x.id==="sale-dtc").comparable,"Comparison cohort qualification","Changed sold quantity prevents like-for-like delta");
+ const precise='id,amount\r\nlarge,18014398509481986.20\r\n';
+ let p=api.addSource(w,{name:"Exact_Decimal.csv",mediaType:"text/csv",content_base64:runtime.toBase64(runtime.encode(precise))},{operationId:"precision-source",expectedRoot:w.rootSha256,at:"2026-10-14T00:00:05Z"});
+ assert(api.mapTable(p.workspace,p.sourceId,{format:"csv",mapping:{id:"id",amount:"amount"}}).rows[0].amount==="18014398509481986.20","Original large decimal token","No Number conversion");
+ const json='[{"id":"x","amount":18014398509481986.20}]';
+ p=api.addSource(w,{name:"Exact_Decimal.json",mediaType:"application/json",content_base64:runtime.toBase64(runtime.encode(json))},{operationId:"precision-json",expectedRoot:w.rootSha256,at:"2026-10-14T00:00:05Z"});
+ assert(api.inspectSource(p.workspace,p.sourceId,{format:"json"}).rows[0].values.amount==="18014398509481986.20","Original JSON numeric lexeme","Decimal digits survive JSON intake");
+ const dup='[{"id":"a","id":"b"}]';
+ p=api.addSource(w,{name:"Duplicate.json",mediaType:"application/json",content_base64:runtime.toBase64(runtime.encode(dup))},{operationId:"duplicate-json",expectedRoot:w.rootSha256,at:"2026-10-14T00:00:05Z"});
+ reject(()=>api.inspectSource(p.workspace,p.sourceId,{format:"json"}),"Duplicate source JSON members");
+ const dims=api.blankInput();dims.asOf="2026-10-14";
+ dims.lots=[{id:"m",itemId:"material",receivedDate:"2026-10-01",quantity:"1000",unit:"lb",invoiceAmount:"1000",currency:"USD",chargesComplete:"yes",evidence:"confirmed"}];
+ dims.standardSelections=[{itemId:"material",lotId:"m"}];dims.unitConversions=[{id:"unit-mass",itemId:"material",fromUnit:"each",toUnit:"oz",factor:"12"}];
+ dims.bomRevisions=["extra","yield"].map(id=>({id,sku:id,effectiveFrom:"2026-10-01",effectiveTo:"",outputQuantity:"153",outputUnit:"each",otherCost:"0",currency:"USD",evidence:"confirmed",costsComplete:"yes"}));
+ dims.bomLines=[{id:"extra-line",revisionId:"extra",componentType:"item",componentId:"material",quantity:"160.65",unit:"each",quantityBasis:"required_input"},{id:"yield-line",revisionId:"yield",componentType:"item",componentId:"material",quantity:"153",unit:"each",quantityBasis:"net_before_loss",yieldPercent:"95"}];
+ const dimension=api.analyse(dims,w);
+ assert(dimension.boms.find(x=>x.id==="extra").cost.value==="120.4875","Explicit five-percent extra input","153 ×12oz ÷16 ×1.05 =120.4875lb");
+ assert(dimension.boms.find(x=>x.id==="yield").cost.exact.numerator==="2295"&&dimension.boms.find(x=>x.id==="yield").cost.exact.denominator==="19","Explicit ninety-five-percent yield","153 ×12oz ÷16 ÷0.95 =2295/19lb; distinct convention");
+ return {schema:"tjlabs.cpg-costing-course.v1",engine:api.engine,status:"passed",execution:"Production pure modules; host records whether actual Node/browser or explicit adapter",checks:results,exampleWorkspace:ex.workspace,comparison:ex.comparison,dimensionExample:{input:dims,report:dimension},blankWorkspace:api.createWorkspace({title:"Blank CPG costing workspace",createdAt:"2026-10-14T00:00:00Z"})};
+}

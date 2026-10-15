@@ -1,0 +1,176 @@
+{
+  "schema": "commons.costing-operator-fields.v1",
+  "inputSchema": "tjlabs.cpg-costing-input.v1",
+  "tables": {
+    "unitConversions": [
+      "id",
+      "itemId",
+      "fromUnit",
+      "toUnit",
+      "factor"
+    ],
+    "lots": [
+      "id",
+      "itemId",
+      "receivedDate",
+      "quantity",
+      "unit",
+      "invoiceAmount",
+      "currency",
+      "chargesComplete",
+      "evidence",
+      "unitPrice",
+      "priceQuantity",
+      "priceUnit"
+    ],
+    "charges": [
+      "id",
+      "label",
+      "amount",
+      "currency",
+      "method",
+      "evidence"
+    ],
+    "chargeAllocations": [
+      "chargeId",
+      "lotId",
+      "amount",
+      "weight"
+    ],
+    "standardSelections": [
+      "itemId",
+      "lotId"
+    ],
+    "bomRevisions": [
+      "id",
+      "sku",
+      "effectiveFrom",
+      "effectiveTo",
+      "outputQuantity",
+      "outputUnit",
+      "otherCost",
+      "currency",
+      "evidence",
+      "costsComplete"
+    ],
+    "bomLines": [
+      "id",
+      "revisionId",
+      "componentType",
+      "componentId",
+      "quantity",
+      "unit",
+      "quantityBasis",
+      "yieldPercent"
+    ],
+    "batches": [
+      "id",
+      "sku",
+      "revisionId",
+      "productionDate",
+      "goodQuantity",
+      "outputUnit",
+      "scrapQuantity",
+      "scrapUnit",
+      "consumptionComplete",
+      "costsComplete"
+    ],
+    "consumption": [
+      "id",
+      "batchId",
+      "kind",
+      "referenceId",
+      "quantity",
+      "unit"
+    ],
+    "batchCosts": [
+      "id",
+      "batchId",
+      "category",
+      "amount",
+      "currency",
+      "evidence"
+    ],
+    "sales": [
+      "id",
+      "batchId",
+      "channel",
+      "quantity",
+      "unit",
+      "revenue",
+      "currency",
+      "periodStart",
+      "periodEnd",
+      "feesComplete",
+      "revenueBasis"
+    ],
+    "fees": [
+      "id",
+      "saleId",
+      "category",
+      "kind",
+      "amount",
+      "ratePercent",
+      "currency",
+      "evidence",
+      "treatment",
+      "rateBase"
+    ]
+  },
+  "enumValues": {
+    "chargesComplete": [
+      "no",
+      "yes"
+    ],
+    "consumptionComplete": [
+      "no",
+      "yes"
+    ],
+    "costsComplete": [
+      "no",
+      "yes"
+    ],
+    "feesComplete": [
+      "no",
+      "yes"
+    ],
+    "method": [
+      "explicit",
+      "weighted"
+    ],
+    "componentType": [
+      "item",
+      "bom"
+    ],
+    "kind": [],
+    "revenueBasis": [
+      "gross",
+      "net_realized"
+    ],
+    "treatment": [
+      "deduct",
+      "already_in_revenue"
+    ],
+    "rateBase": [
+      "recorded_revenue"
+    ],
+    "quantityBasis": [
+      "required_input",
+      "net_before_loss"
+    ]
+  },
+  "help": {
+    "unitConversions": "Explicit item-specific conversion; factor is exact decimal text. Compatible standard mass, volume and count units use the domain's documented exact conversions; item-specific cross-dimension conversions require an explicit factor.",
+    "lots": "Retained receipts and invoice amount. Declare whether additional landed costs are complete. Use either an exact invoice amount or the explicit unitPrice/priceQuantity/priceUnit basis. Keep the selected basis visible.",
+    "charges": "Separate landed charges. Choose an explicit amount allocation or owner-selected weights.",
+    "chargeAllocations": "Reference each charge and receipt lot. Complete amounts or positive allocation weights under the selected method.",
+    "standardSelections": "Choose the exact retained lot whose unit cost should price each item in the standard BOM.",
+    "bomRevisions": "Recipe revision and effective dates. Output quantity and unit are the recipe basis. Select additional standard recipe costs and their completeness explicitly.",
+    "bomLines": "Ingredient/item or lower-level BOM revision requirements. componentType is item or bom; a nested BOM references its exact revision ID. required_input uses the entered quantity directly; net_before_loss uses the explicitly supplied yieldPercent.",
+    "batches": "Actual good output and source-selected recipe. Scrap context is recorded separately; completeness controls describe actual known coverage.",
+    "consumption": "Actual lot or upstream batch quantities consumed by each batch.",
+    "batchCosts": "Actual selected labor, co-packer, packaging or other extra cost. Avoid recording costs already included in consumed inputs twice.",
+    "sales": "Recorded revenue is explicitly gross or net_realized. Keep quantity, period, currency, batch and the selected deductions together.",
+    "fees": "Choose deduct or already_in_revenue. The latter is disclosed without subtraction from net-realized revenue. Rate rows select recorded_revenue as the rate base."
+  }
+}

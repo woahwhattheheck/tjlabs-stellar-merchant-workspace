@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "cpg-costing",
+  "description": "Complete supplier, batch and channel costing with managed editable sessions and original source recovery",
+  "components": [
+    "products/cpg-costing"
+  ],
+  "commands": {
+    "costing-workspace": "products/cpg-costing/cli.mjs",
+    "costing-managed": "products/cpg-costing/managed.mjs"
+  },
+  "commandDescriptions": {
+    "costing-workspace": "Create, receive and export complete CPG costing sessions",
+    "costing-managed": "Open the managed costing operator through Applications"
+  },
+  "exports": {
+    "./products/costing": "./source/products/cpg-costing/runtime.mjs",
+    "./products/costing/client": "./source/products/cpg-costing/host/client.mjs",
+    "./products/costing/server": "./source/products/cpg-costing/host/server.mjs"
+  },
+  "applicationProviders": {
+    "cpg-costing": "products/cpg-costing/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "cpg-costing": "products/cpg-costing/merchant-provider.mjs"
+  }
+}

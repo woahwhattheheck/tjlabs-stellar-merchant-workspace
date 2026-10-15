@@ -1,0 +1,87 @@
+{
+  "schema": "tjlabs.cpg-costing-input.v1",
+  "currency": "USD",
+  "asOf": "2026-10-14",
+  "unitConversions": [
+    {
+      "id": "unit-mass",
+      "itemId": "material",
+      "fromUnit": "each",
+      "toUnit": "oz",
+      "factor": "12"
+    }
+  ],
+  "lots": [
+    {
+      "id": "m",
+      "itemId": "material",
+      "receivedDate": "2026-10-01",
+      "quantity": "1000",
+      "unit": "lb",
+      "invoiceAmount": "1000",
+      "currency": "USD",
+      "chargesComplete": "yes",
+      "evidence": "confirmed"
+    }
+  ],
+  "charges": [],
+  "chargeAllocations": [],
+  "standardSelections": [
+    {
+      "itemId": "material",
+      "lotId": "m"
+    }
+  ],
+  "bomRevisions": [
+    {
+      "id": "extra",
+      "sku": "extra",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "",
+      "outputQuantity": "153",
+      "outputUnit": "each",
+      "otherCost": "0",
+      "currency": "USD",
+      "evidence": "confirmed",
+      "costsComplete": "yes"
+    },
+    {
+      "id": "yield",
+      "sku": "yield",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "",
+      "outputQuantity": "153",
+      "outputUnit": "each",
+      "otherCost": "0",
+      "currency": "USD",
+      "evidence": "confirmed",
+      "costsComplete": "yes"
+    }
+  ],
+  "bomLines": [
+    {
+      "id": "extra-line",
+      "revisionId": "extra",
+      "componentType": "item",
+      "componentId": "material",
+      "quantity": "160.65",
+      "unit": "each",
+      "quantityBasis": "required_input"
+    },
+    {
+      "id": "yield-line",
+      "revisionId": "yield",
+      "componentType": "item",
+      "componentId": "material",
+      "quantity": "153",
+      "unit": "each",
+      "quantityBasis": "net_before_loss",
+      "yieldPercent": "95"
+    }
+  ],
+  "batches": [],
+  "consumption": [],
+  "batchCosts": [],
+  "sales": [],
+  "fees": []
+}
