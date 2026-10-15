@@ -1,0 +1,41 @@
+{
+  "execution": "Actual whole28-family JavaScript application with original retained authored source; browser and OS receiving are recorded separately",
+  "checks": [
+    {
+      "name": "Complete28-family source and returned histories match with all six physical-batch members",
+      "passed": true
+    },
+    {
+      "name": "Full physical, quality and financial course preserves split lineage, missing outcomes and exact currencies",
+      "passed": true
+    },
+    {
+      "name": "All six work members retain all eight phases including increased review",
+      "passed": true
+    },
+    {
+      "name": "Malformed potentially in-scope member remains visible and prevents whole-work comparison",
+      "passed": true
+    },
+    {
+      "name": "Buyer-only planning authority cannot approve a grower allocation",
+      "passed": true
+    },
+    {
+      "name": "Observed work outside the declared member population cannot be hidden inside a complete saving",
+      "passed": true
+    },
+    {
+      "name": "Exact source population mismatch prevents both whole work and complete allocation acceptance",
+      "passed": true
+    },
+    {
+      "name": "A supplied crop-specific protocol cannot validate another crop forecast or quality endpoint",
+      "passed": true
+    },
+    {
+      "name": "Complete source originals and all selected contexts reopen without a source change",
+      "passed": true
+    }
+  ]
+}

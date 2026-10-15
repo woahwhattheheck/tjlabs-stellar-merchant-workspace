@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "harvest-outcome-study",
+  "description": "Complete harvest and outcome study with stable physical lot lineage, split and merge quantities, original temperature histories, exact forecast inputs, censored quality outcomes, reviewed plans, actual dispatch, sales, credits and recurring work.",
+  "components": [
+    "products/harvest-outcome-study"
+  ],
+  "commands": {
+    "harvest-outcome-study-workspace": "products/harvest-outcome-study/installed-cli.mjs",
+    "harvest-outcome-study-managed": "products/harvest-outcome-study/managed.mjs"
+  },
+  "commandDescriptions": {
+    "harvest-outcome-study-workspace": "Create, receive and export complete Harvest and Outcome Study sessions",
+    "harvest-outcome-study-managed": "Open the complete harvest and outcome study through Applications"
+  },
+  "exports": {
+    "./products/harvest-outcome-study": "./source/products/harvest-outcome-study/runtime.mjs",
+    "./products/harvest-outcome-study/client": "./source/products/harvest-outcome-study/host/client.mjs",
+    "./products/harvest-outcome-study/server": "./source/products/harvest-outcome-study/host/server.mjs"
+  },
+  "applicationProviders": {
+    "harvest-outcome-study": "products/harvest-outcome-study/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "harvest-outcome-study": "products/harvest-outcome-study/merchant-provider.mjs"
+  }
+}

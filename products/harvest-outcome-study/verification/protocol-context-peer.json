@@ -1,0 +1,8 @@
+{
+  "execution": "Actual complete source application in JavaScript",
+  "baseline_observed_endpoints": 3,
+  "changed_protocol_observed_endpoints": 0,
+  "retained_valid_forecasts": 4,
+  "retained_actual_quality_observations": 6,
+  "protocol_mismatch_forecasts": 3
+}

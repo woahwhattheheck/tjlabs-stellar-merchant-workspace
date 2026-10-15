@@ -1,0 +1,4 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,buyer_id,name,valid_from,valid_to
+CTX-KITCHEN,CTX-KITCHEN,1,,active,2026-09-29T00:00:00.000Z,2026-09-29T00:00:00.000Z,document-8de5b970e798522b4e6e0501784c3d5e,Authored complete harvest operations source / CTX-KITCHEN,KITCHEN,Authored KITCHEN,2026-09-29T00:00:00.000Z,
+CTX-DISTRIBUTOR,CTX-DISTRIBUTOR,1,,active,2026-09-29T00:00:00.000Z,2026-09-29T00:00:00.000Z,document-08ee33034618c3d9e62abd0cc7ca184e,Authored complete harvest operations source / CTX-DISTRIBUTOR,DISTRIBUTOR,Authored DISTRIBUTOR,2026-09-29T00:00:00.000Z,
+CTX-RETAIL,CTX-RETAIL,1,,active,2026-09-29T00:00:00.000Z,2026-09-29T00:00:00.000Z,document-765fb0f186672069696155af27cab12f,Authored complete harvest operations source / CTX-RETAIL,RETAIL,Authored RETAIL,2026-09-29T00:00:00.000Z,
