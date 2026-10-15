@@ -1,0 +1,42 @@
+{
+  "model": {
+    "schema": "stellar-forge.roastery-installed-course.v1",
+    "checks": [
+      "Original source replacement retains complete unfinished previous draft",
+      "Reviewed frozen allocations, actual outcome, append-only correction and original retry retain later state",
+      "Exact source/table/frozen-plan/outcome/draft/request reads preserve complete context",
+      "Complete handover source, working and editable boot reopen exactly and assembled browser scripts parse"
+    ],
+    "sequence": 4,
+    "captures": 8,
+    "plans": 2,
+    "outcomes": 3,
+    "backups": 4,
+    "zipMembers": 85,
+    "zipBytes": 1554299,
+    "zipSha256": "e056dbb1ddea1fdbefd3c6a718d9c9e6e24438151676dbac3bc51fdcf47a8cd1"
+  },
+  "controller": {
+    "schema": "stellar-forge.roastery-controller-course.v1",
+    "runtime": "Actual installed production controller executed in V8 with explicit DOM, storage and download adapters",
+    "unfinishedSourceAndOutcomeDraftsExact": true,
+    "originalFileRetained": true,
+    "frozenPlans": 2,
+    "outcomes": 3,
+    "completePriorSessions": 7,
+    "newPeriodAndFullReopen": true,
+    "zipMembers": 84
+  },
+  "runtime": "Production source executed in V8 with explicit DOM, storage and download adapters",
+  "capacity": {
+    "schema": "stellar-forge.roastery-transition-capacity-course.v1",
+    "runtime": "Actual production session transitions and installed file/apply handlers with explicit DOM adapters",
+    "capacityBytes": 23973,
+    "acceptedSuccessorBytes": 23957,
+    "remainingBytes": 16,
+    "oversizeFileLeavesVisibleDraftAndCompleteSessionExact": true,
+    "nearCapacityFileRetainsOriginalDraft": true,
+    "oversizeSourceApplyLeavesDraftAndSelectedSessionExact": true,
+    "expandedRetainRejectsBeforeSelection": true
+  }
+}

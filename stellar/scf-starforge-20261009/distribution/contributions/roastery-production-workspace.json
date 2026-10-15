@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "roastery-production-workspace",
+  "description": "Complete original production tables, reviewed roast plans, measured outcomes and recoverable working sessions",
+  "components": [
+    "integrations/roastery-production-workspace"
+  ],
+  "commands": {
+    "roastery-workspace": "integrations/roastery-production-workspace/cli.mjs",
+    "roastery-managed": "integrations/roastery-production-workspace/managed.mjs"
+  },
+  "commandDescriptions": {
+    "roastery-workspace": "Create, receive and export complete Roastery production sessions",
+    "roastery-managed": "Open the managed roastery operator through Applications"
+  },
+  "exports": {
+    "./products/roastery": "./source/integrations/roastery-production-workspace/runtime.mjs",
+    "./products/roastery/client": "./source/integrations/roastery-production-workspace/host/client.mjs",
+    "./products/roastery/server": "./source/integrations/roastery-production-workspace/host/server.mjs"
+  },
+  "applicationProviders": {
+    "roastery-production-workspace": "integrations/roastery-production-workspace/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "roastery-production-workspace": "integrations/roastery-production-workspace/merchant-provider.mjs"
+  }
+}
