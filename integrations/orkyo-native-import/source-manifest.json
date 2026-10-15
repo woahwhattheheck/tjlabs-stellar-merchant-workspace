@@ -1,77 +1,7 @@
 {
-  "schema": "tjlabs.orkyo-native-import.source.v1",
+  "schema": "tjlabs.orkyo-generic-source.v1",
   "sourceCommit": "9b773566ecbfb0947f51f6e20ea925c03ddb2a22",
   "files": [
-    {
-      "path": "vendor/orkyo-foundation/frontend/src/lib/utils/import-export.ts",
-      "bytes": 5228,
-      "sha256": "81b97cb324abb59966b5cacdc8e414a3baea21ad0e325e853a9242873c07f745"
-    },
-    {
-      "path": "vendor/orkyo-foundation/frontend/src/lib/utils/export-handlers.ts",
-      "bytes": 21654,
-      "sha256": "bcce7298820975206909ed94836e206bfbd4df5be45071a24b3e6aa9eb4f2463"
-    },
-    {
-      "path": "vendor/orkyo-foundation/frontend/src/lib/utils/spreadsheet-import.ts",
-      "bytes": 7778,
-      "sha256": "b501daece3d40416df2e2f36f3b8a9852c3b16424af8002a121feb88d0635d34"
-    },
-    {
-      "path": "vendor/orkyo-foundation/frontend/src/lib/utils/spreadsheet-file.ts",
-      "bytes": 5543,
-      "sha256": "72c8790b6e23f42e37bd3cf21d9c31aac10dd9d781cbb9fa897205dc93fb34d1"
-    },
-    {
-      "path": "vendor/orkyo-foundation/frontend/src/hooks/useSpreadsheetImport.ts",
-      "bytes": 3464,
-      "sha256": "6ff1086a6ef97516ed96b74af5f610c4be7bb90be6ca17e82ba0c8891d892de4"
-    },
-    {
-      "path": "vendor/orkyo-foundation/frontend/src/lib/api/resources-api.ts",
-      "bytes": 6232,
-      "sha256": "d58af227939a9eb7cc3031775ac32b6e4cc9862be812afa34b48026dc12c8d58"
-    },
-    {
-      "path": "vendor/orkyo-foundation/frontend/src/lib/api/request-api.ts",
-      "bytes": 3735,
-      "sha256": "8602fc46dfce6cdd43d3b3b00f7ee3ec4a1155a1f0fd51b28e5508be761d04e9"
-    },
-    {
-      "path": "vendor/orkyo-foundation/frontend/src/types/requests.ts",
-      "bytes": 8262,
-      "sha256": "eb054ed7be0876822c591e511ba3ac3c91234e6dfd12e3d994a25aa3caa7e2bc"
-    },
-    {
-      "path": "vendor/orkyo-foundation/backend/core/Models/Export/ExportPayload.cs",
-      "bytes": 9624,
-      "sha256": "2c7ad9e31b773561c0343f10f97262af92412ad4910e948c08bf459a7c221dca"
-    },
-    {
-      "path": "vendor/orkyo-foundation/backend/core/Validators/ResourceRequestValidators.cs",
-      "bytes": 4437,
-      "sha256": "13c04096c33f141609022f36952abce4d90f77f0abaf7035bc7ae3c7305c1e5b"
-    },
-    {
-      "path": "vendor/orkyo-foundation/backend/core/Constants/AllocationModes.cs",
-      "bytes": 724,
-      "sha256": "c00d710e4563d15d945c9e3b9d63c90b43ebd636f36bc00911db2ec3037768cd"
-    },
-    {
-      "path": "vendor/orkyo-foundation/backend/core/Constants/DomainLimits.cs",
-      "bytes": 4441,
-      "sha256": "dc28031907cb642483c4112e5df1679ce2844cce5f272df343202424e5a4b2e5"
-    },
-    {
-      "path": "vendor/orkyo-foundation/backend/core/Models/Geometry.cs",
-      "bytes": 3194,
-      "sha256": "f9e3cf0b71c5202488b86af075e307ae2f18dc67d949d5a1c7ca31537fa0eb36"
-    },
-    {
-      "path": "vendor/orkyo-foundation/LICENSE",
-      "bytes": 34523,
-      "sha256": "0d96a4ff68ad6d4b6f1f30f713b18d5184912ba8dd389f86aa7710db079abcb0"
-    },
     {
       "path": "adapter/orkyo-import.js",
       "bytes": 14071,
@@ -81,41 +11,6 @@
       "path": "adapter/orkyo-import.mjs",
       "bytes": 14107,
       "sha256": "50ee1f7d9ca9724fce9b271abd9e8c5190558984e3986193fb314f49473e4570"
-    },
-    {
-      "path": "receiving/native-reader.mjs",
-      "bytes": 3454,
-      "sha256": "593fa429e635d8789fa389093d2691c036410e74e3c12780464ff0162eabe933"
-    },
-    {
-      "path": "examples/authored-requests.csv",
-      "bytes": 322,
-      "sha256": "cc4803d3889ce931a27838e5e869d2a7d726b8ac8186a26f1efa11db6d3b217b"
-    },
-    {
-      "path": "examples/authored-resources.csv",
-      "bytes": 333,
-      "sha256": "c652cd12b8f3d12afbf73482b63ca6e336222041beb2cf468cf0094795d6ad1e"
-    },
-    {
-      "path": "examples/authored-custom-field-definitions.json",
-      "bytes": 75,
-      "sha256": "2375bd93ad47dcc4b2c83002bd2408567b55bcbf5d10d6e83f7f63f987826696"
-    },
-    {
-      "path": "receiving/actual-v8-source-comparison.json",
-      "bytes": 12844,
-      "sha256": "60fc2c7431dc559c56af9b49c06f89941a13eb7fe022f9db3041f57da1a11f1f"
-    },
-    {
-      "path": "receiving/compare-native.mjs",
-      "bytes": 1377,
-      "sha256": "1ba5ece56ebbad2734fdec78770d9b6ea0db236b89a8ee3e84bc198d5dcfd5d0"
-    },
-    {
-      "path": "SOURCE_CONTRACT.md",
-      "bytes": 5599,
-      "sha256": "733d713fca045f62c128c785d7b6b040b44c9baba1bb4aca658040c401694377"
     },
     {
       "path": "adapter/workbook-native-reader.mjs",
@@ -133,14 +28,89 @@
       "sha256": "74c6816d367d7d0868a4bd5ae9cebbbe75ceb1b727af531e11532860dc29210c"
     },
     {
-      "path": "vendor/UZIP.js",
-      "bytes": 36451,
-      "sha256": "3e8169a2095935ff38285b6422c428236fcba335b63177117d437c83caefc19c"
+      "path": "desk/build-cli.mjs",
+      "bytes": 1074,
+      "sha256": "6318a48ecac3749ea35c9aeb133dbe417403f084575fd2b41f53e103f3ce222e"
     },
     {
-      "path": "vendor/archive_codec.mjs",
-      "bytes": 16616,
-      "sha256": "c128d4b5f1d1fcb519e5cb81b5b40cb18a7fdb012826bb9daee49e2a43d47472"
+      "path": "desk/build.mjs",
+      "bytes": 1510,
+      "sha256": "02051b4e91a7688698a484bc5e49433317be972023b18e2dede328ee7be80457"
+    },
+    {
+      "path": "desk/cli.mjs",
+      "bytes": 3316,
+      "sha256": "c4eb51a5e358d5466c8569a7aab329c3dbf6c1a8fbd97dd2a857a6ac735b95c0"
+    },
+    {
+      "path": "desk/copy-store.js",
+      "bytes": 942,
+      "sha256": "4a26b12cd3e4acba3f6b9014f41b3d2e9b777667c4bda9dc940aee32de0cde0a"
+    },
+    {
+      "path": "desk/operator.js",
+      "bytes": 21856,
+      "sha256": "263c5644c1c96e7f092f269d7528cce72e5c03f7faa8ee6d4fd175cd8b552b12"
+    },
+    {
+      "path": "desk/readiness-core.js",
+      "bytes": 19298,
+      "sha256": "528a664ded64bb3afaa26fb5c549cf4672660e33e25f0bd5cadb2d51361575fa"
+    },
+    {
+      "path": "desk/readiness-core.mjs",
+      "bytes": 19334,
+      "sha256": "836ae8b331798ee59a1291d4e5671d64e21c1f1f59ca0d9828b68912c34acd29"
+    },
+    {
+      "path": "desk/style.css",
+      "bytes": 2131,
+      "sha256": "03af157606380dec9912356f7d2fdc2ce48568048ade44ca4a2777e9b950dd85"
+    },
+    {
+      "path": "desk/template.html",
+      "bytes": 10623,
+      "sha256": "dc930d1fd02f3157a31f95ac385cd37aba70ad99d2930596809fa79935fbd635"
+    },
+    {
+      "path": "desk/xlsx-reader.js",
+      "bytes": 2927,
+      "sha256": "4851dd2f57942d3f16cfbe5a6c3a77319af35de63ad4f8b359540436927f65ce"
+    },
+    {
+      "path": "examples/Authored_Outcomes.csv",
+      "bytes": 2160,
+      "sha256": "4ad1a647e1b2bac598a8455be4946fe49fd45811be2a7e70669837dd874241c6"
+    },
+    {
+      "path": "examples/Authored_Readiness.csv",
+      "bytes": 3851,
+      "sha256": "4420f4d3fd8b76e46304c21d88f6dcaaa40f5987796ebb633bab9a58267cd9a7"
+    },
+    {
+      "path": "examples/Authored_Receiving_Report.html",
+      "bytes": 157068,
+      "sha256": "cdb683c950993fdb25ae525aea1bfd7f0cfc0dd6441951d6f96d71f8b31ca67d"
+    },
+    {
+      "path": "examples/authored-custom-field-definitions.json",
+      "bytes": 75,
+      "sha256": "2375bd93ad47dcc4b2c83002bd2408567b55bcbf5d10d6e83f7f63f987826696"
+    },
+    {
+      "path": "examples/authored-desk-workspace.json",
+      "bytes": 14545,
+      "sha256": "fcb4851d929ef4cb599707c8e99ef26037e946c511a978b0631dd082d22c0f77"
+    },
+    {
+      "path": "examples/authored-requests.csv",
+      "bytes": 322,
+      "sha256": "cc4803d3889ce931a27838e5e869d2a7d726b8ac8186a26f1efa11db6d3b217b"
+    },
+    {
+      "path": "examples/authored-resources.csv",
+      "bytes": 333,
+      "sha256": "c652cd12b8f3d12afbf73482b63ca6e336222041beb2cf468cf0094795d6ad1e"
     },
     {
       "path": "examples/authored-workbook-sheets.json",
@@ -153,24 +123,54 @@
       "sha256": "de9909bf4615e539e0735ed811639961b29b618e25a2c2ae52eac94064c184fd"
     },
     {
+      "path": "OPERATOR_GUIDE.md",
+      "bytes": 13041,
+      "sha256": "f3ab75b294df301d4ef1088c4d9686bd6e5ac7fb4b544d072e240f9ba52470c7"
+    },
+    {
+      "path": "Orkyo_Import_Readiness.html",
+      "bytes": 157612,
+      "sha256": "5f3bd591423bfe161d645328f988ac4674844dbbb822c6ebaeabc0c01a65c4b2"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4785,
+      "sha256": "9f98a904b6d96e801cc9523ef09d436c8de1b4da52e18e9c5effef5dd69eab4d"
+    },
+    {
+      "path": "receiving/actual-desk-course.json",
+      "bytes": 1784,
+      "sha256": "4283ad31170005fddd21865219e4afb799a609e09633840202cfcdba7584f53d"
+    },
+    {
+      "path": "receiving/actual-v8-source-comparison.json",
+      "bytes": 12844,
+      "sha256": "60fc2c7431dc559c56af9b49c06f89941a13eb7fe022f9db3041f57da1a11f1f"
+    },
+    {
       "path": "receiving/actual-workbook-course.json",
       "bytes": 22631,
       "sha256": "c268132d499ddda7043e045efd766fd70da0084c7e7019e9f2b7cf4d7161af50"
     },
     {
-      "path": "WORKBOOK_GUIDE.md",
-      "bytes": 5984,
-      "sha256": "f6e1b1f8ad1d8c05630bc7c3799b3a6728fea8af32b6d8cd27ef2160abda9389"
+      "path": "receiving/browser-receiving.mjs",
+      "bytes": 7080,
+      "sha256": "6c62745a07be6de7f590786dbc7404b714871e95d6112955c421983c10221ce6"
     },
     {
-      "path": "vendor/orkyo-foundation/backend/src/Endpoints/ResourceEndpoints.cs",
-      "bytes": 12888,
-      "sha256": "c0f633f9b7ee7f284d2dd9cfaf26e4d59c9e12283a7c7add6d82610e038ca6e7"
+      "path": "receiving/compare-native.mjs",
+      "bytes": 1377,
+      "sha256": "1ba5ece56ebbad2734fdec78770d9b6ea0db236b89a8ee3e84bc198d5dcfd5d0"
     },
     {
-      "path": "vendor/orkyo-foundation/backend/core/Services/ResourceService.cs",
-      "bytes": 7868,
-      "sha256": "48edc275e2df22d10efd7354ebc81785d87e2eec34494b36a3946117ced5070c"
+      "path": "receiving/desk-course.js",
+      "bytes": 7316,
+      "sha256": "59cbe2f0c955c8e0e1a92af17bd8888306eaaac2578d08291909e6b230d1baeb"
+    },
+    {
+      "path": "receiving/native-reader.mjs",
+      "bytes": 3454,
+      "sha256": "593fa429e635d8789fa389093d2691c036410e74e3c12780464ff0162eabe933"
     },
     {
       "path": "receiving/workbook-course.mjs",
@@ -178,9 +178,9 @@
       "sha256": "e0bceaf4a173027026152d38fe72c4440f8b28c6a43be986fa4714f7b0ec15c1"
     },
     {
-      "path": "vendor/UZIP.LICENSE",
-      "bytes": 1065,
-      "sha256": "786adae9320db47cd483f9a8774ebd3edab8876d714caa4fb0aee8e5b2c3edc0"
+      "path": "SOURCE_CONTRACT.md",
+      "bytes": 5599,
+      "sha256": "733d713fca045f62c128c785d7b6b040b44c9baba1bb4aca658040c401694377"
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
@@ -188,9 +188,104 @@
       "sha256": "4b82e1da32cc6f5c6f448c7a765079f0556455be8bfc31ff47d217de235e2797"
     },
     {
-      "path": "README.md",
-      "bytes": 3936,
-      "sha256": "89918aa809fb36deaa06a500cc09c81fdbde249314601859f5a3646a3c33909a"
+      "path": "vendor/archive_codec.mjs",
+      "bytes": 16616,
+      "sha256": "c128d4b5f1d1fcb519e5cb81b5b40cb18a7fdb012826bb9daee49e2a43d47472"
+    },
+    {
+      "path": "vendor/orkyo-foundation/backend/core/Constants/AllocationModes.cs",
+      "bytes": 724,
+      "sha256": "c00d710e4563d15d945c9e3b9d63c90b43ebd636f36bc00911db2ec3037768cd"
+    },
+    {
+      "path": "vendor/orkyo-foundation/backend/core/Constants/DomainLimits.cs",
+      "bytes": 4441,
+      "sha256": "dc28031907cb642483c4112e5df1679ce2844cce5f272df343202424e5a4b2e5"
+    },
+    {
+      "path": "vendor/orkyo-foundation/backend/core/Models/Export/ExportPayload.cs",
+      "bytes": 9624,
+      "sha256": "2c7ad9e31b773561c0343f10f97262af92412ad4910e948c08bf459a7c221dca"
+    },
+    {
+      "path": "vendor/orkyo-foundation/backend/core/Models/Geometry.cs",
+      "bytes": 3194,
+      "sha256": "f9e3cf0b71c5202488b86af075e307ae2f18dc67d949d5a1c7ca31537fa0eb36"
+    },
+    {
+      "path": "vendor/orkyo-foundation/backend/core/Services/ResourceService.cs",
+      "bytes": 7868,
+      "sha256": "48edc275e2df22d10efd7354ebc81785d87e2eec34494b36a3946117ced5070c"
+    },
+    {
+      "path": "vendor/orkyo-foundation/backend/core/Validators/ResourceRequestValidators.cs",
+      "bytes": 4437,
+      "sha256": "13c04096c33f141609022f36952abce4d90f77f0abaf7035bc7ae3c7305c1e5b"
+    },
+    {
+      "path": "vendor/orkyo-foundation/backend/src/Endpoints/ResourceEndpoints.cs",
+      "bytes": 12888,
+      "sha256": "c0f633f9b7ee7f284d2dd9cfaf26e4d59c9e12283a7c7add6d82610e038ca6e7"
+    },
+    {
+      "path": "vendor/orkyo-foundation/frontend/src/hooks/useSpreadsheetImport.ts",
+      "bytes": 3464,
+      "sha256": "6ff1086a6ef97516ed96b74af5f610c4be7bb90be6ca17e82ba0c8891d892de4"
+    },
+    {
+      "path": "vendor/orkyo-foundation/frontend/src/lib/api/request-api.ts",
+      "bytes": 3735,
+      "sha256": "8602fc46dfce6cdd43d3b3b00f7ee3ec4a1155a1f0fd51b28e5508be761d04e9"
+    },
+    {
+      "path": "vendor/orkyo-foundation/frontend/src/lib/api/resources-api.ts",
+      "bytes": 6232,
+      "sha256": "d58af227939a9eb7cc3031775ac32b6e4cc9862be812afa34b48026dc12c8d58"
+    },
+    {
+      "path": "vendor/orkyo-foundation/frontend/src/lib/utils/export-handlers.ts",
+      "bytes": 21654,
+      "sha256": "bcce7298820975206909ed94836e206bfbd4df5be45071a24b3e6aa9eb4f2463"
+    },
+    {
+      "path": "vendor/orkyo-foundation/frontend/src/lib/utils/import-export.ts",
+      "bytes": 5228,
+      "sha256": "81b97cb324abb59966b5cacdc8e414a3baea21ad0e325e853a9242873c07f745"
+    },
+    {
+      "path": "vendor/orkyo-foundation/frontend/src/lib/utils/spreadsheet-file.ts",
+      "bytes": 5543,
+      "sha256": "72c8790b6e23f42e37bd3cf21d9c31aac10dd9d781cbb9fa897205dc93fb34d1"
+    },
+    {
+      "path": "vendor/orkyo-foundation/frontend/src/lib/utils/spreadsheet-import.ts",
+      "bytes": 7778,
+      "sha256": "b501daece3d40416df2e2f36f3b8a9852c3b16424af8002a121feb88d0635d34"
+    },
+    {
+      "path": "vendor/orkyo-foundation/frontend/src/types/requests.ts",
+      "bytes": 8262,
+      "sha256": "eb054ed7be0876822c591e511ba3ac3c91234e6dfd12e3d994a25aa3caa7e2bc"
+    },
+    {
+      "path": "vendor/orkyo-foundation/LICENSE",
+      "bytes": 34523,
+      "sha256": "0d96a4ff68ad6d4b6f1f30f713b18d5184912ba8dd389f86aa7710db079abcb0"
+    },
+    {
+      "path": "vendor/UZIP.js",
+      "bytes": 36451,
+      "sha256": "3e8169a2095935ff38285b6422c428236fcba335b63177117d437c83caefc19c"
+    },
+    {
+      "path": "vendor/UZIP.LICENSE",
+      "bytes": 1065,
+      "sha256": "786adae9320db47cd483f9a8774ebd3edab8876d714caa4fb0aee8e5b2c3edc0"
+    },
+    {
+      "path": "WORKBOOK_GUIDE.md",
+      "bytes": 5984,
+      "sha256": "f6e1b1f8ad1d8c05630bc7c3799b3a6728fea8af32b6d8cd27ef2160abda9389"
     }
   ]
 }

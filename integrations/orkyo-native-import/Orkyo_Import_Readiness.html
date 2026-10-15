@@ -1,0 +1,1866 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orkyo Import Readiness</title><style>:root{color-scheme:light}*{box-sizing:border-box}body{font:14px system-ui,sans-serif;color:#222;background:#f4f4f2;margin:0}header{background:#fff;border-bottom:1px solid #bbb;padding:20px 28px}h1{font-size:24px;margin:0 0 8px}h2{font-size:19px}h3{font-size:16px}.top,.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.top{justify-content:space-between}.bar{margin:12px 0}main{padding:20px 28px;max-width:1500px;margin:auto}nav{padding:8px 28px;background:#e7e7e4;display:flex;flex-wrap:wrap;gap:6px}button,input,select,textarea{font:inherit;color:inherit}button{background:#fff;border:1px solid #777;padding:8px 11px;border-radius:3px;cursor:pointer}button:hover{background:#eee}button[aria-selected=true]{background:#333;color:#fff}button:disabled{opacity:.55;cursor:wait}input,select,textarea{background:#fff;border:1px solid #999;padding:8px;border-radius:2px;max-width:100%}input[type=checkbox]{width:auto}label{display:block;font-weight:600;margin:12px 0 5px}label small{display:block;font-weight:400;color:#555}textarea{width:100%;min-height:100px;font:13px ui-monospace,monospace;tab-size:2}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:560px;overflow:auto;background:#f7f7f5;border:1px solid #ccc;padding:12px}section,.card{border:1px solid #c5c5c2;background:#fff;padding:18px;margin:12px 0}.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.wide{grid-column:1/-1}.muted,small{color:#555}.hint{border-left:3px solid #777;padding:9px 12px;background:#f0f0ed}#notice{margin:0;padding:13px 28px;background:#eee;border-bottom:1px solid #bbb;white-space:pre-wrap}.error{font-weight:700;border-left:5px solid #333}table{width:100%;border-collapse:collapse}th,td{text-align:left;vertical-align:top;padding:9px;border-bottom:1px solid #ccc}th{background:#eee}.table{overflow:auto}details{margin:12px 0}summary{cursor:pointer;font-weight:600}#source-text{min-height:220px}#review-values{min-height:250px}[hidden]{display:none!important}@media(max-width:800px){header,main{padding:14px}nav{padding:8px 14px}.grid{grid-template-columns:1fr}button{min-height:40px}td,th{padding:7px}.top{display:block}}</style></head><body>
+<header><div class="top"><div><h1 id="workspace-title">Orkyo Import Readiness</h1><div id="revision"></div><p id="totals"></p></div><div class="bar"><button id="save">Save complete copy</button><button id="emergency">Emergency export</button></div></div><p class="muted">Prepare native imports, preserve originals, and reconcile actual target IDs. Every save is an independent complete copy; tabs do not overwrite or merge each other.</p></header>
+<p id="notice" role="status">Open an existing copy or retain an original source. The authored course is available under Workspace.</p><p id="busy" role="status"></p>
+<nav aria-label="Operating stages"><button data-tab="intake" aria-selected="true">1. Original & target</button><button data-tab="review">2. Review rows</button><button data-tab="batches-tab">3. Native batches & outcomes</button><button data-tab="workspace-tab">Workspace & exports</button></nav>
+<main>
+<div class="tab" id="intake">
+<h2>Original source and exact receiving context</h2><p class="hint">Requests CSV and resource CSV/JSON create records and ignore exported IDs. Production workbook imports reuse exact workstation codes but create each job again. Keep a complete target lookup and resolve any prior uncertain import first.</p>
+<div class="grid"><section><h3>Retain source</h3><label>Choose original CSV, JSON or XLSX<input id="source-file" type="file" accept=".csv,.json,.xlsx"></label><p id="file-note"></p><button id="download-original">Download selected original bytes</button>
+<label>Import kind<select id="kind"><option value="requests">Requests CSV</option><option value="resources">Resource CSV / JSON</option><option value="workbook">Production workbook</option></select></label>
+<label>Representation<select id="format"><option value="csv">CSV</option><option value="json">Native flat resource JSON</option><option value="sheets-json">Complete worksheet-cell JSON</option></select></label>
+<label>Source ID<input id="source-id" placeholder="Leave blank to create a unique ID"></label><label>Filename<input id="filename"></label>
+<label>Full source / complete workbook sheets<small>Edits create a reviewed source representation. The selected original file bytes stay retained separately.</small></label><textarea id="source-text" spellcheck="false"></textarea></section>
+<section><h3>Receiving context</h3><label>Exact tenant / environment label<input id="tenant" placeholder="Your verified Orkyo tenant"></label>
+<label>Actual resource type key<input id="type-key" placeholder="Read the receiving tenant's type definition"></label><label>Actual workbook site ID<input id="site-id"></label>
+<label>Actual custom-field definitions for resources<small>JSON object: field key → number, boolean, text or list_lookup. Preserve text identifiers as text.</small></label><textarea id="custom-fields">{}</textarea>
+<label>All active placeable resources for the selected workbook site<small>JSON array of actual {code,id} rows. Codes are case-sensitive. New physical stations require their real geometry before workbook reuse.</small></label><textarea id="existing">[]</textarea>
+<label><input type="checkbox" id="existing-complete"> Complete lookup; no further result pages remain</label>
+<label>Retained lookup response / source evidence</label><textarea id="lookup" placeholder="Paste the complete actual lookup response, including target/site and pagination state."></textarea>
+<button id="retain-source">Retain original and inspect</button></section></div>
+<section><h3>Correct a retained source before freezing a batch</h3><p>Choose the source under Review rows, then load it here. Corrections preserve all earlier editions and review decisions. A frozen or attempted source must first be reconciled.</p><button id="load-source">Load selected retained source</button><label>Reason for complete source / context correction</label><textarea id="correction-reason"></textarea><button id="correct-source">Save corrected edition of selected source</button></section>
+</div>
+<div class="tab" id="review" hidden><h2>Review each original row occurrence</h2><div class="bar"><select id="sources" aria-label="Retained source"></select><input id="search" type="search" placeholder="Search IDs, names, original values or reviews"><button id="prev">Previous 50</button><span id="page"></span><button id="next">Next 50</button></div><pre id="source-summary"></pre><div class="table"><table><thead><tr><th>Select</th><th>Row</th><th>Name</th><th>Decision</th><th>State / target</th><th>Attention</th></tr></thead><tbody id="rows"></tbody></table></div>
+<section><h3 id="row-title">Choose a row to review</h3><div class="grid"><div><label>Disposition<select id="review-action"><option value="new">Reviewed new create</option><option value="bind">Bind an actual existing target ID</option><option value="exclude">Exclude from this import</option></select></label>
+<label>Named reviewer<input id="reviewer"></label><label>Review reason</label><textarea id="review-reason"></textarea><label>Corrected native row / complete job cells</label><textarea id="review-values" spellcheck="false">{}</textarea>
+<label>Acknowledged issue codes, one per line<small>Preview first. Every displayed issue requires review; blocking issues require corrected values rather than acknowledgement.</small></label><textarea id="acknowledged"></textarea><label>Why an identical payload elsewhere is a separate legitimate create<small>Required only when the same receiving payload occurs in another retained row.</small></label><textarea id="distinct-reason"></textarea>
+<label>Actual existing target ID for Bind<input id="target-id"></label><label>Actual existing-target lookup evidence</label><textarea id="review-evidence"></textarea><div class="bar"><button id="preview-review">Preview corrected payload</button><button id="save-review">Save explicit review</button></div></div>
+<div><h3>Original, native payload, issues and retained decision</h3><pre id="row-detail"></pre></div></div></section>
+<section><h3>Freeze the selected reviewed new rows</h3><p id="selection-count">0 rows selected</p><label>New batch ID<input id="batch-id" placeholder="Leave blank for a unique ID"></label><button id="prepare">Prepare exact native batch</button><p class="hint">Rows already prepared, unresolved, created or bound are excluded from new creation. A reviewed remaining batch is a new retained file; earlier batches and outcomes stay intact.</p></section>
+<details><summary>Full original editions and source-native plan</summary><pre id="source-detail"></pre></details></div>
+<div class="tab" id="batches-tab" hidden><h2>Frozen native batches and actual outcomes</h2><div class="bar"><select id="batches" aria-label="Frozen batch"></select><button id="native-download">Download exact native file</button></div><p class="hint">Use the receiving tenant's authorized import screen. This desk never sends provider writes. Mark the batch attempted when it enters that workflow. A missing response leaves the affected row unresolved until actual lookup or response evidence establishes its outcome.</p>
+<div class="grid"><section><h3>Record the actual import attempt</h3><label>Type the exact tenant label<input id="confirm-tenant"></label><label>Actual importing operator<input id="operator"></label><label>Actual page / workbook route<input id="route"></label><label>Attempt details, or reason for abandoning an unattempted batch</label><textarea id="attempt-details"></textarea><div class="bar"><button id="mark-attempt">Mark attempted; await outcomes</button><button id="abandon">Abandon unattempted prepared batch</button></div></section>
+<section><h3>Resolve one actual row outcome</h3><label>Batch row<select id="outcome-row"></select></label><label>Outcome<select id="outcome-status"><option value="created">Created; actual returned ID</option><option value="existing">Existing; actual lookup ID</option><option value="rejected">Rejected before creation</option><option value="not-attempted">Not attempted</option></select></label><label>Actual target ID for Created / Existing<input id="outcome-target"></label><label>Reviewer<input id="outcome-reviewer"></label><label>Reason and source-to-target attribution</label><textarea id="outcome-reason"></textarea><label>Complete actual response or lookup evidence<small>A total count alone does not identify which target ID belongs to a row.</small></label><textarea id="outcome-evidence"></textarea><button id="resolve">Retain resolved outcome</button></section></div><details open><summary>Full frozen rows, native file, context, attempt and outcomes</summary><pre id="batch-detail"></pre></details></div>
+<div class="tab" id="workspace-tab" hidden><h2>Complete saved copies and portable exports</h2><section><h3>Open a complete saved copy</h3><p id="copy-count"></p><div class="bar"><select id="copies" aria-label="Saved complete copy"></select><button id="open-copy">Open selected copy</button><button id="download-copy">Download selected copy</button></div><label>Import whole workspace or complete desk copy<input type="file" id="import-copy" accept=".json"></label><p>Every saved copy contains the full event history, original source editions, frozen import files, IDs, evidence and pending form draft. Opening another copy first preserves your current work. Use Emergency export if browser storage is unavailable.</p></section>
+<section><div class="bar"><button id="export-json">Complete workspace JSON</button><button id="export-ready">Readiness CSV</button><button id="export-outcomes">Outcomes CSV</button><button id="report">Full readable report</button></div></section>
+<section><h3>Independent working copy</h3><label>Title for a new workspace<input id="title"></label><div class="bar"><button id="new">Start independent blank workspace</button><button id="example">Open complete authored receiving course</button></div><p>The authored course uses explicitly authored target IDs and outcomes. Public shop research is separate from customer source data.</p></section>
+<section><h3>Retain a complete operating note or receiving response</h3><label>Title<input id="note-title"></label><label>Full text</label><textarea id="note-text"></textarea><button id="note-save">Save note in history</button><pre id="notes"></pre></section><details><summary>Full immutable event history</summary><pre id="history"></pre></details></div>
+</main><script>// Copyright TokenJunkieLabs. Pure JavaScript archive primitives; no filesystem, network or code evaluation.
+// High-level limits and portable paths are enforced by source_bank.mjs.
+function createArchiveCodec() {
+  "use strict";
+  const fail = message => { throw new Error("archive_codec: " + message); };
+  const bytes = value => value instanceof Uint8Array ? value : Uint8Array.from(value);
+  function utf8Encode(text) {
+    const out = [];
+    for (let i = 0; i < text.length; i++) {
+      let c = text.charCodeAt(i);
+      if (c >= 0xd800 && c <= 0xdbff) {
+        const low = text.charCodeAt(++i);
+        if (!(low >= 0xdc00 && low <= 0xdfff)) fail("unpaired UTF-16 surrogate");
+        c = 0x10000 + ((c - 0xd800) << 10) + low - 0xdc00;
+      } else if (c >= 0xdc00 && c <= 0xdfff) fail("unpaired UTF-16 surrogate");
+      if (c < 0x80) out.push(c);
+      else if (c < 0x800) out.push(0xc0 | (c >>> 6), 0x80 | (c & 63));
+      else if (c < 0x10000) out.push(0xe0 | (c >>> 12), 0x80 | ((c >>> 6) & 63), 0x80 | (c & 63));
+      else out.push(0xf0 | (c >>> 18), 0x80 | ((c >>> 12) & 63), 0x80 | ((c >>> 6) & 63), 0x80 | (c & 63));
+    }
+    return Uint8Array.from(out);
+  }
+  function utf8Decode(input) {
+    const a = bytes(input), chunks = [], part = [];
+    for (let i = 0; i < a.length;) {
+      const first = a[i++]; let c, count, minimum;
+      if (first < 128) { c = first; count = 0; minimum = 0; }
+      else if (first >= 0xc2 && first <= 0xdf) { c = first & 31; count = 1; minimum = 0x80; }
+      else if (first >= 0xe0 && first <= 0xef) { c = first & 15; count = 2; minimum = 0x800; }
+      else if (first >= 0xf0 && first <= 0xf4) { c = first & 7; count = 3; minimum = 0x10000; }
+      else fail("invalid UTF-8 lead byte");
+      for (let k = 0; k < count; k++) {
+        if (i >= a.length || (a[i] & 0xc0) !== 0x80) fail("invalid UTF-8 continuation");
+        c = (c << 6) | (a[i++] & 63);
+      }
+      if (c < minimum || c > 0x10ffff || (c >= 0xd800 && c <= 0xdfff)) fail("invalid UTF-8 scalar");
+      if (c <= 0xffff) part.push(c);
+      else { c -= 0x10000; part.push(0xd800 | (c >>> 10), 0xdc00 | (c & 1023)); }
+      if (part.length >= 8192) { chunks.push(String.fromCharCode(...part)); part.length = 0; }
+    }
+    if (part.length) chunks.push(String.fromCharCode(...part));
+    return chunks.join("");
+  }
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  function base64Decode(text) {
+    const s = String(text).replace(/[ \t\r\n]/g, "");
+    if (s.length % 4) fail("invalid base64 length");
+    const padding = s.endsWith("==") ? 2 : s.endsWith("=") ? 1 : 0;
+    const out = new Uint8Array(s.length / 4 * 3 - padding); let p = 0;
+    for (let i = 0; i < s.length; i += 4) {
+      const a = alphabet.indexOf(s[i]), b = alphabet.indexOf(s[i + 1]);
+      const last = i + 4 === s.length;
+      const c = s[i + 2] === "=" ? -2 : alphabet.indexOf(s[i + 2]);
+      const d = s[i + 3] === "=" ? -2 : alphabet.indexOf(s[i + 3]);
+      if (a < 0 || b < 0 || c === -1 || d === -1 ||
+          (c === -2 && (!last || d !== -2)) || (d === -2 && !last))
+        fail("invalid base64 alphabet or padding");
+      if ((c === -2 && (b & 15)) || (d === -2 && c >= 0 && (c & 3)))
+        fail("noncanonical base64 padding");
+      const v = (a << 18) | (b << 12) | (Math.max(c, 0) << 6) | Math.max(d, 0);
+      if (p < out.length) out[p++] = v >>> 16;
+      if (p < out.length) out[p++] = (v >>> 8) & 255;
+      if (p < out.length) out[p++] = v & 255;
+    }
+    return out;
+  }
+  function base64Encode(input) {
+    const a = bytes(input), chunks = []; let part = "";
+    for (let i = 0; i < a.length; i += 3) {
+      const remain = a.length - i, v = (a[i] << 16) | ((a[i + 1] || 0) << 8) | (a[i + 2] || 0);
+      part += alphabet[(v >>> 18) & 63] + alphabet[(v >>> 12) & 63] +
+        (remain > 1 ? alphabet[(v >>> 6) & 63] : "=") + (remain > 2 ? alphabet[v & 63] : "=");
+      if (part.length >= 8192) { chunks.push(part); part = ""; }
+    }
+    if (part) chunks.push(part);
+    return chunks.join("");
+  }
+  const crcTable = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let j = 0; j < 8; j++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    crcTable[i] = c >>> 0;
+  }
+  function crc32(input) {
+    let c = 0xffffffff;
+    for (const v of bytes(input)) c = crcTable[(c ^ v) & 255] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  }
+  const shaK = Uint32Array.from([
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+  ]);
+  const rotate = (x, n) => (x >>> n) | (x << (32 - n));
+  function sha256(input) {
+    const a = typeof input === "string" ? utf8Encode(input) : bytes(input);
+    const n = a.length, padded = new Uint8Array(Math.ceil((n + 9) / 64) * 64);
+    padded.set(a); padded[n] = 128;
+    const high = Math.floor(n / 0x20000000), low = (n * 8) >>> 0;
+    for (let i = 0; i < 4; i++) {
+      padded[padded.length - 8 + i] = (high >>> (24 - i * 8)) & 255;
+      padded[padded.length - 4 + i] = (low >>> (24 - i * 8)) & 255;
+    }
+    const h = Uint32Array.from([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+    const w = new Uint32Array(64);
+    for (let offset = 0; offset < padded.length; offset += 64) {
+      for (let i = 0; i < 16; i++) {
+        const p = offset + i * 4;
+        w[i] = ((padded[p] << 24) | (padded[p + 1] << 16) | (padded[p + 2] << 8) | padded[p + 3]) >>> 0;
+      }
+      for (let i = 16; i < 64; i++) {
+        const x = w[i - 15], y = w[i - 2];
+        w[i] = ((rotate(x,7) ^ rotate(x,18) ^ (x >>> 3)) + w[i - 16] +
+                (rotate(y,17) ^ rotate(y,19) ^ (y >>> 10)) + w[i - 7]) >>> 0;
+      }
+      let [v0,v1,v2,v3,v4,v5,v6,v7] = h;
+      for (let i = 0; i < 64; i++) {
+        const t1 = (v7 + (rotate(v4,6) ^ rotate(v4,11) ^ rotate(v4,25)) +
+                    ((v4 & v5) ^ (~v4 & v6)) + shaK[i] + w[i]) >>> 0;
+        const t2 = ((rotate(v0,2) ^ rotate(v0,13) ^ rotate(v0,22)) +
+                    ((v0 & v1) ^ (v0 & v2) ^ (v1 & v2))) >>> 0;
+        v7=v6;v6=v5;v5=v4;v4=(v3+t1)>>>0;v3=v2;v2=v1;v1=v0;v0=(t1+t2)>>>0;
+      }
+      for (const [i,v] of [v0,v1,v2,v3,v4,v5,v6,v7].entries()) h[i] = (h[i] + v) >>> 0;
+    }
+    return Array.from(h, v => v.toString(16).padStart(8,"0")).join("");
+  }
+  const lengthBase = [3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258];
+  const lengthExtra = [0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0];
+  const distanceBase = [1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577];
+  const distanceExtra = [0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13];
+  function reverse(value, count) { let out=0; for(let i=0;i<count;i++){out=(out<<1)|(value&1);value>>>=1;} return out; }
+  function huffman(lengths) {
+    const count = new Uint16Array(16), next = new Uint16Array(16), maps = [], codes = [];
+    let max=0, code=0, left=1;
+    for (const length of lengths) { if(length<0 || length>15) fail("invalid Huffman length"); if(length){count[length]++;max=Math.max(max,length);} }
+    for(let n=1;n<=15;n++){left=(left<<1)-count[n];if(left<0)fail("oversubscribed Huffman tree");code=(code+count[n-1])<<1;next[n]=code;if(count[n])maps[n]=new Map();}
+    for(let symbol=0;symbol<lengths.length;symbol++){
+      const n=lengths[symbol];if(n){const rev=reverse(next[n]++,n);maps[n].set(rev,symbol);codes[symbol]=[rev,n];}
+    }
+    return {maps,max,codes};
+  }
+  const fixedLengths = Array.from({length:288},(_,i)=>i<144?8:i<256?9:i<280?7:8);
+  const fixedLiteral = huffman(fixedLengths), fixedDistance = huffman(Array(32).fill(5));
+  function inflateRaw(input, offset=0, maxOutputBytes=134217728) {
+    const a=bytes(input);
+    if (!Number.isSafeInteger(offset) || offset < 0 || offset > a.length ||
+        !Number.isSafeInteger(maxOutputBytes) || maxOutputBytes < 0 || maxOutputBytes > 0x7fffffff)
+      fail("invalid inflate offset or output limit");
+    let position=offset, buffer=0, buffered=0, output=new Uint8Array(Math.min(65536,maxOutputBytes)), used=0;
+    function read(n){while(buffered<n){if(position>=a.length)fail("truncated deflate stream");buffer|=a[position++]<<buffered;buffered+=8;}const v=buffer&((1<<n)-1);buffer>>>=n;buffered-=n;return v;}
+    function emit(v){if(used>=maxOutputBytes)fail("decompressed size exceeds maxOutputBytes");if(used===output.length){const grown=new Uint8Array(Math.min(maxOutputBytes,Math.max(1,output.length*2)));grown.set(output);output=grown;}output[used++]=v;}
+    function decode(tree){let code=0;for(let n=1;n<=tree.max;n++){code|=read(1)<<(n-1);const symbol=tree.maps[n]?.get(code);if(symbol!==undefined)return symbol;}fail("invalid Huffman code");}
+    let final=0;
+    do {
+      final=read(1);const type=read(2);
+      if(type===0){
+        buffer=0;buffered=0;
+        const size=read(16), complement=read(16);
+        if(((size^0xffff)&0xffff)!==complement)fail("invalid stored-block length");
+        for(let i=0;i<size;i++)emit(read(8));
+        continue;
+      }
+      let literal, distance;
+      if(type===1){literal=fixedLiteral;distance=fixedDistance;}
+      else if(type===2){
+        const literalCount=read(5)+257,distanceCount=read(5)+1,codeCount=read(4)+4;
+        const order=[16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15],codeLengths=Array(19).fill(0);
+        for(let i=0;i<codeCount;i++)codeLengths[order[i]]=read(3);
+        const codeTree=huffman(codeLengths),lengths=[];
+        while(lengths.length<literalCount+distanceCount){
+          const value=decode(codeTree);let repeat=1,length=value;
+          if(value===16){if(!lengths.length)fail("repeat without previous code");length=lengths[lengths.length-1];repeat=read(2)+3;}
+          else if(value===17){length=0;repeat=read(3)+3;}
+          else if(value===18){length=0;repeat=read(7)+11;}
+          else if(value>18)fail("invalid code-length symbol");
+          if(lengths.length+repeat>literalCount+distanceCount)fail("code-length repeat overflow");
+          for(let j=0;j<repeat;j++)lengths.push(length);
+        }
+        if(!lengths[256])fail("missing end-of-block code");
+        literal=huffman(lengths.slice(0,literalCount));distance=huffman(lengths.slice(literalCount));
+      } else fail("reserved deflate block type");
+      while(true){
+        const symbol=decode(literal);
+        if(symbol<256){emit(symbol);continue;}
+        if(symbol===256)break;
+        if(symbol<257 || symbol>285)fail("invalid length symbol");
+        const li=symbol-257,len=lengthBase[li]+read(lengthExtra[li]),ds=decode(distance);
+        if(ds>29)fail("invalid distance symbol");
+        const back=distanceBase[ds]+read(distanceExtra[ds]);
+        if(back>used)fail("distance precedes output");
+        for(let j=0;j<len;j++)emit(output[used-back]);
+      }
+    } while(!final);
+    return {bytes:output.slice(0,used),nextOffset:position};
+  }
+  const read32 = (a,p) => ((a[p]|(a[p+1]<<8)|(a[p+2]<<16)|(a[p+3]<<24))>>>0);
+  function gunzipDetailed(input, {maxOutputBytes=134217728,maxMembers=1024}={}) {
+    const a=bytes(input), chunks=[], members=[];let p=0,total=0;
+    if (!Number.isSafeInteger(maxOutputBytes) || maxOutputBytes < 0 || maxOutputBytes > 0x7fffffff ||
+        !Number.isSafeInteger(maxMembers) || maxMembers < 1) fail("invalid gzip limits");
+    while(p<a.length){
+      if (members.length >= maxMembers) fail("gzip member limit exceeded");
+      const start=p;
+      if(p+10>a.length || a[p]!==31 || a[p+1]!==139 || a[p+2]!==8)fail("invalid gzip header");
+      const flags=a[p+3];if(flags&0xe0)fail("reserved gzip flags");p+=10;
+      if(flags&4){if(p+2>a.length)fail("truncated gzip extra");const n=a[p]|(a[p+1]<<8);p+=2+n;if(p>a.length)fail("truncated gzip extra");}
+      for(const flag of [8,16])if(flags&flag){while(p<a.length && a[p]!==0)p++;if(p>=a.length)fail("unterminated gzip header");p++;}
+      if(flags&2){if(p+2>a.length || (crc32(a.subarray(start,p))&0xffff)!==(a[p]|(a[p+1]<<8)))fail("gzip header CRC mismatch");p+=2;}
+      const decoded=inflateRaw(a,p,maxOutputBytes-total);p=decoded.nextOffset;
+      if(p+8>a.length)fail("truncated gzip trailer");
+      const expectedCrc=read32(a,p),expectedSize=read32(a,p+4),actualCrc=crc32(decoded.bytes);
+      if(actualCrc!==expectedCrc)fail("gzip CRC32 mismatch");
+      if((decoded.bytes.length>>>0)!==expectedSize)fail("gzip ISIZE mismatch");
+      p+=8;total+=decoded.bytes.length;chunks.push(decoded.bytes);
+      members.push({start,end:p,bytes:decoded.bytes.length,crc32:actualCrc.toString(16).padStart(8,"0")});
+    }
+    if(!members.length)fail("empty gzip input");
+    const out=new Uint8Array(total);let offset=0;for(const chunk of chunks){out.set(chunk,offset);offset+=chunk.length;}
+    return {bytes:out,members};
+  }
+  function deflateRaw(input) {
+    const a=bytes(input), out=[];let buffer=0,buffered=0;
+    function write(v,n){buffer|=v<<buffered;buffered+=n;while(buffered>=8){out.push(buffer&255);buffer>>>=8;buffered-=8;}}
+    const symbol=(tree,s)=>{const pair=tree.codes[s];write(pair[0],pair[1]);};
+    write(3,3);
+    const heads=new Int32Array(65536).fill(-1),previous=new Int32Array(a.length).fill(-1);
+    const hash=p=>((a[p]*251+a[p+1])*251+a[p+2])&65535;
+    function insert(p){if(p+2<a.length){const h=hash(p);previous[p]=heads[h];heads[h]=p;}}
+    for(let p=0;p<a.length;){
+      let best=2,bestDistance=0;
+      if(p+2<a.length){
+        let candidate=heads[hash(p)],remaining=64;const maximum=Math.min(258,a.length-p);
+        while(candidate>=0 && p-candidate<=32768 && remaining--){
+          if(a[candidate]===a[p] && a[candidate+1]===a[p+1] && a[candidate+best]===a[p+best]){
+            let len=2;while(len<maximum && a[candidate+len]===a[p+len])len++;
+            if(len>best){best=len;bestDistance=p-candidate;if(len===maximum)break;}
+          }
+          candidate=previous[candidate];
+        }
+      }
+      if(bestDistance && best>=3){
+        let li=0;while(li+1<lengthBase.length && lengthBase[li+1]<=best)li++;
+        symbol(fixedLiteral,257+li);write(best-lengthBase[li],lengthExtra[li]);
+        let di=0;while(di+1<distanceBase.length && distanceBase[di+1]<=bestDistance)di++;
+        symbol(fixedDistance,di);write(bestDistance-distanceBase[di],distanceExtra[di]);
+        for(let j=0;j<best;j++)insert(p+j);p+=best;
+      }else{symbol(fixedLiteral,a[p]);insert(p);p++;}
+    }
+    symbol(fixedLiteral,256);if(buffered)out.push(buffer&255);return Uint8Array.from(out);
+  }
+  function gzip(input) {
+    const a=typeof input==="string"?utf8Encode(input):bytes(input), compressed=deflateRaw(a);
+    const out=new Uint8Array(18+compressed.length);out.set([31,139,8,0,0,0,0,0,0,255]);out.set(compressed,10);
+    const crc=crc32(a),size=a.length>>>0;for(let i=0;i<4;i++){out[out.length-8+i]=(crc>>>(8*i))&255;out[out.length-4+i]=(size>>>(8*i))&255;}
+    return out;
+  }
+  function decodeSourceBank(encoded,expectedSha256) {
+    const packed=base64Decode(encoded),decoded=gunzipDetailed(packed),digest=sha256(decoded.bytes);
+    if(expectedSha256 && digest!==expectedSha256.toLowerCase())fail("source-bank SHA256 mismatch: "+digest);
+    const text=utf8Decode(decoded.bytes),bank=JSON.parse(text);
+    return {bank,text,bytes:decoded.bytes.length,sha256:digest,gzipBase64:base64Encode(packed),gzipBytes:packed.length,gzipSha256:sha256(packed),members:decoded.members};
+  }
+  function encodeSourceBank(bankOrText) {
+    const text=typeof bankOrText==="string"?bankOrText:JSON.stringify(bankOrText),raw=utf8Encode(text),packed=gzip(raw);
+    return {text,bytes:raw.length,sha256:sha256(raw),gzipBase64:base64Encode(packed),gzipBytes:packed.length,gzipSha256:sha256(packed)};
+  }
+  return {utf8Encode,utf8Decode,base64Encode,base64Decode,crc32,sha256,inflateRaw,
+          gunzip:(input,options)=>gunzipDetailed(input,options).bytes,gunzipDetailed,deflateRaw,gzip,
+          decodeSourceBank,encodeSourceBank};
+}
+
+
+
+
+var UZIP = {};
+
+(function(){
+	
+	var B = {
+		readUshort : function(buff,p)  {  return (buff[p]) | (buff[p+1]<<8);  },
+		writeUshort: function(buff,p,n){  buff[p] = (n)&255;  buff[p+1] = (n>>8)&255;  },
+		readUint   : function(buff,p)  {  return (buff[p+3]*(256*256*256)) + ((buff[p+2]<<16) | (buff[p+1]<< 8) | buff[p]);  },
+		writeUint  : function(buff,p,n){  buff[p]=n&255;  buff[p+1]=(n>>8)&255;  buff[p+2]=(n>>16)&255;  buff[p+3]=(n>>24)&255;  },
+		readASCII  : function(buff,p,l){  var s = "";  for(var i=0; i<l; i++) s += String.fromCharCode(buff[p+i]);  return s;    },
+		writeASCII : function(data,p,s){  for(var i=0; i<s.length; i++) data[p+i] = s.charCodeAt(i);  },
+		pad : function(n) { return n.length < 2 ? "0" + n : n; },
+		readIBM  : function(buff, p, l) {
+			var codes = [
+				0xc7, 0xfc, 0xe9, 0xe2, 0xe4, 0xe0, 0xe5, 0xe7, 0xea,   0xeb, 0xe8, 0xef, 0xee, 0xec, 0xc4, 0xc5,
+				0xc9, 0xe6, 0xc6, 0xf4, 0xf6, 0xf2, 0xfb, 0xf9, 0xff,   0xd6, 0xdc, 0xa2, 0xa3, 0xa5, 0xa7, 0x192,
+				0xe1, 0xed, 0xf3, 0xfa, 0xf1, 0xd1, 0xaa, 0xba, 0xbf, 0x2310, 0xac, 0xbd, 0xbc, 0xa1, 0xab, 0xbb
+			]
+			var out = "";
+			for(var i=0; i<l; i++) {
+				var cc = buff[p+i];
+				if     (cc<0x80) cc = cc;
+				else if(cc<0xb0) cc = codes[cc-0x80];
+				else             return null;
+				out += String.fromCharCode(cc);
+			}
+			return out;
+		},
+		readUTF8 : function(buff, p, l) {
+			var s = "", ns;
+			for(var i=0; i<l; i++) s += "%" + B.pad(buff[p+i].toString(16));
+			try {  ns = decodeURIComponent(s); }
+			catch(e) {  return B.readASCII(buff, p, l);  }
+			return  ns;
+		},
+		writeUTF8 : function(buff, p, str) {
+			var strl = str.length, i=0;
+			for(var ci=0; ci<strl; ci++)
+			{
+				var code = str.charCodeAt(ci);
+				if     ((code&(0xffffffff-(1<< 7)+1))==0) {  buff[p+i] = (     code     );  i++;  }
+				else if((code&(0xffffffff-(1<<11)+1))==0) {  buff[p+i] = (192|(code>> 6));  buff[p+i+1] = (128|((code>> 0)&63));  i+=2;  }
+				else if((code&(0xffffffff-(1<<16)+1))==0) {  buff[p+i] = (224|(code>>12));  buff[p+i+1] = (128|((code>> 6)&63));  buff[p+i+2] = (128|((code>>0)&63));  i+=3;  }
+				else if((code&(0xffffffff-(1<<21)+1))==0) {  buff[p+i] = (240|(code>>18));  buff[p+i+1] = (128|((code>>12)&63));  buff[p+i+2] = (128|((code>>6)&63));  buff[p+i+3] = (128|((code>>0)&63)); i+=4;  }
+				else throw "e";
+			}
+			return i;
+		},
+		sizeUTF8 : function(str) {
+			var strl = str.length, i=0;
+			for(var ci=0; ci<strl; ci++)
+			{
+				var code = str.charCodeAt(ci);
+				if     ((code&(0xffffffff-(1<< 7)+1))==0) {  i++ ;  }
+				else if((code&(0xffffffff-(1<<11)+1))==0) {  i+=2;  }
+				else if((code&(0xffffffff-(1<<16)+1))==0) {  i+=3;  }
+				else if((code&(0xffffffff-(1<<21)+1))==0) {  i+=4;  }
+				else throw "e";
+			}
+			return i;
+		}
+	}
+	
+	var crc = {
+		table : ( function() {
+		   var tab = new Uint32Array(256);
+		   for (var n=0; n<256; n++) {
+				var c = n;
+				for (var k=0; k<8; k++) {
+					if (c & 1)  c = 0xedb88320 ^ (c >>> 1);
+					else        c = c >>> 1;
+				}
+				tab[n] = c;  }    
+			return tab;  })(),
+		update : function(c, buf, off, len) {
+			for (var i=0; i<len; i++)  c = crc.table[(c ^ buf[off+i]) & 0xff] ^ (c >>> 8);
+			return c;
+		},
+		crc : function(b,o,l)  {  return crc.update(0xffffffff,b,o,l) ^ 0xffffffff;  }
+	}
+	
+	function adler(data,o,len) {
+		var a = 1, b = 0;
+		var off = o, end=o+len;
+		while(off<end) {
+			var eend = Math.min(off+5552, end);
+			while(off<eend) {
+				a += data[off++];
+				b += a;
+			}
+			a=a%65521;
+			b=b%65521;
+		}
+		return (b << 16) | a;
+	}
+	
+	function parseTar(data) {
+		var off = 0, out={};
+		while(off+1024<data.length) {
+			var no=off;  while(data[no]!=0) no++;
+			var nam = B.readASCII(data,off,no-off);  off+=100;
+			off+=24;
+			var sz = parseInt(B.readASCII(data,off,12),8);  off+=12;
+			var tm = parseInt(B.readASCII(data,off,12),8);  off+=12;
+			// console.log(nam, sz, tm);  
+			off+=8+1+100;
+			off+=6+2+32+32+8+8+155+12;
+		
+			out[nam] = data.slice(off,off+sz);
+			off+=sz;
+			
+			var ex = off&0x1ff;  if(ex!=0) off+=512-ex;
+		}
+		return out;
+	}
+	/*
+	var parse7z = function() {
+		var rUs = B.readUshort, rUi = B.readUint;
+		var data, off;
+		
+		function NUMBER() {
+			var v = data[off++];
+			if     ((v&128)==0) return v;
+			else if((v& 64)==0) return ((((((v&63)<<8)+data[off++])    )           )   );
+			else if((v& 32)==0) return ((((((v&31)<<8)+data[off++])<<8)+data[off++])   );
+			else if((v& 16)==0) return ((((((v&31)<<8)+data[off++])<<8)+data[off++])<<8)+data[off++];
+			else throw v.toString(2);
+		}
+		
+		function readProp() {
+			var ID = data[off++];  console.log(ID.toString(16));
+			
+			if     (ID==0x17) readProp(off);  // EncodedHeader
+			else if(ID==0x06) { 			  // PackInfo
+				var pos = NUMBER();  
+				var cnt = NUMBER();  if(cnt!=1) throw "e";
+				
+				console.log(pos, cnt);
+				
+				console.log(data.slice(off));
+				
+				var siz = readProp();  console.log(siz);
+				
+				console.log(data.slice(off));
+				
+				var crc = readProp();  console.log(crc);
+				
+				
+				console.log(data.slice(off));
+			}
+			else if(ID==0x09) { 			 // Size
+				return NUMBER();
+			}
+			else throw ID;
+			
+		}
+		
+		function pars(_d) {
+			data = _d;  off=8;
+			
+			var sign = [55, 122, 188, 175, 39, 28, 0, 4];
+			for(var i=0; i<8; i++) if(data[i]!=sign[i]) throw "e";
+			
+			var crc = rUi(data,off);  off+=4;
+			
+			var nho = rUi(data,off);  off+=8;
+			var nhs = rUi(data,off);  off+=8;
+			var nhc = rUi(data,off);  off+=4;
+			console.log(nho,nhs,nhc);
+			
+			//var hdr=data[off++];
+			
+			//console.log(hdr);
+			
+			off = 32+nho;
+			readProp();
+			
+			
+			
+			
+			
+			console.log(data.slice(off));  throw "e";
+		}
+	
+		return pars;
+	}();
+	*/
+
+	function parse(buf, onlyNames)	// ArrayBuffer
+	{
+		var rUs = B.readUshort, rUi = B.readUint, o = 0, out = {};
+		var data = new Uint8Array(buf);
+		if(data.length>257+6 && B.readASCII(data,257,6)=="ustar ") return parseTar(data);
+		//if(B.readASCII(data,0,2)=="7z") return parse7z(data);
+		
+		var eocd = data.length-4;
+		
+		while(rUi(data, eocd)!=0x06054b50) eocd--;
+		
+		var o = eocd;
+		o+=4;	// sign  = 0x06054b50
+		o+=4;  // disks = 0;
+		var cnu = rUs(data, o);  o+=2;
+		var cnt = rUs(data, o);  o+=2;
+				
+		var csize = rUi(data, o);  o+=4;
+		var coffs = rUi(data, o);  o+=4;
+		
+		o = coffs;
+		for(var i=0; i<cnu; i++)
+		{
+			var sign = rUi(data, o);  o+=4;
+			o += 4;  // versions;
+			o += 4;  // flag + compr
+			var time = _readTime(data,o);  o += 4;  // time
+			
+			var crc32 = rUi(data, o);  o+=4;
+			var csize = rUi(data, o);  o+=4;
+			var usize = rUi(data, o);  o+=4;
+			
+			var nl = rUs(data, o), el = rUs(data, o+2), cl = rUs(data, o+4);  o += 6;  // name, extra, comment
+			o += 8;  // disk, attribs
+			var roff = rUi(data, o);  o+=4;
+			
+			o += nl;
+			
+			var lo=0;
+			while(lo<el) {
+				var id=rUs(data,o+lo);  lo+=2;
+				var sz=rUs(data,o+lo);  lo+=2;
+				if(id==1) {  // Zip64
+					if(usize==0xffffffff) {  usize=rUi(data,o+lo);  lo+=8;  }
+					if(csize==0xffffffff) {  csize=rUi(data,o+lo);  lo+=8;  }
+					if(roff ==0xffffffff) {  roff =rUi(data,o+lo);  lo+=8;  }
+				}
+				else lo+=sz;
+			}
+			
+			o += el + cl;
+			
+			_readLocal(data, roff, out, csize, usize, onlyNames);
+		}
+		//console.log(out);
+		return out;
+	}
+
+	function _readTime(data,o) {
+		var time = B.readUshort(data,o), date = B.readUshort(data,o+2);
+		var year = 1980+(date>>>9);
+		var mont = (date>>>5)&15;
+		var day  = (date)&31;
+		//console.log(year,mont,day);
+		
+		var hour = (time>>>11);
+		var minu = (time>>> 5)&63;
+		var seco = 2*(time&31);
+		
+		var stamp = new Date(year,mont,day,hour,minu,seco).getTime();
+		
+		//console.log(date,time);
+		return stamp;
+	}
+	function _writeTime(data,o,stamp) {
+		var dt = new Date(stamp);
+		var date = ((dt.getFullYear()-1980)<<9) | ((dt.getMonth()+1)<<5) | dt.getDate();
+		var time = (dt.getHours()<<11) | (dt.getMinutes()<<5) | (dt.getSeconds()>>>1);
+		B.writeUshort(data,o,time);
+		B.writeUshort(data,o+2,date);
+	}
+
+
+	function _readLocal(data, o, out, csize, usize, onlyNames)
+	{
+		var rUs = B.readUshort, rUi = B.readUint;
+		var sign  = rUi(data, o);  o+=4;
+		var ver   = rUs(data, o);  o+=2;
+		var gpflg = rUs(data, o);  o+=2;
+		//if((gpflg&8)!=0) throw "unknown sizes";
+		var cmpr  = rUs(data, o);  o+=2;
+		
+		var time  = _readTime(data,o);  o+=4;
+		
+		var crc32 = rUi(data, o);  o+=4;
+		//var csize = rUi(data, o);  o+=4;
+		//var usize = rUi(data, o);  o+=4;
+		o+=8;
+			
+		var nlen  = rUs(data, o);  o+=2;
+		var elen  = rUs(data, o);  o+=2;
+			
+		var name =  (gpflg&2048)==0 ? B.readIBM(data,o,nlen) : B.readUTF8(data, o, nlen);  
+		if(name==null) name=B.readUTF8(data, o, nlen);
+		o += nlen;  //console.log(name);
+		o += elen;
+				
+		//console.log(sign.toString(16), ver, gpflg, cmpr, crc32.toString(16), "csize, usize", csize, usize, nlen, elen, name, o);
+		if(onlyNames) {  out[name]={size:usize, csize:csize};  return;  }   
+		var file = new Uint8Array(data.buffer, o);
+		if(gpflg&1) {  out[name] = new Uint8Array(0);  alert("ZIPs with a password are not supported.",3000);  }
+		else if(cmpr==0) out[name] = new Uint8Array(file.buffer.slice(o, o+csize));
+		else if(cmpr==8) {
+			var buf = new Uint8Array(usize);  inflateRaw(file, buf);
+			/*var nbuf = pako["inflateRaw"](file);
+			if(usize>8514000) {
+				//console.log(PUtils.readASCII(buf , 8514500, 500));
+				//console.log(PUtils.readASCII(nbuf, 8514500, 500));
+			}
+			for(var i=0; i<buf.length; i++) if(buf[i]!=nbuf[i]) {  console.log(buf.length, nbuf.length, usize, i);  throw "e";  }
+			*/
+			out[name] = buf;
+		}
+		else if(cmpr==14 && window["LZMA"]) {
+			var vsn = rUs(file,0);
+			var siz = rUs(file,2);  if(siz!=5) throw "unknown LZMA header";
+			
+			var prp = file[4];
+			var dictSize = rUi(file,5);
+			var lc = prp % 9;
+			prp = ~~(prp / 9);
+			var lp = prp % 5;
+			var pb = ~~(prp / 5);
+			//console.log(vsn,siz,dictSize,lc,lp,pb);
+			
+			//console.log(file);
+			var time = Date.now();
+			var buf = out[name] = new Uint8Array(usize);
+						
+			var dec = new window["LZMA"]["Decoder"]();
+			dec["setProperties"]({ "dsz":dictSize, "lc":lc, "lp":lp, "pb":pb });
+			dec["decodeBody"](new Uint8Array(data.buffer,o+9),buf, usize);
+			
+			//console.log(Date.now()-time);
+		}
+		else throw "unknown compression method: "+cmpr;
+	}
+	
+	function UStream(buf) {  this.buf = buf;  this.off = 0;  }
+	UStream.prototype["readByte"]  = function(   ) {  return this.buf[this.off++];  }
+	UStream.prototype["writeByte"] = function(b  ) {  this.buf[this.off++] = b;     }
+	UStream.prototype["writeBytes"]= function(a,s) {  a = new Uint8Array(a.buffer,a.byteOffset,Math.min(a.length,this.buf.length-this.off));  this.buf.set(a,this.off);  this.off+=a.length;  }
+
+	function inflateRaw(file, buf) {  return UZIP["F"]["inflate"](file, buf);  }
+	function inflate(file, buf) { 
+		var CMF = file[0], FLG = file[1];
+		if(CMF==31 && FLG==139) {  // GZIP
+			var CM = file[2], FLG = file[3];  if(CM!=8) throw CM;  /* 8 is DEFLATE */
+			var off = 4;  off+=4;  // MTIME
+			off+=2;  // XFL, OS
+			if((FLG& 4)!=0) throw "e";  // FEXTRA
+			if((FLG& 8)!=0) {           // FNAME
+				while(file[off]!=0) off++;  off++;
+			}
+			if((FLG&16)!=0) throw "e";  // FCOMMENT
+			if((FLG& 2)!=0) throw "e";  // FHCR
+			return inflateRaw(new Uint8Array(file.buffer, file.byteOffset+off, file.length-off-8), buf);  
+		}
+		var CM = (CMF&15), CINFO = (CMF>>>4);
+		//console.log(CM, CINFO,CMF,FLG);
+		return inflateRaw(new Uint8Array(file.buffer, file.byteOffset+2, file.length-6), buf);  
+	}
+	function deflate(data, opts/*, buf, off*/) {
+		if(opts==null) opts={"level":6};
+		var off=0, buf=new Uint8Array(50+Math.floor(data.length*1.1));
+		buf[off]=120;  buf[off+1]=156;  off+=2;
+		off = UZIP["F"]["deflateRaw"](data, buf, off, opts["level"]);
+		var crc = adler(data, 0, data.length);
+		buf[off+0]=((crc>>>24)&255); 
+		buf[off+1]=((crc>>>16)&255); 
+		buf[off+2]=((crc>>> 8)&255); 
+		buf[off+3]=((crc>>> 0)&255); 	
+		return new Uint8Array(buf.buffer, 0, off+4);
+	}
+	function deflateRaw(data, opts) {
+		if(opts==null) opts={"level":6};
+		var buf=new Uint8Array(50+Math.floor(data.length*1.1));
+		var off = UZIP["F"]["deflateRaw"](data, buf, off, opts["level"]);
+		return new Uint8Array(buf.buffer, 0, off);
+	}
+
+
+	function encode(obj, noCmpr) {
+		if(noCmpr==null) noCmpr=false;
+		var tot = 0, wUi = B.writeUint, wUs = B.writeUshort;
+		var zpd = {};
+		for(var p in obj) {  var cpr = !_noNeed(p) && !noCmpr, buf = obj[p], cr = crc.crc(buf,0,buf.length); 
+			zpd[p] = {  cpr:cpr, usize:buf.length, crc:cr, file: (cpr ? deflateRaw(buf) : buf)  };  }
+		
+		for(var p in zpd) tot += zpd[p].file.length + 30 + 46 + 2*B.sizeUTF8(p);
+		tot +=  22;
+		
+		var data = new Uint8Array(tot), o = 0;
+		var fof = []
+		
+		for(var p in zpd) {
+			var file = zpd[p];  fof.push(o);
+			o = _writeHeader(data, o, p, file, 0);
+		}
+		var i=0, ioff = o;
+		for(var p in zpd) {
+			var file = zpd[p];  fof.push(o);
+			o = _writeHeader(data, o, p, file, 1, fof[i++]);		
+		}
+		var csize = o-ioff;
+		
+		wUi(data, o, 0x06054b50);  o+=4;
+		o += 4;  // disks
+		wUs(data, o, i);  o += 2;
+		wUs(data, o, i);  o += 2;	// number of c d records
+		wUi(data, o, csize);  o += 4;
+		wUi(data, o, ioff );  o += 4;
+		o += 2;
+		return data.buffer;
+	}
+	// no need to compress .PNG, .ZIP, .JPEG ....
+	function _noNeed(fn) {  var ext = fn.split(".").pop().toLowerCase();  return ["png","jpg","jpeg","webp","zip","mp3","mp4"].indexOf(ext)!=-1;  }
+
+	function _writeHeader(data, o, p, obj, t, roff)
+	{
+		// it is a task of a user to provide valid file names
+		//var bad = "#%&{}\<>*?$'\":@+`|=";
+		//for(var i=0; i<p.length; i++) if(bad.indexOf(p[i])!=-1) p = p.slice(0,i)+"_"+p.slice(i+1);
+		
+		var wUi = B.writeUint, wUs = B.writeUshort;
+		var file = obj.file;
+		
+		wUi(data, o, t==0 ? 0x04034b50 : 0x02014b50);  o+=4; // sign
+		if(t==1) o+=2;  // ver made by
+		wUs(data, o, 20);  o+=2;	// ver
+		wUs(data, o,  2048);  o+=2;    // gflip
+		wUs(data, o,  obj.cpr?8:0);  o+=2;	// cmpr
+			
+		_writeTime(data,o,Date.now());  o+=4;//wUi(data, o,  0);  o+=4;	// time		
+		wUi(data, o, obj.crc);  o+=4;	// crc32
+		wUi(data, o, file.length);  o+=4;	// csize
+		wUi(data, o, obj.usize);  o+=4;	// usize
+			
+		wUs(data, o, B.sizeUTF8(p));  o+=2;	// nlen
+		wUs(data, o, 0);  o+=2;	// elen
+		
+		if(t==1) {
+			o += 2;  // comment length
+			o += 2;  // disk number
+			o += 6;  // attributes
+			wUi(data, o, roff);  o+=4;	// usize
+		}
+		var nlen = B.writeUTF8(data, o, p);  o+= nlen;	
+		if(t==0) {  data.set(file, o);  o += file.length;  }
+		return o;
+	}
+
+	
+	UZIP["crc"  ] = crc;
+	UZIP["adler"  ] = adler;
+	
+	UZIP["inflate"   ] = inflate;
+	UZIP["inflateRaw"] = inflateRaw;
+	UZIP["deflate"   ] = deflate;
+	UZIP["deflateRaw"] = deflateRaw;
+	UZIP["parse"     ] = parse;
+	UZIP["encode"    ] = encode;
+})();
+
+
+
+
+
+
+(function() {
+	
+	var U = (function(){
+		var u16=Uint16Array, u32=Uint32Array;
+		return {
+			next_code : new u16(16),
+			bl_count  : new u16(16),
+			ordr : [ 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 ],
+			of0  : [3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258,999,999,999],
+			exb  : [0,0,0,0,0,0,0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4,  4,  5,  5,  5,  5,  0,  0,  0,  0],
+			ldef : new u16(32),
+			df0  : [1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577, 65535, 65535],
+			dxb  : [0,0,0,0,1,1,2, 2, 3, 3, 4, 4, 5, 5,  6,  6,  7,  7,  8,  8,   9,   9,  10,  10,  11,  11,  12,   12,   13,   13,     0,     0],
+			ddef : new u32(32),
+			flmap: new u16(  512),  fltree: [],
+			fdmap: new u16(   32),  fdtree: [],
+			lmap : new u16(32768),  ltree : [],  ttree:[],
+			dmap : new u16(32768),  dtree : [],
+			imap : new u16(  512),  itree : [],
+			//rev9 : new u16(  512)
+			rev15: new u16(1<<15),
+			lhst : new u32(286), dhst : new u32( 30), ihst : new u32(19),
+			lits : new u32(15000),
+			strt : new u16(1<<16),
+			prev : new u16(1<<15)
+		};  
+	})();
+	
+	function makeCodes(tree, MAX_BITS) {  // code, length
+		var max_code = tree.length;
+		var code, bits, n, i, len;
+		
+		var bl_count = U.bl_count;  for(var i=0; i<=MAX_BITS; i++) bl_count[i]=0;
+		for(i=1; i<max_code; i+=2) bl_count[tree[i]]++;
+		
+		var next_code = U.next_code;	// smallest code for each length
+		
+		code = 0;
+		bl_count[0] = 0;
+		for (bits = 1; bits <= MAX_BITS; bits++) {
+			code = (code + bl_count[bits-1]) << 1;
+			next_code[bits] = code;
+		}
+		
+		for (n = 0; n < max_code; n+=2) {
+			len = tree[n+1];
+			if (len != 0) {
+				tree[n] = next_code[len];
+				next_code[len]++;
+			}
+		}
+	}
+	function codes2map(tree, MAX_BITS, map) {
+		var max_code = tree.length;
+		var r15 = U.rev15;
+		for(var i=0; i<max_code; i+=2) if(tree[i+1]!=0)  {
+			var lit = i>>1;
+			var cl = tree[i+1], val = (lit<<4)|cl; // :  (0x8000 | (U.of0[lit-257]<<7) | (U.exb[lit-257]<<4) | cl);
+			var rest = (MAX_BITS-cl), i0 = tree[i]<<rest, i1 = i0 + (1<<rest);
+			//tree[i]=r15[i0]>>>(15-MAX_BITS);
+			while(i0!=i1) {
+				var p0 = r15[i0]>>>(15-MAX_BITS);
+				map[p0]=val;  i0++;
+			}
+		}
+	}
+	function revCodes(tree, MAX_BITS) {
+		var r15 = U.rev15, imb = 15-MAX_BITS;
+		for(var i=0; i<tree.length; i+=2) {  var i0 = (tree[i]<<(MAX_BITS-tree[i+1]));  tree[i] = r15[i0]>>>imb;  }
+	}
+
+	// used only in deflate
+	function _putsE(dt, pos, val   ) {  val = val<<(pos&7);  var o=(pos>>>3);  dt[o]|=val;  dt[o+1]|=(val>>>8);                        }
+	function _putsF(dt, pos, val   ) {  val = val<<(pos&7);  var o=(pos>>>3);  dt[o]|=val;  dt[o+1]|=(val>>>8);  dt[o+2]|=(val>>>16);  }
+
+	function _bitsE(dt, pos, length) {  return ((dt[pos>>>3] | (dt[(pos>>>3)+1]<<8)                        )>>>(pos&7))&((1<<length)-1);  }
+	function _bitsF(dt, pos, length) {  return ((dt[pos>>>3] | (dt[(pos>>>3)+1]<<8) | (dt[(pos>>>3)+2]<<16))>>>(pos&7))&((1<<length)-1);  }
+	
+	function _get17(dt, pos) {	// return at least 17 meaningful bytes
+		return (dt[pos>>>3] | (dt[(pos>>>3)+1]<<8) | (dt[(pos>>>3)+2]<<16) )>>>(pos&7);
+	}
+	function _get25(dt, pos) {	// return at least 17 meaningful bytes
+		return (dt[pos>>>3] | (dt[(pos>>>3)+1]<<8) | (dt[(pos>>>3)+2]<<16) | (dt[(pos>>>3)+3]<<24) )>>>(pos&7);
+	}
+	
+
+	(function(){	
+		var len = 1<<15;
+		for(var i=0; i<len; i++) {
+			var x = i;
+			x = (((x & 0xaaaaaaaa) >>> 1) | ((x & 0x55555555) << 1));
+			x = (((x & 0xcccccccc) >>> 2) | ((x & 0x33333333) << 2));
+			x = (((x & 0xf0f0f0f0) >>> 4) | ((x & 0x0f0f0f0f) << 4));
+			x = (((x & 0xff00ff00) >>> 8) | ((x & 0x00ff00ff) << 8));
+			U.rev15[i] = (((x >>> 16) | (x << 16)))>>>17;
+		}
+		
+		function pushV(tgt, n, sv) {  while(n--!=0) tgt.push(0,sv);  }
+		
+		for(var i=0; i<32; i++) {  U.ldef[i]=(U.of0[i]<<3)|U.exb[i];  U.ddef[i]=(U.df0[i]<<4)|U.dxb[i];  }
+		
+		pushV(U.fltree, 144, 8);  pushV(U.fltree, 255-143, 9);  pushV(U.fltree, 279-255, 7);  pushV(U.fltree,287-279,8);
+		/*
+		var i = 0;
+		for(; i<=143; i++) U.fltree.push(0,8);
+		for(; i<=255; i++) U.fltree.push(0,9);
+		for(; i<=279; i++) U.fltree.push(0,7);
+		for(; i<=287; i++) U.fltree.push(0,8);
+		*/
+		makeCodes(U.fltree, 9);
+		codes2map(U.fltree, 9, U.flmap);
+		revCodes (U.fltree, 9)
+		
+		pushV(U.fdtree,32,5);
+		//for(i=0;i<32; i++) U.fdtree.push(0,5);
+		makeCodes(U.fdtree, 5);
+		codes2map(U.fdtree, 5, U.fdmap);
+		revCodes (U.fdtree, 5)
+		
+		pushV(U.itree,19,0);  pushV(U.ltree,286,0);  pushV(U.dtree,30,0);  pushV(U.ttree,320,0);
+		/*
+		for(var i=0; i< 19; i++) U.itree.push(0,0);
+		for(var i=0; i<286; i++) U.ltree.push(0,0);
+		for(var i=0; i< 30; i++) U.dtree.push(0,0);
+		for(var i=0; i<320; i++) U.ttree.push(0,0);
+		*/
+	})();
+
+	function deflateRaw(data, out, opos, lvl) {	
+		var opts = [
+		/*
+			 ush good_length; /* reduce lazy search above this match length 
+			 ush max_lazy;    /* do not perform lazy search above this match length 
+			 ush nice_length; /* quit search above this match length 
+		*/
+		/*      good lazy nice chain */
+		/* 0 */ [ 0,   0,   0,    0,0],  /* store only */
+		/* 1 */ [ 4,   4,   8,    4,0], /* max speed, no lazy matches */
+		/* 2 */ [ 4,   5,  16,    8,0],
+		/* 3 */ [ 4,   6,  16,   16,0],
+
+		/* 4 */ [ 4,  10,  16,   32,0],  /* lazy matches */
+		/* 5 */ [ 8,  16,  32,   32,0],
+		/* 6 */ [ 8,  16, 128,  128,0],
+		/* 7 */ [ 8,  32, 128,  256,0],
+		/* 8 */ [32, 128, 258, 1024,1],
+		/* 9 */ [32, 258, 258, 4096,1]]; /* max compression */
+		
+		var opt = opts[lvl];
+		
+		
+		//var U = UZIP.F.U, goodIndex = UZIP.F._goodIndex, hash = UZIP.F._hash, putsE = UZIP.F._putsE;
+		var i = 0, pos = opos<<3, cvrd = 0, dlen = data.length;
+		
+		if(lvl==0) {
+			while(i<dlen) {   var len = Math.min(0xffff, dlen-i);
+				_putsE(out, pos, (i+len==dlen ? 1 : 0));  pos = _copyExact(data, i, len, out, pos+8);  i += len;  }
+			return pos>>>3;
+		}
+
+		var lits = U.lits, strt=U.strt, prev=U.prev, li=0, lc=0, bs=0, ebits=0, c=0, nc=0;  // last_item, literal_count, block_start
+		if(dlen>2) {  nc=_hash(data,0);  strt[nc]=0;  }
+		var nmch=0,nmci=0;
+		
+		for(i=0; i<dlen; i++)  {
+			c = nc;
+			//*
+			if(i+1<dlen-2) {
+				nc = _hash(data, i+1);
+				var ii = ((i+1)&0x7fff);
+				prev[ii]=strt[nc];
+				strt[nc]=ii;
+			} //*/
+			if(cvrd<=i) {
+				if((li>14000 || lc>26697) && (dlen-i)>100) {
+					if(cvrd<i) {  lits[li]=i-cvrd;  li+=2;  cvrd=i;  }
+					pos = _writeBlock(((i==dlen-1) || (cvrd==dlen))?1:0, lits, li, ebits, data,bs,i-bs, out, pos);  li=lc=ebits=0;  bs=i;
+				}
+				
+				var mch = 0;
+				//if(nmci==i) mch= nmch;  else 
+				if(i<dlen-2) mch = _bestMatch(data, i, prev, c, Math.min(opt[2],dlen-i), opt[3]);
+				/*
+				if(mch!=0 && opt[4]==1 && (mch>>>16)<opt[1] && i+1<dlen-2) {
+					nmch = UZIP.F._bestMatch(data, i+1, prev, nc, opt[2], opt[3]);  nmci=i+1;
+					//var mch2 = UZIP.F._bestMatch(data, i+2, prev, nnc);  //nmci=i+1;
+					if((nmch>>>16)>(mch>>>16)) mch=0;
+				}//*/
+				var len = mch>>>16, dst = mch&0xffff;  //if(i-dst<0) throw "e";
+				if(mch!=0) { 
+					var len = mch>>>16, dst = mch&0xffff;  //if(i-dst<0) throw "e";
+					var lgi = _goodIndex(len, U.of0);  U.lhst[257+lgi]++; 
+					var dgi = _goodIndex(dst, U.df0);  U.dhst[    dgi]++;  ebits += U.exb[lgi] + U.dxb[dgi]; 
+					lits[li] = (len<<23)|(i-cvrd);  lits[li+1] = (dst<<16)|(lgi<<8)|dgi;  li+=2;
+					cvrd = i + len;  
+				}
+				else {	U.lhst[data[i]]++;  }
+				lc++;
+			}
+		}
+		if(bs!=i || data.length==0) {
+			if(cvrd<i) {  lits[li]=i-cvrd;  li+=2;  cvrd=i;  }
+			pos = _writeBlock(1, lits, li, ebits, data,bs,i-bs, out, pos);  li=0;  lc=0;  li=lc=ebits=0;  bs=i;
+		}
+		while((pos&7)!=0) pos++;
+		return pos>>>3;
+	}
+	function _bestMatch(data, i, prev, c, nice, chain) {
+		var ci = (i&0x7fff), pi=prev[ci];  
+		//console.log("----", i);
+		var dif = ((ci-pi + (1<<15)) & 0x7fff);  if(pi==ci || c!=_hash(data,i-dif)) return 0;
+		var tl=0, td=0;  // top length, top distance
+		var dlim = Math.min(0x7fff, i);
+		while(dif<=dlim && --chain!=0 && pi!=ci /*&& c==UZIP.F._hash(data,i-dif)*/) {
+			if(tl==0 || (data[i+tl]==data[i+tl-dif])) {
+				var cl = _howLong(data, i, dif);
+				if(cl>tl) {  
+					tl=cl;  td=dif;  if(tl>=nice) break;    //* 
+					if(dif+2<cl) cl = dif+2;
+					var maxd = 0; // pi does not point to the start of the word
+					for(var j=0; j<cl-2; j++) {
+						var ei =  (i-dif+j+ (1<<15)) & 0x7fff;
+						var li = prev[ei];
+						var curd = (ei-li + (1<<15)) & 0x7fff;
+						if(curd>maxd) {  maxd=curd;  pi = ei; }
+					}  //*/
+				}
+			}
+			
+			ci=pi;  pi = prev[ci];
+			dif += ((ci-pi + (1<<15)) & 0x7fff);
+		}
+		return (tl<<16)|td;
+	}
+	function _howLong(data, i, dif) {
+		if(data[i]!=data[i-dif] || data[i+1]!=data[i+1-dif] || data[i+2]!=data[i+2-dif]) return 0;
+		var oi=i, l = Math.min(data.length, i+258);  i+=3;
+		//while(i+4<l && data[i]==data[i-dif] && data[i+1]==data[i+1-dif] && data[i+2]==data[i+2-dif] && data[i+3]==data[i+3-dif]) i+=4;
+		while(i<l && data[i]==data[i-dif]) i++;
+		return i-oi;
+	}
+	function _hash(data, i) {
+		return (((data[i]<<8) | data[i+1])+(data[i+2]<<4))&0xffff;
+		//var hash_shift = 0, hash_mask = 255;
+		//var h = data[i+1] % 251;
+		//h = (((h << 8) + data[i+2]) % 251);
+		//h = (((h << 8) + data[i+2]) % 251);
+		//h = ((h<<hash_shift) ^ (c) ) & hash_mask;
+		//return h | (data[i]<<8);
+		//return (data[i] | (data[i+1]<<8));
+	}
+	//UZIP.___toth = 0;
+	//UZIP.saved = 0;
+	function _writeBlock(BFINAL, lits, li, ebits, data,o0,l0, out, pos) {
+		//var U = UZIP.F.U, putsF = UZIP.F._putsF, putsE = UZIP.F._putsE;
+		
+		//*
+		var T, ML, MD, MH, numl, numd, numh, lset, dset;  U.lhst[256]++;
+		T = getTrees(); ML=T[0]; MD=T[1]; MH=T[2]; numl=T[3]; numd=T[4]; numh=T[5]; lset=T[6]; dset=T[7];
+		
+		var cstSize = (((pos+3)&7)==0 ? 0 : 8-((pos+3)&7)) + 32 + (l0<<3);
+		var fxdSize = ebits + contSize(U.fltree, U.lhst) + contSize(U.fdtree, U.dhst);
+		var dynSize = ebits + contSize(U.ltree , U.lhst) + contSize(U.dtree , U.dhst);
+		dynSize    += 14 + 3*numh + contSize(U.itree, U.ihst) + (U.ihst[16]*2 + U.ihst[17]*3 + U.ihst[18]*7);
+		
+		for(var j=0; j<286; j++) U.lhst[j]=0;   for(var j=0; j<30; j++) U.dhst[j]=0;   for(var j=0; j<19; j++) U.ihst[j]=0;
+		//*/
+		var BTYPE = (cstSize<fxdSize && cstSize<dynSize) ? 0 : ( fxdSize<dynSize ? 1 : 2 );
+		_putsF(out, pos, BFINAL);  _putsF(out, pos+1, BTYPE);  pos+=3;
+		
+		var opos = pos;
+		if(BTYPE==0) {
+			while((pos&7)!=0) pos++;
+			pos = _copyExact(data, o0, l0, out, pos);
+		}
+		else {
+			var ltree, dtree;
+			if(BTYPE==1) {  ltree=U.fltree;  dtree=U.fdtree;  }
+			if(BTYPE==2) {	
+				makeCodes(U.ltree, ML);  revCodes(U.ltree, ML);
+				makeCodes(U.dtree, MD);  revCodes(U.dtree, MD);
+				makeCodes(U.itree, MH);  revCodes(U.itree, MH);
+				
+				ltree = U.ltree;  dtree = U.dtree;
+				
+				_putsE(out, pos,numl-257);  pos+=5;  // 286
+				_putsE(out, pos,numd-  1);  pos+=5;  // 30
+				_putsE(out, pos,numh-  4);  pos+=4;  // 19
+				
+				for(var i=0; i<numh; i++) _putsE(out, pos+i*3, U.itree[(U.ordr[i]<<1)+1]);   pos+=3* numh;
+				pos = _codeTiny(lset, U.itree, out, pos);
+				pos = _codeTiny(dset, U.itree, out, pos);
+			}
+			
+			var off=o0;
+			for(var si=0; si<li; si+=2) {
+				var qb=lits[si], len=(qb>>>23), end = off+(qb&((1<<23)-1));
+				while(off<end) pos = _writeLit(data[off++], ltree, out, pos);
+				
+				if(len!=0) {
+					var qc = lits[si+1], dst=(qc>>16), lgi=(qc>>8)&255, dgi=(qc&255);
+					pos = _writeLit(257+lgi, ltree, out, pos);
+					_putsE(out, pos, len-U.of0[lgi]);  pos+=U.exb[lgi];
+					
+					pos = _writeLit(dgi, dtree, out, pos);
+					_putsF(out, pos, dst-U.df0[dgi]);  pos+=U.dxb[dgi];  off+=len;
+				}
+			}
+			pos = _writeLit(256, ltree, out, pos);
+		}
+		//console.log(pos-opos, fxdSize, dynSize, cstSize);
+		return pos;
+	}
+	function _copyExact(data,off,len,out,pos) {
+		var p8 = (pos>>>3);
+		out[p8]=(len);  out[p8+1]=(len>>>8);  out[p8+2]=255-out[p8];  out[p8+3]=255-out[p8+1];  p8+=4;
+		out.set(new Uint8Array(data.buffer, off, len), p8);
+		//for(var i=0; i<len; i++) out[p8+i]=data[off+i];
+		return pos + ((len+4)<<3);
+	}
+	/*
+		Interesting facts:
+		- decompressed block can have bytes, which do not occur in a Huffman tree (copied from the previous block by reference)
+	*/
+
+	function getTrees() {
+		var ML = _hufTree(U.lhst, U.ltree, 15);
+		var MD = _hufTree(U.dhst, U.dtree, 15);
+		var lset = [], numl = _lenCodes(U.ltree, lset);
+		var dset = [], numd = _lenCodes(U.dtree, dset);
+		for(var i=0; i<lset.length; i+=2) U.ihst[lset[i]]++;
+		for(var i=0; i<dset.length; i+=2) U.ihst[dset[i]]++;
+		var MH = _hufTree(U.ihst, U.itree,  7);
+		var numh = 19;  while(numh>4 && U.itree[(U.ordr[numh-1]<<1)+1]==0) numh--;
+		return [ML, MD, MH, numl, numd, numh, lset, dset];
+	}
+	function getSecond(a) {  var b=[];  for(var i=0; i<a.length; i+=2) b.push  (a[i+1]);  return b;  }
+	function nonZero(a) {  var b= "";  for(var i=0; i<a.length; i+=2) if(a[i+1]!=0)b+=(i>>1)+",";  return b;  }
+	function contSize(tree, hst) {  var s=0;  for(var i=0; i<hst.length; i++) s+= hst[i]*tree[(i<<1)+1];  return s;  }
+	function _codeTiny(set, tree, out, pos) {
+		for(var i=0; i<set.length; i+=2) {
+			var l = set[i], rst = set[i+1];  //console.log(l, pos, tree[(l<<1)+1]);
+			pos = _writeLit(l, tree, out, pos);
+			var rsl = l==16 ? 2 : (l==17 ? 3 : 7);
+			if(l>15) {  _putsE(out, pos, rst, rsl);  pos+=rsl;  }
+		}
+		return pos;
+	}
+	function _lenCodes(tree, set) {
+		var len=tree.length;  while(len!=2 && tree[len-1]==0) len-=2;  // when no distances, keep one code with length 0
+		for(var i=0; i<len; i+=2) {
+			var l = tree[i+1], nxt = (i+3<len ? tree[i+3]:-1),  nnxt = (i+5<len ? tree[i+5]:-1),  prv = (i==0 ? -1 : tree[i-1]);
+			if(l==0 && nxt==l && nnxt==l) {
+				var lz = i+5;
+				while(lz+2<len && tree[lz+2]==l) lz+=2;
+				var zc = Math.min((lz+1-i)>>>1, 138);
+				if(zc<11) set.push(17, zc-3);
+				else set.push(18, zc-11);
+				i += zc*2-2;
+			}
+			else if(l==prv && nxt==l && nnxt==l) {
+				var lz = i+5;
+				while(lz+2<len && tree[lz+2]==l) lz+=2;
+				var zc = Math.min((lz+1-i)>>>1, 6);
+				set.push(16, zc-3);
+				i += zc*2-2;
+			}
+			else set.push(l, 0);
+		}
+		return len>>>1;
+	}
+	function _hufTree(hst, tree, MAXL) {
+		var list=[], hl = hst.length, tl=tree.length, i=0;
+		for(i=0; i<tl; i+=2) {  tree[i]=0;  tree[i+1]=0;  }	
+		for(i=0; i<hl; i++) if(hst[i]!=0) list.push({lit:i, f:hst[i]});
+		var end = list.length, l2=list.slice(0);
+		if(end==0) return 0;  // empty histogram (usually for dist)
+		if(end==1) {  var lit=list[0].lit, l2=lit==0?1:0;  tree[(lit<<1)+1]=1;  tree[(l2<<1)+1]=1;  return 1;  }
+		list.sort(function(a,b){return a.f-b.f;});
+		var a=list[0], b=list[1], i0=0, i1=1, i2=2;  list[0]={lit:-1,f:a.f+b.f,l:a,r:b,d:0};
+		while(i1!=end-1) {
+			if(i0!=i1 && (i2==end || list[i0].f<list[i2].f)) {  a=list[i0++];  }  else {  a=list[i2++];  }
+			if(i0!=i1 && (i2==end || list[i0].f<list[i2].f)) {  b=list[i0++];  }  else {  b=list[i2++];  }
+			list[i1++]={lit:-1,f:a.f+b.f, l:a,r:b};
+		}
+		var maxl = setDepth(list[i1-1], 0);
+		if(maxl>MAXL) {  restrictDepth(l2, MAXL, maxl);  maxl = MAXL;  }
+		for(i=0; i<end; i++) tree[(l2[i].lit<<1)+1]=l2[i].d;
+		return maxl;
+	}
+
+	function setDepth(t, d) {
+		if(t.lit!=-1) {  t.d=d;  return d;  }
+		return Math.max( setDepth(t.l, d+1),  setDepth(t.r, d+1) );
+	}
+
+	function restrictDepth(dps, MD, maxl) {
+		var i=0, bCost=1<<(maxl-MD), dbt=0;
+		dps.sort(function(a,b){return b.d==a.d ? a.f-b.f : b.d-a.d;});
+		
+		for(i=0; i<dps.length; i++) if(dps[i].d>MD) {  var od=dps[i].d;  dps[i].d=MD;  dbt+=bCost-(1<<(maxl-od));  }  else break;
+		dbt = dbt>>>(maxl-MD);
+		while(dbt>0) {  var od=dps[i].d;  if(od<MD) {  dps[i].d++;  dbt-=(1<<(MD-od-1));  }  else  i++;  }
+		for(; i>=0; i--) if(dps[i].d==MD && dbt<0) {  dps[i].d--;  dbt++;  }  if(dbt!=0) console.log("debt left");
+	}
+
+	function _goodIndex(v, arr) {
+		var i=0;  if(arr[i|16]<=v) i|=16;  if(arr[i|8]<=v) i|=8;  if(arr[i|4]<=v) i|=4;  if(arr[i|2]<=v) i|=2;  if(arr[i|1]<=v) i|=1;  return i;
+	}
+	function _writeLit(ch, ltree, out, pos) {
+		_putsF(out, pos, ltree[ch<<1]);
+		return pos+ltree[(ch<<1)+1];
+	}
+
+
+
+
+
+
+
+
+	function inflate(data, buf) {
+		var u8=Uint8Array;
+		if(data[0]==3 && data[1]==0) return (buf ? buf : new u8(0));
+		//var F=UZIP.F, bitsF = F._bitsF, bitsE = F._bitsE, decodeTiny = F._decodeTiny, makeCodes = F.makeCodes, codes2map=F.codes2map, get17 = F._get17;
+		
+		var noBuf = (buf==null);
+		if(noBuf) buf = new u8((data.length>>>2)<<3);
+		
+		var BFINAL=0, BTYPE=0, HLIT=0, HDIST=0, HCLEN=0, ML=0, MD=0; 	
+		var off = 0, pos = 0;
+		var lmap, dmap;
+		
+		while(BFINAL==0) {		
+			BFINAL = _bitsF(data, pos  , 1);
+			BTYPE  = _bitsF(data, pos+1, 2);  pos+=3;
+			//console.log(BFINAL, BTYPE);
+			
+			if(BTYPE==0) {
+				if((pos&7)!=0) pos+=8-(pos&7);
+				var p8 = (pos>>>3)+4, len = data[p8-4]|(data[p8-3]<<8);  //console.log(len);//bitsF(data, pos, 16), 
+				if(noBuf) buf=_check(buf, off+len);
+				buf.set(new u8(data.buffer, data.byteOffset+p8, len), off);
+				//for(var i=0; i<len; i++) buf[off+i] = data[p8+i];
+				//for(var i=0; i<len; i++) if(buf[off+i] != data[p8+i]) throw "e";
+				pos = ((p8+len)<<3);  off+=len;  continue;
+			}
+			if(noBuf) buf=_check(buf, off+(1<<17));  // really not enough in many cases (but PNG and ZIP provide buffer in advance)
+			if(BTYPE==1) {  lmap = U.flmap;  dmap = U.fdmap;  ML = (1<<9)-1;  MD = (1<<5)-1;   }
+			if(BTYPE==2) {
+				HLIT  = _bitsE(data, pos   , 5)+257;  
+				HDIST = _bitsE(data, pos+ 5, 5)+  1;  
+				HCLEN = _bitsE(data, pos+10, 4)+  4;  pos+=14;
+				
+				var ppos = pos;
+				for(var i=0; i<38; i+=2) {  U.itree[i]=0;  U.itree[i+1]=0;  }
+				var tl = 1;
+				for(var i=0; i<HCLEN; i++) {  var l=_bitsE(data, pos+i*3, 3);  U.itree[(U.ordr[i]<<1)+1] = l;  if(l>tl)tl=l;  }     pos+=3*HCLEN;  //console.log(itree);
+				makeCodes(U.itree, tl);
+				codes2map(U.itree, tl, U.imap);
+				
+				lmap = U.lmap;  dmap = U.dmap;
+				
+				pos = _decodeTiny(U.imap, (1<<tl)-1, HLIT+HDIST, data, pos, U.ttree);
+				var mx0 = _copyOut(U.ttree,    0, HLIT , U.ltree);  ML = (1<<mx0)-1;
+				var mx1 = _copyOut(U.ttree, HLIT, HDIST, U.dtree);  MD = (1<<mx1)-1;
+				
+				//var ml = _decodeTiny(U.imap, (1<<tl)-1, HLIT , data, pos, U.ltree); ML = (1<<(ml>>>24))-1;  pos+=(ml&0xffffff);
+				makeCodes(U.ltree, mx0);
+				codes2map(U.ltree, mx0, lmap);
+				
+				//var md = _decodeTiny(U.imap, (1<<tl)-1, HDIST, data, pos, U.dtree); MD = (1<<(md>>>24))-1;  pos+=(md&0xffffff);
+				makeCodes(U.dtree, mx1);
+				codes2map(U.dtree, mx1, dmap);
+			}
+			//var ooff=off, opos=pos;
+			while(true) {
+				var code = lmap[_get17(data, pos) & ML];  pos += code&15;
+				var lit = code>>>4;  //U.lhst[lit]++;  
+				if((lit>>>8)==0) {  buf[off++] = lit;  }
+				else if(lit==256) {  break;  }
+				else {
+					var end = off+lit-254;
+					if(lit>264) { var ebs = U.ldef[lit-257];  end = off + (ebs>>>3) + _bitsE(data, pos, ebs&7);  pos += ebs&7;  }
+					//UZIP.F.dst[end-off]++;
+					
+					var dcode = dmap[_get17(data, pos) & MD];  pos += dcode&15;
+					var dlit = dcode>>>4;
+					var dbs = U.ddef[dlit], dst = (dbs>>>4) + _bitsF(data, pos, dbs&15);  pos += dbs&15;
+					
+					//var o0 = off-dst, stp = Math.min(end-off, dst);
+					//if(stp>20) while(off<end) {  buf.copyWithin(off, o0, o0+stp);  off+=stp;  }  else
+					//if(end-dst<=off) buf.copyWithin(off, off-dst, end-dst);  else
+					//if(dst==1) buf.fill(buf[off-1], off, end);  else
+					if(noBuf) buf=_check(buf, off+(1<<17));
+					while(off<end) {  buf[off]=buf[off++-dst];    buf[off]=buf[off++-dst];  buf[off]=buf[off++-dst];  buf[off]=buf[off++-dst];  }   
+					off=end;
+					//while(off!=end) {  buf[off]=buf[off++-dst];  }
+				}
+			}
+			//console.log(off-ooff, (pos-opos)>>>3);
+		}
+		//console.log(UZIP.F.dst);
+		//console.log(tlen, dlen, off-tlen+tcnt);
+		return buf.length==off ? buf : buf.slice(0,off);
+	}
+	function _check(buf, len) {
+		var bl=buf.length;  if(len<=bl) return buf;
+		var nbuf = new Uint8Array(Math.max(bl<<1,len));  nbuf.set(buf,0);
+		//for(var i=0; i<bl; i+=4) {  nbuf[i]=buf[i];  nbuf[i+1]=buf[i+1];  nbuf[i+2]=buf[i+2];  nbuf[i+3]=buf[i+3];  }
+		return nbuf;
+	}
+
+	function _decodeTiny(lmap, LL, len, data, pos, tree) {
+		//var bitsE = UZIP.F._bitsE, get17 = UZIP.F._get17;
+		var i = 0;
+		while(i<len) {
+			var code = lmap[_get17(data, pos)&LL];  pos+=code&15;
+			var lit = code>>>4; 
+			if(lit<=15) {  tree[i]=lit;  i++;  }
+			else {
+				var ll = 0, n = 0;
+				if(lit==16) {
+					n = (3  + _bitsE(data, pos, 2));  pos += 2;  ll = tree[i-1];
+				}
+				else if(lit==17) {
+					n = (3  + _bitsE(data, pos, 3));  pos += 3;
+				}
+				else if(lit==18) {
+					n = (11 + _bitsE(data, pos, 7));  pos += 7;
+				}
+				var ni = i+n;
+				while(i<ni) {  tree[i]=ll;  i++; }
+			}
+		}
+		return pos;
+	}
+	function _copyOut(src, off, len, tree) {
+		var mx=0, i=0, tl=tree.length>>>1;
+		while(i<len) {  var v=src[i+off];  tree[(i<<1)]=0;  tree[(i<<1)+1]=v;  if(v>mx)mx=v;  i++;  }
+		while(i<tl ) {  tree[(i<<1)]=0;  tree[(i<<1)+1]=0;  i++;  }
+		return mx;
+	}
+
+	UZIP["F"]={"inflate":inflate, "deflateRaw":deflateRaw};
+	
+})();
+
+
+function createOrkyoImportAdapter(){
+"use strict";
+const VERSION="orkyo-import-adapter.v1";
+const SOURCE_COMMIT="9b773566ecbfb0947f51f6e20ea925c03ddb2a22";
+const REQUEST_HEADERS=["id","name","description","status","start_ts","end_ts","resource_id","resource_name","earliest_start_ts","latest_end_ts","min_duration_value","min_duration_unit","actual_duration_value","actual_duration_unit","requirements_count"];
+const RESOURCE_COLUMNS=["id","resource_type_key","name","description","external_reference","allocation_mode","base_availability_percent","is_active","home_site_id","cross_site_allowed","email","notes","code","is_physical","capacity","geometry_type","coordinates","properties","group_id","linked_user_id"];
+const STATUS=["new","in_progress","done","cancelled","deferred"];
+const UNITS=["years","months","weeks","days","hours","minutes"];
+const clone=x=>JSON.parse(JSON.stringify(x));
+const scalar=v=>typeof v==="string"?v:typeof v==="number"||typeof v==="boolean"?String(v):"";
+const issue=(code,message,blocking=true)=>({code,message,blocking});
+function parseCSV(text){
+ if(typeof text!=="string")throw Error("CSV text required");
+ const records=[];let row=[],field="",quoted=false,closed=false;let line=1,startLine=1;
+ const fieldEnd=()=>{row.push(field);field="";closed=false};
+ const rowEnd=()=>{fieldEnd();if(row.some(x=>x.trim()))records.push({cells:row,line:startLine});row=[];startLine=line+1};
+ for(let i=0;i<text.length;i++){
+  const ch=text[i];
+  if(quoted){
+   if(ch==='"'&&text[i+1]==='"'){field+='"';i++}
+   else if(ch==='"'){quoted=false;closed=true}
+   else {field+=ch;if(ch==="\n")line++}
+  }else if(ch==='"'){
+   if(field||closed)throw Error("Unexpected quote on CSV line "+line);
+   quoted=true;
+  }else if(ch===","){fieldEnd()}
+  else if(ch==="\n"||ch==="\r"){
+   if(ch==="\r"&&text[i+1]==="\n")i++;
+   rowEnd();line++;
+  }else{
+   if(closed)throw Error("Text after quoted field on CSV line "+line);
+   field+=ch;
+  }
+ }
+ if(quoted)throw Error("Unclosed quoted CSV field");
+ fieldEnd();if(row.some(x=>x.trim()))records.push({cells:row,line:startLine});
+ if(!records.length)return {headers:[],rows:[]};
+ const headers=records[0].cells;
+ if(headers.some(x=>!x)||new Set(headers).size!==headers.length)throw Error("Nonempty unique CSV headers required");
+ const rows=records.slice(1).map((r,index)=>{
+  if(r.cells.length!==headers.length)throw Error("CSV line "+r.line+" has "+r.cells.length+" cells; expected "+headers.length);
+  const raw=Object.fromEntries(headers.map((h,i)=>[h,r.cells[i]]));
+  const values=Object.fromEntries(headers.map((h,i)=>[h,/^'[=+\-@\t\r]/.test(r.cells[i])?r.cells[i].slice(1):r.cells[i]]));
+  return {index:index+1,line:r.line,raw,values};
+ });
+ return {headers:headers.slice(),rows};
+}
+function csvCell(value){
+ if(value===null||value===undefined)return "";
+ let s=typeof value==="object"?JSON.stringify(value):String(value);
+ if(typeof value==="string"&&/^'[=+\-@\t\r]/.test(s))throw Error("The native CSV importer would strip this literal leading apostrophe; preserve it through a reviewed correction or a resource JSON import");
+ if(typeof value==="string"&&/^[=+\-@\t\r]/.test(s))s="'"+s;
+ return /[,"\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+}
+function encodeCSV(rows,headers){
+ if(!Array.isArray(rows))throw Error("Rows required");
+ const keys=headers||[...new Set(rows.flatMap(x=>Object.keys(x)))];
+ if(keys.some(x=>typeof x!=="string"||!x)||new Set(keys).size!==keys.length)throw Error("Unique headers required");
+ return [keys.map(csvCell).join(","),...rows.map(r=>keys.map(k=>csvCell(r[k])).join(","))].join("\n")+"\n";
+}
+function timestampIssues(row,keys,issues){
+ for(const k of keys){if(!row[k])continue;const s=scalar(row[k]);if(!/^\d{4}-\d\d-\d\dT\d\d:\d\d(?::\d\d(?:\.\d{1,7})?)?(?:Z|[+-]\d\d:\d\d)$/.test(s)||!Number.isFinite(Date.parse(s)))issues.push(issue("timestamp:"+k,k+" needs an explicit ISO timestamp with timezone"))}
+ for(const [a,b] of [["start_ts","end_ts"],["earliest_start_ts","latest_end_ts"]])if(row[a]&&row[b]&&Date.parse(row[b])<=Date.parse(row[a]))issues.push(issue("window:"+a,"End must follow start for "+a));
+}
+function requestPreview(row){
+ const issues=[];
+ if(!row.name)return {nativePayload:null,issues:[issue("skipped-name","Native importer skips this record because name is empty")],nativeDisposition:"skipped"};
+ const durationValue=parseInt(scalar(row.min_duration_value));
+ const durationUnit=UNITS.find(u=>u===row.min_duration_unit);
+ const actualValue=parseInt(scalar(row.actual_duration_value));
+ const actualUnit=UNITS.find(u=>u===row.actual_duration_unit);
+ const nativePayload={
+ name:row.name,description:row.description||undefined,status:STATUS.find(s=>s===row.status),
+ startTs:row.start_ts||undefined,endTs:row.end_ts||undefined,
+ earliestStartTs:row.earliest_start_ts||undefined,latestEndTs:row.latest_end_ts||undefined,
+ minimalDurationValue:Number.isFinite(durationValue)&&durationValue>0?durationValue:1,
+ minimalDurationUnit:durationUnit||"hours",
+ actualDurationValue:Number.isFinite(actualValue)&&actualValue>0&&actualUnit?actualValue:undefined,
+ actualDurationUnit:Number.isFinite(actualValue)&&actualValue>0&&actualUnit?actualUnit:undefined,
+ resourceIds:row.resource_id?[row.resource_id]:undefined};
+ if(scalar(row.name).length>200)issues.push(issue("name-length","Request name exceeds the current 200-character limit"));
+ if(!scalar(row.name).trim())issues.push(issue("blank-name","A whitespace-only name reaches native creation; supply a real name"));
+ if(row.id)issues.push(issue("id-ignored","Import ignores id and creates a new request",false));
+ if(!/^[1-9]\d*$/.test(scalar(row.min_duration_value))||!Number.isSafeInteger(durationValue))issues.push(issue("duration-coercion","Native import truncates or defaults minimal duration; use a positive whole number in the declared unit"));
+ if(!durationUnit)issues.push(issue("duration-unit","Native import defaults the missing or unknown duration unit to hours"));
+ if(row.status&&!STATUS.includes(row.status))issues.push(issue("status-ignored","Native import omits an unknown status"));
+ if(row.actual_duration_value||row.actual_duration_unit){
+  if(!/^[1-9]\d*$/.test(scalar(row.actual_duration_value))||!Number.isSafeInteger(actualValue)||!actualUnit)issues.push(issue("actual-duration-coercion","Actual duration would be truncated or discarded; resolve the number and unit"));
+ }
+ if(Number(row.requirements_count)>0)issues.push(issue("requirements-not-imported","The exported requirements count carries no requirement definitions; restore through the actual authorized workflow"));
+ if(row.resource_name&&!row.resource_id)issues.push(issue("resource-name-unresolved","Native import uses resource_id, not resource_name"));
+ timestampIssues(row,["start_ts","end_ts","earliest_start_ts","latest_end_ts"],issues);
+ const unmapped=Object.keys(row).filter(k=>!REQUEST_HEADERS.includes(k)&&scalar(row[k])!=="");
+ if(unmapped.length)issues.push(issue("unmapped-columns","Columns are retained here but not imported: "+unmapped.join(", ")));
+ issues.push(issue("structural-scope","Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions",false));
+ return {nativePayload:clone(nativePayload),issues,nativeDisposition:"create"};
+}
+function resourcePreview(row,typeKey,customFieldTypes){
+ const issues=[];const cell=scalar;
+ if(!cell(row.name).trim())return {nativePayload:null,issues:[issue("skipped-name","Native importer skips this record because name is empty")],nativeDisposition:"skipped"};
+ if(!typeKey)issues.push(issue("type-required","Choose the actual resource type from the receiving workspace"));
+ const request={resourceTypeKey:typeKey,name:cell(row.name).trim(),allocationMode:cell(row.allocation_mode)||"exclusive"};
+ if(!["Exclusive","Fractional"].includes(request.allocationMode))issues.push(issue("allocation-mode","Current backend accepts exact Exclusive or Fractional; the importer default lowercase exclusive does not satisfy that contract"));
+ if(request.name.length>200)issues.push(issue("name-length","Resource name exceeds the current 200-character limit"));
+ const customFields={};
+ for(const [key,value] of Object.entries(row)){
+  if(!key.startsWith("meta.")||value===""||value==null)continue;
+  const f=key.slice(5),t=customFieldTypes[f];
+  if(typeof value==="number"||typeof value==="boolean")customFields[f]=value;
+  else if(typeof value==="string"){
+   const n=Number(value);
+   customFields[f]=t==="number"&&value.trim()!==""&&Number.isFinite(n)?n:t==="boolean"&&value==="true"?true:t==="boolean"&&value==="false"?false:value;
+  }else issues.push(issue("meta-nonscalar:"+f,"Native import ignores non-scalar custom field "+f));
+  if(!t)issues.push(issue("meta-definition:"+f,"Receiving field definition is required for "+f));
+  else if(Object.hasOwn(customFields,f)&&((t==="number"&&typeof customFields[f]!=="number")||(t==="boolean"&&typeof customFields[f]!=="boolean")))issues.push(issue("meta-type:"+f,"Native payload does not match "+t+" field "+f));
+  if(t==="list_lookup")issues.push(issue("lookup:"+f,"Confirm the receiving list row ID for "+f+"; a name is not an ID"));
+ }
+ const pairs=[["description","description"],["external_reference","externalReference"],["home_site_id","homeSiteId"],["email","email"],["notes","notes"],["code","code"]];
+ for(const [key,to] of pairs)if(cell(row[key]))request[to]=cell(row[key]);
+ for(const [key,to] of [["base_availability_percent","baseAvailabilityPercent"],["capacity","capacity"]])if(cell(row[key])){
+  request[to]=Number(cell(row[key]));
+  if(!Number.isFinite(request[to]))issues.push(issue("number:"+key,key+" would become a non-finite native number"));
+  else if(!Number.isInteger(request[to])||request[to]<0||(key==="capacity"&&request[to]<1)||(key==="base_availability_percent"&&request[to]>100))issues.push(issue("range:"+key,"Resolve the native integer range for "+key));
+ }
+ for(const [key,to] of [["cross_site_allowed","crossSiteAllowed"],["is_physical","isPhysical"]])if(cell(row[key])){
+  request[to]=cell(row[key])==="true";
+  if(!["true","false"].includes(cell(row[key])))issues.push(issue("boolean:"+key,"Only exact true/false preserves the intended native value for "+key));
+ }
+ for(const k of ["coordinates","properties"])if(cell(row[k])){
+  try{const p=JSON.parse(cell(row[k]));if(k==="coordinates")request.geometry={type:cell(row.geometry_type),coordinates:p};else request.properties=p}
+  catch{issues.push(issue("json:"+k,"Native import omits malformed "+k+"; correct the source cell"))}
+ }
+ if(request.isPhysical&&!request.geometry)issues.push(issue("physical-geometry","Physical resource has no parsed geometry; review its actual receiving type and geometry requirement"));
+ if(Object.keys(customFields).length)request.customFields=customFields;
+ if(row.id)issues.push(issue("id-ignored","Import ignores id and creates a new resource",false));
+ for(const k of ["is_active","group_id","linked_user_id"])if(row[k]!==undefined&&row[k]!=="")issues.push(issue("unmapped:"+k,k+" is retained but not restored by the generic create import",false));
+ if(row.resource_type_key&&row.resource_type_key!==typeKey)issues.push(issue("type-mismatch","File resource_type_key differs from the selected receiving type"));
+ const unknown=Object.keys(row).filter(k=>!RESOURCE_COLUMNS.includes(k)&&!k.startsWith("meta.")&&scalar(row[k])!=="");
+ if(unknown.length)issues.push(issue("unmapped-columns","Retained columns need an explicit receiving workflow: "+unknown.join(", ")));
+ // Preserve NaN in review output as explicit text; never serialize it into a proposed payload.
+ const nativePayload=Object.values(request).some(x=>typeof x==="number"&&!Number.isFinite(x))?null:clone(request);
+ return {nativePayload,issues,nativeDisposition:"create"};
+}
+function inspect({kind,format="csv",sourceId,text,typeKey="",customFieldTypes={}}){
+ if(!["requests","resources"].includes(kind))throw Error("Choose requests or resources");
+ if(typeof sourceId!=="string"||!sourceId)throw Error("Original source ID required");
+ if(typeof text!=="string")throw Error("Full original text required");
+ if(kind==="requests"&&format!=="csv")throw Error("Native per-page requests accept CSV only");
+ if(!["csv","json"].includes(format))throw Error("Choose CSV or JSON");
+ let input;
+ if(format==="csv")input=parseCSV(text);
+ else{
+  const p=JSON.parse(text);const data=Array.isArray(p)?p:p.data;
+  if(!Array.isArray(data)||data.some(x=>!x||typeof x!=="object"||Array.isArray(x)))throw Error("Native resource JSON requires rows or an object with a data array");
+  input={headers:[...new Set(data.flatMap(x=>Object.keys(x)))],rows:data.map((x,i)=>({index:i+1,line:null,raw:clone(x),values:clone(x)}))};
+ }
+ const rows=input.rows.map(r=>{
+  const out=kind==="requests"?requestPreview(r.values):resourcePreview(r.values,typeKey,customFieldTypes);
+  return {occurrenceId:sourceId+":row:"+r.index,index:r.index,line:r.line,original:clone(r.raw),values:clone(r.values),...out};
+ });
+ return {schema:VERSION,sourceCommit:SOURCE_COMMIT,source:{id:sourceId,kind,format,text},typeKey,customFieldTypes:clone(customFieldTypes),headers:input.headers,rows,summary:{records:rows.length,creates:rows.filter(x=>x.nativeDisposition==="create").length,skipped:rows.filter(x=>x.nativeDisposition==="skipped").length,needsReview:rows.filter(x=>x.issues.some(i=>i.blocking)).length},notes:["This is a local import preview. The target service validates and creates records when its authorized operator imports.","Complete originals, row occurrences and unmapped fields remain in this result."]};
+}
+function exportResourceJSON(rows,typeKey,exportTimestamp){
+ if(!typeKey||!exportTimestamp||!Number.isFinite(Date.parse(exportTimestamp)))throw Error("Actual type and explicit export timestamp required");
+ return JSON.stringify({exportTimestamp,schemaVersion:"1.0.0",context:"resources:"+typeKey,data:clone(rows)},null,2)+"\n";
+}
+return {VERSION,SOURCE_COMMIT,REQUEST_HEADERS:REQUEST_HEADERS.slice(),RESOURCE_COLUMNS:RESOURCE_COLUMNS.slice(),parseCSV,encodeCSV,inspect,requestPreview,resourcePreview,exportResourceJSON};
+}
+
+function createOrkyoWorkbookNativeReader(original){
+ const changes=[
+ [/^import type .*;\n/gm,"",2],[/^export type SheetCell = .*;\n/gm,"",1],[/^export interface \w+ \{[\s\S]*?^\}\n/gm,"",5],
+ ["function text(cell: SheetCell): string","function text(cell)",1],["function number(cell: SheetCell): number | null","function number(cell)",1],
+ ["export function cellToIsoDate(cell: SheetCell): string | null","function cellToIsoDate(cell)",1],["function isBlank(cells: SheetCell[]): boolean","function isBlank(cells)",1],
+ ["export function parseTemplateWorkbook(sheets: SheetData[]): ParsedWorkbook","function parseTemplateWorkbook(sheets)",1],["const errors: ImportRowError[] = [];","const errors = [];",1],
+ ["const workstations: WorkstationRow[] = [];","const workstations = [];",1],["const jobs: JobRow[] = [];","const jobs = [];",1],["new Set<string>()","new Set()",1],
+ ["export function workstationToCreateSpace(\n  row: WorkstationRow,\n  siteId: string,\n  resourceTypeKey: string,\n): CreateResourceRequest","function workstationToCreateSpace(row, siteId, resourceTypeKey)",1],
+ ["function weekdayCount(startIso: string, endIso: string): number","function weekdayCount(startIso, endIso)",1],
+ ["export function jobToCreateRequest(\n  job: JobRow,\n  codeToResourceId: Map<string, string>,\n  siteId: string,\n): CreateRequestRequest","function jobToCreateRequest(job, codeToResourceId, siteId)",1]];
+ let code=original;for(const [a,b,n]of changes){const count=typeof a==="string"?code.split(a).length-1:[...code.matchAll(a)].length;if(count!==n)throw Error("Native source signature changed: "+String(a));code=code.replace(a,b);}
+ return Function(code+"\nreturn {parseTemplateWorkbook,workstationToCreateSpace,jobToCreateRequest,cellToIsoDate,weekdayCount};")();
+}
+
+/* MIT */
+function createOrkyoWorkbookPlanner(native){
+ const sourceCommit="9b773566ecbfb0947f51f6e20ea925c03ddb2a22",clone=x=>JSON.parse(JSON.stringify(x)),txt=x=>x==null?"":String(x).trim();
+ const need=(v,m)=>{if(!v)throw Error(m);};
+ const headers={Workstations:["Code","Workstation","What stands there","Capacity (h/day)","Notes"],Jobs:["Job","Description","Workstation code","Start","End","Hours/day"]};
+ function normalize(sheets){need(Array.isArray(sheets),"Complete sheet array required");return sheets.map(s=>{need(typeof s.name==="string"&&Array.isArray(s.rows),"Sheet name and complete rows required");return {name:s.name,rows:Array.from(s.rows,r=>Array.from(r||[],v=>{if(v instanceof Date){need(Number.isFinite(v.getTime()),"Invalid date cell");return v.toISOString();}need(v==null||["string","boolean"].includes(typeof v)||(typeof v==="number"&&Number.isFinite(v)),"Cell must be finite scalar");return v??null;}))};});}
+ function makeSheets({workstations=[],jobs=[]}={}){
+ return [{name:"Workstations",rows:[["Orkyo production import"],["Codes match exactly, including letter case."],["Capacity hours/day is retained; native import does not map it."],[],headers.Workstations,...workstations.map(w=>[w.code??"",w.name??"",w.standsThere??"",w.capacityHoursPerDay??"",w.notes??""])]},
+ {name:"Jobs",rows:[["Orkyo production import"],["End is inclusive; native request ends next midnight UTC."],["Duration counts Monday–Friday, with one-hour fallback."],[],headers.Jobs,...jobs.map(j=>[j.job??"",j.description??"",j.workstationCode??"",j.start??"",j.end??"",j.hoursPerDay??""])]}];}
+ function jobKey(siteId,j){return JSON.stringify([siteId,j.job,j.description,j.workstationCode,j.start,j.end,j.hoursPerDay]);}
+ function inspectSheets(input,context={}){
+  const sheets=normalize(input),issues=[],issue=(code,message,sheet,row=0,blocking=false,detail={})=>issues.push({code,message,sheet,row,blocking,...detail}),seenSheets=new Set();
+  for(const s of sheets){if(seenSheets.has(s.name))issue("duplicate-sheet","Native import reads only the first named sheet.",s.name,0,true);seenSheets.add(s.name);}
+  const parsed=native.parseTemplateWorkbook(sheets);for(const e of parsed.errors)issue("native-parse-error",e.message,e.sheet,e.row,true);
+  const siteId=txt(context.siteId),typeKey=txt(context.typeKey),existingResources=clone(context.existingResources||[]),priorJobCreates=clone(context.priorJobCreates||[]),existing=new Map();
+  need(Array.isArray(existingResources)&&Array.isArray(priorJobCreates),"Existing resources and prior creates must be arrays.");
+  if(!siteId)issue("missing-site","Select exact target site.","Workbook",0,true);if(!typeKey)issue("missing-type","Select an actual tenant type that supports placement.","Workbook",0,true);
+  if(context.existingComplete!==true)issue("incomplete-existing-resources","Retrieve all active placeable resources for the selected site before matching codes.","Workbook",0,true);
+  for(const r of existingResources){if(!r.code)continue;need(typeof r.code==="string"&&typeof r.id==="string"&&r.id,"Existing resource requires exact code and actual ID.");if(existing.has(r.code)&&existing.get(r.code)!==r.id)issue("ambiguous-existing-code","Multiple IDs share this exact code.","Workstations",0,true,{codeValue:r.code});existing.set(r.code,r.id);}
+  const workstations=parsed.workstations.map(r=>{
+   const original=sheets.find(s=>s.name==="Workstations").rows[r.row-1],id=existing.get(r.code);
+   if(txt(original[3]))issue("capacity-not-mapped","Hours/day capacity is retained but is not imported as occupancy or calendar.","Workstations",r.row,false,{originalValue:original[3]});
+   if(!id)issue("new-station-geometry-required","Pinned native workbook creation sends isPhysical true without geometry; the server requires geometry. Create this station first with its actual geometry, refresh the complete lookup, then reuse it in this workbook.","Workstations",r.row,true,{workstationCode:r.code});
+   return {row:r.row,code:r.code,action:id?"reuse":"create",existingResourceId:id||null,original:clone(original),parsed:clone(r),payload:id?null:native.workstationToCreateSpace(r,siteId,typeKey)};
+  }),seenJobs=new Map();
+  const jobs=parsed.jobs.map(j=>{
+   const original=sheets.find(s=>s.name==="Jobs").rows[j.row-1],key=jobKey(siteId,j),priorCreates=priorJobCreates.filter(x=>x.jobKey===key);
+   if(seenJobs.has(key))issue("repeated-job","Native import creates every repeated job row.","Jobs",j.row,true,{earlierRow:seenJobs.get(key)});else seenJobs.set(key,j.row);
+   if(priorCreates.length)issue("prior-created-job","This exact job has a recorded prior create. Reconcile that run and prepare a remaining-only workbook before re-importing.","Jobs",j.row,true,{priorCreates});
+   for(const [field,raw,result]of [["start",original[3],j.start],["end",original[4],j.end]]){
+    if(!result)issue("missing-"+field,"Native import leaves this request window empty.","Jobs",j.row,false,{field,originalValue:raw??null});
+    if(typeof raw==="number"&&raw!==Math.round(raw))issue("rounded-excel-date","Native import rounds fractional Excel serial days.","Jobs",j.row,false,{field,originalValue:raw,normalizedDate:result});
+    if(typeof raw==="string"&&raw&&result&&raw.trim()!==result)issue("converted-date","Native date parsing converts this cell to a UTC date.","Jobs",j.row,false,{field,originalValue:raw,normalizedDate:result});
+   }
+   if(typeof original[5]==="string"&&txt(original[5])&&j.hoursPerDay!==null&&Number(txt(original[5]))!==j.hoursPerDay)issue("partial-hour-number","Native parseFloat uses the numeric prefix and drops trailing text.","Jobs",j.row,false,{originalValue:original[5],nativeHoursPerDay:j.hoursPerDay});
+   const workingDays=j.start&&j.end?native.weekdayCount(j.start,j.end):0,totalHours=j.hoursPerDay&&workingDays>0?j.hoursPerDay*workingDays:0,payload=native.jobToCreateRequest(j,existing,siteId),station=workstations.find(s=>s.code===j.workstationCode);
+   if(!(totalHours>0))issue("one-hour-fallback","Hours and weekday count produce the native one-hour minimum.","Jobs",j.row,false,{workingDays,hoursPerDay:j.hoursPerDay});
+   return {row:j.row,jobKey:key,original:clone(original),parsed:clone(j),workingDays,minimumHours:payload.minimalDurationValue,payload,resourceBinding:{code:j.workstationCode,action:station?.action||"unresolved",existingResourceId:existing.get(j.workstationCode)||null,resolveAfterWorkstationCreate:station?.action==="create"},priorCreates};
+  });
+  if(jobs.length)issue("site-calendar-not-applied","Native workbook duration counts Monday–Friday; review actual site shifts, holidays, shutdowns and overtime in the target calendar.","Jobs");
+  if(workstations.some(w=>w.action==="reuse"))issue("reused-stations-not-updated","Existing stations are reused unchanged. Workbook names, notes and capacity do not update them.","Workstations");
+  const rows=sheets.flatMap(s=>s.rows.map((cells,i)=>({sheet:s.name,row:i+1,cells:clone(cells),role:i<4?"instruction":i===4?"header":"data"})));
+  return {schema:"tjlabs.orkyo-workbook-plan.v1",sourceCommit,sheets,rows,context:{siteId,typeKey,existingComplete:context.existingComplete===true,existingResources,priorJobCreates},nativeParsed:clone(parsed),workstations,jobs,issues,summary:{sourceRows:rows.length,workstations:workstations.length,createWorkstations:workstations.filter(w=>w.action==="create").length,reuseWorkstations:workstations.filter(w=>w.action==="reuse").length,createJobs:jobs.length,blocking:issues.filter(x=>x.blocking).length,review:issues.filter(x=>!x.blocking).length},execution:"Stations first, then every job, sequentially. Completed writes remain after a later failure. Record actual IDs and prepare only remaining jobs after reconciling that run."};
+ }
+ function remainingSheets(plan,{createdWorkstationCodes=[],createdJobKeys=[]}={}){
+  need(plan?.schema==="tjlabs.orkyo-workbook-plan.v1","Complete workbook plan required");const completed=new Set(createdJobKeys),skip=new Set();
+  for(const key of completed){const match=plan.jobs.filter(j=>j.jobKey===key);need(match.length===1,"Completed job key is missing or duplicated; reconcile rows individually.");skip.add(match[0].row);}
+  const sheets=clone(plan.sheets),jobs=sheets.find(s=>s.name==="Jobs");jobs.rows=jobs.rows.filter((_,i)=>!skip.has(i+1));
+  return {sheets,completed:{createdWorkstationCodes:clone(createdWorkstationCodes),createdJobKeys:[...completed]},removedJobRows:[...skip],instruction:"Retain workstation rows so native parsing can resolve job codes. Refresh the complete existing-station lookup before import."};
+ }
+ function xml(v){const s=String(v);need(!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(s),"Cell contains a non-XML control character; original remains unchanged.");return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;");}
+ function column(n){let s="";for(n++;n;n=Math.floor((n-1)/26))s=String.fromCharCode(65+(n-1)%26)+s;return s;}
+ function xlsxEntries(input){
+  const sheets=normalize(input),seen=new Set(),decl='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',ns="http://schemas.openxmlformats.org/spreadsheetml/2006/main",rel="http://schemas.openxmlformats.org/package/2006/relationships",office="http://schemas.openxmlformats.org/officeDocument/2006/relationships";
+  need(sheets.length>0,"Workbook needs a sheet.");for(const s of sheets){need(s.name.length>0&&s.name.length<=31&&!/[\\/?*[\]:]/.test(s.name)&&!seen.has(s.name.toLowerCase()),"Excel sheet names must be unique and valid.");seen.add(s.name.toLowerCase());need(s.rows.length<=1048576&&s.rows.every(r=>r.length<=16384),"Excel row/column limits exceeded.");}
+  const entries=[
+   {name:"[Content_Types].xml",content:decl+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+sheets.map((s,i)=>'<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join("")+'</Types>'},
+   {name:"_rels/.rels",content:decl+'<Relationships xmlns="'+rel+'"><Relationship Id="rId1" Type="'+office+'/officeDocument" Target="xl/workbook.xml"/></Relationships>'},
+   {name:"xl/workbook.xml",content:decl+'<workbook xmlns="'+ns+'" xmlns:r="'+office+'"><sheets>'+sheets.map((s,i)=>'<sheet name="'+xml(s.name)+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>').join("")+'</sheets></workbook>'},
+   {name:"xl/_rels/workbook.xml.rels",content:decl+'<Relationships xmlns="'+rel+'">'+sheets.map((s,i)=>'<Relationship Id="rId'+(i+1)+'" Type="'+office+'/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>').join("")+'</Relationships>'}
+  ];
+  sheets.forEach((s,i)=>entries.push({name:"xl/worksheets/sheet"+(i+1)+".xml",content:decl+'<worksheet xmlns="'+ns+'"><sheetData>'+s.rows.map((row,r)=>'<row r="'+(r+1)+'">'+row.map((v,c)=>{if(v==null)return "";const ref=column(c)+(r+1);if(typeof v==="number")return '<c r="'+ref+'"><v>'+v+'</v></c>';if(typeof v==="boolean")return '<c r="'+ref+'" t="b"><v>'+(v?1:0)+'</v></c>';need(v.length<=32767,"Excel cell text exceeds 32767 characters.");return '<c r="'+ref+'" t="inlineStr"><is><t xml:space="preserve">'+xml(v)+'</t></is></c>';}).join("")+'</row>').join("")+'</sheetData></worksheet>'}));
+  return entries;
+ }
+ function buildXlsx(sheets,encodeZip,encode){need(typeof encodeZip==="function"&&typeof encode==="function","Complete ZIP writer and UTF-8 encoder required.");return new Uint8Array(encodeZip(Object.fromEntries(xlsxEntries(sheets).map(e=>[e.name,encode(e.content)]))));}
+ return {sourceCommit,headers,makeSheets,inspectSheets,remainingSheets,jobKey,xlsxEntries,buildXlsx};
+}
+
+/* MIT — source-preserving Orkyo import/reconciliation desk */
+function createOrkyoReadinessCore({codec,adapter,workbook}){
+const SCHEMA="tjlabs.orkyo-readiness.v1",OP="ORKYO-PRODUCTION-IMPORT-WORKSHARE-20261015";
+const clone=x=>JSON.parse(JSON.stringify(x)),own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+function need(v,m){if(!v)throw Error(m)}
+function obj(v,m){need(v&&typeof v==="object"&&!Array.isArray(v),m);return v}
+function str(v,m){need(typeof v==="string"&&v.trim(),m);return v}
+function canonical(x){if(x===null||typeof x!=="object")return JSON.stringify(x);if(Array.isArray(x))return "["+x.map(canonical).join(",")+"]";return "{"+Object.keys(x).sort().map(k=>JSON.stringify(k)+":"+canonical(x[k])).join(",")+"}"}
+const sha=x=>codec.sha256(codec.utf8Encode(typeof x==="string"?x:canonical(x)));
+function stamp(s){str(s,"Explicit time required");need(Number.isFinite(Date.parse(s)),"Valid time required");return s}
+function evidence(x){obj(x,"Complete evidence required");str(x.text,"Retain the actual response, lookup or source explanation");if(x.url!=null)need(typeof x.url==="string","Evidence URL must be text");return clone(x)}
+function artifact(x){obj(x,"Complete source required");str(x.filename,"Source filename required");need(typeof x.text==="string","Full original UTF-8 text required");if(x.originalFile){obj(x.originalFile,"Original binary file required");str(x.originalFile.filename,"Original filename required");str(x.originalFile.base64,"Complete original file bytes required");const b=codec.base64Decode(x.originalFile.base64);need(b.length===x.originalFile.bytes&&codec.sha256(b)===x.originalFile.sha256,"Original file bytes differ");}return {...clone(x),bytes:codec.utf8Encode(x.text).length,sha256:sha(x.text)}}
+function create({id,title,at}){str(id,"Workspace ID required");str(title,"Workspace title required");return {schema:SCHEMA,operationId:OP,id,title,createdAt:stamp(at),sourceCommit:adapter.SOURCE_COMMIT,events:[],revision:0,head:sha({schema:SCHEMA,operationId:OP,id,title,createdAt:at,sourceCommit:adapter.SOURCE_COMMIT})}}
+function baseState(){return {sources:[],batches:[],notes:[],audit:[]}}
+function sourceBy(s,id){const v=s.sources.find(x=>x.id===id);need(v,"Source not found");return v}
+function rowKey(sourceId,rowId){return sourceId+"::"+rowId}
+function inspectSource(src){
+ const a=src.editions[src.editions.length-1].artifact,c=src.context;
+ try{
+ if(src.kind==="workbook"){const sheets=JSON.parse(a.text);const plan=workbook.inspectSheets(sheets,c);if(!plan.jobs.length)throw Error("Workbook contains no admitted job rows; retain and correct the source.");return {ok:true,plan,rows:plan.jobs.map(j=>({id:"Jobs:"+j.row,original:clone(j.original),values:clone(j.original),nativePayload:j.payload,nativeDisposition:"create",jobKey:j.jobKey,issues:plan.issues.filter(z=>z.row===0||z.sheet==="Jobs"&&z.row===j.row||z.sheet==="Workstations"&&z.blocking),index:j.row})),summary:plan.summary}}
+ const plan=adapter.inspect({kind:src.kind,format:src.format,sourceId:src.id,text:a.text,typeKey:c.typeKey||"",customFieldTypes:c.customFieldTypes||{}});
+ if(!plan.rows.length)throw Error("Source contains no admitted data rows; retain and correct the source.");return {ok:true,plan,rows:plan.rows.map(r=>({...r,id:"row:"+r.index})),summary:plan.summary}
+ }catch(e){return {ok:false,error:String(e.message||e),rows:[],summary:{records:0}}}
+}
+function preview(src,row,review){
+ if(!review)return {...clone(row),review:null,ready:false};
+ const values=clone(review.values==null?row.values:review.values);let nativePayload,issues,nativeDisposition,jobKey=row.jobKey;
+ if(src.kind==="workbook"){
+  need(Array.isArray(values),"Workbook row correction must be a full cell array");
+  const initial=inspectSource(src);need(initial.ok,"Repair original workbook first");
+  const sheets=clone(initial.plan.sheets),js=sheets.find(x=>x.name==="Jobs");js.rows[row.index-1]=values;
+  const p=workbook.inspectSheets(sheets,src.context),j=p.jobs.find(x=>x.row===row.index);
+  need(j,"Corrected job row is not admitted by the native parser");
+  nativePayload=j.payload;jobKey=j.jobKey;nativeDisposition="create";
+  issues=p.issues.filter(z=>z.row===0||z.sheet==="Jobs"&&z.row===row.index||z.sheet==="Workstations"&&z.blocking);
+ }else{
+  obj(values,"Corrected native row must be an object");
+  const out=src.kind==="requests"?adapter.requestPreview(values):adapter.resourcePreview(values,src.context.typeKey,src.context.customFieldTypes||{});
+  ({nativePayload,issues,nativeDisposition}=out);
+ }
+ const acknowledged=new Set(review.acknowledged||[]);
+ const unacknowledged=issues.filter(x=>!acknowledged.has(x.code));
+ const blocking=issues.filter(x=>x.blocking);
+ return {...clone(row),values,nativePayload,issues,jobKey,nativeDisposition,review:clone(review),ready:review.action==="new"&&nativeDisposition==="create"&&!!nativePayload&&!blocking.length&&!unacknowledged.length,unacknowledged};
+}
+function fullRows(s,src){const q=inspectSource(src);return q.rows.map(r=>preview(src,r,src.reviews.find(x=>x.rowId===r.id)?.review))}
+function statuses(s,sourceId,rowId){
+ const hits=s.batches.filter(b=>b.sourceId===sourceId&&b.rows.some(r=>r.id===rowId)&&b.state!=="abandoned");
+ const states=hits.map(b=>({batchId:b.id,state:b.state,outcome:b.outcomes.find(x=>x.rowId===rowId)||null}));
+ const pending=states.some(x=>x.state==="prepared"||x.state==="attempted"&&!x.outcome);
+ const done=states.find(x=>x.outcome&&["created","existing"].includes(x.outcome.status));
+ return {pending,done:done||null,history:states};
+}
+function signature(src,row){return sha({tenant:src.context.tenant,kind:src.kind==="resources"?"resource":"request",payload:row.nativePayload})}
+function safeContext(c,kind){obj(c,"Target context required");str(c.tenant,"Exact target tenant/environment label required");if(kind==="resources")str(c.typeKey,"Actual target resource type key required");if(kind==="workbook"){str(c.siteId,"Actual site ID required");str(c.typeKey,"Actual placeable type key required");need(Array.isArray(c.existingResources),"Complete existing-resource array required");need(c.existingComplete===true,"Complete target resource lookup required");evidence(c.lookupEvidence)}return clone(c)}
+function prepareData(s,src,rowIds,at){
+ need(Array.isArray(rowIds)&&rowIds.length&&new Set(rowIds).size===rowIds.length,"Distinct selected row IDs required");
+ const all=fullRows(s,src),selected=rowIds.map(id=>{const r=all.find(z=>z.id===id);need(r,"Selected source row disappeared");need(r.ready,"Row "+id+" needs explicit new-create review and all blocking corrections");const st=statuses(s,src.id,id);need(!st.pending&&!st.done,"Row "+id+" is already prepared, unresolved or bound");return r});
+ const collisions=[];
+ for(const row of selected){
+  const sig=signature(src,row);
+  const prior=s.sources.flatMap(other=>fullRows(s,other).filter(r=>!(other.id===src.id&&r.id===row.id)&&signature(other,r)===sig).map(r=>({sourceId:other.id,rowId:r.id,stage:statuses(s,other.id,r.id)})));
+  if(prior.length){need(row.review.distinctReason&&row.review.distinctReason.trim(),"Identical native payload occurs elsewhere; explain why this row is a separate legitimate create");collisions.push({rowId:row.id,distinctReason:row.review.distinctReason,otherRows:prior.map(x=>({sourceId:x.sourceId,rowId:x.rowId}))})}
+ }
+ let file;
+ if(src.kind==="workbook"){
+  const q=inspectSource(src);need(q.ok,"Workbook parse failed");
+  const sheets=clone(q.plan.sheets),jobs=sheets.find(x=>x.name==="Jobs"),selectedByIndex=new Map(selected.map(r=>[r.index,r]));
+  jobs.rows=jobs.rows.flatMap((r,i)=>i<5?[r]:selectedByIndex.has(i+1)?[selectedByIndex.get(i+1).values]:[]);
+  const finalPlan=workbook.inspectSheets(sheets,src.context);
+  need(!finalPlan.issues.some(x=>x.blocking),"Selected workbook still has blocking native issues");
+  need(finalPlan.jobs.length===selected.length,"Selected workbook changed its job population");
+  file={filename:"Orkyo_Reviewed_Jobs.xlsx",mime:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",sheets,preview:finalPlan};
+ }else{
+  const values=selected.map(r=>r.values);
+  const text=src.format==="json"?adapter.exportResourceJSON(values,src.context.typeKey,at):adapter.encodeCSV(values);
+  const check=adapter.inspect({kind:src.kind,format:src.format,sourceId:"prepared",text,typeKey:src.context.typeKey||"",customFieldTypes:src.context.customFieldTypes||{}});
+  need(check.rows.length===selected.length,"Export changed row count");
+  check.rows.forEach((r,i)=>need(canonical(r.nativePayload)===canonical(selected[i].nativePayload),"Native export roundtrip changed payload on row "+selected[i].id));
+  file={filename:"Orkyo_Reviewed_"+src.kind+"."+src.format,mime:src.format==="json"?"application/json":"text/csv",text,bytes:codec.utf8Encode(text).length,sha256:sha(text)};
+ }
+ return {rows:clone(selected),file,collisions,sourceEdition:src.editions.length,sourceSha256:src.editions.at(-1).artifact.sha256,context:clone(src.context)};
+}
+function reduce(s,event){
+ const p=event.payload,t=event.type;obj(p,"Event payload required");
+ if(t==="intake"){
+  str(p.sourceId,"Source ID required");need(!s.sources.some(x=>x.id===p.sourceId),"Source ID already exists");
+  need(["requests","resources","workbook"].includes(p.kind),"Unknown import kind");
+  need(p.kind==="workbook"?p.format==="sheets-json":["csv","json"].includes(p.format),"Unsupported source format");
+  need(!(p.kind==="requests"&&p.format!=="csv"),"Request page accepts CSV");
+  const a=artifact(p.artifact),context=safeContext(p.context,p.kind);
+  need(!s.sources.some(x=>x.kind===p.kind&&x.context.tenant===context.tenant&&x.editions.some(e=>e.artifact.sha256===a.sha256)),"Identical original is already retained; continue its existing rows");
+  s.sources.push({id:p.sourceId,kind:p.kind,format:p.format,context,editions:[{eventId:event.id,at:event.at,artifact:a,reason:"Original intake"}],reviews:[]});
+ }else if(t==="correct-source"){
+  const src=sourceBy(s,p.sourceId);need(!s.batches.some(b=>b.sourceId===src.id&&b.state!=="abandoned"),"Source has a frozen batch; reconcile it and preserve its source before a new intake");
+  str(p.reason,"Reason for complete-source correction required");const a=artifact(p.artifact);
+  src.editions.push({eventId:event.id,at:event.at,artifact:a,reason:p.reason,previousReviews:clone(src.reviews)});src.reviews=[];
+  if(p.context)src.context=safeContext(p.context,src.kind);
+ }else if(t==="review"){
+  const src=sourceBy(s,p.sourceId),row=inspectSource(src).rows.find(x=>x.id===p.rowId);need(row,"Row not found");
+  const st=statuses(s,src.id,row.id);need(!st.pending&&!st.done,"Frozen, unresolved or completed row cannot be redefined");
+  obj(p.review,"Full review required");const r=clone(p.review);
+  need(["new","bind","exclude"].includes(r.action),"Choose new, bind or exclude");
+  str(r.reason,"Review reason required");str(r.reviewer,"Named reviewer required");
+  need(Array.isArray(r.acknowledged)&&r.acknowledged.every(x=>typeof x==="string"),"Explicit issue acknowledgement array required");
+  if(r.action==="bind"){str(r.targetId,"Actual existing target ID required");r.evidence=evidence(r.evidence)}
+  if(r.action==="new"){need(!r.targetId,"New-create review cannot contain existing target ID");preview(src,row,r)}
+  const old=src.reviews.findIndex(x=>x.rowId===row.id);const item={rowId:row.id,review:r,eventId:event.id,at:event.at};
+  if(old<0)src.reviews.push(item);else src.reviews[old]=item;
+ }else if(t==="prepare"){
+  const src=sourceBy(s,p.sourceId);str(p.batchId,"Batch ID required");need(!s.batches.some(x=>x.id===p.batchId),"Batch ID exists");
+  const data=prepareData(s,src,p.rowIds,event.at);
+  s.batches.push({id:p.batchId,sourceId:src.id,createdAt:event.at,eventId:event.id,state:"prepared",...data,outcomes:[],attempt:null});
+ }else if(t==="attempt"){
+  const b=s.batches.find(x=>x.id===p.batchId);need(b&&b.state==="prepared","Only a prepared batch can be marked attempted");
+  need(p.confirmTenant===b.context.tenant,"Type the exact target tenant label");str(p.operator,"Actual importing operator required");str(p.route,"Actual Orkyo page/workbook route required");
+  b.state="attempted";b.attempt={eventId:event.id,at:event.at,operator:p.operator,route:p.route,confirmTenant:p.confirmTenant,details:p.details||""};
+ }else if(t==="resolve"){
+  const b=s.batches.find(x=>x.id===p.batchId);need(b&&b.state==="attempted","Only an attempted batch has outcomes");
+  const row=b.rows.find(x=>x.id===p.rowId);need(row,"Batch row not found");
+  need(!b.outcomes.some(x=>x.rowId===p.rowId),"Outcome already resolved; retain original target binding");
+  need(["created","existing","rejected","not-attempted"].includes(p.status),"Choose a resolved outcome");
+  str(p.reason,"Outcome explanation required");str(p.reviewer,"Outcome reviewer required");const ev=evidence(p.evidence);
+  if(["created","existing"].includes(p.status))str(p.targetId,"Actual returned or lookup target ID required");else need(!p.targetId,"Rejected/unattempted row cannot have a target ID");
+  if(p.status==="created")need(!s.batches.some(x=>x.outcomes.some(o=>o.targetId===p.targetId&&o.status==="created"&&x.context.tenant===b.context.tenant)),"This created target ID is already bound; investigate duplicate row attribution");
+  b.outcomes.push({eventId:event.id,at:event.at,rowId:p.rowId,status:p.status,targetId:p.targetId||null,reason:p.reason,reviewer:p.reviewer,evidence:ev});
+ }else if(t==="abandon"){
+  const b=s.batches.find(x=>x.id===p.batchId);need(b&&b.state==="prepared","Only an unattempted prepared batch can be abandoned");
+  str(p.reason,"Abandon reason required");b.state="abandoned";b.abandoned={eventId:event.id,at:event.at,reason:p.reason};
+ }else if(t==="note"){
+  str(p.title,"Note title required");str(p.text,"Complete note required");s.notes.push({...clone(p),eventId:event.id,at:event.at});
+ }else throw Error("Unknown event type: "+t);
+ s.audit.push({id:event.id,type:event.type,at:event.at});
+ return s;
+}
+function reopen(input){
+ const w=clone(input);obj(w,"Workspace required");need(w.schema===SCHEMA&&w.operationId===OP,"Foreign operation/workspace schema");
+ const empty=create({id:w.id,title:w.title,at:w.createdAt});need(w.sourceCommit===adapter.SOURCE_COMMIT,"Native source version differs");
+ need(Array.isArray(w.events)&&w.revision===w.events.length,"Complete revision/event history required");
+ let head=empty.head,s=baseState();const ids=new Set();
+ for(let i=0;i<w.events.length;i++){
+  const e=w.events[i];need(e.seq===i+1&&e.previous===head,"Event chain differs");str(e.id,"Event ID required");need(!ids.has(e.id),"Repeated event ID");ids.add(e.id);stamp(e.at);
+  const body={id:e.id,seq:e.seq,previous:e.previous,type:e.type,at:e.at,payload:e.payload};need(e.sha256===sha(body),"Event bytes differ");s=reduce(s,e);head=e.sha256;
+ }
+ need(w.head===head,"Workspace head differs");return {workspace:w,state:s};
+}
+function command(workspace,{id,expectedHead,type,at,payload}){
+ const {workspace:w,state:s}=reopen(workspace);need(expectedHead===w.head,"Workspace changed; preserve this proposal and reopen the selected copy");
+ str(id,"Unique command ID required");const old=w.events.find(x=>x.id===id);
+ if(old){need(old.type===type&&old.at===at&&canonical(old.payload)===canonical(payload),"Command ID already has different content");return w}
+ const e={id,seq:w.events.length+1,previous:w.head,type,at:stamp(at),payload:clone(payload)};e.sha256=sha(e);
+ reduce(s,e);w.events.push(e);w.revision=w.events.length;w.head=e.sha256;return w;
+}
+function view(w){
+ const {state:s}=reopen(w);
+ return {...s,sources:s.sources.map(src=>{const q=inspectSource(src);return {...src,inspection:q,rows:fullRows(s,src).map(row=>({...row,status:statuses(s,src.id,row.id),signature:signature(src,row)}))};})};
+}
+function csv(rows,headers){const cell=v=>{let t=v==null?"":typeof v==="object"?JSON.stringify(v):String(v);if(/^[=+\-@\t\r]/.test(t))t="'"+t;return '"'+t.replace(/"/g,'""')+'"'};return [headers.map(cell).join(","),...rows.map(r=>headers.map(h=>cell(r[h])).join(","))].join("\r\n")+"\r\n"}
+function exports(w){
+ const v=view(w),rows=v.sources.flatMap(s=>s.rows.map(r=>({sourceId:s.id,rowId:r.id,kind:s.kind,tenant:s.context.tenant,name:r.nativePayload?.name||"",review:r.review?.action||"unreviewed",ready:r.ready,pending:r.status.pending,targetId:r.status.done?.outcome.targetId||r.review?.targetId||"",issues:r.issues.map(x=>x.code).join("; "),nativePayload:r.nativePayload,original:r.original,corrected:r.values})));
+ const outcomes=v.batches.flatMap(b=>b.rows.map(r=>({batchId:b.id,sourceId:b.sourceId,rowId:r.id,batchState:b.state,outcome:b.outcomes.find(o=>o.rowId===r.id)?.status||(b.state==="attempted"?"unresolved":"unattempted"),targetId:b.outcomes.find(o=>o.rowId===r.id)?.targetId||"",evidence:b.outcomes.find(o=>o.rowId===r.id)?.evidence||null,payload:r.nativePayload})));
+ return {workspace:JSON.stringify(w,null,2)+"\n",readinessCSV:csv(rows,["sourceId","rowId","kind","tenant","name","review","ready","pending","targetId","issues","nativePayload","original","corrected"]),outcomesCSV:csv(outcomes,["batchId","sourceId","rowId","batchState","outcome","targetId","evidence","payload"])};
+}
+function report(w){
+ const v=view(w),h=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+ return '<!doctype html><meta charset="utf-8"><title>'+h(w.title)+'</title><style>body{font:15px system-ui;max-width:1180px;margin:32px auto;padding:20px;color:#222}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}pre{white-space:pre-wrap;overflow-wrap:anywhere}details{margin:12px 0}</style><h1>'+h(w.title)+'</h1><p>Orkyo import readiness and actual-outcome reconciliation. Revision '+w.revision+' · '+h(w.head)+'</p><p>Each prepared file creates records through the selected native Orkyo route. Resolve every uncertain result before preparing a remaining batch.</p>'+
+ v.sources.map(s=>'<section><h2>'+h(s.id)+' — '+h(s.kind)+'</h2><p>Tenant '+h(s.context.tenant)+'; '+s.editions.length+' retained source editions.</p>'+(!s.inspection.ok?'<p>Source needs repair: '+h(s.inspection.error)+'</p>':'')+'<table><thead><tr><th>Row</th><th>Name</th><th>Review</th><th>Import state</th><th>Attention</th></tr></thead><tbody>'+s.rows.map(r=>'<tr><td>'+h(r.id)+'</td><td>'+h(r.nativePayload?.name)+'</td><td>'+h(r.review?.action||"Unreviewed")+'</td><td>'+h(r.status.done?.outcome.targetId||r.review?.targetId||(r.status.pending?"Prepared / unresolved":r.ready?"Ready":"Review"))+'</td><td>'+h(r.issues.map(x=>x.message).join(" "))+'</td></tr>').join("")+'</tbody></table><details><summary>Full sources, corrections, payloads and review reasons</summary><pre>'+h(JSON.stringify(s,null,2))+'</pre></details></section>').join("")+'<h2>Frozen batches and outcomes</h2>'+v.batches.map(b=>'<details open><summary>'+h(b.id)+' · '+h(b.state)+' · '+b.outcomes.length+'/'+b.rows.length+' outcomes</summary><pre>'+h(JSON.stringify(b,null,2))+'</pre></details>').join("")+'<h2>Retained notes</h2><pre>'+h(JSON.stringify(v.notes,null,2))+'</pre><h2>Event history</h2><pre>'+h(JSON.stringify(w.events,null,2))+'</pre>';
+}
+return {SCHEMA,OP,create,reopen,command,view,exports,report,canonical,sha,inspectSource,preview};
+}
+
+function createOrkyoCopyStore(storage,codec,prefix="tjlabs.orkyo.desk.v1."){
+const session=globalThis.crypto?.randomUUID?.()||Date.now()+"-"+Math.random().toString(36).slice(2);let version=0;
+function save(record){const body=JSON.stringify(record);const key=prefix+session+"."+String(++version).padStart(8,"0");storage.setItem(key,body);if(storage.getItem(key)!==body)throw Error("Saved copy readback differs");return {key,bytes:codec.utf8Encode(body).length,sha256:codec.sha256(codec.utf8Encode(body))}}
+function list(){const out=[];for(let i=0;i<storage.length;i++){const key=storage.key(i);if(!key?.startsWith(prefix))continue;const raw=storage.getItem(key);try{const body=JSON.parse(raw);out.push({key,at:body.savedAt,title:body.workspace?.title,revision:body.workspace?.revision,body,raw})}catch(e){out.push({key,error:e.message,raw})}}return out.sort((a,b)=>String(b.at||b.key).localeCompare(String(a.at||a.key)))}
+return {save,list};
+}
+function readOrkyoXlsx(bytes,UZIP){
+const zip=UZIP.parse(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)),decoder=new TextDecoder("utf-8",{fatal:true});
+const xml=path=>{if(!zip[path])throw Error("Workbook member missing: "+path);const d=new DOMParser().parseFromString(decoder.decode(zip[path]),"application/xml");if(d.getElementsByTagName("parsererror").length)throw Error("Invalid workbook XML: "+path);return d};
+const els=(n,tag)=>Array.from(n.getElementsByTagNameNS("*",tag)),attr=(n,k)=>n.getAttribute(k),text=(n,tag)=>els(n,tag).map(x=>x.textContent||"").join("");
+const book=xml("xl/workbook.xml"),rels=xml("xl/_rels/workbook.xml.rels"),relationships=new Map(els(rels,"Relationship").map(x=>[attr(x,"Id"),attr(x,"Target")]));
+const shared=zip["xl/sharedStrings.xml"]?els(xml("xl/sharedStrings.xml"),"si").map(x=>text(x,"t")):[];
+const notices=[],sheets=[];
+for(const sh of els(book,"sheet")){
+ const id=sh.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships","id")||attr(sh,"r:id"),target=relationships.get(id);if(!target)throw Error("Workbook sheet relationship missing");
+ let path=target.startsWith("/")?target.slice(1):"xl/"+target;const stack=[];for(const p of path.split("/")){if(p===".."){if(!stack.length)throw Error("Workbook path escapes archive");stack.pop()}else if(p!==".")stack.push(p)}path=stack.join("/");
+ const rows=[];for(const r of els(xml(path),"row")){
+  const ri=Number(attr(r,"r"));if(!Number.isInteger(ri)||ri<1||ri>1048576)throw Error("Invalid worksheet row");while(rows.length<ri)rows.push([]);const cells=rows[ri-1];
+  for(const cell of els(r,"c")){
+   const ref=attr(cell,"r")||"",m=ref.match(/^([A-Z]+)([0-9]+)$/);if(!m||Number(m[2])!==ri)throw Error("Invalid worksheet cell address");let ci=0;for(const ch of m[1])ci=ci*26+ch.charCodeAt(0)-64;ci--;if(ci>=16384)throw Error("Worksheet column limit");while(cells.length<=ci)cells.push(null);
+   const t=attr(cell,"t"),v=text(cell,"v"),formula=els(cell,"f");
+   if(formula.length){if(!els(cell,"v").length)throw Error("Formula cell has no cached value: "+ref);notices.push({sheet:attr(sh,"name"),cell:ref,formula:formula[0].textContent,cached:v})}
+   let value;if(t==="inlineStr")value=text(cell,"t");else if(t==="s"){const ix=Number(v);if(!Number.isInteger(ix)||ix<0||ix>=shared.length)throw Error("Shared string index missing");value=shared[ix]}else if(t==="b")value=v==="1";else if(t==="str"||t==="d")value=v;else if(t==="e")throw Error("Workbook error value in "+ref+": "+v);else if(v==="")value=null;else {value=Number(v);if(!Number.isFinite(value))throw Error("Invalid numeric workbook value in "+ref)}
+   cells[ci]=value;
+  }
+ }
+ sheets.push({name:attr(sh,"name"),rows});
+}
+return {sheets,notices,memberNames:Object.keys(zip),basis:"Original XLSX retained. Standard shared/inline strings and cached formula values are decoded; original formulas remain in the binary source."};
+}
+function startOrkyoDesk({core,codec,adapter,workbook,UZIP,authoredWorkspace}){
+const $=id=>document.getElementById(id),json=x=>JSON.stringify(x,null,2),uid=()=>crypto.randomUUID(),now=()=>new Date().toISOString(),escape=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let w=core.create({id:uid(),title:"Orkyo import readiness",at:now()}),dirty=false,busy=false,selectedSource="",selectedRow="",selectedBatch="",selectedOutcomeRow="",exportedFingerprint=null,page=0,selected=new Set(),pendingFile=null,emergency=[],copyStore=null,savedKey="",activeTab="intake";
+try{copyStore=createOrkyoCopyStore(localStorage,codec)}catch(e){}
+const fields=["title","kind","format","source-id","filename","tenant","type-key","site-id","custom-fields","existing","lookup","source-text","correction-reason","review-action","reviewer","review-reason","review-values","acknowledged","target-id","review-evidence","distinct-reason","batch-id","confirm-tenant","operator","route","attempt-details","outcome-row","outcome-status","outcome-target","outcome-reviewer","outcome-reason","outcome-evidence","note-title","note-text"];
+const say=(msg,bad=false)=>{$("notice").textContent=msg;$("notice").className=bad?"error":""};
+function forms(){const out=Object.fromEntries(fields.map(id=>[id,$(id).value]));out["outcome-row"]=selectedOutcomeRow;return out}
+function record(){return {schema:"tjlabs.orkyo-desk-copy.v1",savedAt:now(),workspace:w,forms:forms(),pendingFile,flags:{existingComplete:$("existing-complete").checked},selection:{source:selectedSource,row:selectedRow,batch:selectedBatch},outcomeDraftBinding:{batchId:selectedBatch,rowId:selectedOutcomeRow},savedKey}}
+function validateRecord(x){if(x?.schema!=="tjlabs.orkyo-desk-copy.v1")throw Error("Choose a complete Orkyo desk copy");const ww=core.reopen(x.workspace).workspace;if(!x.forms||typeof x.forms!=="object"||Array.isArray(x.forms))throw Error("Full form draft required");for(const id of fields)if(typeof x.forms[id]!=="string")throw Error("Draft field missing: "+id);if(!["requests","resources","workbook"].includes(x.forms.kind))throw Error("Unknown draft import kind");if(x.flags!=null&&typeof x.flags.existingComplete!=="boolean")throw Error("Invalid complete-lookup draft flag");if(x.pendingFile){const b=codec.base64Decode(x.pendingFile.base64);if(b.length!==x.pendingFile.bytes||codec.sha256(b)!==x.pendingFile.sha256)throw Error("Pending original bytes differ")}const state=core.view(ww),sel=x.selection||{};if(sel.source&&!state.sources.some(z=>z.id===sel.source))throw Error("Saved selected source is missing");if(sel.row&&!state.sources.find(z=>z.id===sel.source)?.rows.some(z=>z.id===sel.row))throw Error("Saved selected row is missing");if(sel.batch&&!state.batches.some(z=>z.id===sel.batch))throw Error("Saved selected batch is missing");const outcomeRow=x.forms["outcome-row"];if(outcomeRow&&!state.batches.find(z=>z.id===sel.batch)?.rows.some(z=>z.id===outcomeRow))throw Error("Saved outcome row is not in its selected batch");if(x.outcomeDraftBinding&&(x.outcomeDraftBinding.batchId!==(sel.batch||"")||x.outcomeDraftBinding.rowId!==outcomeRow))throw Error("Outcome draft binding differs");return {...x,workspace:ww}}
+function download(name,body,type="application/json"){const blob=new Blob([body],{type}),u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),30000)}
+function save({quiet=false}={}){const r=record();try{if(!copyStore)throw Error("Browser storage is unavailable");const receipt=copyStore.save(r);savedKey=receipt.key;dirty=false;refreshCopies();if(!quiet)say("Saved an independent complete copy, including pending forms and original file bytes.");return true}catch(e){emergency.push(r);dirty=true;if(!quiet)say("Save failed: "+e.message+". Complete current copy remains available through Emergency export.",true);return false}}
+function fingerprint(r){const stable={...r};delete stable.savedAt;delete stable.savedKey;delete stable.earlierInMemoryCopies;return core.sha(stable)}
+function retainBeforeReplace(){if(save({quiet:true}))return;if(exportedFingerprint===fingerprint(record()))return;throw Error("Could not retain the current draft. Download Emergency export, confirm that exact file was saved, then retry. Any edit requires a new export.")}
+function adopt(x){const r=validateRecord(x);retainBeforeReplace();w=r.workspace;pendingFile=r.pendingFile||null;for(const id of fields)$(id).value=r.forms[id];$("existing-complete").checked=r.flags?.existingComplete===true;selectedSource=r.selection?.source||"";selectedRow=r.selection?.row||"";selectedBatch=r.selection?.batch||"";selectedOutcomeRow=r.forms["outcome-row"]||"";selected.clear();page=0;dirty=false;savedKey=r.savedKey||"";render();say("Opened the selected complete copy. Other saved copies remain independent.");}
+function clearReview(){selectedRow="";for(const id of ["reviewer","review-reason","acknowledged","target-id","review-evidence","distinct-reason"])$(id).value="";$("review-action").value="new";$("review-values").value="{}";$("row-title").textContent="Choose a row to review";$("row-detail").textContent="";}
+function clearOutcome(){for(const id of ["outcome-target","outcome-reviewer","outcome-reason","outcome-evidence"])$(id).value="";$("outcome-status").value="created";}
+function blankForms(title){for(const id of fields)$(id).value="";Object.assign($("title"),{value:title});$("kind").value="requests";$("format").value="csv";$("custom-fields").value="{}";$("existing").value="[]";$("review-action").value="new";$("outcome-status").value="created";$("existing-complete").checked=false;selectedSource=selectedRow=selectedBatch=selectedOutcomeRow="";pendingFile=null;selected.clear();$("row-detail").textContent="";$("file-note").textContent="";}
+function refreshCopies(){if(!copyStore)return;const copies=copyStore.list();$("copies").replaceChildren(...copies.map(c=>{const o=document.createElement("option");o.value=c.key;o.textContent=c.error?"Unreadable retained copy "+c.key:(c.at+" · "+(c.title||"Untitled")+" · revision "+c.revision);return o}));$("copy-count").textContent=copies.length+" complete saved copies"}
+function lock(on){busy=on;document.querySelectorAll("button,input,select,textarea").forEach(el=>{if(el.id!=="emergency")el.disabled=on});$("busy").textContent=on?"Reading the selected original; controls are frozen.":""}
+function run(fn){if(busy)return;try{fn()}catch(e){say(e.message,true)}}
+async function asyncRun(fn){if(busy)return;lock(true);try{await fn()}catch(e){say(e.message,true)}finally{lock(false)}}
+function mutate(type,payload){const before=record(),candidate=core.command(w,{id:uid(),expectedHead:w.head,type,at:now(),payload});emergency.push(before);w=candidate;dirty=true;const ok=save({quiet:true});render();say(ok?"Saved revision "+w.revision+" as a complete independent copy.":"Revision "+w.revision+" is open but browser save failed. Download Emergency export now.",!ok)}
+function context(){const kind=$("kind").value,c={tenant:$("tenant").value.trim()};if(kind==="resources"){c.typeKey=$("type-key").value.trim();c.customFieldTypes=JSON.parse($("custom-fields").value||"{}")}if(kind==="workbook"){Object.assign(c,{siteId:$("site-id").value.trim(),typeKey:$("type-key").value.trim(),existingComplete:$("existing-complete").checked,existingResources:JSON.parse($("existing").value||"[]"),lookupEvidence:{text:$("lookup").value}})}return c}
+function currentArtifact(){const text=$("source-text").value;return {filename:$("filename").value||"original.txt",text,...(pendingFile?{originalFile:pendingFile}:{}),...($("kind").value==="workbook"?{representation:"Complete worksheet-cell JSON; original XLSX retained when selected"}:{})}}
+function view(){return core.view(w)}
+function src(){return view().sources.find(s=>s.id===selectedSource)}
+function updateSourceSelect(v){const prior=selectedSource;$("sources").replaceChildren(...v.sources.map(s=>{const o=document.createElement("option");o.value=s.id;o.textContent=s.id+" · "+s.kind+" · "+s.rows.length+" rows";return o}));if(!v.sources.some(s=>s.id===prior))selectedSource=v.sources[0]?.id||"";$("sources").value=selectedSource}
+function render(){
+ $("workspace-title").textContent=w.title;$("revision").textContent="Revision "+w.revision+" · "+w.head.slice(0,16);const v=view();updateSourceSelect(v);
+ $("totals").textContent=v.sources.length+" sources · "+v.sources.reduce((n,s)=>n+s.rows.length,0)+" retained rows · "+v.batches.length+" frozen batches";
+ const source=v.sources.find(s=>s.id===selectedSource);$("source-summary").textContent=source?(source.inspection.ok?json(source.inspection.summary):"Original needs repair: "+source.inspection.error):"Select or retain an original file.";
+ const search=$("search").value.toLowerCase(),rows=(source?.rows||[]).filter(r=>JSON.stringify({id:r.id,payload:r.nativePayload,original:r.original,review:r.review}).toLowerCase().includes(search)),pages=Math.max(1,Math.ceil(rows.length/50));page=Math.min(page,pages-1);
+ $("page").textContent=(page+1)+"/"+pages+" · "+rows.length+" matching rows";$("rows").innerHTML=rows.slice(page*50,page*50+50).map(r=>'<tr><td><input type="checkbox" data-select="'+escape(r.id)+'" '+(selected.has(r.id)?"checked":"")+'></td><td><button data-row="'+escape(r.id)+'">'+escape(r.id)+'</button></td><td>'+escape(r.nativePayload?.name||"")+'</td><td>'+escape(r.review?.action||"Unreviewed")+'</td><td>'+escape(r.status.done?.outcome.targetId||r.review?.targetId||(r.status.pending?"Prepared / unresolved":r.ready?"Ready":"Review"))+'</td><td>'+escape(r.issues.map(x=>x.code).join(", "))+'</td></tr>').join("");
+ $("selection-count").textContent=selected.size+" rows selected";
+ $("source-detail").textContent=source?json({context:source.context,editions:source.editions,inspection:source.inspection.plan}):"";
+ const priorBatch=selectedBatch;$("batches").replaceChildren(...v.batches.map(b=>{const o=document.createElement("option");o.value=b.id;o.textContent=b.id+" · "+b.state+" · "+b.outcomes.length+"/"+b.rows.length+" resolved";return o}));if(!v.batches.some(b=>b.id===selectedBatch))selectedBatch=v.batches[0]?.id||"";if(priorBatch!==selectedBatch){selectedOutcomeRow="";clearOutcome()}$("batches").value=selectedBatch;renderBatch();const currentRow=source?.rows.find(r=>r.id===selectedRow);$("row-title").textContent=currentRow?selectedSource+" / "+selectedRow:"Choose a row to review";$("row-detail").textContent=currentRow?json(currentRow):"";
+ $("history").textContent=json(w.events);$("notes").textContent=json(v.notes);refreshCopies();
+}
+function chooseRow(id){const s=src(),r=s.rows.find(x=>x.id===id);if(!r)return;selectedRow=id;const review=r.review||{};$("row-title").textContent=s.id+" / "+id;$("review-action").value=review.action||"new";$("reviewer").value=review.reviewer||"";$("review-reason").value=review.reason||"";$("review-values").value=json(r.values);$("acknowledged").value=(review.acknowledged||[]).join("\n");$("target-id").value=review.targetId||"";$("review-evidence").value=review.evidence?.text||"";$("distinct-reason").value=review.distinctReason||"";$("row-detail").textContent=json(r);dirty=true;}
+function renderBatch(){const previousRow=selectedOutcomeRow;const b=view().batches.find(x=>x.id===selectedBatch);$("batch-detail").textContent=b?json(b):"No frozen batch selected.";$("outcome-row").replaceChildren(...(b?.rows||[]).map(r=>{const o=document.createElement("option");o.value=r.id;o.textContent=r.id+" · "+(r.nativePayload?.name||"")+" · "+(b.outcomes.find(x=>x.rowId===r.id)?.status||"unresolved");return o}));selectedOutcomeRow=b?.rows.some(r=>r.id===previousRow)?previousRow:b?.rows[0]?.id||"";$("outcome-row").value=selectedOutcomeRow;}
+function nativeBatchDownload(){const b=view().batches.find(x=>x.id===$("batches").value);if(!b)throw Error("Select a frozen batch");if(b.state!=="prepared"&&!confirm("This batch was already attempted or abandoned. Downloading it does not authorize importing it again. Continue for inspection?"))return;const file=b.file;if(file.sheets)download(b.id+".xlsx",workbook.buildXlsx(file.sheets,UZIP.encode,codec.utf8Encode),file.mime);else download(b.id+"."+file.filename.split(".").at(-1),file.text,file.mime);say("Downloaded the exact frozen native batch. Mark attempted at the actual import, then reconcile each row before another create.");}
+document.addEventListener("input",e=>{if(e.target.matches("input,textarea,select"))dirty=true});
+document.addEventListener("change",e=>{if(e.target.matches("input,textarea,select"))dirty=true});
+$("save").onclick=()=>run(()=>save());
+$("emergency").onclick=()=>run(()=>{const exact=record(),identity=fingerprint(exact);download("Orkyo_Complete_Emergency_Copy.json",json({...exact,earlierInMemoryCopies:emergency}));if(confirm("Confirm the complete Emergency Copy file is saved on your device before allowing another copy to replace this draft.")){exportedFingerprint=identity;say("The exact exported copy is retained. You may now open/import/start another copy even if browser storage remains unavailable. Any edits require another export.");}else say("Current draft remains protected. Confirm a saved emergency export before replacement.",true);});
+$("open-copy").onclick=()=>run(()=>{const c=copyStore?.list().find(x=>x.key===$("copies").value);if(!c||c.error)throw Error("Selected copy is not readable");adopt(c.body)});
+$("download-copy").onclick=()=>run(()=>{const c=copyStore?.list().find(x=>x.key===$("copies").value);if(!c)throw Error("Select saved copy");download("Orkyo_Saved_Copy.json",c.raw)});
+$("import-copy").onchange=()=>asyncRun(async()=>{const f=$("import-copy").files[0];if(!f)return;const text=new TextDecoder("utf-8",{fatal:true}).decode(await f.arrayBuffer()),parsed=JSON.parse(text);if(parsed.schema===core.SCHEMA){const current=record();current.workspace=core.reopen(parsed).workspace;current.forms=Object.fromEntries(fields.map(k=>[k,""]));Object.assign(current.forms,{kind:"requests",format:"csv",title:parsed.title,"custom-fields":"{}","existing":"[]","review-action":"new","outcome-status":"created"});current.pendingFile=null;current.selection={};current.outcomeDraftBinding={batchId:"",rowId:""};current.flags={existingComplete:false};adopt(current)}else adopt(parsed)});
+$("new").onclick=()=>run(()=>{retainBeforeReplace();w=core.create({id:uid(),title:$("title").value.trim()||"Orkyo import readiness",at:now()});blankForms(w.title);dirty=true;render();save()});
+$("example").onclick=()=>run(()=>{const r=record();r.workspace=authoredWorkspace;r.forms=Object.fromEntries(fields.map(k=>[k,""]));Object.assign(r.forms,{kind:"requests",format:"csv",title:authoredWorkspace.title,"custom-fields":"{}","existing":"[]","review-action":"new","outcome-status":"created"});r.pendingFile=null;r.selection={source:"requests",row:"",batch:""};r.outcomeDraftBinding={batchId:"",rowId:""};r.flags={existingComplete:false};adopt(r);say("Opened the authored receiving course. Its target IDs and provider responses are explicitly authored examples.")});
+$("source-file").onchange=()=>asyncRun(async()=>{const f=$("source-file").files[0];if(!f)return;retainBeforeReplace();const b=new Uint8Array(await f.arrayBuffer()),original={filename:f.name,base64:codec.base64Encode(b),bytes:b.length,sha256:codec.sha256(b)};pendingFile=original;$("filename").value=f.name;$("source-text").value="";$("file-note").textContent="Original bytes retained; decoding in progress.";dirty=true;
+ if(/\.xlsx$/i.test(f.name)){const read=readOrkyoXlsx(b,UZIP);$("kind").value="workbook";$("format").value="sheets-json";$("source-text").value=json(read.sheets);$("file-note").textContent=read.basis+(read.notices.length?" "+read.notices.length+" formula cells use retained cached values.":"");}
+ else {$("source-text").value=new TextDecoder("utf-8",{fatal:true,ignoreBOM:true}).decode(b);$("format").value=/\.json$/i.test(f.name)?"json":"csv";$("file-note").textContent="Exact original bytes retained separately from editable source text."}
+ save();});
+$("download-original").onclick=()=>run(()=>{if(!pendingFile)throw Error("No selected binary original");download(pendingFile.filename,codec.base64Decode(pendingFile.base64),"application/octet-stream")});
+$("kind").onchange=()=>{if($("kind").value==="workbook")$("format").value="sheets-json";else if($("format").value==="sheets-json")$("format").value="csv";dirty=true};
+$("retain-source").onclick=()=>run(()=>{const id=$("source-id").value.trim()||uid();mutate("intake",{sourceId:id,kind:$("kind").value,format:$("format").value,context:context(),artifact:currentArtifact()});selectedSource=id;clearReview();selected.clear();dirty=true;render();save()});
+$("load-source").onclick=()=>run(()=>{const s=src();if(!s)throw Error("Select source");retainBeforeReplace();const e=s.editions.at(-1);$("kind").value=s.kind;$("format").value=s.format;$("source-id").value=s.id;$("filename").value=e.artifact.filename;$("source-text").value=e.artifact.text;$("tenant").value=s.context.tenant;$("type-key").value=s.context.typeKey||"";$("site-id").value=s.context.siteId||"";$("custom-fields").value=json(s.context.customFieldTypes||{});$("existing").value=json(s.context.existingResources||[]);$("existing-complete").checked=s.context.existingComplete===true;$("lookup").value=s.context.lookupEvidence?.text||"";pendingFile=e.artifact.originalFile||null;dirty=true;say("Loaded the retained source into the correction form. Its original edition stays unchanged.")});
+$("correct-source").onclick=()=>run(()=>{if($("source-id").value!==selectedSource)throw Error("Load the selected source before replacing its current edition");mutate("correct-source",{sourceId:selectedSource,reason:$("correction-reason").value,context:context(),artifact:currentArtifact()})});
+$("sources").onchange=()=>run(()=>{const next=$("sources").value;try{retainBeforeReplace()}catch(e){$("sources").value=selectedSource;throw e}selectedSource=next;clearReview();selected.clear();page=0;dirty=true;render()});
+$("search").oninput=()=>{page=0;render()};$("prev").onclick=()=>{page=Math.max(0,page-1);render()};$("next").onclick=()=>{page++;render()};
+$("rows").onclick=e=>{const b=e.target.closest("[data-row]");if(b)run(()=>{if(dirty)retainBeforeReplace();chooseRow(b.dataset.row)})};
+$("rows").onchange=e=>{const id=e.target.dataset.select;if(id){e.target.checked?selected.add(id):selected.delete(id);$("selection-count").textContent=selected.size+" rows selected"}};
+$("preview-review").onclick=()=>run(()=>{const s=src(),r=s?.rows.find(x=>x.id===selectedRow);if(!r)throw Error("Select row");const review={action:$("review-action").value,reviewer:$("reviewer").value,reason:$("review-reason").value,values:JSON.parse($("review-values").value),acknowledged:$("acknowledged").value.split("\n").map(x=>x.trim()).filter(Boolean)};$("row-detail").textContent=json(core.preview(s,r,review));say("Preview refreshed. Copy the issue codes you have actually reviewed into the acknowledgement field; blocking issues require corrected values.")});
+$("save-review").onclick=()=>run(()=>{if(!selectedRow)throw Error("Select row");const action=$("review-action").value,review={action,reviewer:$("reviewer").value,reason:$("review-reason").value,values:JSON.parse($("review-values").value),acknowledged:$("acknowledged").value.split("\n").map(x=>x.trim()).filter(Boolean),distinctReason:$("distinct-reason").value};if(action==="bind"){review.targetId=$("target-id").value;review.evidence={text:$("review-evidence").value}}mutate("review",{sourceId:selectedSource,rowId:selectedRow,review})});
+$("prepare").onclick=()=>run(()=>{mutate("prepare",{sourceId:selectedSource,batchId:$("batch-id").value.trim()||uid(),rowIds:[...selected]});selected.clear();render()});
+$("batches").onchange=()=>run(()=>{const next=$("batches").value;try{retainBeforeReplace()}catch(e){$("batches").value=selectedBatch;throw e}selectedBatch=next;selectedOutcomeRow="";clearOutcome();dirty=true;renderBatch()});$("outcome-row").onchange=()=>run(()=>{const next=$("outcome-row").value;try{retainBeforeReplace()}catch(e){$("outcome-row").value=selectedOutcomeRow;throw e}selectedOutcomeRow=next;clearOutcome();dirty=true;});$("native-download").onclick=()=>run(nativeBatchDownload);
+$("mark-attempt").onclick=()=>run(()=>mutate("attempt",{batchId:$("batches").value,confirmTenant:$("confirm-tenant").value,operator:$("operator").value,route:$("route").value,details:$("attempt-details").value}));
+$("abandon").onclick=()=>run(()=>mutate("abandon",{batchId:$("batches").value,reason:$("attempt-details").value}));
+$("resolve").onclick=()=>run(()=>mutate("resolve",{batchId:selectedBatch,rowId:selectedOutcomeRow,status:$("outcome-status").value,targetId:$("outcome-target").value||null,reviewer:$("outcome-reviewer").value,reason:$("outcome-reason").value,evidence:{text:$("outcome-evidence").value}}));
+$("note-save").onclick=()=>run(()=>mutate("note",{title:$("note-title").value,text:$("note-text").value}));
+$("export-json").onclick=()=>run(()=>download("Orkyo_Complete_Workspace.json",core.exports(w).workspace));
+$("export-ready").onclick=()=>run(()=>download("Orkyo_Readiness.csv",core.exports(w).readinessCSV,"text/csv"));
+$("export-outcomes").onclick=()=>run(()=>download("Orkyo_Outcomes.csv",core.exports(w).outcomesCSV,"text/csv"));
+$("report").onclick=()=>run(()=>download("Orkyo_Complete_Report.html",core.report(w),"text/html"));
+document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{activeTab=b.dataset.tab;document.querySelectorAll(".tab").forEach(x=>x.hidden=x.id!==activeTab);document.querySelectorAll("[data-tab]").forEach(x=>x.setAttribute("aria-selected",String(x===b)))});
+window.addEventListener("beforeunload",e=>{if(dirty){e.preventDefault();e.returnValue=""}});
+$("title").value=w.title;$("custom-fields").value="{}";$("existing").value="[]";render();
+}
+
+const codec=createArchiveCodec(),adapter=createOrkyoImportAdapter(),native=createOrkyoWorkbookNativeReader("import type { CreateRequestRequest } from '@foundation/src/types/requests';\nimport type { CreateResourceRequest } from '@foundation/src/lib/api/resources-api';\n\n// Parses the published Orkyo capacity-planning workbook (orkyo.com/guides/\n// capacity-planning-excel-template/) into create payloads. Kept free of file\n// reading: spreadsheet-file.ts unpacks the .xlsx and hands over neutral SheetData,\n// so everything here is synchronous and testable.\n//\n// Template layout (both sheets): headers on row 5, data from row 6. Columns\n// beyond the input range are derived formulas in the workbook and are ignored.\n\nexport type SheetCell = string | number | boolean | Date | null | undefined;\n\nexport interface SheetData {\n  name: string;\n  /** rows[0] is spreadsheet row 1; cells[0] is column A. */\n  rows: SheetCell[][];\n}\n\nexport interface WorkstationRow {\n  /** Spreadsheet row number, for error messages. */\n  row: number;\n  code: string;\n  name: string;\n  standsThere: string;\n  notes: string;\n}\n\nexport interface JobRow {\n  row: number;\n  job: string;\n  description: string;\n  workstationCode: string;\n  /** ISO date (yyyy-mm-dd) or null when the cell was empty/unreadable. */\n  start: string | null;\n  end: string | null;\n  hoursPerDay: number | null;\n}\n\nexport interface ImportRowError {\n  sheet: string;\n  row: number;\n  message: string;\n}\n\nexport interface ParsedWorkbook {\n  workstations: WorkstationRow[];\n  jobs: JobRow[];\n  errors: ImportRowError[];\n}\n\nconst WORKSTATIONS_SHEET = 'Workstations';\nconst JOBS_SHEET = 'Jobs';\nconst DATA_FIRST_ROW = 6; // 1-based; headers sit on row 5\n\nfunction text(cell: SheetCell): string {\n  if (cell === null || cell === undefined) return '';\n  if (cell instanceof Date) return cell.toISOString();\n  return String(cell).trim();\n}\n\nfunction number(cell: SheetCell): number | null {\n  if (typeof cell === 'number' && Number.isFinite(cell)) return cell;\n  const parsed = parseFloat(text(cell));\n  return Number.isFinite(parsed) ? parsed : null;\n}\n\n/** Excel serial dates count days from 1899-12-30 (the off-by-two lotus legacy). */\nconst EXCEL_EPOCH_MS = Date.UTC(1899, 11, 30);\nconst DAY_MS = 24 * 60 * 60 * 1000;\n\nexport function cellToIsoDate(cell: SheetCell): string | null {\n  if (cell === null || cell === undefined || cell === '') return null;\n  if (cell instanceof Date) {\n    return Number.isNaN(cell.getTime()) ? null : cell.toISOString().slice(0, 10);\n  }\n  if (typeof cell === 'number' && Number.isFinite(cell) && cell > 0) {\n    return new Date(EXCEL_EPOCH_MS + Math.round(cell) * DAY_MS).toISOString().slice(0, 10);\n  }\n  const parsed = new Date(text(cell));\n  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString().slice(0, 10);\n}\n\nfunction isBlank(cells: SheetCell[]): boolean {\n  return cells.every(c => text(c) === '');\n}\n\nexport function parseTemplateWorkbook(sheets: SheetData[]): ParsedWorkbook {\n  const errors: ImportRowError[] = [];\n  const workstations: WorkstationRow[] = [];\n  const jobs: JobRow[] = [];\n\n  const wsSheet = sheets.find(s => s.name === WORKSTATIONS_SHEET);\n  const jobSheet = sheets.find(s => s.name === JOBS_SHEET);\n  if (!wsSheet) {\n    errors.push({ sheet: WORKSTATIONS_SHEET, row: 0, message: `Sheet \"${WORKSTATIONS_SHEET}\" not found — is this the capacity-planning template?` });\n  }\n  if (!jobSheet) {\n    errors.push({ sheet: JOBS_SHEET, row: 0, message: `Sheet \"${JOBS_SHEET}\" not found — is this the capacity-planning template?` });\n  }\n  if (!wsSheet || !jobSheet) return { workstations, jobs, errors };\n\n  const seenCodes = new Set\u003cstring>();\n  for (let i = DATA_FIRST_ROW - 1; i \u003c wsSheet.rows.length; i++) {\n    const cells = wsSheet.rows[i] ?? [];\n    const input = cells.slice(0, 5); // A–E; F+ are derived formulas\n    if (isBlank(input)) continue;\n    const row = i + 1;\n    const code = text(input[0]);\n    const name = text(input[1]);\n    if (!code || !name) {\n      errors.push({ sheet: WORKSTATIONS_SHEET, row, message: 'Code and Workstation name are both required.' });\n      continue;\n    }\n    if (seenCodes.has(code)) {\n      errors.push({ sheet: WORKSTATIONS_SHEET, row, message: `Duplicate code \"${code}\" — codes must be unique.` });\n      continue;\n    }\n    seenCodes.add(code);\n    workstations.push({ row, code, name, standsThere: text(input[2]), notes: text(input[4]) });\n  }\n\n  for (let i = DATA_FIRST_ROW - 1; i \u003c jobSheet.rows.length; i++) {\n    const cells = jobSheet.rows[i] ?? [];\n    const input = cells.slice(0, 6); // A–F; G+ are derived formulas\n    if (isBlank(input)) continue;\n    const row = i + 1;\n    const job = text(input[0]);\n    const workstationCode = text(input[2]);\n    if (!job) {\n      errors.push({ sheet: JOBS_SHEET, row, message: 'Job name is required.' });\n      continue;\n    }\n    if (!workstationCode) {\n      errors.push({ sheet: JOBS_SHEET, row, message: `Job \"${job}\" has no workstation code.` });\n      continue;\n    }\n    if (!seenCodes.has(workstationCode)) {\n      errors.push({ sheet: JOBS_SHEET, row, message: `Job \"${job}\" references unknown workstation \"${workstationCode}\".` });\n      continue;\n    }\n    const start = cellToIsoDate(input[3]);\n    const end = cellToIsoDate(input[4]);\n    if (start && end && end \u003c start) {\n      errors.push({ sheet: JOBS_SHEET, row, message: `Job \"${job}\" ends before it starts.` });\n      continue;\n    }\n    jobs.push({ row, job, description: text(input[1]), workstationCode, start, end, hoursPerDay: number(input[5]) });\n  }\n\n  return { workstations, jobs, errors };\n}\n\n// The template's \"Capacity (h/day)\" is hours a workstation can absorb; a space's\n// `capacity` is how many things fit in it at once. Different quantities — the\n// hours column is deliberately not mapped, and the wizard says so.\nexport function workstationToCreateSpace(\n  row: WorkstationRow,\n  siteId: string,\n  resourceTypeKey: string,\n): CreateResourceRequest {\n  const description = [row.standsThere, row.notes].filter(Boolean).join(' — ');\n  return {\n    // A workstation is a placed thing; which placeable type it becomes is the caller's answer,\n    // resolved from the tenant's own types rather than assuming the built-in space still exists.\n    resourceTypeKey,\n    name: row.name,\n    code: row.code,\n    description: description || undefined,\n    allocationMode: 'Exclusive',\n    homeSiteId: siteId,\n    crossSiteAllowed: false,\n    isPhysical: true,\n  };\n}\n\nfunction weekdayCount(startIso: string, endIso: string): number {\n  const start = new Date(`${startIso}T00:00:00Z`);\n  const end = new Date(`${endIso}T00:00:00Z`);\n  let count = 0;\n  for (let t = start.getTime(); t \u003c= end.getTime(); t += DAY_MS) {\n    const day = new Date(t).getUTCDay();\n    if (day !== 0 && day !== 6) count++;\n  }\n  return count;\n}\n\nexport function jobToCreateRequest(\n  job: JobRow,\n  codeToResourceId: Map\u003cstring, string>,\n  siteId: string,\n): CreateRequestRequest {\n  const resourceId = codeToResourceId.get(job.workstationCode);\n  // The template's End column is inclusive (a one-day job has Start = End);\n  // request windows are exclusive at the end, so the window runs to the\n  // following midnight.\n  const startTs = job.start ? `${job.start}T00:00:00Z` : undefined;\n  const endTs = job.end\n    ? `${new Date(new Date(`${job.end}T00:00:00Z`).getTime() + DAY_MS).toISOString().slice(0, 10)}T00:00:00Z`\n    : undefined;\n  const workingDays = job.start && job.end ? weekdayCount(job.start, job.end) : 0;\n  const totalHours = job.hoursPerDay && workingDays > 0 ? job.hoursPerDay * workingDays : 0;\n\n  return {\n    name: job.job,\n    description: job.description || undefined,\n    siteId,\n    resourceIds: resourceId ? [resourceId] : undefined,\n    startTs,\n    endTs,\n    minimalDurationValue: totalHours > 0 ? totalHours : 1,\n    minimalDurationUnit: 'hours',\n    status: 'new',\n  };\n}\n"),workbook=createOrkyoWorkbookPlanner(native),core=createOrkyoReadinessCore({codec,adapter,workbook});
+startOrkyoDesk({core,codec,adapter,workbook,UZIP,authoredWorkspace:{"schema":"tjlabs.orkyo-readiness.v1","operationId":"ORKYO-PRODUCTION-IMPORT-WORKSHARE-20261015","id":"authored-shop","title":"Authored machining shop — complete receiving course","createdAt":"2026-10-15T01:00:00Z","sourceCommit":"9b773566ecbfb0947f51f6e20ea925c03ddb2a22","events":[{"id":"authored-1","seq":1,"previous":"3da3a254ee86d0eb4446236f1d05ba64e9ba00184fe38168cb0ea82d166cc5ac","type":"intake","at":"2026-10-15T01:00:01.000Z","payload":{"sourceId":"requests","kind":"requests","format":"csv","context":{"tenant":"Authored receiving tenant"},"artifact":{"filename":"authored-requests.csv","text":"id,name,description,status,start_ts,end_ts,resource_id,resource_name,earliest_start_ts,latest_end_ts,min_duration_value,min_duration_unit,actual_duration_value,actual_duration_unit,requirements_count\nold-1,WO-001,\"Mill, inspect\nKeep exact source\",new,,,mill-a,,,,2.5,hours,,,2\nold-2,WO-002,,new,,,mill-a,,,,90,minutes,,,0\n"}},"sha256":"7d41e8007c30f282851ccd3bc0eee1f2c70336703a218a565942bc14fa40849a"},{"id":"authored-3","seq":2,"previous":"7d41e8007c30f282851ccd3bc0eee1f2c70336703a218a565942bc14fa40849a","type":"review","at":"2026-10-15T01:00:03.000Z","payload":{"sourceId":"requests","rowId":"row:1","review":{"action":"new","reviewer":"Authored receiving operator","reason":"Authored target inspection confirms requirements are outside this request-only trial; originals with count two remain retained. Use 150 minutes to preserve 2.5 hours.","values":{"id":"old-1","name":"WO-001","description":"Mill, inspect\nKeep exact source","status":"new","start_ts":"","end_ts":"","resource_id":"mill-a","resource_name":"","earliest_start_ts":"","latest_end_ts":"","min_duration_value":"150","min_duration_unit":"minutes","actual_duration_value":"","actual_duration_unit":"","requirements_count":"0"},"acknowledged":["id-ignored","structural-scope"]}},"sha256":"6bb84d794fe174e730eabf60ddc824c6de2c3d470e231fbb021f63c18f99ff5d"},{"id":"authored-4","seq":3,"previous":"6bb84d794fe174e730eabf60ddc824c6de2c3d470e231fbb021f63c18f99ff5d","type":"review","at":"2026-10-15T01:00:04.000Z","payload":{"sourceId":"requests","rowId":"row:2","review":{"action":"new","reviewer":"Authored receiving operator","reason":"Authored exact resource mill-a and root-request scope reviewed.","values":{"id":"old-2","name":"WO-002","description":"","status":"new","start_ts":"","end_ts":"","resource_id":"mill-a","resource_name":"","earliest_start_ts":"","latest_end_ts":"","min_duration_value":"90","min_duration_unit":"minutes","actual_duration_value":"","actual_duration_unit":"","requirements_count":"0"},"acknowledged":["id-ignored","structural-scope"]}},"sha256":"c921451a5d8e6848df636c53c9d24bd97ce61447fda88ab70dadf00ea634907f"},{"id":"authored-5","seq":4,"previous":"c921451a5d8e6848df636c53c9d24bd97ce61447fda88ab70dadf00ea634907f","type":"prepare","at":"2026-10-15T01:00:05.000Z","payload":{"sourceId":"requests","batchId":"requests-1","rowIds":["row:1","row:2"]},"sha256":"ab5036ee9a88ff0bfc2989e723ff9f334158380494a7bd0eb116f785daed0dc8"},{"id":"authored-6","seq":5,"previous":"ab5036ee9a88ff0bfc2989e723ff9f334158380494a7bd0eb116f785daed0dc8","type":"attempt","at":"2026-10-15T01:00:06.000Z","payload":{"batchId":"requests-1","confirmTenant":"Authored receiving tenant","operator":"Authored operator","route":"Requests CSV import","details":"Authored partial-write scenario; these are not production service responses."},"sha256":"b0fba0cd6fef6579937fb36e40b6ab0964ac5d576756014720124390b660a547"},{"id":"authored-7","seq":6,"previous":"b0fba0cd6fef6579937fb36e40b6ab0964ac5d576756014720124390b660a547","type":"resolve","at":"2026-10-15T01:00:07.000Z","payload":{"batchId":"requests-1","rowId":"row:1","status":"created","targetId":"authored-request-701","reviewer":"Authored operator","reason":"First create returned an ID in the authored receiving scenario.","evidence":{"text":"{\"id\":\"authored-request-701\",\"name\":\"WO-001\"}","kind":"authored-response"}},"sha256":"6cc22efb0502beae2618a6750cde248e3c1069c73fc4a5204023d51a4fd94e85"},{"id":"authored-9","seq":7,"previous":"6cc22efb0502beae2618a6750cde248e3c1069c73fc4a5204023d51a4fd94e85","type":"resolve","at":"2026-10-15T01:00:09.000Z","payload":{"batchId":"requests-1","rowId":"row:2","status":"not-attempted","reviewer":"Authored operator","reason":"Authored importer stopped before second row; complete response and target lookup are retained.","evidence":{"text":"{\"created\":1,\"stoppedBeforeRow\":2,\"targetLookup\":[]}","kind":"authored-response"}},"sha256":"507f75217230ddd1a24961a81d8cfe97ab1a188d0f1dfaaee2eeb15c8ca17b54"},{"id":"authored-10","seq":8,"previous":"507f75217230ddd1a24961a81d8cfe97ab1a188d0f1dfaaee2eeb15c8ca17b54","type":"prepare","at":"2026-10-15T01:00:10.000Z","payload":{"sourceId":"requests","batchId":"requests-remaining","rowIds":["row:2"]},"sha256":"19038ffaa3897a4f36a507ee7eb904fe8f4ca9fc11e4eb7d274a5d6b7246a0dd"},{"id":"authored-12","seq":9,"previous":"19038ffaa3897a4f36a507ee7eb904fe8f4ca9fc11e4eb7d274a5d6b7246a0dd","type":"intake","at":"2026-10-15T01:00:12.000Z","payload":{"sourceId":"workbook","kind":"workbook","format":"sheets-json","context":{"tenant":"Authored receiving tenant","siteId":"authored-site","typeKey":"machine","existingComplete":true,"existingResources":[{"code":"CNC-01","id":"authored-cnc"},{"code":"INSPECT","id":"authored-inspect"}],"lookupEvidence":{"text":"{\"site\":\"authored-site\",\"hasNextPage\":false,\"resources\":[{\"code\":\"CNC-01\",\"id\":\"authored-cnc\"},{\"code\":\"INSPECT\",\"id\":\"authored-inspect\"}]}","kind":"authored-lookup"}},"artifact":{"filename":"authored-workbook-sheets.json","text":"[{\"name\":\"Workstations\",\"rows\":[[\"Orkyo production import\"],[\"Codes match exactly, including letter case.\"],[\"Capacity hours/day is retained; native import does not map it.\"],[],[\"Code\",\"Workstation\",\"What stands there\",\"Capacity (h/day)\",\"Notes\"],[\"CNC-01\",\"Machining centre\",\"Fixture A\",8,\"Authored example\"],[\"INSPECT\",\"Inspection\",\"\",6,\"\"]]},{\"name\":\"Jobs\",\"rows\":[[\"Orkyo production import\"],[\"End is inclusive; native request ends next midnight UTC.\"],[\"Duration counts Monday–Friday, with one-hour fallback.\"],[],[\"Job\",\"Description\",\"Workstation code\",\"Start\",\"End\",\"Hours/day\"],[\"EX-100 Rough\",\"Authored demonstration\",\"CNC-01\",\"2026-10-16\",\"2026-10-19\",2.5],[\"EX-100 Inspect\",\"\",\"INSPECT\",\"2026-10-19\",\"2026-10-19\",1.25]]}]"}},"sha256":"e70413ce0d287cab1dceb9562ffc1578d3284d099495eec692cbce680f08abfb"},{"id":"authored-13","seq":10,"previous":"e70413ce0d287cab1dceb9562ffc1578d3284d099495eec692cbce680f08abfb","type":"review","at":"2026-10-15T01:00:13.000Z","payload":{"sourceId":"workbook","rowId":"Jobs:6","review":{"action":"new","reviewer":"Authored receiving operator","reason":"Authored site/code/actual geometry lookup and Monday-Friday window reviewed; station capacities remain separate.","values":["EX-100 Rough","Authored demonstration","CNC-01","2026-10-16","2026-10-19",2.5],"acknowledged":["site-calendar-not-applied","reused-stations-not-updated"]}},"sha256":"0b2ec70eef8b4e1762e34f387f5bf96850fa9a3436cc707ec0124e1608170b71"},{"id":"authored-14","seq":11,"previous":"0b2ec70eef8b4e1762e34f387f5bf96850fa9a3436cc707ec0124e1608170b71","type":"review","at":"2026-10-15T01:00:14.000Z","payload":{"sourceId":"workbook","rowId":"Jobs:7","review":{"action":"new","reviewer":"Authored receiving operator","reason":"Authored site/code/actual geometry lookup and Monday-Friday window reviewed; station capacities remain separate.","values":["EX-100 Inspect","","INSPECT","2026-10-19","2026-10-19",1.25],"acknowledged":["site-calendar-not-applied","reused-stations-not-updated"]}},"sha256":"4a3156eddd7fbf832c66ebc9c0fd154dcb377142ceca28f64538c788614c1cf6"},{"id":"authored-15","seq":12,"previous":"4a3156eddd7fbf832c66ebc9c0fd154dcb377142ceca28f64538c788614c1cf6","type":"prepare","at":"2026-10-15T01:00:15.000Z","payload":{"sourceId":"workbook","batchId":"jobs-1","rowIds":["Jobs:6","Jobs:7"]},"sha256":"060c9c84f80ccd2bfd26af4aedfe81faa8a9f77b43dc811ce4cd884ce5538a7a"},{"id":"authored-16","seq":13,"previous":"060c9c84f80ccd2bfd26af4aedfe81faa8a9f77b43dc811ce4cd884ce5538a7a","type":"attempt","at":"2026-10-15T01:00:16.000Z","payload":{"batchId":"jobs-1","confirmTenant":"Authored receiving tenant","operator":"Authored operator","route":"Production workbook import"},"sha256":"842ed3978c5e49208cdc1c72d13d976d17311cd8cf338bdd83d553c3ae32ebb8"},{"id":"authored-17","seq":14,"previous":"842ed3978c5e49208cdc1c72d13d976d17311cd8cf338bdd83d553c3ae32ebb8","type":"resolve","at":"2026-10-15T01:00:17.000Z","payload":{"batchId":"jobs-1","rowId":"Jobs:6","status":"created","targetId":"authored-job-801","reviewer":"Authored operator","reason":"Authored first job was created.","evidence":{"text":"{\"id\":\"authored-job-801\"}","kind":"authored-response"}},"sha256":"2135d4432431f6af0d5d4ed6b5ecbf7ada679e22084969ab8db8ba8f6d8ab5ff"},{"id":"authored-18","seq":15,"previous":"2135d4432431f6af0d5d4ed6b5ecbf7ada679e22084969ab8db8ba8f6d8ab5ff","type":"resolve","at":"2026-10-15T01:00:18.000Z","payload":{"batchId":"jobs-1","rowId":"Jobs:7","status":"rejected","reviewer":"Authored operator","reason":"Authored receiver rejected second job before creation.","evidence":{"text":"{\"status\":400,\"created\":false,\"row\":7}","kind":"authored-response"}},"sha256":"a6fbf441b3eee17eb16e9f2d2dc5914c7f74a999c242068ad9723c9135af5732"},{"id":"authored-19","seq":16,"previous":"a6fbf441b3eee17eb16e9f2d2dc5914c7f74a999c242068ad9723c9135af5732","type":"prepare","at":"2026-10-15T01:00:19.000Z","payload":{"sourceId":"workbook","batchId":"jobs-remaining","rowIds":["Jobs:7"]},"sha256":"18b0a9ccf77e1e61e22090067d1ebccb19f976fbf5a99eccf5facc436bf132f2"},{"id":"authored-20","seq":17,"previous":"18b0a9ccf77e1e61e22090067d1ebccb19f976fbf5a99eccf5facc436bf132f2","type":"intake","at":"2026-10-15T01:00:20.000Z","payload":{"sourceId":"malformed","kind":"requests","format":"csv","context":{"tenant":"Authored receiving tenant"},"artifact":{"filename":"damaged.csv","text":"name,description\n\"unfinished"}},"sha256":"2cfc8dda7072f91bba8f1c175754aa47f6080d1ad1f88a76935814087af268a4"},{"id":"authored-21","seq":18,"previous":"2cfc8dda7072f91bba8f1c175754aa47f6080d1ad1f88a76935814087af268a4","type":"correct-source","at":"2026-10-15T01:00:21.000Z","payload":{"sourceId":"malformed","reason":"Authored source owner repaired the closing quote.","artifact":{"filename":"repaired.csv","text":"name,description\nRepaired,\"complete\""}},"sha256":"b51a2045476a04b977a67b929c83b9fc3ef894106f7051fff35864f6d0e23ce3"}],"revision":18,"head":"b51a2045476a04b977a67b929c83b9fc3ef894106f7051fff35864f6d0e23ce3"}});</script></body></html>
