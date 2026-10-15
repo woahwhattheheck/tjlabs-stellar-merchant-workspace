@@ -247,7 +247,8 @@ function rankPreparedDocuments(documents, q, avg, df, total, fuzzyMatches = null
     if (!coverage) continue;
     const phrase = q.join(' ');
     const hasPhrase = q.length >= 2 &&
-      doc.fields.slice(0, 5).some(f => f.tokens.join(' ').includes(phrase));
+      // Match complete tokens; substring overlaps at either end are not phrases.
+      doc.fields.slice(0, 5).some(f => ` ${f.tokens.join(' ')} `.includes(` ${phrase} `));
     score *= 1 + 0.45 * coverage / q.length;
     if (hasPhrase) score += 1.4;
     if (exactHits === q.length) score += 0.4;
