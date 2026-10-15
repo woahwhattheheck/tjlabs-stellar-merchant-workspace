@@ -1123,8 +1123,8 @@
     },
     {
       "path": "receiving/run-resumable-export.mjs",
-      "bytes": 5499,
-      "sha256": "e6b34f643a0b8854428c0a84c8bf3f9ca1c34dd1f1f47b6a14f915e1d011a5ba"
+      "bytes": 4878,
+      "sha256": "422e1098c8bf15bdb2f57caab4633a7b931bf230bbdb761a7893034e5e267698"
     },
     {
       "path": "receiving/RESUMABLE_EXPORT.md",
@@ -2260,8 +2260,8 @@
     },
     {
       "path": "receiving/run-resumable-export.mjs",
-      "bytes": 5499,
-      "sha256": "e6b34f643a0b8854428c0a84c8bf3f9ca1c34dd1f1f47b6a14f915e1d011a5ba"
+      "bytes": 4878,
+      "sha256": "422e1098c8bf15bdb2f57caab4633a7b931bf230bbdb761a7893034e5e267698"
     },
     {
       "path": "receiving/RESUMABLE_EXPORT.md",
