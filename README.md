@@ -16,6 +16,8 @@ roadmap, native acceptance and complete customer handover in one source.
 
 ## Choose a workflow
 
+The standalone [Fleet Commissioning Workspace](integrations/fleet-commissioning-workspace/README.md) retains original device, certificate, lifecycle and telemetry exports, compares a declared snapshot, preserves source-bound reviews and unfinished working copies, and hands over a complete offline desk.
+
 The standalone [Marine Job Workbench](integrations/marine-job-workspace/README.md) preserves original vessel jobs, quote revisions, time and material corrections, selected customer handovers, weekly approvals and independent accounting/payment records through complete browser/native continuation.
 
 The standalone [Technician Day Workbench](integrations/technician-day-workspace/README.md) compares original/revised appointments, declared technician/bay windows and buffers, actual completion, quotes, invoices, deposits and refund allocations, retaining whole source editions and browser/native recovery.
