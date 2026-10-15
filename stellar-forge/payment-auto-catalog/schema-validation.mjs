@@ -109,6 +109,28 @@ function resolvePointer(root, ref) {
   return node;
 }
 
+function inspectSchemaDocument(schema) {
+  const state = { nodes: 0, schemas: new WeakSet(), references: [] };
+  const inspection = inspectSchema(schema, 0, state);
+  if (inspection) return inspection;
+  try {
+    // Check every referenced target, including alternatives not taken by an
+    // example. Resolve fragments against this schema document, never its
+    // surrounding discovery envelope or an external source.
+    const checked = new Set();
+    for (let index = 0; index < state.references.length; index++) {
+      const ref = state.references[index];
+      if (checked.has(ref)) continue;
+      checked.add(ref);
+      const invalid = inspectSchema(resolvePointer(schema, ref), 0, state);
+      if (invalid) return invalid;
+    }
+    return null;
+  } catch (error) {
+    return error.message;
+  }
+}
+
 function validateNode(value, schema, root, path = '$', refs = new Set(), depth = 0, evaluation = { nodes: 0 }) {
   if (++evaluation.nodes > MAX_SCHEMA_EVALUATIONS) throw new TypeError('SCHEMA_EVALUATION_LIMIT');
   if (depth > 512) throw new TypeError('SCHEMA_EVALUATION_DEPTH_LIMIT');
@@ -259,6 +281,8 @@ function bazaarContractError(info, schema) {
       return 'INFO_MCP_INPUT_SCHEMA_REQUIRED_INVALID';
     }
   }
+  const inputSchemaInspection = inspectSchemaDocument(input.inputSchema);
+  if (inputSchemaInspection) return `INFO_MCP_INPUT_SCHEMA_INVALID:${inputSchemaInspection}`;
   for (const [field, reason] of [
     ['toolName', 'SCHEMA_MCP_TOOL_NAME_NOT_REQUIRED'],
     ['inputSchema', 'SCHEMA_MCP_INPUT_SCHEMA_NOT_REQUIRED'],
@@ -287,20 +311,9 @@ export function validateBazaarExtension(extension) {
   catch { return { ok: false, reason: 'SCHEMA_NOT_SERIALIZABLE' }; }
   if (bytes > 32_768) return { ok: false, reason: 'SCHEMA_SIZE_LIMIT' };
   if (extension.schema.$schema !== DRAFT) return { ok: false, reason: 'SCHEMA_DRAFT_REQUIRED' };
-  const state = { nodes: 0, schemas: new WeakSet(), references: [] };
-  const inspection = inspectSchema(extension.schema, 0, state);
+  const inspection = inspectSchemaDocument(extension.schema);
   if (inspection) return { ok: false, reason: inspection };
   try {
-    // Check every referenced target, including alternatives not taken by this instance.
-    // This follows schema nodes once, so finite recursive message definitions stay valid.
-    const checked = new Set();
-    for (let index = 0; index < state.references.length; index++) {
-      const ref = state.references[index];
-      if (checked.has(ref)) continue;
-      checked.add(ref);
-      const invalid = inspectSchema(resolvePointer(extension.schema, ref), 0, state);
-      if (invalid) return { ok: false, reason: invalid };
-    }
     const errors = validateNode(extension.info, extension.schema, extension.schema);
     if (errors.length) return { ok: false, reason: 'INFO_SCHEMA_MISMATCH', errors };
     const contract = bazaarContractError(extension.info, extension.schema);
