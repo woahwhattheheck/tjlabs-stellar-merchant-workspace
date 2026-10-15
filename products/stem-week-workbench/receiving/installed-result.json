@@ -1,0 +1,67 @@
+{
+  "schema": "stellar-forge.stemweek-installed-receiving.v1",
+  "originalDomainChecks": 20,
+  "model": {
+    "schema": "stellar-forge.stemweek-installed-course.v1",
+    "runtime": "Actual original core and production model in V8",
+    "checks": [
+      "Four originals retain BOM/CRLF",
+      "Entire unfinished input retained before intake",
+      "Unknown actual counts remain distinct from measured zero",
+      "Grower correction retains original selection and arithmetic",
+      "Original intake retry retains later correction",
+      "Complete pinned projection editions",
+      "Complete pinned projection decisions",
+      "Complete pinned projection original",
+      "Complete pinned projection sourceRows",
+      "Complete pinned projection varieties",
+      "Complete pinned projection variety",
+      "Complete pinned projection commitments",
+      "Complete pinned projection pull",
+      "Complete pinned projection shares",
+      "Complete pinned projection attention",
+      "Complete pinned projection currentDecisions",
+      "Complete pinned projection decisionHistory",
+      "Complete pinned projection vendorComparison",
+      "Complete pinned projection backups",
+      "Complete pinned projection draft",
+      "Complete pinned projection requests",
+      "Whole editor carrier reopens exactly"
+    ],
+    "sequence": 3,
+    "sourceEditions": 3,
+    "backups": 3
+  },
+  "controller": {
+    "schema": "stellar-forge.stemweek-controller-course.v1",
+    "runtime": "Actual installed controller with explicit DOM, byte-file, download and storage adapters",
+    "checks": [
+      "Invalid source and incomplete decision retained",
+      "Four-file controller intake preserves exact original bytes",
+      "Complete controller correction retains both revisions",
+      "Basis-specific complete drafts retained",
+      "New project retains prior complete editors",
+      "Working file restores exact editions and corrected decision",
+      "Old invalid input remains in prior editor"
+    ],
+    "completePriorSessions": 9
+  },
+  "capacity": {
+    "schema": "stellar-forge.stemweek-capacity-course.v1",
+    "capacity": 16791,
+    "acceptedCompleteBytes": 16775,
+    "oversizeOriginalPreservesCompleteEditor": true,
+    "newEditionRejectionPreservesOriginalDrafts": true,
+    "productionDefault": 134217728
+  },
+  "browserStorage": {
+    "schema": "stellar-forge.stemweek-managed-storage-course.v1",
+    "pendingOriginalRetained": true,
+    "conflictingProposalRetained": true,
+    "selectedHeadUnchanged": true,
+    "expandedRecoveryExact": true,
+    "sharedOriginalWorkspaces": 4,
+    "expandedBytes": 227966,
+    "proposalMetadataBytes": 43110
+  }
+}
