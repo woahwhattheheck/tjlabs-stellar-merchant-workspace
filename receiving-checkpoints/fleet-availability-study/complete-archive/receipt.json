@@ -1,0 +1,149 @@
+{
+  "schema": "commons.streamed-complete-export.v1",
+  "identity": "f761a2364e4654e3b12c79d7ff0dcdbff1615382c261bd0e80edfb0c072365a5",
+  "bytes": 106865760,
+  "sha256": "ea4d8a4eeec9dfa7d2460595a549df79c4f9d23f1e2560c2ddc708e0fa927712",
+  "members": 10828,
+  "uncompressedBytes": 312499299,
+  "metadataBytes": 5149824,
+  "maxInputFragmentBytes": 650000,
+  "maxOutputChunkBytes": 487500,
+  "receivingSource": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "sourceHead": "f3c0576290dfd4bcc1b688796bba0ecd31b97560",
+    "inputHead": "31995231f898fdc32dc49f133eb9c29ebc35b644",
+    "inputManifest": "receiving-checkpoints/fleet-availability-study/complete-course/manifest.json",
+    "inputSha256": "78634cfceee97cb904ceca33ba4775989d4e2094264b4a2ee8a181deef9bbfb7",
+    "executionDependency": {
+      "cacheHead": "6d1e099a618d37641f12ff943a061f3fe23723bc",
+      "sourceZipSha256": "78cc84089aa4aad4303888b6ca0156df258ab19ac0ca2aca1aeffd9674d1fb6a",
+      "checkpointStorageSha256": "bff39c118069c3417c9678e84ce522a99aa65a20661320816a31153704f821a9",
+      "seededPreparerHead": "ee00f27740eb312879a977c7d81f14e5d330a571",
+      "seededPreparerSha256": "7fa0afcb8a38846138204db44c6c4e7ad04164779a77d248cf3f77da892f5f28"
+    },
+    "resumedFrom": {
+      "priorHead": "e184e6688e1930dbfdb30369d62996e79bc185d4",
+      "head": "287e160ecf83765e5f6c4eedc60d7bd6649b0deb",
+      "reusedVerifiedRefs": 3912,
+      "newlyVerifiedRefs": 120,
+      "groups": 314,
+      "entries": 6727
+    },
+    "recovery": {
+      "head": "68ef6e2e09d1082e632592174a2551b9834003cf",
+      "verifiedRefsReused": 6035,
+      "newRefsVerified": 277,
+      "groups": 382,
+      "entries": 10809,
+      "elapsed": 145656
+    }
+  },
+  "derivation": {
+    "schema": "commons.source-successor-derivation.v1",
+    "parentIdentity": "fc2529b47f7aa79a71c9a6dc62661539edb05490ca70649848c5076293356636",
+    "parentIndexSha256": "1b4e6afd12f4629bc76d4e585046757ee6b020fd8c0f6270b8d4ace5ca79ba62",
+    "sourceVersion": "woahwhattheheck/tjlabs-stellar-merchant-workspace@5c259b9b57ce2fe674a3e71c9024de7eb8668a45:products/fleet-availability-study",
+    "compression": {
+      "engine": "pako",
+      "level": 1
+    },
+    "changes": [
+      {
+        "name": "source/host/domain.mjs",
+        "before": {
+          "bytes": 8367,
+          "sha256": "99967d6330bfcadd40b18ba445540ba0a4110c893beb9283a4e310f2bad5617e"
+        },
+        "after": {
+          "bytes": 8672,
+          "sha256": "985116a66c047724496eb765228955daf0bf120478a9b60410b78af8bc802718"
+        }
+      },
+      {
+        "name": "source/src/connected_zip.cjs",
+        "before": {
+          "bytes": 22223,
+          "sha256": "751354cbfe55450be53689de23631900f3b1661063c7974e46f99fa2413cbc1f"
+        },
+        "after": {
+          "bytes": 22417,
+          "sha256": "78cc84089aa4aad4303888b6ca0156df258ab19ac0ca2aca1aeffd9674d1fb6a"
+        }
+      },
+      {
+        "name": "source/SOURCE_MANIFEST.json",
+        "before": {
+          "bytes": 30872,
+          "sha256": "c677986484a302d56c49a2d62b90e5af658241815efeb9ac6c36d15acbda7aca"
+        },
+        "after": {
+          "bytes": 30872,
+          "sha256": "7a31bf010adfd5ae8eabd6a2149a9af1a1ab57b39dbc1b093d7fa4235684766e"
+        }
+      },
+      {
+        "name": "source/receiving/checkpoint-storage.cjs",
+        "before": {
+          "bytes": 2493,
+          "sha256": "effafda4907de3ab610f90427a04067e2e3e2cefbd4af2008fad3bdde07db78f"
+        },
+        "after": {
+          "bytes": 3625,
+          "sha256": "bff39c118069c3417c9678e84ce522a99aa65a20661320816a31153704f821a9"
+        }
+      },
+      {
+        "name": "source/receiving/run-resumable-export.mjs",
+        "before": {
+          "bytes": 5096,
+          "sha256": "4b3dd111d7dbd676c9b951a786942b97e2f7fdb2486cd9cfd67270396085f25c"
+        },
+        "after": {
+          "bytes": 4886,
+          "sha256": "7a599c566239c9661ba503f04a3b8fbf7a14ef976c177b53713ed667c457b02c"
+        }
+      },
+      {
+        "name": "source/receiving/RESUMABLE_EXPORT.md",
+        "before": {
+          "bytes": 5289,
+          "sha256": "0b9fe362b8b2a179bba794b8de41be9378b5752c6d8dc6be46aa57ca37dc9998"
+        },
+        "after": {
+          "bytes": 6065,
+          "sha256": "fffe4f3d89be0bc6a05c9ae70fe89347ec1e370b4be7ec8d9a3d989851c1bbde"
+        }
+      },
+      {
+        "name": "source/source-manifest.json",
+        "before": null,
+        "after": {
+          "bytes": 31045,
+          "sha256": "3184664b0a66989e568f19561ef6453fd3b0effca8db951c6747407d3a0f6881"
+        }
+      },
+      {
+        "name": "working/Fleet_Availability_Study_Editable.html",
+        "before": {
+          "bytes": 7569100,
+          "sha256": "17e3ec124cff8e1e1a5a97c3befbca84ac7536fcc9d58eab71be4ea7c269f79a"
+        },
+        "after": {
+          "bytes": 7605388,
+          "sha256": "4043d867c3b2cbd1f1dfedd9ddc50af8728e88bdbc6c91cd7a958e5d0bba9094"
+        }
+      },
+      {
+        "name": "EXPORT_MANIFEST.json",
+        "before": {
+          "bytes": 2877877,
+          "sha256": "5b495417af5ea5b00dad12e6474f0014fe7fda52901577a7dea28d99aae467a6"
+        },
+        "after": {
+          "bytes": 2878040,
+          "sha256": "e4504cf1e638bcf1ee9304a76ce08a544bce9b66e31ea817f48c26a8edca85c8"
+        }
+      }
+    ]
+  }
+}
