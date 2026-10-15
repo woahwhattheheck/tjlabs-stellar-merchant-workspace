@@ -1,0 +1,14 @@
+{
+  "name": "turnover-workbench",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "receive:installed": "node native/receive-installed.mjs",
+    "course": "node native/receive.mjs",
+    "build:desk": "node native/build.mjs"
+  }
+}
