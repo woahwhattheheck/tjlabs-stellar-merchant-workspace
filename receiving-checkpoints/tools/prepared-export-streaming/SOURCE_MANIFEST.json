@@ -4,8 +4,8 @@
   "files": [
     {
       "path": "prepared-stream.cjs",
-      "bytes": 16033,
-      "sha256": "ccecfcb3f98d48748e02314cb4475f67e0660ec08e4b5c65e323c530cd4c892f"
+      "bytes": 17015,
+      "sha256": "9f1cb890041c1eefc6206488e177dbda4784e22cd811fc2a29dd9db27e186412"
     },
     {
       "path": "connected_zip.cjs",
@@ -49,8 +49,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 3271,
-      "sha256": "7a32ff558fd2592bc9a13a0b8d873b6008c1ff9d0747d4247563de3322cd89fb"
+      "bytes": 4019,
+      "sha256": "e3e70acd4205414ae578db8e21a28c5d317fb8cb84a8903e8bdce7b88b9d1636"
     },
     {
       "path": "full-source-result.json",
@@ -66,6 +66,16 @@
       "path": "vendor/PAKO_LICENSE.txt",
       "bytes": 1104,
       "sha256": "a04665b3b2de56c66730c1f720f528175739e4104f79073614aa611da1e85539"
+    },
+    {
+      "path": "verify-source-addition.cjs",
+      "bytes": 4842,
+      "sha256": "8c2e324d4382801c1b704c9674662e2ad70c404416ac6997b5ceb49e2f9e8125"
+    },
+    {
+      "path": "source-addition-result.json",
+      "bytes": 2978,
+      "sha256": "b362add6a92d1f1e53bce4e377a59e01eb92a2aedcbb4c3252786f5a83d1627f"
     }
   ]
 }
