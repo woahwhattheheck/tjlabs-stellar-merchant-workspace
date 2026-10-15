@@ -24,8 +24,8 @@
     },
     {
       "path": "commissioning/installed-result.json",
-      "bytes": 3922,
-      "sha256": "d725d3dc24030ce4818fb6287e942be3ae7e7e1fd9113034ac6fab03bc51c3f1"
+      "bytes": 4785,
+      "sha256": "4481f73693e9c3a5c076210128acce9b5f106c24106ad94c179fe521add0088f"
     },
     {
       "path": "commissioning/memory-indexeddb.mjs",
@@ -369,8 +369,8 @@
     },
     {
       "path": "OPERATING.md",
-      "bytes": 7191,
-      "sha256": "ff07587bf0f6514f57b57eafe98ee414ac6957ba21646189f153a8d6538c69df"
+      "bytes": 7948,
+      "sha256": "161b27c8211c82d90e3375db4085baa5b0260c32644c33e03f842e53d9c536b4"
     },
     {
       "path": "operator/body.html",
@@ -379,8 +379,13 @@
     },
     {
       "path": "operator/build.mjs",
-      "bytes": 4592,
-      "sha256": "dfec66e0fa0cea7ad091ff67cb67fdc5ea91eea808638096d91b1b0e58259f37"
+      "bytes": 4640,
+      "sha256": "4fe8b56b9495d5d4542d6e848ff2c082afa8bf2126b3629521d48875eb6ab17e"
+    },
+    {
+      "path": "operator/capacity.mjs",
+      "bytes": 5270,
+      "sha256": "ea98daaf86b335f6a22ebfcf0afc17860260906ac6a878604f145895a6e785d7"
     },
     {
       "path": "operator/codec.mjs",
@@ -394,8 +399,8 @@
     },
     {
       "path": "operator/controller.js",
-      "bytes": 55048,
-      "sha256": "deb613063667faf450b5ab9107570275f2e5b26abafc06da901b981c3153fbde"
+      "bytes": 55350,
+      "sha256": "87603e2bbe6260d2ec8b05a3670abea9e18d02845e7d4c429635e5f2dfa59296"
     },
     {
       "path": "operator/fields.json",

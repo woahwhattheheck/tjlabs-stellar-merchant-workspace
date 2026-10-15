@@ -104,8 +104,9 @@ function deliveryEntries(candidate=session){
  for(const b of candidate.backups)add("working/prior-sessions/"+fileName(b.id)+".json",S.pack({...S.copy(b.snapshot),backups:[]}));
  return entries;
 }
-function measureHandover(candidate=session){const entries=deliveryEntries(candidate);let bytes=22;for(const e of entries)bytes+=76+2*C.utf8Encode(e.name).length+e.data.length;if(bytes>128*1024*1024||entries.length>2000)throw Error("Complete working, editable HTML, source and originals handover exceeds 128 MiB or 2,000 files. Prior state remains available; select a smaller revision scope.");return {bytes,entries};}
-function fullZIP(){return PlanningZIP.packStoredZip(measureHandover().entries,{timestamp:"2026-10-15T00:00:00Z",maxBytes:128*1024*1024,maxEntries:2000});}
+const handoverCapacity=createPlanningCapacity({C,api,A,files,buildPlanningDesk,reportHTML,reportMarkdown,comparisonHTML,reconciliationCSV,recordCSV:V.recordCSV});
+function measureHandover(candidate=session){const bound=handoverCapacity.estimate(candidate);if(bound.archiveWithinLimits&&bound.bytes<=128*1024*1024&&bound.members<=2000)return bound;const entries=deliveryEntries(candidate);let bytes=22;for(const e of entries)bytes+=76+2*C.utf8Encode(e.name).length+e.data.length;if(bytes>128*1024*1024||entries.length>2000)throw Error("Complete working, editable HTML, source and originals handover exceeds 128 MiB or 2,000 files. Prior state remains available; select a smaller revision scope.");return {bytes,entries};}
+function fullZIP(){return PlanningZIP.packStoredZip(deliveryEntries(session),{timestamp:"2026-10-15T00:00:00Z",maxBytes:128*1024*1024,maxEntries:2000});}
 
 function correctionBinding(){return C.sha256Bytes(C.utf8Encode(JSON.stringify({root:w().rootSha256,input:draft().rawInput,correction:draft().correction})));}
 function retainPendingRow(){const d=draft().correction;if(d.loadedIndex===""||d.rowRaw==="")return;const index=Number(d.loadedIndex),entry={index,raw:d.rowRaw},old=d.edits.findIndex(e=>e.index===index);if(old<0)d.edits.push(entry);else d.edits[old]=entry;}

@@ -39,7 +39,7 @@
   "finalAssembly": {
     "exactCurrentSource": true,
     "blankReady": true,
-    "cacheAndArchiveModulesAssembled": true,
+    "cacheArchiveAndCapacityModulesAssembled": true,
     "workingExport": true
   },
   "capacityDomain": {
@@ -127,5 +127,40 @@
     "transportAndReopenMs": 118677,
     "totalMs": 295246
   },
-  "finalCapacityMeasure": "Final enlarged exact-byte-cache measurement in progress"
+  "finalCapacityMeasure": {
+    "jobs": 250,
+    "operations": 500,
+    "priorFullSessions": 1,
+    "initialMeasureMs": 104215,
+    "repeatedMeasureMs": 54251,
+    "changedMeasureMs": 82016,
+    "completeBytes": 58044676,
+    "sourceMembers": 100
+  },
+  "capacityBound": {
+    "jobs": 250,
+    "operations": 500,
+    "coldMs": 19684,
+    "warmMs": 5,
+    "boundBytes": 62169794,
+    "exactExportBytes": 58043919,
+    "members": 128,
+    "ordinaryActionAvoidsFullExport": true,
+    "totalMs": 35667
+  },
+  "ordinaryCapacity": {
+    "boundBytes": 6488909,
+    "referenceCompleteExportBytes": 5268123,
+    "members": 145,
+    "coldMs": 5123,
+    "warmMs": 14,
+    "boundAdmitsWholeProgramme": true,
+    "assembledOperatorReady": true
+  },
+  "capacityFallback": {
+    "safeBoundAvoidsAssembly": true,
+    "uncertainBoundUsesExactExport": true,
+    "exactOversizeRejectedBeforeSelection": true,
+    "archiveDepthAndNodeLimitsCounted": true
+  }
 }
