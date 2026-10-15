@@ -122,11 +122,11 @@
     },
     {
       "path": "products/migration-acceptance/receiving.mjs",
-      "blob": "b87b0d23197b6fb70a0fdf8248355412efdb151a"
+      "blob": "7ec7b4947ed27cce476754e60fc52a69f6b20aee"
     },
     {
       "path": "products/migration-acceptance/RECEIVING.md",
-      "blob": "e03621a6b6fc332c263f49dd3e1d529dee62b590"
+      "blob": "ccb28b874601ce1f7259f51c562730108fd4ff29"
     }
   ]
 }
