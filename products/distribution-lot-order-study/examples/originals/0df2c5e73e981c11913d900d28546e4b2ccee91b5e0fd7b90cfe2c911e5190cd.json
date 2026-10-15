@@ -1,0 +1,25 @@
+{
+  "data_class": "authored_course",
+  "family": "allocation_proposals",
+  "record": {
+    "id": "PROPOSAL-WEST",
+    "record_key": "PROPOSAL-WEST",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:00:00Z",
+    "available_at": "2026-10-01T10:00:00Z",
+    "source_document_id": "SRC-PROPOSAL-WEST",
+    "source_ref": "Authored original allocation_proposals/PROPOSAL-WEST",
+    "proposal_id": "PROPOSAL-WEST",
+    "decision_case_record_id": "DECISION-WEST",
+    "order_line_record_id": "ORDER-4",
+    "lot_record_id": "LOT-E",
+    "quantity": "10",
+    "unit": "kg",
+    "proposed_at": "2026-10-01T10:00:00Z",
+    "supplied_score": "",
+    "score_unit": "",
+    "reason": "Fictional supplied proposal, not an inferred system output."
+  }
+}

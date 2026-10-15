@@ -1,0 +1,24 @@
+{
+  "data_class": "authored_course",
+  "family": "writeoffs",
+  "record": {
+    "id": "WRITE-C",
+    "record_key": "WRITE-C",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T16:00:00Z",
+    "available_at": "2026-10-01T16:00:00Z",
+    "source_document_id": "SRC-WRITE-C",
+    "source_ref": "Authored original writeoffs/WRITE-C",
+    "writeoff_id": "WRITE-C",
+    "lot_record_id": "LOT-C",
+    "warehouse_id": "W-EAST",
+    "posted_at": "2026-10-01T16:00:00Z",
+    "quantity": "10",
+    "unit": "kg",
+    "reason": "Actual recorded disposition of damaged held stock.",
+    "external_ref": "WRITE-OFF-001",
+    "posted_by": "FINANCE"
+  }
+}

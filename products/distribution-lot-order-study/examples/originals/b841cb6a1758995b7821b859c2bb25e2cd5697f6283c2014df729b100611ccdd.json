@@ -1,0 +1,25 @@
+{
+  "data_class": "authored_course",
+  "family": "allocation_proposals",
+  "record": {
+    "id": "PROPOSAL-PACK",
+    "record_key": "PROPOSAL-PACK",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:06:00Z",
+    "available_at": "2026-10-01T10:06:00Z",
+    "source_document_id": "SRC-PROPOSAL-PACK",
+    "source_ref": "Authored original allocation_proposals/PROPOSAL-PACK",
+    "proposal_id": "PROPOSAL-PACK",
+    "decision_case_record_id": "DECISION-EAST-SAFE",
+    "order_line_record_id": "ORDER-1",
+    "lot_record_id": "LOT-D",
+    "quantity": "2",
+    "unit": "bag",
+    "proposed_at": "2026-10-01T10:06:00Z",
+    "supplied_score": "",
+    "score_unit": "",
+    "reason": "Fictional supplied proposal, not an inferred system output."
+  }
+}

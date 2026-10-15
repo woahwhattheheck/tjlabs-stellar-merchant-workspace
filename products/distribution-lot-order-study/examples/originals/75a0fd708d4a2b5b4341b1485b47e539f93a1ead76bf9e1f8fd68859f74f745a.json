@@ -1,0 +1,23 @@
+{
+  "data_class": "authored_course",
+  "family": "certificates",
+  "record": {
+    "id": "CERT-D",
+    "record_key": "CERT-D",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T08:05:00Z",
+    "available_at": "2026-10-01T08:05:00Z",
+    "source_document_id": "SRC-CERT-D",
+    "source_ref": "Authored original certificates/CERT-D",
+    "certificate_id": "CERT-D",
+    "lot_record_id": "LOT-D",
+    "certificate_kind": "analysis",
+    "issuer_id": "LAB",
+    "certificate_ref": "CERTIFICATE-LOT-D",
+    "issued_at": "2026-10-01T08:00:00Z",
+    "valid_until": "2026-12-31T23:59:59Z",
+    "method_document_id": "POLICY-METHOD"
+  }
+}

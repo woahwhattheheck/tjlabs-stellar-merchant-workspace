@@ -1,0 +1,28 @@
+{
+  "data_class": "authored_course",
+  "family": "order_lines",
+  "record": {
+    "id": "ORDER-4",
+    "record_key": "ORDER-4",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T06:00:00Z",
+    "available_at": "2026-10-01T06:00:00Z",
+    "source_document_id": "SRC-ORDER-4",
+    "source_ref": "Authored original order_lines/ORDER-4",
+    "order_line_id": "ORDER-4",
+    "operator_id": "OP",
+    "warehouse_id": "W-WEST",
+    "customer_id": "CUSTOMER-B",
+    "external_order_ref": "CUSTOMER-ORDER-4",
+    "external_line_ref": "1",
+    "product_id": "BULK",
+    "ordered_at": "2026-10-01T06:00:00Z",
+    "due_at": "2026-10-03T12:00:00Z",
+    "quantity": "10",
+    "unit": "kg",
+    "rule_record_id": "RULE-WEST",
+    "approved_by": "PLANNER"
+  }
+}

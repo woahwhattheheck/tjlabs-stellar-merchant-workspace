@@ -1,0 +1,23 @@
+{
+  "data_class": "authored_course",
+  "family": "products",
+  "record": {
+    "id": "PACK",
+    "record_key": "PACK",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-09-30T06:00:00Z",
+    "available_at": "2026-09-30T06:00:00Z",
+    "source_document_id": "SRC-PACK",
+    "source_ref": "Authored original products/PACK",
+    "product_id": "PACK",
+    "operator_id": "OP",
+    "name": "Authored polymer granules, sealed 25 kg bags",
+    "material_id": "MAT-G",
+    "base_unit": "kg",
+    "grade": "G1",
+    "valid_from": "2026-09-01T00:00:00Z",
+    "valid_to": ""
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "data_class": "authored_course",
+  "family": "population_members",
+  "record": {
+    "id": "MEM-LOT-A",
+    "record_key": "MEM-LOT-A",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T17:00:00Z",
+    "available_at": "2026-10-01T17:00:00Z",
+    "source_document_id": "SRC-MEM-LOT-A",
+    "source_ref": "Authored original population_members/MEM-LOT-A",
+    "member_id": "MEM-LOT-A",
+    "population_kind": "lot",
+    "family": "lots",
+    "record_id": "LOT-A",
+    "operator_id": "OP",
+    "warehouse_id": "W-EAST",
+    "population_key": "lot:LOT-A",
+    "included": "true",
+    "exclusion_reason": ""
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schema": "distribution.complete-original-validation-measurement.v1",
+  "documents": 746,
+  "original_bytes": 606045,
+  "before_ms": [
+    654,
+    646,
+    648
+  ],
+  "after_ms": [
+    670,
+    6,
+    5
+  ],
+  "all_returned_study_bytes_exact": true,
+  "changed_source_checks": [
+    "changed bytes",
+    "changed claimed digest",
+    "changed claimed length",
+    "malformed encoding",
+    "metadata still validates"
+  ]
+}

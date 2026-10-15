@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,repack_output_id,job_record_id,lot_record_id,quantity,unit,produced_at
+REPACK-OUT-D,REPACK-OUT-D,1,,active,2026-10-01T08:00:00Z,2026-10-01T08:00:00Z,document-9ff1fb5ad0df7d0a79bafab4770f0d0f,Authored original repack_outputs/REPACK-OUT-D,REPACK-OUT-D,REPACK-1,LOT-D,3,bag,2026-10-01T08:00:00Z

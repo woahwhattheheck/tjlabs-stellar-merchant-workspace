@@ -1,0 +1,25 @@
+{
+  "data_class": "authored_course",
+  "family": "allocation_proposals",
+  "record": {
+    "id": "PROPOSAL-LATE-B",
+    "record_key": "PROPOSAL-LATE-B",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T12:10:00Z",
+    "available_at": "2026-10-01T12:10:00Z",
+    "source_document_id": "SRC-PROPOSAL-LATE-B",
+    "source_ref": "Authored original allocation_proposals/PROPOSAL-LATE-B",
+    "proposal_id": "PROPOSAL-LATE-B",
+    "decision_case_record_id": "DECISION-LATE",
+    "order_line_record_id": "ORDER-2",
+    "lot_record_id": "LOT-B",
+    "quantity": "50",
+    "unit": "kg",
+    "proposed_at": "2026-10-01T12:10:00Z",
+    "supplied_score": "",
+    "score_unit": "",
+    "reason": "Fictional supplied proposal, not an inferred system output."
+  }
+}

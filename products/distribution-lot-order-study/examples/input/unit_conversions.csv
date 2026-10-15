@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,conversion_id,product_id,unit,base_unit,factor_to_base,basis_document_id,valid_from,valid_to
+PACK-BAG,PACK-BAG,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-389858c14c0b4284972dfcc70959ec2a,Authored original unit_conversions/PACK-BAG,PACK-BAG,PACK,bag,kg,25,document-856c06c39c069fe0005c16d9a992e73f,2026-09-01T00:00:00Z,

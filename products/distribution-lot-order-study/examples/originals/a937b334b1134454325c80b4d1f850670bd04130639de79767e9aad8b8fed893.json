@@ -1,0 +1,24 @@
+{
+  "data_class": "authored_course",
+  "family": "certificate_reviews",
+  "record": {
+    "id": "CR-D",
+    "record_key": "CR-D",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T08:10:00Z",
+    "available_at": "2026-10-01T08:10:00Z",
+    "source_document_id": "SRC-CR-D",
+    "source_ref": "Authored original certificate_reviews/CR-D",
+    "certificate_review_id": "CR-D",
+    "certificate_record_id": "CERT-D",
+    "certificate_sha256": "75a0fd708d4a2b5b4341b1485b47e539f93a1ead76bf9e1f8fd68859f74f745a",
+    "lot_record_id": "LOT-D",
+    "policy_record_id": "POL-W-EAST",
+    "reviewed_at": "2026-10-01T08:10:00Z",
+    "reviewed_by": "QA",
+    "decision": "accepted",
+    "notes": "Fictional exact certificate edition reviewed for local lot release."
+  }
+}

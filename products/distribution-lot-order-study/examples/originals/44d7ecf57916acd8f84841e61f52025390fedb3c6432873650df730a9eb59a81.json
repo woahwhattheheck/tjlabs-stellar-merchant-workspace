@@ -1,0 +1,21 @@
+{
+  "data_class": "authored_course",
+  "family": "order_events",
+  "record": {
+    "id": "CANCEL-ORDER-6",
+    "record_key": "CANCEL-ORDER-6",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T08:30:00Z",
+    "available_at": "2026-10-01T08:30:00Z",
+    "source_document_id": "SRC-CANCEL-ORDER-6",
+    "source_ref": "Authored original order_events/CANCEL-ORDER-6",
+    "order_event_id": "CANCEL-ORDER-6",
+    "order_line_record_id": "ORDER-6",
+    "event_at": "2026-10-01T08:30:00Z",
+    "state": "cancelled",
+    "actor_id": "PLANNER",
+    "reason": "Actual customer cancellation; original order retained."
+  }
+}

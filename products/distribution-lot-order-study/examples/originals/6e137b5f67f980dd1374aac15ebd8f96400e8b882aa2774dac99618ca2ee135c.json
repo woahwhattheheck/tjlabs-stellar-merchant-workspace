@@ -1,0 +1,25 @@
+{
+  "data_class": "authored_course",
+  "family": "lot_state_events",
+  "record": {
+    "id": "RELEASE-B",
+    "record_key": "RELEASE-B",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T12:00:00Z",
+    "available_at": "2026-10-01T12:00:00Z",
+    "source_document_id": "SRC-RELEASE-B",
+    "source_ref": "Authored original lot_state_events/RELEASE-B",
+    "state_event_id": "RELEASE-B",
+    "lot_record_id": "LOT-B",
+    "warehouse_id": "W-EAST",
+    "event_at": "2026-10-01T12:00:00Z",
+    "state": "released",
+    "policy_record_id": "POL-W-EAST",
+    "inputs_complete": "true",
+    "expected_inputs": "4",
+    "reviewed_by": "QA",
+    "reason": "Authored named lot-state decision."
+  }
+}

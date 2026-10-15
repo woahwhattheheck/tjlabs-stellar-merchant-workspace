@@ -1,0 +1,20 @@
+{
+  "data_class": "authored_course",
+  "family": "lot_state_inputs",
+  "record": {
+    "id": "RELEASE-B-INPUT-4",
+    "record_key": "RELEASE-B-INPUT-4",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T12:00:00Z",
+    "available_at": "2026-10-01T12:00:00Z",
+    "source_document_id": "SRC-RELEASE-B-INPUT-4",
+    "source_ref": "Authored original lot_state_inputs/RELEASE-B-INPUT-4",
+    "state_input_id": "RELEASE-B-INPUT-4",
+    "state_event_record_id": "RELEASE-B",
+    "family": "hold_events",
+    "record_id": "CLEAR-B",
+    "row_sha256": "8f13680e4b63c6ae5c250f7487e85071c96ed1409cb3f549976c97f2d9cbb7ed"
+  }
+}

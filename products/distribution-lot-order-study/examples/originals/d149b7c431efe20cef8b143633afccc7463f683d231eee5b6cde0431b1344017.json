@@ -1,0 +1,24 @@
+{
+  "data_class": "authored_course",
+  "family": "authorities",
+  "record": {
+    "id": "AUTH-OWNER-operations-W-WEST",
+    "record_key": "AUTH-OWNER-operations-W-WEST",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-09-30T06:00:00Z",
+    "available_at": "2026-09-30T06:00:00Z",
+    "source_document_id": "SRC-AUTH-OWNER-operations-W-WEST",
+    "source_ref": "Authored original authorities/AUTH-OWNER-operations-W-WEST",
+    "authority_id": "AUTH-OWNER-operations-W-WEST",
+    "person_id": "OWNER",
+    "permission": "operations",
+    "operator_id": "OP",
+    "warehouse_id": "W-WEST",
+    "granted_by": "OWNER",
+    "granted_at": "2026-09-30T05:00:00Z",
+    "valid_from": "2026-09-01T00:00:00Z",
+    "valid_to": ""
+  }
+}

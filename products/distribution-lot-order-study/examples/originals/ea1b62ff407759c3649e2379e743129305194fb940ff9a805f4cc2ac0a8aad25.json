@@ -1,0 +1,24 @@
+{
+  "data_class": "authored_course",
+  "family": "population_members",
+  "record": {
+    "id": "MEM-ORDER-5",
+    "record_key": "MEM-ORDER-5",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T17:00:00Z",
+    "available_at": "2026-10-01T17:00:00Z",
+    "source_document_id": "SRC-MEM-ORDER-5",
+    "source_ref": "Authored original population_members/MEM-ORDER-5",
+    "member_id": "MEM-ORDER-5",
+    "population_kind": "order",
+    "family": "order_lines",
+    "record_id": "ORDER-5",
+    "operator_id": "OP",
+    "warehouse_id": "W-EAST",
+    "population_key": "order:ORDER-5",
+    "included": "true",
+    "exclusion_reason": ""
+  }
+}

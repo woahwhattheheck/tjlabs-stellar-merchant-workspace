@@ -1,0 +1,28 @@
+{
+  "data_class": "authored_course",
+  "family": "decision_cases",
+  "record": {
+    "id": "DECISION-WEST",
+    "record_key": "DECISION-WEST",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:00:00Z",
+    "available_at": "2026-10-01T10:00:00Z",
+    "source_document_id": "SRC-DECISION-WEST",
+    "source_ref": "Authored original decision_cases/DECISION-WEST",
+    "decision_case_id": "DECISION-WEST",
+    "operator_id": "OP",
+    "warehouse_id": "W-WEST",
+    "policy_record_id": "POL-W-WEST",
+    "decided_at": "2026-10-01T10:00:00Z",
+    "order_population_complete": "true",
+    "expected_order_lines": "6",
+    "lot_population_complete": "true",
+    "expected_lots": "5",
+    "input_population_complete": "true",
+    "expected_inputs": "97",
+    "generated_by": "PLANNER",
+    "purpose": "Authored supplied allocation comparison with frozen source inputs."
+  }
+}

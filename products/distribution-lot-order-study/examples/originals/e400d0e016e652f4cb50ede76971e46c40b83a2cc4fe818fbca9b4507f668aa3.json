@@ -1,0 +1,29 @@
+{
+  "data_class": "authored_course",
+  "family": "repack_jobs",
+  "record": {
+    "id": "REPACK-1",
+    "record_key": "REPACK-1",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T08:00:00Z",
+    "available_at": "2026-10-01T08:00:00Z",
+    "source_document_id": "SRC-REPACK-1",
+    "source_ref": "Authored original repack_jobs/REPACK-1",
+    "repack_job_id": "REPACK-1",
+    "operator_id": "OP",
+    "warehouse_id": "W-EAST",
+    "material_id": "MAT-G",
+    "started_at": "2026-10-01T07:30:00Z",
+    "completed_at": "2026-10-01T08:00:00Z",
+    "input_complete": "true",
+    "expected_inputs": "1",
+    "output_complete": "true",
+    "expected_outputs": "1",
+    "loss_quantity": "5",
+    "loss_unit": "kg",
+    "reason": "Authored measured process loss during same-material repacking",
+    "completed_by": "RECEIVER"
+  }
+}

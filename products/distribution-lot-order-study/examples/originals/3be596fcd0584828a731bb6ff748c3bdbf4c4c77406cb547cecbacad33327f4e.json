@@ -1,0 +1,25 @@
+{
+  "data_class": "authored_course",
+  "family": "lot_state_events",
+  "record": {
+    "id": "RELEASE-E-EAST",
+    "record_key": "RELEASE-E-EAST",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T09:00:00Z",
+    "available_at": "2026-10-01T09:00:00Z",
+    "source_document_id": "SRC-RELEASE-E-EAST",
+    "source_ref": "Authored original lot_state_events/RELEASE-E-EAST",
+    "state_event_id": "RELEASE-E-EAST",
+    "lot_record_id": "LOT-E",
+    "warehouse_id": "W-EAST",
+    "event_at": "2026-10-01T09:00:00Z",
+    "state": "released",
+    "policy_record_id": "POL-W-EAST",
+    "inputs_complete": "true",
+    "expected_inputs": "2",
+    "reviewed_by": "QA",
+    "reason": "Authored named lot-state decision."
+  }
+}

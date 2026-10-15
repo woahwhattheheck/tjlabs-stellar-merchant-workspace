@@ -1,0 +1,17 @@
+'use strict';
+const Course=require('../distribution-course.cjs');
+const Engine=require('../distribution-engine.cjs');
+const Core=require('../core.cjs');
+const Session=require('../session.cjs');
+const Peer=require('./distribution-business-peer.cjs');
+const started=Date.now();
+const operating=Course.run(Engine);
+const peer=Peer.run(Engine,Course);
+const receivingStarted=Date.now();
+const received=Course.receiveFixture(Core);
+const receivingMs=Date.now()-receivingStarted;
+const appStarted=Date.now();
+const app=Course.runApp(received,Core,Session);
+const result={schema:'distribution.native-course-receipt.v1',data_class:'authored_course',receiving_ms:receivingMs,core_session_course_ms:Date.now()-appStarted,total_ms:Date.now()-started,operating:operating.checks.map(x=>({name:x.name,pass:x.pass})),business_peer:peer.cases.map(x=>({name:x.name,pass:x.pass})),core_session:app.checks.map(x=>({name:x.name,pass:x.pass})),documents:received.study.documents.length,csv_imports:received.study.originals.length,attachment_links:received.study.document_links.length,export_members:app.export_index.length,study_sha256:Core.digest(app.study),current_session_study_sha256:Core.digest(app.session.study)};
+process.stdout.write(JSON.stringify(result,null,2)+'\n');
+if([...result.operating,...result.business_peer,...result.core_session].some(x=>!x.pass))process.exitCode=1;

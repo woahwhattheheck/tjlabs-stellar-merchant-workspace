@@ -1,0 +1,21 @@
+{
+  "data_class": "authored_course",
+  "family": "parties",
+  "record": {
+    "id": "CUSTOMER-B",
+    "record_key": "CUSTOMER-B",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-09-30T06:00:00Z",
+    "available_at": "2026-09-30T06:00:00Z",
+    "source_document_id": "SRC-CUSTOMER-B",
+    "source_ref": "Authored original parties/CUSTOMER-B",
+    "party_id": "CUSTOMER-B",
+    "operator_id": "OP",
+    "name": "Fictional industrial customer B",
+    "party_type": "customer",
+    "valid_from": "2026-09-01T00:00:00Z",
+    "valid_to": ""
+  }
+}

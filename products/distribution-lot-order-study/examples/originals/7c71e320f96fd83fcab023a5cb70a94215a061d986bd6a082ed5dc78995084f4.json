@@ -1,0 +1,20 @@
+{
+  "data_class": "authored_course",
+  "family": "lot_state_inputs",
+  "record": {
+    "id": "HOLD-STATE-B-INPUT-2",
+    "record_key": "HOLD-STATE-B-INPUT-2",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T07:15:00Z",
+    "available_at": "2026-10-01T07:15:00Z",
+    "source_document_id": "SRC-HOLD-STATE-B-INPUT-2",
+    "source_ref": "Authored original lot_state_inputs/HOLD-STATE-B-INPUT-2",
+    "state_input_id": "HOLD-STATE-B-INPUT-2",
+    "state_event_record_id": "HOLD-STATE-B",
+    "family": "certificate_reviews",
+    "record_id": "CR-B-REVIEW",
+    "row_sha256": "f77bba71d99a44ad509151baf728aa352b9dc6eb297f2a873b381e78d460b7c9"
+  }
+}

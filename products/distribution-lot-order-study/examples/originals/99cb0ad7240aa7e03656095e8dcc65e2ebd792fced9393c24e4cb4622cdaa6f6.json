@@ -1,0 +1,23 @@
+{
+  "data_class": "authored_course",
+  "family": "dispatches",
+  "record": {
+    "id": "DISPATCH-3",
+    "record_key": "DISPATCH-3",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:45:00.000Z",
+    "available_at": "2026-10-01T10:45:00.000Z",
+    "source_document_id": "SRC-DISPATCH-3",
+    "source_ref": "Authored original dispatches/DISPATCH-3",
+    "dispatch_id": "DISPATCH-3",
+    "operator_id": "OP",
+    "warehouse_id": "W-EAST",
+    "customer_id": "CUSTOMER-B",
+    "dispatched_at": "2026-10-01T10:40:00.000Z",
+    "accepted_at": "2026-10-01T10:45:00.000Z",
+    "carrier_ref": "CARRIER-3",
+    "dispatched_by": "DISPATCH"
+  }
+}

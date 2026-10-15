@@ -1,0 +1,1 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,repack_job_id,operator_id,warehouse_id,material_id,started_at,completed_at,input_complete,expected_inputs,output_complete,expected_outputs,loss_quantity,loss_unit,reason,completed_by

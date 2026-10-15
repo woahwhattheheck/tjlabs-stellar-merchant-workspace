@@ -1,0 +1,3 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,warehouse_id,operator_id,name,valid_from,valid_to
+W-EAST,W-EAST,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-868aa59faf25a9975b680eb998eaad3b,Authored original warehouses/W-EAST,W-EAST,OP,East distribution warehouse,2026-09-01T00:00:00Z,
+W-WEST,W-WEST,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-295cb6c5aa996340c01b33d2bef0ad4f,Authored original warehouses/W-WEST,W-WEST,OP,West distribution warehouse,2026-09-01T00:00:00Z,

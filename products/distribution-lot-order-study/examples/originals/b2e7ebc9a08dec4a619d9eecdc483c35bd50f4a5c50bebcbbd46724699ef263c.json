@@ -1,0 +1,26 @@
+{
+  "data_class": "authored_course",
+  "family": "cost_entries",
+  "record": {
+    "id": "COST-SALE",
+    "record_key": "COST-SALE",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T16:10:00Z",
+    "available_at": "2026-10-01T16:10:00Z",
+    "source_document_id": "SRC-COST-SALE",
+    "source_ref": "Authored original cost_entries/COST-SALE",
+    "cost_id": "COST-SALE",
+    "operator_id": "OP",
+    "warehouse_id": "W-EAST",
+    "lot_record_id": "LOT-B",
+    "order_line_record_id": "ORDER-2",
+    "posted_at": "2026-10-01T16:10:00Z",
+    "kind": "sale",
+    "amount": "500",
+    "currency": "GBP",
+    "external_ref": "POSTED-SALE-001",
+    "posted_by": "FINANCE"
+  }
+}

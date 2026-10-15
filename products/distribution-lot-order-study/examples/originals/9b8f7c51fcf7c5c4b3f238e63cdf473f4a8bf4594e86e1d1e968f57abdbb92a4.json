@@ -1,0 +1,21 @@
+{
+  "data_class": "authored_course",
+  "family": "parties",
+  "record": {
+    "id": "SUPPLIER",
+    "record_key": "SUPPLIER",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-09-30T06:00:00Z",
+    "available_at": "2026-09-30T06:00:00Z",
+    "source_document_id": "SRC-SUPPLIER",
+    "source_ref": "Authored original parties/SUPPLIER",
+    "party_id": "SUPPLIER",
+    "operator_id": "OP",
+    "name": "Fictional supplier",
+    "party_type": "supplier",
+    "valid_from": "2026-09-01T00:00:00Z",
+    "valid_to": ""
+  }
+}

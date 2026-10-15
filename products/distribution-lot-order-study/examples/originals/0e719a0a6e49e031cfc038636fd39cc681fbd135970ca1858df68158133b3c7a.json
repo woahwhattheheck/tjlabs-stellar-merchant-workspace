@@ -1,0 +1,25 @@
+{
+  "data_class": "authored_course",
+  "family": "policies",
+  "record": {
+    "id": "POL-W-WEST",
+    "record_key": "POL-W-WEST",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-09-30T06:00:00Z",
+    "available_at": "2026-09-30T06:00:00Z",
+    "source_document_id": "SRC-POL-W-WEST",
+    "source_ref": "Authored original policies/POL-W-WEST",
+    "policy_id": "POL-W-WEST",
+    "operator_id": "OP",
+    "warehouse_id": "W-WEST",
+    "material_id": "MAT-G",
+    "ranking_rule": "FEFO",
+    "certificate_kinds": "[\"analysis\"]",
+    "alert_days": "14",
+    "method_document_id": "POLICY-METHOD",
+    "valid_from": "2026-09-01T00:00:00Z",
+    "valid_to": ""
+  }
+}

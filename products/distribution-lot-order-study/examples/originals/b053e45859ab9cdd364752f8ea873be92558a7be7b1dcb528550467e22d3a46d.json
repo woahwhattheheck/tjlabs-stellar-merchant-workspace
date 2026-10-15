@@ -1,0 +1,21 @@
+{
+  "data_class": "authored_course",
+  "family": "lot_holds",
+  "record": {
+    "id": "HOLD-C",
+    "record_key": "HOLD-C",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-09-30T06:00:00Z",
+    "available_at": "2026-09-30T06:00:00Z",
+    "source_document_id": "SRC-HOLD-C",
+    "source_ref": "Authored original lot_holds/HOLD-C",
+    "hold_id": "HOLD-C",
+    "lot_record_id": "LOT-C",
+    "warehouse_id": "W-EAST",
+    "raised_at": "2026-09-30T06:00:00Z",
+    "raised_by": "QA",
+    "reason": "Open local quality hold. Earliest expiry must not imply eligibility."
+  }
+}

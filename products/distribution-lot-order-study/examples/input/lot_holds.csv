@@ -1,0 +1,3 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,hold_id,lot_record_id,warehouse_id,raised_at,raised_by,reason
+HOLD-C,HOLD-C,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-e0661ffb3bacf66e837f8bc0a693cc0e,Authored original lot_holds/HOLD-C,HOLD-C,LOT-C,W-EAST,2026-09-30T06:00:00Z,QA,Open local quality hold. Earliest expiry must not imply eligibility.
+HOLD-B,HOLD-B,1,,active,2026-10-01T07:00:00Z,2026-10-01T07:00:00Z,document-fabc8b969ef80a9a1d658a71edc2f809,Authored original lot_holds/HOLD-B,HOLD-B,LOT-B,W-EAST,2026-10-01T07:00:00Z,QA,Await amended certificate and actual QA review.

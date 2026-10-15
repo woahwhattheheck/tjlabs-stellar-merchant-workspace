@@ -1,0 +1,23 @@
+{
+  "data_class": "authored_course",
+  "family": "unit_conversions",
+  "record": {
+    "id": "PACK-BAG",
+    "record_key": "PACK-BAG",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-09-30T06:00:00Z",
+    "available_at": "2026-09-30T06:00:00Z",
+    "source_document_id": "SRC-PACK-BAG",
+    "source_ref": "Authored original unit_conversions/PACK-BAG",
+    "conversion_id": "PACK-BAG",
+    "product_id": "PACK",
+    "unit": "bag",
+    "base_unit": "kg",
+    "factor_to_base": "25",
+    "basis_document_id": "PACK-SPEC",
+    "valid_from": "2026-09-01T00:00:00Z",
+    "valid_to": ""
+  }
+}

@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,order_event_id,order_line_record_id,event_at,state,actor_id,reason
+CANCEL-ORDER-6,CANCEL-ORDER-6,1,,active,2026-10-01T08:30:00Z,2026-10-01T08:30:00Z,document-ddfc237372f238e3627e9894437bbed9,Authored original order_events/CANCEL-ORDER-6,CANCEL-ORDER-6,ORDER-6,2026-10-01T08:30:00Z,cancelled,PLANNER,Actual customer cancellation; original order retained.

@@ -1,0 +1,9 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,person_id,operator_id,name,valid_from,valid_to
+OWNER,OWNER,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-6abf522b5ef8060236504e98b9c82c43,Authored original people/OWNER,OWNER,OP,Alex Owner,2026-09-01T00:00:00Z,
+RECEIVER,RECEIVER,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-05d9dd031101140038cb31c4cd49fc84,Authored original people/RECEIVER,RECEIVER,OP,Robin Receiving,2026-09-01T00:00:00Z,
+QA,QA,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-5afeb7f00a50e214cb982affef1df3e3,Authored original people/QA,QA,OP,Quinn Quality,2026-09-01T00:00:00Z,
+PLANNER,PLANNER,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-80ec0bd0e24941391303730f033a11dd,Authored original people/PLANNER,PLANNER,OP,Pat Planning,2026-09-01T00:00:00Z,
+DISPATCH,DISPATCH,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-b9479966078c67a5d3dcf73fd90926db,Authored original people/DISPATCH,DISPATCH,OP,Drew Dispatch,2026-09-01T00:00:00Z,
+FINANCE,FINANCE,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-8e6746d79b9ddad98fd509e37b35be43,Authored original people/FINANCE,FINANCE,OP,Frankie Finance,2026-09-01T00:00:00Z,
+BASELINE,BASELINE,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-66161fb69fc7bc8f507ea49ca13e43ed,Authored original people/BASELINE,BASELINE,OP,Blair Baseline observer,2026-09-01T00:00:00Z,
+CURRENT,CURRENT,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-a2e2b1286336b74425d59ab7e475119c,Authored original people/CURRENT,CURRENT,OP,Casey Current observer,2026-09-01T00:00:00Z,

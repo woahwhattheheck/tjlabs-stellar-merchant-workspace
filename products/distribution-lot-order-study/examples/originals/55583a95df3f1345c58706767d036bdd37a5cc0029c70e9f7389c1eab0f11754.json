@@ -1,0 +1,26 @@
+{
+  "data_class": "authored_course",
+  "family": "allocations",
+  "record": {
+    "id": "ALLOC-4",
+    "record_key": "ALLOC-4",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:10:00Z",
+    "available_at": "2026-10-01T10:10:00Z",
+    "source_document_id": "SRC-ALLOC-4",
+    "source_ref": "Authored original allocations/ALLOC-4",
+    "allocation_id": "ALLOC-4",
+    "order_line_record_id": "ORDER-4",
+    "lot_record_id": "LOT-E",
+    "warehouse_id": "W-WEST",
+    "quantity": "10",
+    "unit": "kg",
+    "allocated_at": "2026-10-01T10:10:00Z",
+    "decision_review_record_id": "REVIEW-WEST",
+    "proposal_record_id": "PROPOSAL-WEST",
+    "override_reason": "",
+    "allocated_by": "PLANNER"
+  }
+}

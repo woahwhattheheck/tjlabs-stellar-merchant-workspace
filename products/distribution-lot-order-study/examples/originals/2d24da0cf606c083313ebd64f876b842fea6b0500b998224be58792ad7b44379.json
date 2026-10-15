@@ -1,0 +1,21 @@
+{
+  "data_class": "authored_course",
+  "family": "return_events",
+  "record": {
+    "id": "RETURN-HOLD",
+    "record_key": "RETURN-HOLD",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T15:05:00Z",
+    "available_at": "2026-10-01T15:05:00Z",
+    "source_document_id": "SRC-RETURN-HOLD",
+    "source_ref": "Authored original return_events/RETURN-HOLD",
+    "return_event_id": "RETURN-HOLD",
+    "return_record_id": "RETURN-B",
+    "event_at": "2026-10-01T15:05:00Z",
+    "state": "quarantined",
+    "reviewed_by": "QA",
+    "reason": "Actual returned quantity held pending inspection; not automatically released."
+  }
+}

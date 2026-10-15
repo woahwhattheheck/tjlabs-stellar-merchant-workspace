@@ -1,0 +1,26 @@
+{
+  "data_class": "authored_course",
+  "family": "transfers",
+  "record": {
+    "id": "TRANSFER-E",
+    "record_key": "TRANSFER-E",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T09:00:00Z",
+    "available_at": "2026-10-01T09:00:00Z",
+    "source_document_id": "SRC-TRANSFER-E",
+    "source_ref": "Authored original transfers/TRANSFER-E",
+    "transfer_id": "TRANSFER-E",
+    "lot_record_id": "LOT-E",
+    "from_warehouse_id": "W-WEST",
+    "to_warehouse_id": "W-EAST",
+    "sent_at": "2026-10-01T08:00:00Z",
+    "received_at": "2026-10-01T09:00:00Z",
+    "quantity": "20",
+    "unit": "kg",
+    "dispatched_by": "RECEIVER",
+    "received_by": "RECEIVER",
+    "external_ref": "TRANSFER-001"
+  }
+}

@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,receipt_id,purchase_line_record_id,lot_id,warehouse_id,received_at,quantity,unit,supplier_ref,received_by,disposition
+RECEIPT-B,RECEIPT-B,1,,active,2026-10-01T07:00:00Z,2026-10-01T07:00:00Z,document-dedc8d1b72a597dcc8152135c7dabd55,Authored original receipts/RECEIPT-B,RECEIPT-B,PO-B,LOT-B,W-EAST,2026-10-01T07:00:00Z,100,kg,DELIVERY-100,RECEIVER,quarantined

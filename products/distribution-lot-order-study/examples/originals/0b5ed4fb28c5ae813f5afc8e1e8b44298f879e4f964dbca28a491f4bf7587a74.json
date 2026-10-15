@@ -1,0 +1,22 @@
+{
+  "data_class": "authored_course",
+  "family": "decision_reviews",
+  "record": {
+    "id": "REVIEW-WEST",
+    "record_key": "REVIEW-WEST",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:05:00Z",
+    "available_at": "2026-10-01T10:05:00Z",
+    "source_document_id": "SRC-REVIEW-WEST",
+    "source_ref": "Authored original decision_reviews/REVIEW-WEST",
+    "decision_review_id": "REVIEW-WEST",
+    "decision_case_record_id": "DECISION-WEST",
+    "decision_basis_sha256": "bf0621895bb57809e54b8c032a64470181e493b888093b3652575d06f146e140",
+    "reviewed_at": "2026-10-01T10:05:00Z",
+    "reviewed_by": "PLANNER",
+    "decision": "accepted",
+    "notes": "Exact supplied decision and frozen source context; early B proposal remains rejected."
+  }
+}

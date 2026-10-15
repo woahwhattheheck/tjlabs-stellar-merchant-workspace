@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,writeoff_id,lot_record_id,warehouse_id,posted_at,quantity,unit,reason,external_ref,posted_by
+WRITE-C,WRITE-C,1,,active,2026-10-01T16:00:00Z,2026-10-01T16:00:00Z,document-b3272cc3fba39421e37f4d0be0a145f7,Authored original writeoffs/WRITE-C,WRITE-C,LOT-C,W-EAST,2026-10-01T16:00:00Z,10,kg,Actual recorded disposition of damaged held stock.,WRITE-OFF-001,FINANCE

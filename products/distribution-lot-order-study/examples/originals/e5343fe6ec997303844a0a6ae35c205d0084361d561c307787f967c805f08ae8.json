@@ -1,0 +1,20 @@
+{
+  "data_class": "authored_course",
+  "family": "people",
+  "record": {
+    "id": "CURRENT",
+    "record_key": "CURRENT",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-09-30T06:00:00Z",
+    "available_at": "2026-09-30T06:00:00Z",
+    "source_document_id": "SRC-CURRENT",
+    "source_ref": "Authored original people/CURRENT",
+    "person_id": "CURRENT",
+    "operator_id": "OP",
+    "name": "Casey Current observer",
+    "valid_from": "2026-09-01T00:00:00Z",
+    "valid_to": ""
+  }
+}

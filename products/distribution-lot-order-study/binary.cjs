@@ -1,0 +1,5 @@
+'use strict';
+const alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+function encode(bytes){let out="";for(let i=0;i<bytes.length;i+=3){const n=(bytes[i]<<16)|((bytes[i+1]||0)<<8)|(bytes[i+2]||0);out+=alphabet[(n>>>18)&63]+alphabet[(n>>>12)&63]+(i+1<bytes.length?alphabet[(n>>>6)&63]:"=")+(i+2<bytes.length?alphabet[n&63]:"=");}return out;}
+function decode(text){if(typeof text!=="string"||text.length%4!==0||!/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(text))throw Error("Invalid retained base64");const out=[];for(let i=0;i<text.length;i+=4){const n=(alphabet.indexOf(text[i])<<18)|(alphabet.indexOf(text[i+1])<<12)|((text[i+2]==="="?0:alphabet.indexOf(text[i+2]))<<6)|(text[i+3]==="="?0:alphabet.indexOf(text[i+3]));out.push((n>>>16)&255);if(text[i+2]!=="=")out.push((n>>>8)&255);if(text[i+3]!=="=")out.push(n&255);}const bytes=new Uint8Array(out);if(encode(bytes)!==text)throw Error("Noncanonical retained base64");return bytes;}
+module.exports={encode,decode};

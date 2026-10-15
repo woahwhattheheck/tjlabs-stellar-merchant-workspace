@@ -1,0 +1,23 @@
+{
+  "data_class": "authored_course",
+  "family": "returns",
+  "record": {
+    "id": "RETURN-B",
+    "record_key": "RETURN-B",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T15:00:00Z",
+    "available_at": "2026-10-01T15:00:00Z",
+    "source_document_id": "SRC-RETURN-B",
+    "source_ref": "Authored original returns/RETURN-B",
+    "return_id": "RETURN-B",
+    "dispatch_line_record_id": "DL-2",
+    "warehouse_id": "W-EAST",
+    "received_at": "2026-10-01T15:00:00Z",
+    "quantity": "5",
+    "unit": "kg",
+    "received_by": "RECEIVER",
+    "external_ref": "ACTUAL-RETURN-001"
+  }
+}
