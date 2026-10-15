@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,operator_id,name,valid_from,valid_to
+OP,OP,1,,active,2026-09-01T00:00:00Z,2026-09-01T00:00:00Z,document-dace5203cfb6456a0bb6885576387025,authored/operators/OP,OP,Example Transit Cooperative,2026-09-01T00:00:00Z,

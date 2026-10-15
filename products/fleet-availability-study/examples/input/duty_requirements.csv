@@ -1,0 +1,3 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,duty_id,operator_id,depot_id,vehicle_class,minimum_seats,required_vehicles,starts_at,ends_at,approved_at,approved_by
+DUTY-MORNING,DUTY-MORNING,1,,active,2026-10-01T05:30:00Z,2026-10-01T05:30:00Z,document-b0131e2b6e8f95adee0d5791e4eb5337,authored/duty_requirements/DUTY-MORNING,DUTY-MORNING,OP,DEPOT,single_deck,40,1,2026-10-01T08:00:00Z,2026-10-01T10:00:00Z,2026-10-01T05:30:00Z,OPS
+DUTY-AFTER-REPAIR,DUTY-AFTER-REPAIR,1,,active,2026-10-01T05:30:00Z,2026-10-01T05:30:00Z,document-c9a298f9e1a4467cbcf1825758258593,authored/duty_requirements/DUTY-AFTER-REPAIR,DUTY-AFTER-REPAIR,OP,DEPOT,single_deck,40,1,2026-10-01T11:00:00Z,2026-10-01T13:00:00Z,2026-10-01T05:30:00Z,OPS

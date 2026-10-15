@@ -1,0 +1,8 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,person_id,operator_id,name,valid_from,valid_to
+MANAGER,MANAGER,1,,active,2026-09-01T00:00:00Z,2026-09-01T00:00:00Z,document-d08fe270fad3187979ee3b11b83faf89,authored/people/MANAGER,MANAGER,OP,"Morgan, accountable depot manager",2026-09-01T00:00:00Z,
+OPS,OPS,1,,active,2026-09-01T00:00:00Z,2026-09-01T00:00:00Z,document-e5edb3e3f3e37ad212ed75163d50a820,authored/people/OPS,OPS,OP,"Olive, operations coordinator",2026-09-01T00:00:00Z,
+TECH,TECH,1,,active,2026-09-01T00:00:00Z,2026-09-01T00:00:00Z,document-f12ffa2812256f7c9addcb79fba72284,authored/people/TECH,TECH,OP,"Terry, maintenance technician",2026-09-01T00:00:00Z,
+PARTS,PARTS,1,,active,2026-09-01T00:00:00Z,2026-09-01T00:00:00Z,document-41e93c3b95d630536570ce2a852ace24,authored/people/PARTS,PARTS,OP,"Pat, stores receiver",2026-09-01T00:00:00Z,
+SUPPLIER,SUPPLIER,1,,active,2026-09-01T00:00:00Z,2026-09-01T00:00:00Z,document-d661bbcf7a447fb5c39ffc7e97d1b7ed,authored/people/SUPPLIER,SUPPLIER,OP,"Sam, supplier coordinator",2026-09-01T00:00:00Z,
+SAFETY,SAFETY,1,,active,2026-09-01T00:00:00Z,2026-09-01T00:00:00Z,document-55ba87a2cdf3c8594c5c926c8e8a57d3,authored/people/SAFETY,SAFETY,OP,"Sasha, safety reviewer",2026-09-01T00:00:00Z,
+FINANCE,FINANCE,1,,active,2026-09-01T00:00:00Z,2026-09-01T00:00:00Z,document-41913934fe5cf778a3c9f9fec9c4549e,authored/people/FINANCE,FINANCE,OP,"Fran, accounts clerk",2026-09-01T00:00:00Z,

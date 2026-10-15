@@ -1,0 +1,6 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,requirement_id,release_case_record_id,family,record_id,required_state
+REQUIREMENT-V1-1,REQUIREMENT-V1-1,1,,active,2026-10-01T10:35:00Z,2026-10-01T10:35:00Z,document-e0f198ff4cecc88d5c7c7578164a020b,authored/release_requirements/REQUIREMENT-V1-1,REQUIREMENT-V1-1,RELEASE-V1,faults,FAULT-V1,resolved
+REQUIREMENT-V1-2,REQUIREMENT-V1-2,1,,active,2026-10-01T10:35:00Z,2026-10-01T10:35:00Z,document-d77c412be462e3056c11b4265b83508a,authored/release_requirements/REQUIREMENT-V1-2,REQUIREMENT-V1-2,RELEASE-V1,work_orders,WORK-V1,completed
+REQUIREMENT-V1-3,REQUIREMENT-V1-3,1,,active,2026-10-01T10:35:00Z,2026-10-01T10:35:00Z,document-61e70cf16a7ba0851d824b1b65b89ddb,authored/release_requirements/REQUIREMENT-V1-3,REQUIREMENT-V1-3,RELEASE-V1,part_requests,PART-V1,installed
+REQUIREMENT-V1-4,REQUIREMENT-V1-4,1,,active,2026-10-01T10:35:00Z,2026-10-01T10:35:00Z,document-e061e8eb1f695a53ebb982573bb62953,authored/release_requirements/REQUIREMENT-V1-4,REQUIREMENT-V1-4,RELEASE-V1,supplier_jobs,SUPPLY-V1,completed
+REQUIREMENT-V1-5,REQUIREMENT-V1-5,1,,active,2026-10-01T10:35:00Z,2026-10-01T10:35:00Z,document-0e57dbf6d35666f43cd2cddd8109aa6b,authored/release_requirements/REQUIREMENT-V1-5,REQUIREMENT-V1-5,RELEASE-V1,safety_cases,SAFETY-V1,cleared

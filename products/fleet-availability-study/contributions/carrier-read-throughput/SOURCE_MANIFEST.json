@@ -1,0 +1,39 @@
+{
+  "members": [
+    {
+      "path": "before/host-model.cjs",
+      "bytes": 5181,
+      "sha256": "076e52ec6f5de98ad4145c61d9d46a3c19db1acccb46ce4344f68c8538692d33"
+    },
+    {
+      "path": "after/host-model.cjs",
+      "bytes": 5679,
+      "sha256": "5e0e5a74efd5b619fd12f04f8528a274fa15d06aa9d8bdbdf1598fce08f74304"
+    },
+    {
+      "path": "measure-complete-read.cjs",
+      "bytes": 2679,
+      "sha256": "ecbaf81dc5335942a95c6f4b4fb4ff5133d90d57e8b626c479b8f088aa93e45c"
+    },
+    {
+      "path": "checkpoint-selection.cjs",
+      "bytes": 830,
+      "sha256": "c8ff95f8b70342a77c55b05e397f1b9c0e574846794ebdf177ac030a04af0a77"
+    },
+    {
+      "path": "measurement.json",
+      "bytes": 2060,
+      "sha256": "a8645eaff456516c43b70796d05fcb82b38f7c4bb0f7e5cb68a7f9879d53f736"
+    },
+    {
+      "path": "changed-source-and-isolation.json",
+      "bytes": 709,
+      "sha256": "3e2779ff847f67dd4ee6d351f1f0eb2a6680f727bd02fca0f0ae7a253c9f8e18"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2348,
+      "sha256": "c5962bde26f8f524d71e35a89b4346b58b51627ee621e4e9525117d20d9f2330"
+    }
+  ]
+}

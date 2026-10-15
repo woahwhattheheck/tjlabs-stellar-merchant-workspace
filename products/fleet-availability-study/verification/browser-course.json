@@ -1,0 +1,30 @@
+{
+  "execution": "Actual generated offline HTML handlers with injected DOM and IndexedDB services; no rendered browser claim",
+  "checks": [
+    "Generated operator starts with an empty fleet availability study",
+    "Actual study handler renders its empty state",
+    "Actual intake handler renders its empty state",
+    "Actual selection handler renders its empty state",
+    "Actual records handler renders its empty state",
+    "Actual crosswalks handler renders its empty state",
+    "Actual documents handler renders its empty state",
+    "Actual plan handler renders its empty state",
+    "Actual commerce handler renders its empty state",
+    "Actual timeline handler renders its empty state",
+    "Actual compare handler renders its empty state",
+    "Actual reviews handler renders its empty state",
+    "Actual recovery handler renders its empty state",
+    "Actual authored course opens all four physical-vehicle members",
+    "Ordinary plan retains both actual duty and scoped-authority source coverage",
+    "Actual physical and outcome view renders readiness intervals and actual duties",
+    "Actual record editor opens complete original fault observation",
+    "Starting another record preserves the preceding whole draft",
+    "Actual release_inputs helper binds its exact original source",
+    "Actual release_reviews helper binds its exact original source",
+    "Stale actual review is rejected after study change",
+    "Complete session, maintained source and study exports execute",
+    "Cold instance reopens every unfinished form",
+    "Cross-tab save preserves competing branch",
+    "Explicit branch adoption resumes normal complete saving"
+  ]
+}

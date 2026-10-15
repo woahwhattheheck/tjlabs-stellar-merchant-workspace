@@ -1,0 +1,15 @@
+{
+  "donor": {
+    "files": 100,
+    "bytes": 2853988,
+    "sha256": "f58e28b2084eb9593009d5bc8449953e800116618ca74b23332797a6f2f29101"
+  },
+  "changesToDonor": [
+    "sha256.cjs: reviewed exact-text digest cache with original semantic output",
+    "README.md: installed operation entry",
+    "SOURCE_MANIFEST.json: regenerated for complete composition"
+  ],
+  "sourceFamilies": 29,
+  "completeSourceReadback": "Original100 source recovered and every99 manifest member exact",
+  "currentReceiving": "Installed source checkpoint; browser and Merchant courses continue against this whole source."
+}

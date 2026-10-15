@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,receipt_id,part_request_record_id,quantity,unit,received_at,supplier_ref,receiver_id
+RECEIPT-V1,RECEIPT-V1,1,,active,2026-10-01T08:00:00Z,2026-10-01T08:00:00Z,document-6f72e15d8a999bdb648861aafe079a7e,authored/part_receipts/RECEIPT-V1,RECEIPT-V1,PART-V1,1,each,2026-10-01T08:00:00Z,AUTHORED-DELIVERY-001,PARTS

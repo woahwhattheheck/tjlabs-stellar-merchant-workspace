@@ -1,0 +1,5 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,member_id,vehicle_id,operator_id,depot_id,population_key,included,exclusion_reason
+MEMBER-V1,MEMBER-V1,1,,active,2026-10-01T05:05:00Z,2026-10-01T05:05:00Z,document-e988af30cec44e6e8ac6e88b1a93e80c,authored/population_members/MEMBER-V1,MEMBER-V1,V1,OP,DEPOT,ALL-DEPOT-20261001,true,
+MEMBER-V2,MEMBER-V2,1,,active,2026-10-01T05:05:00Z,2026-10-01T05:05:00Z,document-226c98651b630f8129642b1a65865675,authored/population_members/MEMBER-V2,MEMBER-V2,V2,OP,DEPOT,ALL-DEPOT-20261001,true,
+MEMBER-V3,MEMBER-V3,1,,active,2026-10-01T05:05:00Z,2026-10-01T05:05:00Z,document-9f91444b647fe935615d510967e34ce2,authored/population_members/MEMBER-V3,MEMBER-V3,V3,OP,DEPOT,ALL-DEPOT-20261001,true,
+MEMBER-V4,MEMBER-V4,1,,active,2026-10-01T05:05:00Z,2026-10-01T05:05:00Z,document-01b2b046c865824d6cc453ac2ed3a932,authored/population_members/MEMBER-V4,MEMBER-V4,V4,OP,DEPOT,ALL-DEPOT-20261001,true,

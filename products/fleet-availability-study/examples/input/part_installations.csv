@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,installation_id,part_request_record_id,receipt_record_id,work_order_record_id,quantity,unit,installed_at,technician_id
+INSTALL-V1,INSTALL-V1,1,,active,2026-10-01T09:00:00Z,2026-10-01T09:00:00Z,document-a47cee2bcf19d234e6360e9a31ab7ad9,authored/part_installations/INSTALL-V1,INSTALL-V1,PART-V1,RECEIPT-V1,WORK-V1,1,each,2026-10-01T09:00:00Z,TECH

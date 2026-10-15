@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,supplier_id,name,service_description,valid_from,valid_to
+OUTSIDE,OUTSIDE,1,,active,2026-09-01T00:00:00Z,2026-09-01T00:00:00Z,document-257526085e7a3c83923950d43631482c,authored/suppliers/OUTSIDE,OUTSIDE,Example Component Workshop,Authored external component repair and supplied parts,2026-09-01T00:00:00Z,
