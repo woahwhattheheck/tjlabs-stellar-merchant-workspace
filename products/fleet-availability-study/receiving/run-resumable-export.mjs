@@ -18,7 +18,7 @@ const workload=reader(JSON.parse(compact)),state=workload.read(workload.field(wo
 await fs.mkdir(path.join(output,'objects'),{recursive:true});
 async function atomic(name,body){const destination=path.join(output,name),temporary=destination+'.pending';await fs.writeFile(temporary,body);await fs.rename(temporary,destination);}
 const indexPath=path.join(output,'checkpoint.json');let checkpoint=null;
-try{const index=JSON.parse(await fs.readFile(indexPath,'utf8'));checkpoint=await storage.restore(index,p=>fs.readFile(path.join(output,p),'utf8'),codec);}catch(e){if(e.code!=='ENOENT')throw e;}
+let indexText;try{indexText=await fs.readFile(indexPath,'utf8');}catch(e){if(e.code!=='ENOENT')throw e;}if(indexText!==undefined)checkpoint=await storage.restore(JSON.parse(indexText),p=>fs.readFile(path.join(output,p),'utf8'),codec);
 const job=createFleetAvailabilityStudyExportJob(files,state,records,editions,{codec,core,originalSessions,sessions,buildDesk:buildFleetAvailabilityStudyDesk,zip},{verifiedInputSha256:inputSha,checkpoint});
 let progress=job.statistics();
 while(!progress.done){progress=job.run({maxGroups:8,maxMilliseconds:25000});const saved=storage.prepare(job.checkpoint(),codec);
