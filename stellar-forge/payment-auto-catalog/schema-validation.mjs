@@ -1,8 +1,10 @@
 /**
  * SF-25: v2 PaymentPayload Bazaar extension -> trusted SF-46 catalog commit.
- * Source pin: x402-foundation/x402@e95b06661e1a2a8a9a21fce34cc28b9934834650
+ * Source pin: x402-foundation/x402@faa1c694c66a3732aaabbce93bdae140e521a67d
  * Bazaar spec blob: 442708e76d5a129e0c1393471d8ed71e3604c94e
  * Facilitator extractor blob: 083013ee19544e182c2e3185d7853309c34b9d9c
+ * HTTP types blob: 4e7f4b00c7bbf8fbb858ee86634217726165e4e4
+ * MCP types blob: ec1f9ab2ba32d9ef22506722890dee33b96b3700
  */
 import { compileSchemaPattern } from './schema-pattern.mjs';
 
@@ -237,6 +239,26 @@ function bazaarContractError(info, schema) {
     if (error) return error;
   }
 
+  const outputError = () => {
+    if (info.output === undefined) return null;
+    if (!plain(info.output)) return 'INFO_OUTPUT_INVALID';
+    if (typeof info.output.type !== 'string') return 'INFO_OUTPUT_TYPE_INVALID';
+    if (info.output.format !== undefined && typeof info.output.format !== 'string')
+      return 'INFO_OUTPUT_FORMAT_INVALID';
+    const outputObject = mustReject(witness => { witness.output = []; }, 'SCHEMA_OUTPUT_NOT_CONSTRAINED');
+    if (outputObject) return outputObject;
+    const outputTypeRequired = mustReject(witness => { delete witness.output.type; }, 'SCHEMA_OUTPUT_TYPE_NOT_REQUIRED');
+    if (outputTypeRequired) return outputTypeRequired;
+    const outputType = mustReject(witness => { witness.output.type = 7; }, 'SCHEMA_OUTPUT_TYPE_NOT_CONSTRAINED');
+    if (outputType) return outputType;
+    if (info.output.format !== undefined) {
+      const outputFormat = mustReject(witness => { witness.output.format = []; }, 'SCHEMA_OUTPUT_FORMAT_NOT_CONSTRAINED');
+      if (outputFormat) return outputFormat;
+    }
+    // output.example is intentionally arbitrary JSON under the official contract.
+    return null;
+  };
+
   if (input.type === 'http') {
     if (typeof input.method !== 'string') return 'INFO_HTTP_METHOD_REQUIRED';
     const family = QUERY_METHODS.has(input.method) ? QUERY_METHODS : BODY_METHODS.has(input.method) ? BODY_METHODS : null;
@@ -266,7 +288,34 @@ function bazaarContractError(info, schema) {
         if (error) return error;
       }
     }
-    return null;
+    for (const [field, label] of [
+      ['queryParams', 'QUERY_PARAMS'],
+      ['pathParams', 'PATH_PARAMS'],
+    ]) {
+      if (input[field] === undefined) continue;
+      if (!plain(input[field])) return `INFO_HTTP_${label}_INVALID`;
+      const error = mustReject(
+        witness => { witness.input[field] = []; },
+        `SCHEMA_HTTP_${label}_NOT_CONSTRAINED`,
+      );
+      if (error) return error;
+    }
+    if (input.headers !== undefined) {
+      if (!plain(input.headers) || Object.values(input.headers).some(value => typeof value !== 'string'))
+        return 'INFO_HTTP_HEADERS_INVALID';
+      const objectError = mustReject(
+        witness => { witness.input.headers = []; },
+        'SCHEMA_HTTP_HEADERS_NOT_CONSTRAINED',
+      );
+      if (objectError) return objectError;
+      const [acceptedHeader = 'x-contract-witness'] = Object.keys(input.headers);
+      const valueError = mustReject(
+        witness => { witness.input.headers = { ...witness.input.headers, [acceptedHeader]: 7 }; },
+        'SCHEMA_HTTP_HEADER_VALUES_NOT_CONSTRAINED',
+      );
+      if (valueError) return valueError;
+    }
+    return outputError();
   }
 
   if (typeof input.toolName !== 'string' || input.toolName.length === 0) return 'INFO_MCP_TOOL_NAME_INVALID';
@@ -307,7 +356,23 @@ function bazaarContractError(info, schema) {
     const transport = mustReject(witness => { witness.input.transport = '__invalid__'; }, 'SCHEMA_MCP_TRANSPORT_NOT_CONSTRAINED');
     if (transport) return transport;
   }
-  return null;
+  if (input.description !== undefined) {
+    if (typeof input.description !== 'string') return 'INFO_MCP_DESCRIPTION_INVALID';
+    const description = mustReject(
+      witness => { witness.input.description = 7; },
+      'SCHEMA_MCP_DESCRIPTION_NOT_CONSTRAINED',
+    );
+    if (description) return description;
+  }
+  if (input.example !== undefined) {
+    if (!plain(input.example)) return 'INFO_MCP_EXAMPLE_INVALID';
+    const example = mustReject(
+      witness => { witness.input.example = []; },
+      'SCHEMA_MCP_EXAMPLE_NOT_CONSTRAINED',
+    );
+    if (example) return example;
+  }
+  return outputError();
 }
 
 export function validateBazaarExtension(extension) {
