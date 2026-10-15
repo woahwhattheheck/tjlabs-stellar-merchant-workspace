@@ -37,3 +37,15 @@ Run the installed complete receiver with `node receiving/run-resumable-export.mj
 ## Repeated checkpoint cost
 
 Prepared ZIP snapshots reuse canonical base64 for their private immutable packed payloads. The native receiver uses one stateful createPreparer(codec) per export, reuses unchanged fragment references, and checks only objects it has not already durably written or verified on restore. Metadata is rebuilt for every checkpoint. A failed write cannot mark a merely computed object durable. The complete old/new/restored 962-source comparison is retained at receiving-checkpoints/tools/prepared-checkpoint-cache/full-source-result.json in commit4319b2d0674f2d053fd426dc8d20c78dfb128648; its 963-member ZIP is byte-identical and every member is independently read back. The repeated checkpoint preparation in that V8 course changed from5,021 to332ms.
+
+## Native streaming and complete default compression
+
+The native command finishes the complete retained archive with native/finish-prepared.mjs. It streams prepared original member bytes into an exclusive temporary file, verifies every original member and independently hashes the written ZIP before atomic publication. Pass --finish false to leave a complete durable checkpoint for a separate process. The native stream pins the exact checkpoint file SHA-256. An existing different output is preserved.
+
+Default complete archive capacities are 1 GiB of original member bytes, 512 MiB of ZIP bytes and 60000 members. Optional --max-uncompressed-bytes, --max-archive-bytes and --max-entries select other classic ZIP capacities; those limits are part of the exact resume identity. Frozen prior receiving jobs retain their original source and limits, and the completed source successor records the exact repaired source version.
+
+src/connected_gzip.cjs supplies the maintained default compression API used by src/connected_zip.cjs. It is retained byte for byte from the canonical maintained gzip module, alongside the existing Pako license and the explicit Pako compression hooks used by complete exports.
+
+## Self-contained native receiving and Merchant support
+
+The source bank includes the exact maintained directory writer, application-provider helper, its storage sibling and Merchant provider contract under vendor/merchant-shared/. Their original bodies are pinned to repository commit b2c216f07468f7fa32d96423ddacab904bd99bdb; only the product imports are redirected. Native receiving, source export, and the managed application use those local support files. Host installation through setup.mjs still uses the surrounding platform's sf82 release store and Merchant configuration; run setup from the complete host repository. This host installation dependency is distinct from opening the preserved product sources or receiving a complete working archive.

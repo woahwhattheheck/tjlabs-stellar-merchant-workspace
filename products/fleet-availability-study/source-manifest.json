@@ -508,8 +508,8 @@
     },
     {
       "path": "application-provider.mjs",
-      "bytes": 4089,
-      "sha256": "e0863da1ae8bedf6151fafad82b3b72dca76c068aabb6669e29b2cdbae6c0b85"
+      "bytes": 4064,
+      "sha256": "5fa3f2c9dc8f40c5121bf8aba4585316a49c200ed8af262fdb4e95c0e31ccebf"
     },
     {
       "path": "contributions/harvest-reviewed.source.json",
@@ -598,8 +598,8 @@
     },
     {
       "path": "host/export-core.mjs",
-      "bytes": 13088,
-      "sha256": "acc816364aaa801be36fadbf93ca15778edfc857baaa267b515fe0b3286b7b55"
+      "bytes": 13904,
+      "sha256": "f15228258b541529a3c5baf43b7381b6bd28c9a4e4346023166890f8c4900bdc"
     },
     {
       "path": "host/export.mjs",
@@ -623,8 +623,8 @@
     },
     {
       "path": "host/store.mjs",
-      "bytes": 5745,
-      "sha256": "251743dda9eb401ef56325cdaecb97215bb8c8f7c84e86c7da04a14392c5ca7c"
+      "bytes": 5715,
+      "sha256": "fb2e977add1899cb32124653c62a6affaf04ff83091503f64bb017d52e3cffcf"
     },
     {
       "path": "installed-cli.mjs",
@@ -643,8 +643,8 @@
     },
     {
       "path": "merchant-provider.mjs",
-      "bytes": 2811,
-      "sha256": "6e1f49679cfdbdbeb645ec08d6e8c60355d81acfaf5614b05aed83a4cb76e72b"
+      "bytes": 2803,
+      "sha256": "69e89bd713a05085af973be97395e0bb6f4df7e70f69acb04e614a897b5711aa"
     },
     {
       "path": "native/receive-installed.mjs",
@@ -698,8 +698,8 @@
     },
     {
       "path": "setup.mjs",
-      "bytes": 2668,
-      "sha256": "a43c77f0d5faa48eed2d927a5f68d4987ee83309890c942b4b634f3e71c8127f"
+      "bytes": 2640,
+      "sha256": "09c6c883078bff0190c2838ad8615164ff318d478a872fd7d36a64bcdbeb0ac5"
     },
     {
       "path": "src/archive.mjs",
@@ -903,8 +903,8 @@
     },
     {
       "path": "SOURCE_MANIFEST.json",
-      "bytes": 30872,
-      "sha256": "7a31bf010adfd5ae8eabd6a2149a9af1a1ab57b39dbc1b093d7fa4235684766e"
+      "bytes": 32113,
+      "sha256": "972c7612cc9b05c737c8b15f690a0fcb22ea4d1df489e0dc7b459333dbd5b349"
     },
     {
       "path": "contributions/resumable-export/before-export-core.mjs",
@@ -918,18 +918,53 @@
     },
     {
       "path": "receiving/run-resumable-export.mjs",
-      "bytes": 4886,
-      "sha256": "7a599c566239c9661ba503f04a3b8fbf7a14ef976c177b53713ed667c457b02c"
+      "bytes": 4880,
+      "sha256": "5833f710f6586a577088b7a51ffca21c870dc18a30092a61d205087bb8c137ea"
     },
     {
       "path": "receiving/RESUMABLE_EXPORT.md",
-      "bytes": 6065,
-      "sha256": "fffe4f3d89be0bc6a05c9ae70fe89347ec1e370b4be7ec8d9a3d989851c1bbde"
+      "bytes": 8027,
+      "sha256": "0300c402b8ad26e740832bdf3ab0986aad3d753b00be2d53c70c631f34332f26"
     },
     {
       "path": "contributions/resumable-export/SOURCE.json",
       "bytes": 303,
       "sha256": "7fa9174dc5dda7685993a6c5126a6ce5c06fd23ef7ad7c25d5400a7301acc934"
+    },
+    {
+      "path": "src/connected_gzip.cjs",
+      "bytes": 47127,
+      "sha256": "1fc9f3b218c60d029c96bf9f1c1e4de5fcb86918ed5a0570586dc81488440119"
+    },
+    {
+      "path": "native/finish-prepared.mjs",
+      "bytes": 3201,
+      "sha256": "afca8b17478ef73ce369ba300b2eea03ec9d251774d0e60ae34b839eaed6b86a"
+    },
+    {
+      "path": "receiving/prepared-stream.cjs",
+      "bytes": 17023,
+      "sha256": "8f0c8427c71ffd7584638c5f56ee52c65eba58a1a90ced010327671fe3af45b7"
+    },
+    {
+      "path": "vendor/merchant-shared/operations/history.mjs",
+      "bytes": 42366,
+      "sha256": "5928c1243549c7db21942bb6ce7188060b32e5e75d4690374a88fe7b2ed96de5"
+    },
+    {
+      "path": "vendor/merchant-shared/runtime-workspace/application-provider.mjs",
+      "bytes": 9395,
+      "sha256": "0f638caeeaa5c78560ebd262c0e410cb0dfd4fcd886748f5136cd08755e019c9"
+    },
+    {
+      "path": "vendor/merchant-shared/runtime-workspace/storage.mjs",
+      "bytes": 23911,
+      "sha256": "d42495664abaf6f43d1ce4d92ba7cbcbe07c554310f1c2f58d068c208fcc57fa"
+    },
+    {
+      "path": "vendor/merchant-shared/merchant/provider-contract.mjs",
+      "bytes": 6260,
+      "sha256": "abbc3a9f344f7e1be07f3085e6554f2c0ce1ccf131338d7ffa36f5694628394b"
     }
   ]
 }

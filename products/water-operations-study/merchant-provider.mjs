@@ -1,5 +1,5 @@
 // MIT. Source-owned Merchant customer-agent lifecycle.
-import {defineMerchantProvider,MERCHANT_PROVIDER_SCHEMA} from '../../stellar-forge/mcp-merchant-operator/provider-contract.mjs';
+import {defineMerchantProvider,MERCHANT_PROVIDER_SCHEMA} from './vendor/merchant-shared/merchant/provider-contract.mjs';
 import {waterOperationsTools} from './tools.mjs';
 export default defineMerchantProvider({schema:MERCHANT_PROVIDER_SCHEMA,id:'water-operations-study',family:'waterOperationsStudy',title:'Water Operations Study Desk',order:1385,catalogOrder:1385,configKey:'waterOperationsStudy',summary:true,dependencies:[],
  configuration:{input:'waterOperationsStudyConnection',privateExports:true,read:async(value,{hostPath})=>(await import('./mcp.mjs')).readWaterOperationsStudyConfiguration(hostPath(value))},

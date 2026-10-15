@@ -63,8 +63,8 @@
     },
     {
       "path": "application-provider.mjs",
-      "bytes": 4076,
-      "sha256": "2335a62d591f74e9a9aaad822f9fa0ba12d7a48b3fe72824ad846ae52265e3bb"
+      "bytes": 4051,
+      "sha256": "f50b99c300062a36c09217e77f8eede1bcedca7002e9f304fd2d2989638d062b"
     },
     {
       "path": "base-schema.cjs",
@@ -488,8 +488,8 @@
     },
     {
       "path": "host/export-core.mjs",
-      "bytes": 13068,
-      "sha256": "e70ff48aa22bb485956f3215cf11f681827912117c2c3456a6e70ae9b4c09243"
+      "bytes": 13884,
+      "sha256": "57fb7eb3ef09591129912f8a9b2114adf1084aaa4fff1626adb2a05ad18135a6"
     },
     {
       "path": "host/export.mjs",
@@ -513,8 +513,8 @@
     },
     {
       "path": "host/store.mjs",
-      "bytes": 5729,
-      "sha256": "6324f1f41277784183e0f17cfb6c750513ab3e611178ddcc341bc1262e7a4d3a"
+      "bytes": 5699,
+      "sha256": "39a03d7417ffa20b667b8ad9a495c67e2cf1b850d7bcbf5a489a991816c09b6b"
     },
     {
       "path": "installed-cli.mjs",
@@ -543,8 +543,8 @@
     },
     {
       "path": "merchant-provider.mjs",
-      "bytes": 2689,
-      "sha256": "faad30ad685c8d9615d361befe705d16e8619c0173d1fd45fabe096ca869f54f"
+      "bytes": 2681,
+      "sha256": "20bee45b78662430555eaa173b398f818152e30ff0fb980b7078218d9ce25772"
     },
     {
       "path": "native/receive-installed.mjs",
@@ -648,8 +648,8 @@
     },
     {
       "path": "setup.mjs",
-      "bytes": 2648,
-      "sha256": "b66aacfc41651f75c2c19f5e7d183f2eee0b20b9faa3210da02e6f8b4f701c0c"
+      "bytes": 2620,
+      "sha256": "7477b361a9d9bf4af5e0ba5273bf4cc1126a7059c8851d7813399972038779e9"
     },
     {
       "path": "sha256.cjs",
@@ -1113,8 +1113,8 @@
     },
     {
       "path": "SOURCE_MANIFEST.json",
-      "bytes": 75514,
-      "sha256": "86f6406752ef9b5f9d7438245d15fdc365d47272073d44771a95397e1fac0274"
+      "bytes": 39017,
+      "sha256": "711e4195a31bdbe322f4976223eb41118a9d0bf8f3ed96a5c6702c5b3c37f908"
     },
     {
       "path": "contributions/resumable-export/before-export-core.mjs",
@@ -1128,18 +1128,53 @@
     },
     {
       "path": "receiving/run-resumable-export.mjs",
-      "bytes": 4878,
-      "sha256": "422e1098c8bf15bdb2f57caab4633a7b931bf230bbdb761a7893034e5e267698"
+      "bytes": 4872,
+      "sha256": "bc581cdaac0c2d1cdb91aa8a52e817373441070ba1e94188c07734c998c70e7c"
     },
     {
       "path": "receiving/RESUMABLE_EXPORT.md",
-      "bytes": 6065,
-      "sha256": "fffe4f3d89be0bc6a05c9ae70fe89347ec1e370b4be7ec8d9a3d989851c1bbde"
+      "bytes": 8027,
+      "sha256": "0300c402b8ad26e740832bdf3ab0986aad3d753b00be2d53c70c631f34332f26"
     },
     {
       "path": "contributions/resumable-export/SOURCE.json",
       "bytes": 271,
       "sha256": "b6f18af0ac5388408ca4d389d2e5d2ebbfd92f641e6647bee544307531767c85"
+    },
+    {
+      "path": "src/connected_gzip.cjs",
+      "bytes": 47127,
+      "sha256": "1fc9f3b218c60d029c96bf9f1c1e4de5fcb86918ed5a0570586dc81488440119"
+    },
+    {
+      "path": "native/finish-prepared.mjs",
+      "bytes": 3201,
+      "sha256": "afca8b17478ef73ce369ba300b2eea03ec9d251774d0e60ae34b839eaed6b86a"
+    },
+    {
+      "path": "receiving/prepared-stream.cjs",
+      "bytes": 17023,
+      "sha256": "8f0c8427c71ffd7584638c5f56ee52c65eba58a1a90ced010327671fe3af45b7"
+    },
+    {
+      "path": "vendor/merchant-shared/operations/history.mjs",
+      "bytes": 42366,
+      "sha256": "5928c1243549c7db21942bb6ce7188060b32e5e75d4690374a88fe7b2ed96de5"
+    },
+    {
+      "path": "vendor/merchant-shared/runtime-workspace/application-provider.mjs",
+      "bytes": 9395,
+      "sha256": "0f638caeeaa5c78560ebd262c0e410cb0dfd4fcd886748f5136cd08755e019c9"
+    },
+    {
+      "path": "vendor/merchant-shared/runtime-workspace/storage.mjs",
+      "bytes": 23911,
+      "sha256": "d42495664abaf6f43d1ce4d92ba7cbcbe07c554310f1c2f58d068c208fcc57fa"
+    },
+    {
+      "path": "vendor/merchant-shared/merchant/provider-contract.mjs",
+      "bytes": 6260,
+      "sha256": "abbc3a9f344f7e1be07f3085e6554f2c0ce1ccf131338d7ffa36f5694628394b"
     }
   ]
 }
