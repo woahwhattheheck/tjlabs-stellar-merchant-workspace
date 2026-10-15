@@ -85,17 +85,41 @@ function header(r,stamp,central){
  else{u32(0,0x04034b50);u16(4,20);u16(6,0x800);u16(8,r.method);u16(10,stamp.time);u16(12,stamp.date);u32(14,r.crc32);u32(18,r.compressedBytes);u32(22,r.bytes);u16(26,r.nameBytes.length);}
  return out;
 }
-async function streamPreparedExport(index,read,sink,options={}){
+
+// Emit prepared compressed bytes without repeating their original inflation.
+// Exact encoded fragment/reference identities, member lengths and the complete
+// EXPORT_MANIFEST are still checked. The ordinary archive reader supplies the
+// independent original CRC/SHA pass before recipient delivery.
+async function packedMember(context,r,sink){
+ const {index,read,limits,stats}=context;let packedCount=0,carry='';
+ async function consume(encoded,last){
+  if(!last&&encoded.includes('='))fail('Premature base64 padding');
+  const bytes=Z.fromBase64(encoded);packedCount+=bytes.length;
+  if(packedCount>r.compressedBytes)fail('Compressed member exceeds declared bytes');
+  if(bytes.length)await sink(bytes);
+ }
+ await fragments(index.payloads[r.payload_index],read,async text=>{
+  if(/[^A-Za-z0-9+/=]/.test(text))fail('Non-base64 durable payload');
+  const joined=carry+text,n=Math.max(0,Math.floor(joined.length/4)*4-4);
+  carry=joined.slice(n);if(n)await consume(joined.slice(0,n),false);
+ },limits,stats);
+ await consume(carry,true);
+ if(packedCount!==r.compressedBytes)fail('Prepared member length differs '+r.name);
+}
+
+async function streamPrepared(index,read,sink,options,packedOnly){
  if(typeof sink!=='function')fail('Provide an awaited provisional byte sink');
  const c=await open(index,read,options),hash=H.createSha256ByteHasher(),l=c.layout;let manifest;
  async function emit(bytes){if(!bytes.length)return;hash.update(bytes);c.stats.maxOutputChunkBytes=Math.max(c.stats.maxOutputChunkBytes,bytes.length);await sink(bytes);}
- for(const r of l.records){await emit(header(r,l.stamp,false));await emit(r.nameBytes);const result=await member(c,r,emit,r.name==='EXPORT_MANIFEST.json');if(r.name==='EXPORT_MANIFEST.json'){manifest=result;checkManifest(manifest,c.checkpoint);}if(options.observeMember)await options.observeMember({name:r.name,bytes:r.bytes,sha256:r.sha256});}
+ for(const r of l.records){await emit(header(r,l.stamp,false));await emit(r.nameBytes);const result=packedOnly&&r.name!=='EXPORT_MANIFEST.json'?await packedMember(c,r,emit):await member(c,r,emit,r.name==='EXPORT_MANIFEST.json');if(r.name==='EXPORT_MANIFEST.json'){manifest=result;checkManifest(manifest,c.checkpoint);}if(options.observeMember)await options.observeMember({name:r.name,bytes:r.bytes,sha256:r.sha256});}
  if(!manifest)fail('Missing export manifest');
  for(const r of l.records){await emit(header(r,l.stamp,true));await emit(r.nameBytes);}
  const end=new Uint8Array(22),v=new DataView(end.buffer);v.setUint32(0,0x06054b50,true);v.setUint16(8,l.records.length,true);v.setUint16(10,l.records.length,true);v.setUint32(12,l.central,true);v.setUint32(16,l.local,true);await emit(end);
  const result=hash.digest();if(result.bytes!==l.total)fail('Final archive byte count differs');
- return{schema:'commons.streamed-complete-export.v1',identity:index.identity,...result,members:l.records.length,uncompressedBytes:l.raw,metadataBytes:index.metadata.bytes,...c.stats,receivingSource:clone(index.receivingSource??null),derivation:clone(index.derivation??null)};
+ return{schema:'commons.streamed-complete-export.v1',identity:index.identity,...result,members:l.records.length,uncompressedBytes:l.raw,metadataBytes:index.metadata.bytes,...c.stats,receivingSource:clone(index.receivingSource??null),derivation:clone(index.derivation??null),...(packedOnly?{memberVerification:'prepared-payload-identities',requiresOrdinaryReadback:true}:{} )};
 }
+function streamPreparedExport(index,read,sink,options={}){return streamPrepared(index,read,sink,options,false);}
+function streamPreparedPayloads(index,read,sink,options={}){return streamPrepared(index,read,sink,options,true);}
 function createChunkSink(writePart,options={}){
  const partBytes=options.partBytes??487500;if(typeof writePart!=='function'||!integer(partBytes,16*1024*1024)||!partBytes)fail('Invalid durable output sink');
  let buffer=new Uint8Array(partBytes),used=0,failed=false,closed=false;const refs=[],hash=H.createSha256ByteHasher();
@@ -137,4 +161,4 @@ async function deriveSourceSuccessor(index,read,changes,options={}){
  layout(job,successor);
  return{manifest:successor,objects,derivation};
 }
-module.exports={streamPreparedExport,createChunkSink,deriveSourceSuccessor};
+module.exports={streamPreparedExport,streamPreparedPayloads,createChunkSink,deriveSourceSuccessor};
