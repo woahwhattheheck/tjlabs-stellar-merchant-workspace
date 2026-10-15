@@ -1,0 +1,120 @@
+{
+  "schema": "biomed.onboarding-comparison/v1",
+  "study_sha256": "88ac6f0449375b10af5a2823ea8799fee85c0ab5dffecb779a26ec192a81566d",
+  "data_class": "authored_course",
+  "scope": {
+    "source": "Two fictional facilities, three fictional assets, three recorded administrative events. No clinical readings or real maintenance decisions.",
+    "returned": "Same selected subset, with new trial IDs. First returned edition contains deliberate identity and field differences."
+  },
+  "complete_extract_selection": true,
+  "counts": {
+    "facilities": {
+      "source": 2,
+      "returned": 2
+    },
+    "assets": {
+      "source": 3,
+      "returned": 3
+    },
+    "events": {
+      "source": 3,
+      "returned": 3
+    }
+  },
+  "findings": [
+    {
+      "code": "VALUE_CHANGED",
+      "kind": "assets",
+      "side": "returned",
+      "record_id": "RA2",
+      "field": "facility_id",
+      "expected": "RF1",
+      "actual": "RF2",
+      "detail": "Exact original value differs in the returned edition.",
+      "source": {
+        "original_id": "original-a927e4c849cf3c7088a53efb5f00e4d0",
+        "sha256": "27751d5f895a04c2016a1d05c5fcb545c9e72dcbaace14cc0a3b691368af5825",
+        "extract_id": "extract-7a7d24286d0a52851c4c9d2023d15547",
+        "name": "authored-first-returned-assets.csv",
+        "line_start": 3,
+        "line_end": 3
+      }
+    },
+    {
+      "code": "VALUE_CHANGED",
+      "kind": "assets",
+      "side": "returned",
+      "record_id": "RA2",
+      "field": "serial",
+      "expected": "SER-002",
+      "actual": "SER-002-changed",
+      "detail": "Exact original value differs in the returned edition.",
+      "source": {
+        "original_id": "original-a927e4c849cf3c7088a53efb5f00e4d0",
+        "sha256": "27751d5f895a04c2016a1d05c5fcb545c9e72dcbaace14cc0a3b691368af5825",
+        "extract_id": "extract-7a7d24286d0a52851c4c9d2023d15547",
+        "name": "authored-first-returned-assets.csv",
+        "line_start": 3,
+        "line_end": 3
+      }
+    },
+    {
+      "code": "VALUE_CHANGED",
+      "kind": "events",
+      "side": "returned",
+      "record_id": "RE2",
+      "field": "asset_id",
+      "expected": "RA2",
+      "actual": "RL1",
+      "detail": "Exact original value differs in the returned edition.",
+      "source": {
+        "original_id": "original-abe455f16508dc2aa9ccb04beeb098e4",
+        "sha256": "8bd344cc2b13c2bf467dbad0dccc8a84d91baa685c593cc872a0f1c2a4fa4189",
+        "extract_id": "extract-b883af79990f5ae619d30da3be835794",
+        "name": "authored-first-returned-events.csv",
+        "line_start": 3,
+        "line_end": 3
+      }
+    },
+    {
+      "code": "VALUE_CHANGED",
+      "kind": "events",
+      "side": "returned",
+      "record_id": "RE3",
+      "field": "performed_at",
+      "expected": "2026-09-13",
+      "actual": "2026-09-14",
+      "detail": "Exact original value differs in the returned edition.",
+      "source": {
+        "original_id": "original-abe455f16508dc2aa9ccb04beeb098e4",
+        "sha256": "8bd344cc2b13c2bf467dbad0dccc8a84d91baa685c593cc872a0f1c2a4fa4189",
+        "extract_id": "extract-b883af79990f5ae619d30da3be835794",
+        "name": "authored-first-returned-events.csv",
+        "line_start": 4,
+        "line_end": 4
+      }
+    },
+    {
+      "code": "VALUE_CHANGED",
+      "kind": "events",
+      "side": "returned",
+      "record_id": "RE3",
+      "field": "report_ref",
+      "expected": "REPORT-3",
+      "actual": "",
+      "detail": "Exact original value differs in the returned edition.",
+      "source": {
+        "original_id": "original-abe455f16508dc2aa9ccb04beeb098e4",
+        "sha256": "8bd344cc2b13c2bf467dbad0dccc8a84d91baa685c593cc872a0f1c2a4fa4189",
+        "extract_id": "extract-b883af79990f5ae619d30da3be835794",
+        "name": "authored-first-returned-events.csv",
+        "line_start": 4,
+        "line_end": 4
+      }
+    }
+  ],
+  "comparison_state": "differences_for_review",
+  "reviews": [],
+  "decision": "unreviewed",
+  "limits": "Data-transfer comparison only. It does not assess device safety, choose procedures or maintenance intervals, create clinical readings, authenticate signatures, or release equipment."
+}

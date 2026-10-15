@@ -1,0 +1,29 @@
+{
+  "schema": "biomed.onboarding-comparison/v1",
+  "study_sha256": "f9c0312ba60ca0422e5cf0f8475570de7886946705a2f9c403675340ebb9bb9d",
+  "data_class": "authored_course",
+  "scope": {
+    "source": "Two fictional facilities, three fictional assets, three recorded administrative events. No clinical readings or real maintenance decisions.",
+    "returned": "Corrected authored edition of the same two facilities, three assets and three events; all originals and first returned editions retained."
+  },
+  "complete_extract_selection": true,
+  "counts": {
+    "facilities": {
+      "source": 2,
+      "returned": 2
+    },
+    "assets": {
+      "source": 3,
+      "returned": 3
+    },
+    "events": {
+      "source": 3,
+      "returned": 3
+    }
+  },
+  "findings": [],
+  "comparison_state": "selected_fields_match",
+  "reviews": [],
+  "decision": "unreviewed",
+  "limits": "Data-transfer comparison only. It does not assess device safety, choose procedures or maintenance intervals, create clinical readings, authenticate signatures, or release equipment."
+}
