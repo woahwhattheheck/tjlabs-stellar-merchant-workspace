@@ -1,0 +1,42 @@
+{
+  "schema": "complete-water-receiving-workload/v1",
+  "encoding": "ordered-json-subtree-checkpoint",
+  "bytes": 130071870,
+  "sha256": "700c80935b7b5b17d9f5878d96a7fbc601e2fc0c080dd1aa493c6903483aa4a5",
+  "compactBytes": 3495599,
+  "compactSha256": "e34088ed7acfcf98080549920a358936becfd0db8e9c836fe7538ce5d84dacac",
+  "nodes": 6650,
+  "requests": 42,
+  "editions": 43,
+  "checks": 45,
+  "elapsed_ms": 1571541,
+  "decoder": "receiving-checkpoints/tools/complete-json-checkpoint.cjs",
+  "parts": [
+    {
+      "path": "receiving-checkpoints/water-operations-study/full45-compact/part-000.jsonpart",
+      "bytes": 700012,
+      "sha256": "ea604c1b4c28aa8431f5a861df20861b53ac1cff66de40ad5cf39c4f63fc0a53"
+    },
+    {
+      "path": "receiving-checkpoints/water-operations-study/full45-compact/part-001.jsonpart",
+      "bytes": 700000,
+      "sha256": "7939707fc448111a53ab217542e5562cb183c7babe56a74d269d500ab9cb0ea5"
+    },
+    {
+      "path": "receiving-checkpoints/water-operations-study/full45-compact/part-002.jsonpart",
+      "bytes": 700000,
+      "sha256": "0ce5adaa4f186136e7411747b23b4f81714e57ef77f407239521fe980816580c"
+    },
+    {
+      "path": "receiving-checkpoints/water-operations-study/full45-compact/part-003.jsonpart",
+      "bytes": 700000,
+      "sha256": "ad662bcf8216d98e2cf837c16c158928d3337fa7244d5118254cd1136a70a760"
+    },
+    {
+      "path": "receiving-checkpoints/water-operations-study/full45-compact/part-004.jsonpart",
+      "bytes": 695587,
+      "sha256": "bffa00fac627936916d7a6c99aab27b4f97a2f5643966e02df247575a19817d5"
+    }
+  ],
+  "source": "PR2152 base b42fa429 plus installed-throughput13 exact replacements and source-bytes-course fixture correction; before history key_order successor"
+}
