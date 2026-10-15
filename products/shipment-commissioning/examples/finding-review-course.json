@@ -1,0 +1,106 @@
+{
+  "schema": "shipment-review.finding-disposition-course.v1",
+  "execution": "Actual V8 production core",
+  "command": {
+    "id": "finding-disposition-course",
+    "kind": "review_run",
+    "actor": "Prepared course operator",
+    "at": "2026-10-15T01:09:00Z",
+    "expected_revision": 32,
+    "expected_hash": "1affdb0f1cf8dc46c4122ec340f6427ffd72e2d0aec1996d07992c65150c40a0",
+    "value": {
+      "id": "observed-A",
+      "expected_run_hash": "e62b150bac6a5b25b5f56a5c7753550c1f251aaaab9535ee339fcbf48729c135",
+      "status": "changes_requested",
+      "reviewer": "Prepared product reviewer",
+      "note": "Authored defective output requires correction",
+      "source_refs": [],
+      "dispositions": [
+        {
+          "finding_id": "99b5be5addbb6e95556c095f",
+          "status": "needs_change",
+          "owner": "Authored product owner",
+          "note": "Correct wrong_shipment_binding at initial and retain successor output"
+        },
+        {
+          "finding_id": "3f9bbd2baca90cdcec32d4f8",
+          "status": "needs_change",
+          "owner": "Authored product owner",
+          "note": "Correct protected_field_changed at initial and retain successor output"
+        },
+        {
+          "finding_id": "598b09442b78580bbc8d0590",
+          "status": "needs_change",
+          "owner": "Authored product owner",
+          "note": "Correct readiness_observation_changed at initial and retain successor output"
+        },
+        {
+          "finding_id": "e2b43e3728715cee99ac535f",
+          "status": "needs_change",
+          "owner": "Authored product owner",
+          "note": "Correct wrong_shipment_binding at amendment and retain successor output"
+        },
+        {
+          "finding_id": "7c396ae4ee13c35addf9bcfc",
+          "status": "needs_change",
+          "owner": "Authored product owner",
+          "note": "Correct protected_field_changed at amendment and retain successor output"
+        },
+        {
+          "finding_id": "8d763334200d0abf1d207c86",
+          "status": "needs_change",
+          "owner": "Authored product owner",
+          "note": "Correct readiness_observation_changed at amendment and retain successor output"
+        },
+        {
+          "finding_id": "0a3ae546583231d2ca2ce027",
+          "status": "needs_change",
+          "owner": "Authored product owner",
+          "note": "Correct wrong_shipment_binding at retry and retain successor output"
+        },
+        {
+          "finding_id": "2b3446ea8cf65bf000d86058",
+          "status": "needs_change",
+          "owner": "Authored product owner",
+          "note": "Correct protected_field_changed at retry and retain successor output"
+        },
+        {
+          "finding_id": "3b986588f455e171e555143f",
+          "status": "needs_change",
+          "owner": "Authored product owner",
+          "note": "Correct readiness_observation_changed at retry and retain successor output"
+        },
+        {
+          "finding_id": "4bd666a0fd13c6df5c386bf6",
+          "status": "needs_change",
+          "owner": "Authored product owner",
+          "note": "Correct wrong_shipment_binding at late and retain successor output"
+        },
+        {
+          "finding_id": "63e34fbc31014e7605b6f2bd",
+          "status": "needs_change",
+          "owner": "Authored product owner",
+          "note": "Correct field_value_changed at late and retain successor output"
+        },
+        {
+          "finding_id": "1712a26c0c960c9b2e40a5f7",
+          "status": "needs_change",
+          "owner": "Authored product owner",
+          "note": "Correct protected_field_changed at late and retain successor output"
+        },
+        {
+          "finding_id": "eacc5ddaaa92107b583e2f74",
+          "status": "needs_change",
+          "owner": "Authored product owner",
+          "note": "Correct readiness_observation_changed at late and retain successor output"
+        }
+      ]
+    }
+  },
+  "result": {
+    "dispositions": 13,
+    "full_replay": true,
+    "reselected_capture_expires_review": true,
+    "prior_original_review_retained": true
+  }
+}

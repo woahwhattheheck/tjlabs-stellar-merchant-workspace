@@ -1,0 +1,26 @@
+{
+  "schema": "shipment-review.ui-structure.v1",
+  "execution": "V8 with injected DOM and IndexedDB",
+  "views": [
+    "overview",
+    "originals",
+    "reference",
+    "mapping",
+    "runs",
+    "effort",
+    "handover",
+    "restore"
+  ],
+  "limitations": "No native browser layout or filesystem execution in this check.",
+  "checks": [
+    "all eight views render",
+    "normal reference form edits and saves a new case edition",
+    "frozen run findings visible after reference edit",
+    "same-case phase-matched effort report visible",
+    "complete handover ZIP download path",
+    "second-tab CAS rejects overwrite",
+    "explicit adoption retains full local branch",
+    "editing continues after explicit branch adoption"
+  ],
+  "workspace_revision": 33
+}
