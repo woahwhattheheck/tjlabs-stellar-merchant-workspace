@@ -1,0 +1,11 @@
+product_id,stage_id,sequence,duration_days,day_basis,resource_id,units_per_piece,yield_bps,compatibility
+MUG,form,1,2,resource-open,FORM,1,10000,shared-work
+MUG,dry,2,3,calendar,DRY,1,9000,shared-dry
+MUG,bisque,3,1,resource-open,KILN,1,9000,bisque-06
+MUG,glaze,4,1,resource-open,GLAZE,1,10000,shared-work
+MUG,fire,5,1,resource-open,KILN,1,9000,glaze-6
+PLATE,form,1,2,resource-open,FORM,2,10000,shared-work
+PLATE,dry,2,3,calendar,DRY,2,9000,shared-dry
+PLATE,bisque,3,1,resource-open,KILN,2,9000,bisque-06
+PLATE,glaze,4,1,resource-open,GLAZE,2,10000,shared-work
+PLATE,fire,5,1,resource-open,KILN,2,9000,glaze-10

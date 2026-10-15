@@ -1,0 +1,127 @@
+{
+  "schema": "maker-production.intake.v1",
+  "factory": "createMakerProductionCore()",
+  "operation": "MAKER-PRODUCTION-WORKBENCH",
+  "tables": {
+    "products": [
+      "product_id",
+      "name"
+    ],
+    "resources": [
+      "resource_id",
+      "name",
+      "capacity_unit",
+      "daily_capacity",
+      "open_weekdays"
+    ],
+    "calendar": [
+      "resource_id",
+      "date",
+      "capacity",
+      "source_ref"
+    ],
+    "routes": [
+      "product_id",
+      "stage_id",
+      "sequence",
+      "duration_days",
+      "day_basis",
+      "resource_id",
+      "units_per_piece",
+      "yield_bps",
+      "compatibility"
+    ],
+    "orders": [
+      "order_id",
+      "product_id",
+      "quantity",
+      "due_date",
+      "due_basis",
+      "transit_days",
+      "source_ref"
+    ],
+    "stock": [
+      "stock_id",
+      "product_id",
+      "quantity",
+      "order_id",
+      "batch_id",
+      "source_ref"
+    ],
+    "batches": [
+      "batch_id",
+      "order_id",
+      "target_good",
+      "source_ref"
+    ],
+    "observations": [
+      "event_id",
+      "batch_id",
+      "stage_id",
+      "observed_at",
+      "local_date",
+      "status",
+      "input_qty",
+      "good_qty",
+      "reject_qty",
+      "held_qty",
+      "source_ref"
+    ]
+  },
+  "settings": {
+    "asOf": "Required local ISO date; dated observations through this date only.",
+    "shippingCalendar": "Explicit open weekdays array1..7 and closedDates[]; used only to subtract declared transit days from delivery deadlines."
+  },
+  "notes": [
+    "resource.open_weekdays explicit pipe-delimited ISO weekdays1..7. calendar rows override each resource/day capacity; zero closes it. No implicit five- or seven-day calendar.",
+    "All capacities and units_per_piece are maker-declared comparable integer reservation units. Every active stage day reserves whole batch input_qty × units_per_piece; this is declared occupancy, not throughput physics.",
+    "day_basis calendar|resource-open. Calendar durations count elapsed consecutive dates and reserve declared resource units on each occupied day; resource-open durations use open resource dates. Resource-closed collisions remain visible.",
+    "Yield is integer basis points1..10000. Backward required inputs use exact ceil; projected remaining yield uses exact floor and is separate from observed actual good.",
+    "due_basis ship|delivery|ready. transit_days canonical integer; ship and ready dates require0. Delivery subtracts only maker-declared shipping calendar days. Orders/batches always expose productionDue; ready has shipBy:null.",
+    "Stock allocated by order; blank order is unallocated. A stock row linked to a current batch must match that batch/product/order and is a subset of its final actual good, counted once via batch output. Independent ready stock reduces remaining demand.",
+    "Batch target_good quantities are explicit order allocations. Over/underallocation is attention. No invented batch splitting or capacity solver.",
+    "Observations are complete batch-stage snapshots, not additive movements. Distinct event IDs/timestamps retain corrections; latest eligible snapshot drives current progress. Counts conserve input=good+reject+held. complete requiresheld0. Real-date local_date supplied explicitly beside offset timestamp; no silent timezone conversion.",
+    "A current batch advances sequentially: downstream observations require upstream completed before their instant, and downstream input cannot exceed prior good. Completed batch-linked stock cannot be counted twice.",
+    "All original CSV text and observations retained by immutable edition. Decisions retain correction history bound to exact edition/asOf/target; a decision alone changes no quantities.",
+    "Plan asOf cannot precede edition.settings.asOf because ready stock is an undated snapshot. Retained downstream stage events require strictly earlier upstream completion. Active observations do not automatically count as unstarted-late.",
+    "Zero surviving flow keeps source-required dates/shortage visible but creates no resource reservation or compatibility group.",
+    "resources.daily_capacity may be zero. Positive dated calendar overrides then describe only confirmed shared-studio slots, without recurring availability."
+  ],
+  "api": {
+    "create": "create({id,label})",
+    "addEdition": "addEdition(workspace,{id,label,sources,settings:{asOf,shippingCalendar:{openWeekdays,closedDates}},notes})",
+    "plan": "plan(workspace,{editionId,asOf?})",
+    "decide": "decide(workspace,{id,editionId,asOf?,targetType:'order'|'batch'|'capacity',targetId,action,reviewer,reason,evidence})",
+    "reopen": "reopen(workspaceOrJSON)",
+    "csv": "csv(workspace,{editionId,asOf?},kind:'orders'|'stages'|'capacity'|'observations'|'decisions')",
+    "report": "report(workspace,selection)",
+    "exports": [
+      "columns",
+      "actions",
+      "sampleSources",
+      "sampleSettings",
+      "hash",
+      "parseCSV"
+    ],
+    "planFields": [
+      "schema",
+      "workspaceId",
+      "editionId",
+      "editionLabel",
+      "sourceHash",
+      "asOf",
+      "fingerprint",
+      "orders",
+      "batches",
+      "stages",
+      "capacity",
+      "observations",
+      "futureObservations",
+      "unallocatedStock",
+      "attention",
+      "decisions",
+      "decisionHistory",
+      "summary"
+    ]
+  }
+}

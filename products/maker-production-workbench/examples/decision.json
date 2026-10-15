@@ -1,0 +1,10 @@
+{
+  "id": "final-recount-review",
+  "editionId": "recount",
+  "targetType": "batch",
+  "targetId": "B-MUG",
+  "action": "recount",
+  "reviewer": "Authored maker",
+  "reason": "One good piece reclassified as rejected; order needs one more.",
+  "evidence": "Authored corrected unload sheet"
+}
