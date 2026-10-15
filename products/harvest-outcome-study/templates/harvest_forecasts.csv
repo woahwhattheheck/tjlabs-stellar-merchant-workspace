@@ -1,0 +1,1 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,forecast_id,batch_record_id,model_record_id,model_sha256,origin_time,generated_at,predicted_hours,lower_hours,upper_hours,protocol_id,cohort,input_manifest_sha256

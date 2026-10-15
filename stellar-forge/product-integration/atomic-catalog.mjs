@@ -37,7 +37,7 @@ export class AtomicCatalogIntegration {
       lifecycleResult = stagedLifecycle.upsert(candidate.entry, provenance, sequence);
       if (lifecycleResult.decision !== 'accepted') return lifecycleResult;
       stagedLive = this.#live.clone();
-      catalogKey = stagedLive.insertValidated(candidate.entry);
+      catalogKey = stagedLive.insertValidated(candidate.entry, { lastUpdated: provenance.observedAt });
       // Lifecycle identity is route-template based, while the public HTTP
       // catalog key also includes the concrete URL query. A seller correction
       // can therefore change catalogKey without changing lifecycleResult.id.
@@ -52,7 +52,7 @@ export class AtomicCatalogIntegration {
       return { decision: 'reject', reason: 'INTEGRATION_PREFLIGHT_REJECTED', detail: error?.message ?? 'Error' };
     }
 
-    const trustResult = this.#trust.ingest(candidate, authority);
+    const trustResult = this.#trust.ingest(candidate, authority, { lastUpdated: provenance.observedAt });
     if (trustResult.decision !== 'accepted') return trustResult;
     if (trustResult.catalogKey !== catalogKey) {
       return { decision: 'reject', reason: 'CATALOG_KEY_DIVERGENCE' };
@@ -99,6 +99,8 @@ export class AtomicCatalogIntegration {
 
   list(params = new URLSearchParams()) { return this.#live.list(params); }
   search(params = new URLSearchParams()) { return this.#live.search(params); }
+  listDiscovery(params = new URLSearchParams()) { return this.#live.listDiscovery(params); }
+  searchDiscovery(params = new URLSearchParams()) { return this.#live.searchDiscovery(params); }
   lifecycle(id, options) { return this.#lifecycle.get(id, options); }
   snapshot() {
     return clone({

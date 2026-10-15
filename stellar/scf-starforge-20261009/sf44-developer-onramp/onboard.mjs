@@ -43,7 +43,7 @@ export async function startLocalDevelopmentCatalog() {
   // must independently verify settlement, seller identity, payTo binding and
   // full Bazaar JSON Schema before calling the trusted-only insertValidated hook.
   const catalog = new BazaarCatalog();
-  catalog.insertValidated(developmentOnlyRecord());
+  catalog.insertValidated(developmentOnlyRecord(), { lastUpdated: '2026-10-09T00:00:00.000Z' });
   const server = createServer(createDiscoveryServer(catalog));
   await new Promise((resolve, reject) => {
     server.once('error', reject);
@@ -83,14 +83,15 @@ export async function inspectLocalDiscovery(baseUrl, { query = 'weather', networ
   searchUrl.searchParams.set('query', query);
   searchUrl.searchParams.set('network', network);
   const [listing, search] = await Promise.all([getJson(listUrl), getJson(searchUrl)]);
-  if (!Array.isArray(listing.body.resources) || !Array.isArray(search.body.resources))
+  if (listing.body.x402Version !== 2 || !Array.isArray(listing.body.items) ||
+      search.body.x402Version !== 2 || !Array.isArray(search.body.resources))
     throw new TypeError('Unexpected Bazaar response shape');
   const candidates = search.body.resources.map(row => {
     const terms = (Array.isArray(row.accepts) ? row.accepts : [])
       .filter(accept => accept?.network === network && accept.scheme === 'exact')
       .map(accept => ({ network: accept.network, scheme: accept.scheme, payTo: accept.payTo }));
     return {
-      resourceUrl: row.resource?.url,
+      resourceUrl: typeof row.resource === 'string' ? row.resource : row.resource?.url,
       routeType: row.extensions?.bazaar?.info?.input?.type,
       matchingPaymentTerms: terms,
       disposition: terms.length
@@ -103,7 +104,7 @@ export async function inspectLocalDiscovery(baseUrl, { query = 'weather', networ
     actualHttpRequests: 2,
     status: [listing.status, search.status],
     requestMs: { list: listing.elapsedMs, search: search.elapsedMs },
-    listCount: listing.body.resources.length,
+    listCount: listing.body.items.length,
     searchCount: search.body.resources.length,
     candidates,
     buyerAutoPayment: false,

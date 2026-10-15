@@ -58,8 +58,954 @@
     "elapsedMs": 343143
   },
   "merchant": {
-    "status": "running",
-    "surface": "Production Merchant dispatch and complete model with supplied filesystem and transport"
+    "status": "passed",
+    "checks": [
+      "Declared complete organisations input",
+      "Declared complete systems input",
+      "Declared complete locations input",
+      "Declared complete assets input",
+      "Declared complete source_use input",
+      "Declared complete people input",
+      "Declared complete authorities input",
+      "Declared complete schedules input",
+      "Declared complete obligations input",
+      "Declared complete field_readings input",
+      "Declared complete reading_reviews input",
+      "Declared complete operational_events input",
+      "Declared complete reports input",
+      "Declared complete report_inputs input",
+      "Declared complete report_reviews input",
+      "Declared complete dispatch_events input",
+      "Declared complete handovers input",
+      "Declared complete handover_items input",
+      "Declared complete handover_acknowledgements input",
+      "Declared complete tasks input",
+      "Declared complete task_events input",
+      "Declared complete effort input",
+      "Declared complete source_documents input",
+      "Declared complete population_members input",
+      "Declared complete lab_laboratories input",
+      "Declared complete lab_orders input",
+      "Declared complete lab_order_lines input",
+      "Declared complete lab_samples input",
+      "Declared complete lab_custody_events input",
+      "Declared complete lab_accessions input",
+      "Declared complete lab_reports input",
+      "Declared complete lab_results input",
+      "Declared complete lab_amendments input",
+      "Declared complete lab_reviews input",
+      "Declared complete lab_report_inputs input",
+      "Declared complete lab_sample_links input",
+      "Declared exact binary original",
+      "water-plan",
+      "review",
+      "Complete incoming carrier and original editor actor retained with separate receiving attribution",
+      "Original exact request recovers after later work",
+      "Stale complete request retained without replacing selected work",
+      "Pinned water/laboratory observations, all thirty-six raw families and exact bounded original bytes",
+      "Exact laboratory report-input revision preserves original row, unfinished source and incoming actor",
+      "Complete water assessment available through the production preview"
+    ],
+    "surface": "Actual Merchant dispatch, exact declared reads and complete production model in V8; filesystem/listener injected",
+    "requests": 42,
+    "editions": 43,
+    "elapsedMs": 1571541,
+    "timings": [
+      {
+        "tool": "merchant_wateroperationsstudy_connect",
+        "collection": null,
+        "kind": null,
+        "ms": 2
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "organisations",
+        "ms": 4971
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "systems",
+        "ms": 5068
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "locations",
+        "ms": 5207
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "assets",
+        "ms": 5403
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "source_use",
+        "ms": 5645
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "people",
+        "ms": 5756
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "authorities",
+        "ms": 5968
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "schedules",
+        "ms": 6340
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "obligations",
+        "ms": 6438
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "field_readings",
+        "ms": 6773
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "reading_reviews",
+        "ms": 6969
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "operational_events",
+        "ms": 7207
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "reports",
+        "ms": 7450
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "report_inputs",
+        "ms": 7629
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "report_reviews",
+        "ms": 7970
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "dispatch_events",
+        "ms": 7895
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "handovers",
+        "ms": 7643
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "handover_items",
+        "ms": 8269
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "handover_acknowledgements",
+        "ms": 8788
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "tasks",
+        "ms": 8951
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "task_events",
+        "ms": 9316
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "effort",
+        "ms": 14381
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "source_documents",
+        "ms": 14888
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "population_members",
+        "ms": 14594
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "lab_laboratories",
+        "ms": 16195
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "lab_orders",
+        "ms": 16186
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "lab_order_lines",
+        "ms": 16510
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "lab_samples",
+        "ms": 16952
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "lab_custody_events",
+        "ms": 17052
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "lab_accessions",
+        "ms": 17912
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "lab_reports",
+        "ms": 18046
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "lab_results",
+        "ms": 18732
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "lab_amendments",
+        "ms": 18720
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "lab_reviews",
+        "ms": 19189
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "lab_report_inputs",
+        "ms": 19428
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "lab_sample_links",
+        "ms": 20120
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_ingest",
+        "collection": null,
+        "kind": "document",
+        "ms": 19830
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_action",
+        "collection": null,
+        "kind": "water-plan",
+        "ms": 20707
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_action",
+        "collection": null,
+        "kind": "review",
+        "ms": 24693
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_receive",
+        "collection": null,
+        "kind": "working",
+        "ms": 50561
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "originals",
+        "kind": null,
+        "ms": 11230
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "originals",
+        "kind": null,
+        "ms": 7654
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "originals",
+        "kind": null,
+        "ms": 8335
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "extracts",
+        "kind": null,
+        "ms": 7485
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "extracts",
+        "kind": null,
+        "ms": 7386
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "extracts",
+        "kind": null,
+        "ms": 8026
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 8015
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 8051
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 8117
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 7820
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 8293
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 8143
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "reviews",
+        "kind": null,
+        "ms": 8202
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "documents",
+        "kind": null,
+        "ms": 8252
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "documents",
+        "kind": null,
+        "ms": 8134
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "documents",
+        "kind": null,
+        "ms": 8341
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "documents",
+        "kind": null,
+        "ms": 8479
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "documents",
+        "kind": null,
+        "ms": 7272
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "documents",
+        "kind": null,
+        "ms": 7651
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "documentLinks",
+        "kind": null,
+        "ms": 7935
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "backups",
+        "kind": null,
+        "ms": 8180
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "history",
+        "kind": null,
+        "ms": 8149
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "draft",
+        "kind": null,
+        "ms": 8348
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "requests",
+        "kind": null,
+        "ms": 8230
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "availability",
+        "kind": null,
+        "ms": 8266
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "availability",
+        "kind": null,
+        "ms": 8055
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "findings",
+        "kind": null,
+        "ms": 12071
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 8096
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 7875
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 8084
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 7973
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 8133
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 8144
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "assessment",
+        "kind": null,
+        "ms": 8015
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "plan",
+        "kind": null,
+        "ms": 7908
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "waterResult",
+        "kind": null,
+        "ms": 8043
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "populationMembers",
+        "kind": null,
+        "ms": 7372
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "registeredAssets",
+        "kind": null,
+        "ms": 7320
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "periodSourceUse",
+        "kind": null,
+        "ms": 7298
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "obligations",
+        "kind": null,
+        "ms": 8023
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "fieldReadings",
+        "kind": null,
+        "ms": 7982
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "operationalEvents",
+        "kind": null,
+        "ms": 7761
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "tasks",
+        "kind": null,
+        "ms": 8053
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "reports",
+        "kind": null,
+        "ms": 8256
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "dispatches",
+        "kind": null,
+        "ms": 7827
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "handovers",
+        "kind": null,
+        "ms": 7632
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "effortRecords",
+        "kind": null,
+        "ms": 7392
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "effortRecords",
+        "kind": null,
+        "ms": 7266
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "effortRecords",
+        "kind": null,
+        "ms": 7410
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "effortGroups",
+        "kind": null,
+        "ms": 8450
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "waterIssues",
+        "kind": null,
+        "ms": 8339
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "labReportResultSets",
+        "kind": null,
+        "ms": 8480
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "labIssues",
+        "kind": null,
+        "ms": 8772
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "organisations",
+        "ms": 7973
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "systems",
+        "ms": 8216
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "locations",
+        "ms": 8436
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "assets",
+        "ms": 7306
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "source_use",
+        "ms": 7398
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "people",
+        "ms": 8123
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "authorities",
+        "ms": 8008
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "schedules",
+        "ms": 7904
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "obligations",
+        "ms": 8052
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "field_readings",
+        "ms": 8009
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "reading_reviews",
+        "ms": 8181
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "operational_events",
+        "ms": 8505
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "reports",
+        "ms": 8430
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "report_inputs",
+        "ms": 8301
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "report_reviews",
+        "ms": 8584
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "dispatch_events",
+        "ms": 8291
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "handovers",
+        "ms": 8253
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "handover_items",
+        "ms": 8294
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "handover_acknowledgements",
+        "ms": 7806
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "tasks",
+        "ms": 8159
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "task_events",
+        "ms": 8520
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "effort",
+        "ms": 7179
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "source_documents",
+        "ms": 7347
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "population_members",
+        "ms": 7780
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "lab_laboratories",
+        "ms": 8617
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "lab_orders",
+        "ms": 8132
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "lab_order_lines",
+        "ms": 7963
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "lab_samples",
+        "ms": 8219
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "lab_custody_events",
+        "ms": 7270
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "lab_accessions",
+        "ms": 7505
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "lab_reports",
+        "ms": 7886
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "lab_results",
+        "ms": 8082
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "lab_amendments",
+        "ms": 8700
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "lab_reviews",
+        "ms": 8432
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "lab_report_inputs",
+        "ms": 8066
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "rows",
+        "kind": "lab_sample_links",
+        "ms": 7984
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "labRecords",
+        "kind": "lab_laboratories",
+        "ms": 8305
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "labRecords",
+        "kind": "lab_orders",
+        "ms": 7388
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "labRecords",
+        "kind": "lab_order_lines",
+        "ms": 7474
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "labRecords",
+        "kind": "lab_samples",
+        "ms": 8172
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "labRecords",
+        "kind": "lab_custody_events",
+        "ms": 8371
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "labRecords",
+        "kind": "lab_accessions",
+        "ms": 8178
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "labRecords",
+        "kind": "lab_reports",
+        "ms": 7963
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "labRecords",
+        "kind": "lab_results",
+        "ms": 8634
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "labRecords",
+        "kind": "lab_amendments",
+        "ms": 8775
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "labRecords",
+        "kind": "lab_reviews",
+        "ms": 8612
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "labRecords",
+        "kind": "lab_report_inputs",
+        "ms": 7768
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "labRecords",
+        "kind": "lab_sample_links",
+        "ms": 8097
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "waterResult",
+        "kind": null,
+        "ms": 7310
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "waterResult",
+        "kind": null,
+        "ms": 7457
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "waterResult",
+        "kind": null,
+        "ms": 8002
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_inspect",
+        "collection": "waterResult",
+        "kind": null,
+        "ms": 8202
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_action",
+        "collection": null,
+        "kind": "edit-row",
+        "ms": 35033
+      },
+      {
+        "tool": "merchant_wateroperationsstudy_preview",
+        "collection": null,
+        "kind": "assessment",
+        "ms": 16443
+      }
+    ],
+    "testedSource": {
+      "base": "b42fa42989cff0b7d33129571e60eb34716a181f",
+      "throughput": "888758cf3fc6bff4b08e0b671e79fb8d0008cb90f7a42e46c7ef9fd45fd88367",
+      "originalSessionSHA256": "e5d27d9dd76f22f06fba88321af281ee916e315e5978bbd36d18df7f9947c9eb",
+      "sourceBytesFixture": "Actual M.create wrapper; all3 exact original byte paths"
+    }
   },
   "native": {
     "command": "node native/receive-installed.mjs",
@@ -69,5 +1015,241 @@
     "maxEntries": 60000,
     "reason": "Retained full36-family import history with486ordinary source/export paths per study",
     "status": "awaiting full managed workload"
+  },
+  "historyRecovery": {
+    "schema": "installed-study-history-recovery/v1",
+    "surface": "Actual production core/session in V8",
+    "checks": [
+      "Legacy history uses canonical Core.empty field order and retains exact reviewed study",
+      "Reading legacy history preserves every original archive object and hash",
+      "Legacy complete branch keeps review binding",
+      "New history preserves exact noncanonical source field order",
+      "New retained branch reopens with complete source identity",
+      "Recovered review remains current during actual analysis and continued editing"
+    ],
+    "original_digest": "1bff9d089c64a30a4fa8f1de5c482e5c44aac50d3edc91d160ad7411d7a4239a",
+    "reordered_digest": "506ec2ce6f06430d1f12bec0f7166eb9cb828907cd3939563d3fb6b87ed6dee4",
+    "legacy_archive_unchanged": true,
+    "elapsed_ms": 9523
+  },
+  "originalByteRead": {
+    "checks": [
+      {
+        "name": "original original reconstructed from bounded two-byte ranges",
+        "passed": true,
+        "bytes": 31
+      },
+      {
+        "name": "document original reconstructed from bounded two-byte ranges",
+        "passed": true,
+        "bytes": 7
+      },
+      {
+        "name": "Historical extract rows retain current selected successor",
+        "passed": true
+      }
+    ]
+  },
+  "throughput": {
+    "sourceCanvas": "F0C9CK1FB5H",
+    "sourceSha256": "888758cf3fc6bff4b08e0b671e79fb8d0008cb90f7a42e46c7ef9fd45fd88367",
+    "compatibility": {
+      "execution": "Actual old/new pure-JavaScript codec and pinned SHA wrapper",
+      "checks": [
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 0",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 1",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 2",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 3",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 4",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 5",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 6",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 7",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 8",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 9",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 10",
+          "passed": true
+        },
+        {
+          "name": "Isolated exact-text digest result 11",
+          "passed": true
+        },
+        {
+          "name": "Isolated exact-text digest result 12",
+          "passed": true
+        },
+        {
+          "name": "Isolated exact-text digest result 13",
+          "passed": true
+        },
+        {
+          "name": "Original invalid Unicode and type rejection",
+          "passed": true
+        },
+        {
+          "name": "Exact digest after bounded cache eviction",
+          "passed": true
+        },
+        {
+          "name": "Mutable binary input remains uncached",
+          "passed": true
+        },
+        {
+          "name": "Transport ordinary byte-array compatibility",
+          "passed": true
+        }
+      ]
+    },
+    "managedResultEquivalent": {
+      "execution": "Actual full705005-byte authored Water source, original managed plan and response in V8; deterministic injected clock/random for complete result identity",
+      "baseline_ms": 6414,
+      "candidate_ms": 4203,
+      "reduction_percent": 34.47146866230122,
+      "managed_result_bytes": 1383247,
+      "managed_result_sha256": "c59939d94fc7ee108e496f340a360637f38d59f5f283a027ad8db8b32fa40679",
+      "complete_result_identical": true,
+      "baseline_profile": {
+        "Codec.hashText": {
+          "calls": 11,
+          "ms": 2706
+        },
+        "Original.validate": {
+          "calls": 15,
+          "ms": 717
+        },
+        "Codec.utf8Encode": {
+          "calls": 6,
+          "ms": 895
+        },
+        "Sessions.receive": {
+          "calls": 3,
+          "ms": 550
+        },
+        "SHA.sha256Utf8": {
+          "calls": 1280,
+          "ms": 1460
+        },
+        "SHA.sha256Bytes": {
+          "calls": 1164,
+          "ms": 173
+        },
+        "CSV.table": {
+          "calls": 452,
+          "ms": 116
+        },
+        "Core.validate": {
+          "calls": 3,
+          "ms": 953
+        },
+        "Original.checkpoint": {
+          "calls": 1,
+          "ms": 1547
+        },
+        "Original.byteLength": {
+          "calls": 817,
+          "ms": 58
+        },
+        "Original.retain": {
+          "calls": 1,
+          "ms": 68
+        },
+        "Sessions.advance": {
+          "calls": 1,
+          "ms": 466
+        },
+        "Sessions.pack": {
+          "calls": 1,
+          "ms": 1629
+        }
+      },
+      "candidate_profile": {
+        "Codec.hashText": {
+          "calls": 11,
+          "ms": 2073
+        },
+        "Original.validate": {
+          "calls": 15,
+          "ms": 707
+        },
+        "Sessions.receive": {
+          "calls": 3,
+          "ms": 266
+        },
+        "SHA.sha256Utf8": {
+          "calls": 1280,
+          "ms": 522
+        },
+        "SHA.sha256Bytes": {
+          "calls": 1164,
+          "ms": 177
+        },
+        "CSV.table": {
+          "calls": 452,
+          "ms": 118
+        },
+        "Core.validate": {
+          "calls": 3,
+          "ms": 281
+        },
+        "Original.checkpoint": {
+          "calls": 1,
+          "ms": 873
+        },
+        "Original.byteLength": {
+          "calls": 817,
+          "ms": 59
+        },
+        "Original.retain": {
+          "calls": 1,
+          "ms": 30
+        },
+        "Sessions.advance": {
+          "calls": 1,
+          "ms": 258
+        },
+        "Sessions.pack": {
+          "calls": 1,
+          "ms": 1189
+        }
+      }
+    }
+  },
+  "retainedWorkload": {
+    "commit": "897f5e794d821757f01d2b244359ac6b7f5999be",
+    "bytes": 130071870,
+    "sha256": "700c80935b7b5b17d9f5878d96a7fbc601e2fc0c080dd1aa493c6903483aa4a5",
+    "compactBytes": 3495599,
+    "compactSha256": "e34088ed7acfcf98080549920a358936becfd0db8e9c836fe7538ce5d84dacac",
+    "nodes": 6650
   }
 }

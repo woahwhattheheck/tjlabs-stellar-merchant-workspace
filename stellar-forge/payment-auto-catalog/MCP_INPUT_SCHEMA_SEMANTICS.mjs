@@ -79,10 +79,10 @@ assert.equal(catalog.size, 1);
 const localReference = payload({
   type: 'object',
   $defs: {
-    identifier: { type: 'string', minLength: 1 },
+    'identifier space': { type: 'string', minLength: 1 },
   },
   properties: {
-    portId: { $ref: '#/$defs/identifier' },
+    portId: { $ref: '#/$defs/identifier%20space' },
     includeHistory: true,
   },
   required: ['portId'],
@@ -103,6 +103,8 @@ const malformed = [
   ['invalid nested required', { type: 'object', properties: { leg: { type: 'object', required: [7] } } }, 'INFO_MCP_INPUT_SCHEMA_INVALID:SCHEMA_REQUIRED_INVALID'],
   ['unsupported nested keyword', { type: 'object', properties: { vesselId: { unevaluatedProperties: false } } }, 'INFO_MCP_INPUT_SCHEMA_INVALID:SCHEMA_KEYWORD_UNSUPPORTED:unevaluatedProperties'],
   ['external nested reference', { type: 'object', properties: { vesselId: { $ref: 'https://schemas.example/vessel.json' } } }, 'INFO_MCP_INPUT_SCHEMA_INVALID:SCHEMA_EXTERNAL_REFERENCE'],
+  ['invalid pointer escape', { type: 'object', $defs: { '~2name': { type: 'string' } }, properties: { vesselId: { $ref: '#/$defs/~2name' } } }, 'INFO_MCP_INPUT_SCHEMA_INVALID:SCHEMA_LOCAL_REFERENCE_INVALID'],
+  ['invalid percent escape', { type: 'object', $defs: { identifier: { type: 'string' } }, properties: { vesselId: { $ref: '#/$defs/%ZZ' } } }, 'INFO_MCP_INPUT_SCHEMA_INVALID:SCHEMA_LOCAL_REFERENCE_INVALID'],
   ['missing local reference', { type: 'object', properties: { vesselId: { $ref: '#/$defs/missing' } } }, 'INFO_MCP_INPUT_SCHEMA_INVALID:SCHEMA_LOCAL_REFERENCE_MISSING'],
 ];
 

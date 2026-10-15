@@ -1,0 +1,65 @@
+{
+  "edition": "complete-installed-study-throughput-20261015",
+  "members": [
+    {
+      "path": "README.md",
+      "bytes": 3554,
+      "sha256": "0f1528b8e89766b81cc607045390d92a862ffc07939827403a83a1b27be18441"
+    },
+    {
+      "path": "profile.cjs",
+      "bytes": 4341,
+      "sha256": "d2a0dd38744562e14155c3914a99363aa5bedf90c0752cd31c4b47f30acba23e"
+    },
+    {
+      "path": "bank-loader.cjs",
+      "bytes": 695,
+      "sha256": "11c5e432cca85cd25d67ccc909fb020bca15d8258a6947ae0f9e7ea5201a0659"
+    },
+    {
+      "path": "verification/codec-and-cache.cjs",
+      "bytes": 1929,
+      "sha256": "3b8888f4e9f71c12a0f152fc3ec0168769ff1e45f4b2573564281ee91ac77305"
+    },
+    {
+      "path": "verification/managed-result-equivalence.json",
+      "bytes": 2164,
+      "sha256": "bf288d04d730d320a2c476a0f74e27a79e495277762febabe577ad6365622d54"
+    },
+    {
+      "path": "replacement/sha256.cjs",
+      "bytes": 20566,
+      "sha256": "d8a7efad476e54f40b34c26274abe849f3a22964a31647ad6b38025a61002904"
+    },
+    {
+      "path": "baseline/sha256.cjs",
+      "bytes": 19696,
+      "sha256": "f37a1319db3aa8b9bd15ae2fea89cf0b79677e2a2eb295e63efa4d34f8308230"
+    },
+    {
+      "path": "replacement/host/codec.mjs",
+      "bytes": 46264,
+      "sha256": "f31117119ae2e58de8bf0776d3eae44a45b55a26559c6172dde1fd51ae59d05d"
+    },
+    {
+      "path": "baseline/host/codec.mjs",
+      "bytes": 28418,
+      "sha256": "ab609271b0bcb6aac8b732db7b437edd69bb7865dcaea4fd5cf1ec162de15c45"
+    },
+    {
+      "path": "replacement/src/session.mjs",
+      "bytes": 3898,
+      "sha256": "7f026713124e53a05f1b01f3aa6396e5f66da44dc799523ec473133166997490"
+    },
+    {
+      "path": "baseline/src/session.mjs",
+      "bytes": 3905,
+      "sha256": "47f7e37f4fc869f4fa8fa49d82ab682160d88e76f06ce18b228add6ecc86599a"
+    },
+    {
+      "path": "verification/codec-and-cache.json",
+      "bytes": 1836,
+      "sha256": "1449eada087410554a121a8111e967b37cb411cb8695b761dbff20fc8c4c040f"
+    }
+  ]
+}

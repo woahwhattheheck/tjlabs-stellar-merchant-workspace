@@ -63,13 +63,13 @@
     },
     {
       "path": "SOURCE_MANIFEST.json",
-      "bytes": 29516,
-      "sha256": "c6325997c08dce42fabd51f61ab4dc6339190b9fff57191b24dd962c3c3395bc"
+      "bytes": 32375,
+      "sha256": "20393f76fc39dffb8a7332d2b81acb6bd79aac0a4afba69c0edba6279549a5ac"
     },
     {
       "path": "Water_Operations_Study_Desk.html",
-      "bytes": 4876791,
-      "sha256": "3f5c6aea79a7f525699e6e5fae5441b118e8b428561939db91abd36fdbf67935"
+      "bytes": 5088122,
+      "sha256": "7860fdcb5d6f57df1298b152d2a058f6bdff6eb48dcad9291106aa4537e6c2ce"
     },
     {
       "path": "application-provider.mjs",
@@ -90,6 +90,71 @@
       "path": "canonical.cjs",
       "bytes": 185,
       "sha256": "0584d18ea11873b0851e91ff45b7ebc49d4e6b284f25297c70c100ae26e78ad2"
+    },
+    {
+      "path": "contributions/installed-throughput/README.md",
+      "bytes": 3554,
+      "sha256": "0f1528b8e89766b81cc607045390d92a862ffc07939827403a83a1b27be18441"
+    },
+    {
+      "path": "contributions/installed-throughput/SOURCE_MANIFEST.json",
+      "bytes": 1991,
+      "sha256": "6b5aed58e93516d53873da36e93f01f3645ec66d2e5613fc88509b9d55c34d43"
+    },
+    {
+      "path": "contributions/installed-throughput/bank-loader.cjs",
+      "bytes": 695,
+      "sha256": "11c5e432cca85cd25d67ccc909fb020bca15d8258a6947ae0f9e7ea5201a0659"
+    },
+    {
+      "path": "contributions/installed-throughput/baseline/host/codec.mjs",
+      "bytes": 28418,
+      "sha256": "ab609271b0bcb6aac8b732db7b437edd69bb7865dcaea4fd5cf1ec162de15c45"
+    },
+    {
+      "path": "contributions/installed-throughput/baseline/sha256.cjs",
+      "bytes": 19696,
+      "sha256": "f37a1319db3aa8b9bd15ae2fea89cf0b79677e2a2eb295e63efa4d34f8308230"
+    },
+    {
+      "path": "contributions/installed-throughput/baseline/src/session.mjs",
+      "bytes": 3905,
+      "sha256": "47f7e37f4fc869f4fa8fa49d82ab682160d88e76f06ce18b228add6ecc86599a"
+    },
+    {
+      "path": "contributions/installed-throughput/profile.cjs",
+      "bytes": 4341,
+      "sha256": "d2a0dd38744562e14155c3914a99363aa5bedf90c0752cd31c4b47f30acba23e"
+    },
+    {
+      "path": "contributions/installed-throughput/replacement/host/codec.mjs",
+      "bytes": 46264,
+      "sha256": "f31117119ae2e58de8bf0776d3eae44a45b55a26559c6172dde1fd51ae59d05d"
+    },
+    {
+      "path": "contributions/installed-throughput/replacement/sha256.cjs",
+      "bytes": 20566,
+      "sha256": "d8a7efad476e54f40b34c26274abe849f3a22964a31647ad6b38025a61002904"
+    },
+    {
+      "path": "contributions/installed-throughput/replacement/src/session.mjs",
+      "bytes": 3898,
+      "sha256": "7f026713124e53a05f1b01f3aa6396e5f66da44dc799523ec473133166997490"
+    },
+    {
+      "path": "contributions/installed-throughput/verification/codec-and-cache.cjs",
+      "bytes": 1929,
+      "sha256": "3b8888f4e9f71c12a0f152fc3ec0168769ff1e45f4b2573564281ee91ac77305"
+    },
+    {
+      "path": "contributions/installed-throughput/verification/codec-and-cache.json",
+      "bytes": 1836,
+      "sha256": "1449eada087410554a121a8111e967b37cb411cb8695b761dbff20fc8c4c040f"
+    },
+    {
+      "path": "contributions/installed-throughput/verification/managed-result-equivalence.json",
+      "bytes": 2164,
+      "sha256": "bf288d04d730d320a2c476a0f74e27a79e495277762febabe577ad6365622d54"
     },
     {
       "path": "contributions/water-lab-manifest.json",
@@ -423,8 +488,8 @@
     },
     {
       "path": "host/codec.mjs",
-      "bytes": 28418,
-      "sha256": "ab609271b0bcb6aac8b732db7b437edd69bb7865dcaea4fd5cf1ec162de15c45"
+      "bytes": 46264,
+      "sha256": "f31117119ae2e58de8bf0776d3eae44a45b55a26559c6172dde1fd51ae59d05d"
     },
     {
       "path": "host/domain.mjs",
@@ -557,9 +622,14 @@
       "sha256": "e4feaf822fd41d4456fb96bacbe0b807c357990159aaf0850b35b812c7905911"
     },
     {
+      "path": "receiving/history-recovery-course.cjs",
+      "bytes": 2157,
+      "sha256": "223bef8bbe3e945a7e2ca167b2d990277470212a20438fa4c0015a05710ee974"
+    },
+    {
       "path": "receiving/host-course.cjs",
-      "bytes": 12928,
-      "sha256": "be24abfb4abaa487ba444ef695870cb4ee81a41c17554e5c50c482ac95577f43"
+      "bytes": 12930,
+      "sha256": "9a07527f0b0bfa00b113046c17d13ce14dc2f1aca04dfc622c66e2c6a33de093"
     },
     {
       "path": "receiving/portable-course.cjs",
@@ -568,8 +638,8 @@
     },
     {
       "path": "receiving/source-bytes-course.cjs",
-      "bytes": 2054,
-      "sha256": "ffd4498cc3ba6d4399c081f9d001c9f1dd340b16c1dc274457e79ce412d04b34"
+      "bytes": 2036,
+      "sha256": "a610366a6b2bd980f47e46903330493423fbce5f2e3d19867270415f11d52c44"
     },
     {
       "path": "runtime.mjs",
@@ -583,8 +653,8 @@
     },
     {
       "path": "session.cjs",
-      "bytes": 8547,
-      "sha256": "e5d27d9dd76f22f06fba88321af281ee916e315e5978bbd36d18df7f9947c9eb"
+      "bytes": 8864,
+      "sha256": "d14da2f3f703a981a63ac268998df111387d6c7c5aa7888d0cf32038059a3f7b"
     },
     {
       "path": "setup.mjs",
@@ -593,8 +663,8 @@
     },
     {
       "path": "sha256.cjs",
-      "bytes": 19696,
-      "sha256": "f37a1319db3aa8b9bd15ae2fea89cf0b79677e2a2eb295e63efa4d34f8308230"
+      "bytes": 20566,
+      "sha256": "d8a7efad476e54f40b34c26274abe849f3a22964a31647ad6b38025a61002904"
     },
     {
       "path": "src/archive.mjs",
@@ -633,8 +703,8 @@
     },
     {
       "path": "src/session.mjs",
-      "bytes": 3905,
-      "sha256": "47f7e37f4fc869f4fa8fa49d82ab682160d88e76f06ce18b228add6ecc86599a"
+      "bytes": 3898,
+      "sha256": "7f026713124e53a05f1b01f3aa6396e5f66da44dc799523ec473133166997490"
     },
     {
       "path": "study-time.cjs",
@@ -857,9 +927,14 @@
       "sha256": "495b2b69d96d20fe7f6f76b2a970c523ea044960849567c0863be6319c051c77"
     },
     {
+      "path": "verification/history-recovery.json",
+      "bytes": 802,
+      "sha256": "ee86699fc58af628fc76dd769abc6040009edac89b2debf77133fccc05d4ceab"
+    },
+    {
       "path": "verification/installed-courses.json",
-      "bytes": 2562,
-      "sha256": "f6d1e835431deb13c3ec0971b62505ec35e079b41fe80a15e39ca0c7993f6ff2"
+      "bytes": 34676,
+      "sha256": "9ae1d0b457310f71993afa7247fd4a712462ad2257f19fc11479beb11f1520e3"
     },
     {
       "path": "verification/lab-course.json",
