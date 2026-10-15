@@ -1,0 +1,315 @@
+{
+  "schema": "tjlabs.shipment-source-manifest.v1",
+  "files": [
+    {
+      "path": "application-provider.mjs",
+      "bytes": 3962,
+      "sha256": "2c0e773dc689f8070ab1aa6cf46b5c8053225b91589a50c4ce64f5cd045700b5"
+    },
+    {
+      "path": "browser/industrial.css",
+      "bytes": 2181,
+      "sha256": "0c66cf1d63de0cbafd198aabc2a42d65c73164732d28a211d47e3e45c97c319a"
+    },
+    {
+      "path": "browser/installed-ui.cjs",
+      "bytes": 36126,
+      "sha256": "f46f82ae1a064de2037d340dbcadc82956ef4d3f815d5ad0dc3a91ccde23db45"
+    },
+    {
+      "path": "browser/render-desk.cjs",
+      "bytes": 3845,
+      "sha256": "4bc6be97ce9f48364fa1744c5ab7b458fa6eae7a634e815269862e6d5ae844e3"
+    },
+    {
+      "path": "browser/shipment-ui.cjs",
+      "bytes": 31646,
+      "sha256": "b208d9c9465c8c85f97111fb3ede41e6d635cd7b0b07c6cbe2cc2d228b20d54f"
+    },
+    {
+      "path": "docs/COMMANDS.md",
+      "bytes": 3734,
+      "sha256": "f74dbd987f34d1f134239ad69f2fa94abda44ada31c4656ed7f5b711a83d9783"
+    },
+    {
+      "path": "docs/CONTRACT.md",
+      "bytes": 3586,
+      "sha256": "f0940c277098b27da1905981ad4adf88ccad4810064272810382a2016b8a0217"
+    },
+    {
+      "path": "docs/NATIVE.md",
+      "bytes": 3353,
+      "sha256": "7c481cf7f949970cefa676902ec12ea31ba518205dac21e5709cadaec4e220bd"
+    },
+    {
+      "path": "docs/OPERATOR.md",
+      "bytes": 4344,
+      "sha256": "dde2a8443db8abd5eb6d77d1f0a846381bc4b8e6d817414a3d08e4a5b7f3f367"
+    },
+    {
+      "path": "examples/commands.json",
+      "bytes": 37907,
+      "sha256": "0b42f443d29b829628876104a11628d3858d4899d0c93d8631c32b75ee4baf9d"
+    },
+    {
+      "path": "examples/course.cjs",
+      "bytes": 9915,
+      "sha256": "779fb2b7e6c80405ac602bf79db8cb2581e0b568f66836319102210bd1f05db1"
+    },
+    {
+      "path": "examples/finding-review-course.json",
+      "bytes": 4079,
+      "sha256": "b934b229358399ad97efb366b51f89113eb8e86c74ec167d206cf266f93f3e12"
+    },
+    {
+      "path": "examples/outcome.json",
+      "bytes": 16611,
+      "sha256": "c39c4c8e2e61064d1eb4802e35d3bf83eae9176c06f77dba2e08bf17a9305c59"
+    },
+    {
+      "path": "examples/receiving-fixes.json",
+      "bytes": 856,
+      "sha256": "2d8c48d31f56f96fa0c374d1b3731900be1a16fb24a5d3ad699843097a432088"
+    },
+    {
+      "path": "examples/state-alias-course.json",
+      "bytes": 4509,
+      "sha256": "4d977ac88043fdba7d9e0cb1c19a5127e9a152829df60ab650698b740c634aa1"
+    },
+    {
+      "path": "examples/ui-structure.json",
+      "bytes": 765,
+      "sha256": "c4b0e10ff3ec8367751288611fc3eab689af72e213850faf6b96d0995f66bd30"
+    },
+    {
+      "path": "examples/workspace.json",
+      "bytes": 131043,
+      "sha256": "510a294e39f1c4633c97c592002e1adfb6ee00c9c8820a6cb6dbb4864eb46472"
+    },
+    {
+      "path": "examples/zip-readback.json",
+      "bytes": 266,
+      "sha256": "8d83a5c0812738e6d827951d66d403c791b2560aee3dc951994e28b9f7aa9953"
+    },
+    {
+      "path": "host/client.mjs",
+      "bytes": 4282,
+      "sha256": "12c21517a320e0295d2a271ff0d3db86466971c4c8f41cf17568b5e8b7d355a7"
+    },
+    {
+      "path": "host/codec.mjs",
+      "bytes": 28418,
+      "sha256": "ab609271b0bcb6aac8b732db7b437edd69bb7865dcaea4fd5cf1ec162de15c45"
+    },
+    {
+      "path": "host/domain.mjs",
+      "bytes": 3486,
+      "sha256": "b7b5beab2758d8a7e7a2a93ffba9d986ae0d996b8ccf18b2c72f716d33a5ebda"
+    },
+    {
+      "path": "host/export-core.mjs",
+      "bytes": 4072,
+      "sha256": "35c06e84d34248deb0cfaf21dd477919661717ad7a53208e66a7e74d6d49f5df"
+    },
+    {
+      "path": "host/export.mjs",
+      "bytes": 1594,
+      "sha256": "e16df09a059701db3eb476b3a47ddbc1160484da4e50abd26173f81711823aa3"
+    },
+    {
+      "path": "host/io.mjs",
+      "bytes": 3128,
+      "sha256": "9e317768884e40c4d3b6e87f01bf9c55255e0937ec31eacb4645dc8990df1108"
+    },
+    {
+      "path": "host/model.cjs",
+      "bytes": 5037,
+      "sha256": "ce6648c07d54f7ec2e055a9921a49199ba56220e05beaa0dccc56c85cea682b0"
+    },
+    {
+      "path": "host/server.mjs",
+      "bytes": 6975,
+      "sha256": "2c1a72422119cce44a448f554b94abec8c34540d2bbca0830468211466b8dc70"
+    },
+    {
+      "path": "host/store.mjs",
+      "bytes": 5733,
+      "sha256": "2ef3570d4fa36edb987ea027d466c18acfc7816978b22b3de1fb34572d51c278"
+    },
+    {
+      "path": "INSTALLED_OPERATION.md",
+      "bytes": 8006,
+      "sha256": "19fe27a8149525651437ce5e1e1bcb3f596127f5a32f6de862e1deff464525a9"
+    },
+    {
+      "path": "INSTALLED_RECEIVING.md",
+      "bytes": 2555,
+      "sha256": "7cbb3ce3d46e01e1889a797689f7721d3e4c2941bed78e79ae618ee748090b95"
+    },
+    {
+      "path": "installed-cli.mjs",
+      "bytes": 4369,
+      "sha256": "815e31eeab4104e59b03339c6ef19ff85fa3610a3ccc6235ec830c2d9b87c536"
+    },
+    {
+      "path": "managed.mjs",
+      "bytes": 2602,
+      "sha256": "8b6cdc31b072bcbd5dec5da222750e95ce7b3bb0a69fa0962aedd5dcaa354fd9"
+    },
+    {
+      "path": "mcp.mjs",
+      "bytes": 8484,
+      "sha256": "be1abb1b52831eae1e5a01e3b033a2a71ac54477b6c44d31495ad61c77ff2b56"
+    },
+    {
+      "path": "merchant-provider.mjs",
+      "bytes": 2178,
+      "sha256": "bbbeec62cf9d3012ae6b25f00ba0fc2541a68c2b99a72d0a3f2680fc91f09e00"
+    },
+    {
+      "path": "native/receive-installed.mjs",
+      "bytes": 4155,
+      "sha256": "3d9cadc854a0fba2158974c299fb88f9268bd865b549f74e587cd5502bf6008a"
+    },
+    {
+      "path": "native/shipment-commissioning.cjs",
+      "bytes": 7726,
+      "sha256": "39f7e946dd66c933bbf26c1f972ac8b9d278fb1eb28e13e6150d2b607eab0c23"
+    },
+    {
+      "path": "package.json",
+      "bytes": 220,
+      "sha256": "75a31e2590454d3b81685570066484c910415dc504c5cf4ff7cb3894385d6781"
+    },
+    {
+      "path": "README.md",
+      "bytes": 982,
+      "sha256": "bbb2aedab299fa64129a5de3ebecbce232a5faf629817a35395e7459ffd87af5"
+    },
+    {
+      "path": "receiving/capacity-course.cjs",
+      "bytes": 9674,
+      "sha256": "f89b10b7fb9df1004c6c8624fb6bfc3d10d08769f36fabb0368d49648d23b748"
+    },
+    {
+      "path": "receiving/export-course.cjs",
+      "bytes": 3780,
+      "sha256": "5af3ec9887dde424dcbe8081e68155f2e8147549a10bc6456eb80eb12134d7c0"
+    },
+    {
+      "path": "receiving/host-course.cjs",
+      "bytes": 9451,
+      "sha256": "518ff560ae7819e0f17e83e53b251bbe0421e9b83a2d96f5f983f3670995a689"
+    },
+    {
+      "path": "receiving/pending-original-course.cjs",
+      "bytes": 9265,
+      "sha256": "5ba43a318fe62289db41bd07f7ef22fe546d8ff6a95504b227b5d38b11ca6d42"
+    },
+    {
+      "path": "receiving/portable-course.cjs",
+      "bytes": 12754,
+      "sha256": "74738b7f1c6355190fde732e521bd1505255c172bc9688dff83d7c39868b898f"
+    },
+    {
+      "path": "receiving/VERIFIED_COURSES.json",
+      "bytes": 2393,
+      "sha256": "35c28ff87a3baab96c842340d7250859b54f870dc26b152f5d83fdbff6950c90"
+    },
+    {
+      "path": "runtime.mjs",
+      "bytes": 1467,
+      "sha256": "6d227b70c5c3a2ae17d89ebb2207abe803b4ede1b90d91b62d00d847c3d2adc1"
+    },
+    {
+      "path": "runtime/archive-codec.cjs",
+      "bytes": 18115,
+      "sha256": "25010ed1a8cbe1637a5c40f99df6b6bc3921604aeec9c39b4ac0924e98e12386"
+    },
+    {
+      "path": "runtime/cached-review.cjs",
+      "bytes": 1178,
+      "sha256": "343ba2d3e1f33eb765de9e3c403f97d480e8d9b02bff97481cf240d6104ba358"
+    },
+    {
+      "path": "runtime/connected_gzip.cjs",
+      "bytes": 47127,
+      "sha256": "1fc9f3b218c60d029c96bf9f1c1e4de5fcb86918ed5a0570586dc81488440119"
+    },
+    {
+      "path": "runtime/connected_zip.cjs",
+      "bytes": 12090,
+      "sha256": "857c79f789e9cf4f6321bf22804e1c8d55af6758495ae1ba09d4fa72fd97bb26"
+    },
+    {
+      "path": "runtime/crm-zip.cjs",
+      "bytes": 344,
+      "sha256": "234482db4371b6a967ebd8cf4adc544899438f0796ffbf98d93206ff478c590b"
+    },
+    {
+      "path": "runtime/shipment-review.cjs",
+      "bytes": 22390,
+      "sha256": "77a280e542d7011c27c1045dc82b8a00ed2883b167c15ed46580735e739d0684"
+    },
+    {
+      "path": "runtime/shipment-runtime.cjs",
+      "bytes": 177,
+      "sha256": "653d4223be4a2f21b94bd8b4713ebe052955e2275b4b2499f53ba2240b1bd00b"
+    },
+    {
+      "path": "setup.mjs",
+      "bytes": 2606,
+      "sha256": "e2a95534a300a697b202cd34dc5a8c56c213b8517b58666fb0601515a066689e"
+    },
+    {
+      "path": "Shipment_Commissioning_Desk.html",
+      "bytes": 1115095,
+      "sha256": "de40cacd90dc43856badabf8af65ff491704cd2ce97bdbec35613030c80944a2"
+    },
+    {
+      "path": "src/archive.mjs",
+      "bytes": 470,
+      "sha256": "306cdd6cf02c38f3c8c6526cd4cd54db86f34d1d270e372bcb1b851fc8772374"
+    },
+    {
+      "path": "src/build-installed.mjs",
+      "bytes": 4243,
+      "sha256": "53cf6d51cc8d9262d18a90a4c4fcd88693a10231560aa3132a0062a90f08baa0"
+    },
+    {
+      "path": "src/connected_zip.cjs",
+      "bytes": 13178,
+      "sha256": "4903eb16215d3015388b62788670da9f23872d65e94422ff22cbf09863f9dd08"
+    },
+    {
+      "path": "src/managed-storage.mjs",
+      "bytes": 7801,
+      "sha256": "67d1b1408b7ad089fa8278af44300313ce2296dee2c06b6ef8a06168f7feb651"
+    },
+    {
+      "path": "src/managed.js",
+      "bytes": 14294,
+      "sha256": "97b5566fe6ff9837b42c97897477757a24830361631bcc3ee8c18fb629549cdf"
+    },
+    {
+      "path": "src/session.mjs",
+      "bytes": 4271,
+      "sha256": "cab8255f5ac25a96df69e5dee3c26fd60589ffe9bce5cf76e157576ef9d18167"
+    },
+    {
+      "path": "tools.mjs",
+      "bytes": 4085,
+      "sha256": "2c9f38dfcffe32575fceb03e2818106c52e14a48b835cf3d14e1db8a76dfe4d7"
+    },
+    {
+      "path": "vendor/PAKO_LICENSE.txt",
+      "bytes": 1104,
+      "sha256": "a04665b3b2de56c66730c1f720f528175739e4104f79073614aa611da1e85539"
+    },
+    {
+      "path": "vendor/pako.cjs",
+      "bytes": 238806,
+      "sha256": "e3c8f46f5a741598157ba051a9a0c043bcdc879c1867d3268e4058d4fae5fe3e"
+    }
+  ]
+}

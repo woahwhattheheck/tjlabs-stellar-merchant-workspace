@@ -1,0 +1,601 @@
+{
+  "checks": [
+    "Same weak container never justifies reference identity merge",
+    "Protected consignee differences remain material",
+    "Incorrect readiness and missing-field set are reported",
+    "Late original can expose overwritten amendment",
+    "Corrected four-checkpoint authored run matches exact reference",
+    "Large numeric source literal is exact",
+    "Different work-phase coverage suppresses savings",
+    "Equal phases yield only the authored case-specific difference",
+    "Original request retry after later operations preserves current state",
+    "Changed request under same operation ID rejected",
+    "Full source and command journal reopen exactly",
+    "Unrecorded imported workspace edit rejected by replay",
+    "Reference edits retain previous edition and expire approval while old run keeps frozen reference",
+    "Complete handover includes every retained original"
+  ],
+  "revision": 32,
+  "originals": 14,
+  "reportA": {
+    "run_id": "observed-A",
+    "case_id": "CASE-01",
+    "reference_hash": "196238c18692821486e8e8bb87359af86500f82e1c2e9c9d5ac356e89b2dac89",
+    "current_reference": true,
+    "authored_reference": true,
+    "method": "observed-A",
+    "product_edition": "Authored output fixture observed-A; no live product run",
+    "basis": "e62b150bac6a5b25b5f56a5c7753550c1f251aaaab9535ee339fcbf48729c135",
+    "complete": true,
+    "steps": [
+      {
+        "step_id": "initial",
+        "title": "Two distinct bookings sharing a weak container reference",
+        "capture_id": "capture-observed-A-initial",
+        "covered": true,
+        "reference": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        },
+        "matched": {
+          "bindings": 1,
+          "fields": 2,
+          "gates": 1
+        },
+        "candidate": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        }
+      },
+      {
+        "step_id": "amendment",
+        "title": "Accepted quantity amendment",
+        "capture_id": "capture-observed-A-amendment",
+        "covered": true,
+        "reference": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        },
+        "matched": {
+          "bindings": 1,
+          "fields": 2,
+          "gates": 1
+        },
+        "candidate": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        }
+      },
+      {
+        "step_id": "retry",
+        "title": "Duplicate delivery of the same amendment",
+        "capture_id": "capture-observed-A-retry",
+        "covered": true,
+        "reference": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        },
+        "matched": {
+          "bindings": 1,
+          "fields": 2,
+          "gates": 1
+        },
+        "candidate": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        }
+      },
+      {
+        "step_id": "late",
+        "title": "Late delivery of original booking",
+        "capture_id": "capture-observed-A-late",
+        "covered": true,
+        "reference": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        },
+        "matched": {
+          "bindings": 1,
+          "fields": 1,
+          "gates": 1
+        },
+        "candidate": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        }
+      }
+    ],
+    "findings": [
+      {
+        "id": "99b5be5addbb6e95556c095f",
+        "step_id": "initial",
+        "kind": "bindings",
+        "code": "wrong_shipment_binding",
+        "key": "[\"DOC-B\"]",
+        "expected": {
+          "document": "DOC-B",
+          "shipment": "SHIP-B"
+        },
+        "actual": [
+          {
+            "document": "DOC-B",
+            "shipment": "SHIP-A",
+            "source": {
+              "original_id": "observed-A-initial",
+              "locator": "/documents/1"
+            }
+          }
+        ],
+        "capture_id": "capture-observed-A-initial"
+      },
+      {
+        "id": "3f9bbd2baca90cdcec32d4f8",
+        "step_id": "initial",
+        "kind": "fields",
+        "code": "protected_field_changed",
+        "key": "[\"SHIP-A\",\"consignee\"]",
+        "expected": {
+          "shipment": "SHIP-A",
+          "field": "consignee",
+          "value": {
+            "type": "string",
+            "text": "Example Alpha reviewed"
+          },
+          "owner": "locked"
+        },
+        "actual": [
+          {
+            "shipment": "SHIP-A",
+            "field": "consignee",
+            "value": {
+              "type": "string",
+              "text": "Example Alpha unreviewed"
+            },
+            "owner": "proposed",
+            "source": {
+              "original_id": "observed-A-initial",
+              "locator": "/fields/1"
+            }
+          }
+        ],
+        "capture_id": "capture-observed-A-initial"
+      },
+      {
+        "id": "598b09442b78580bbc8d0590",
+        "step_id": "initial",
+        "kind": "gates",
+        "code": "readiness_observation_changed",
+        "key": "[\"SHIP-A\",\"invoice-ready\"]",
+        "expected": {
+          "shipment": "SHIP-A",
+          "gate": "invoice-ready",
+          "status": "blocked",
+          "missing": [
+            "po_number"
+          ]
+        },
+        "actual": [
+          {
+            "shipment": "SHIP-A",
+            "gate": "invoice-ready",
+            "status": "ready",
+            "missing": [],
+            "source": {
+              "original_id": "observed-A-initial",
+              "locator": "/gates/0"
+            }
+          }
+        ],
+        "capture_id": "capture-observed-A-initial"
+      },
+      {
+        "id": "e2b43e3728715cee99ac535f",
+        "step_id": "amendment",
+        "kind": "bindings",
+        "code": "wrong_shipment_binding",
+        "key": "[\"DOC-B\"]",
+        "expected": {
+          "document": "DOC-B",
+          "shipment": "SHIP-B"
+        },
+        "actual": [
+          {
+            "document": "DOC-B",
+            "shipment": "SHIP-A",
+            "source": {
+              "original_id": "observed-A-amendment",
+              "locator": "/documents/1"
+            }
+          }
+        ],
+        "capture_id": "capture-observed-A-amendment"
+      },
+      {
+        "id": "7c396ae4ee13c35addf9bcfc",
+        "step_id": "amendment",
+        "kind": "fields",
+        "code": "protected_field_changed",
+        "key": "[\"SHIP-A\",\"consignee\"]",
+        "expected": {
+          "shipment": "SHIP-A",
+          "field": "consignee",
+          "value": {
+            "type": "string",
+            "text": "Example Alpha reviewed"
+          },
+          "owner": "locked"
+        },
+        "actual": [
+          {
+            "shipment": "SHIP-A",
+            "field": "consignee",
+            "value": {
+              "type": "string",
+              "text": "Example Alpha unreviewed"
+            },
+            "owner": "proposed",
+            "source": {
+              "original_id": "observed-A-amendment",
+              "locator": "/fields/1"
+            }
+          }
+        ],
+        "capture_id": "capture-observed-A-amendment"
+      },
+      {
+        "id": "8d763334200d0abf1d207c86",
+        "step_id": "amendment",
+        "kind": "gates",
+        "code": "readiness_observation_changed",
+        "key": "[\"SHIP-A\",\"invoice-ready\"]",
+        "expected": {
+          "shipment": "SHIP-A",
+          "gate": "invoice-ready",
+          "status": "blocked",
+          "missing": [
+            "po_number"
+          ]
+        },
+        "actual": [
+          {
+            "shipment": "SHIP-A",
+            "gate": "invoice-ready",
+            "status": "ready",
+            "missing": [],
+            "source": {
+              "original_id": "observed-A-amendment",
+              "locator": "/gates/0"
+            }
+          }
+        ],
+        "capture_id": "capture-observed-A-amendment"
+      },
+      {
+        "id": "0a3ae546583231d2ca2ce027",
+        "step_id": "retry",
+        "kind": "bindings",
+        "code": "wrong_shipment_binding",
+        "key": "[\"DOC-B\"]",
+        "expected": {
+          "document": "DOC-B",
+          "shipment": "SHIP-B"
+        },
+        "actual": [
+          {
+            "document": "DOC-B",
+            "shipment": "SHIP-A",
+            "source": {
+              "original_id": "observed-A-retry",
+              "locator": "/documents/1"
+            }
+          }
+        ],
+        "capture_id": "capture-observed-A-retry"
+      },
+      {
+        "id": "2b3446ea8cf65bf000d86058",
+        "step_id": "retry",
+        "kind": "fields",
+        "code": "protected_field_changed",
+        "key": "[\"SHIP-A\",\"consignee\"]",
+        "expected": {
+          "shipment": "SHIP-A",
+          "field": "consignee",
+          "value": {
+            "type": "string",
+            "text": "Example Alpha reviewed"
+          },
+          "owner": "locked"
+        },
+        "actual": [
+          {
+            "shipment": "SHIP-A",
+            "field": "consignee",
+            "value": {
+              "type": "string",
+              "text": "Example Alpha unreviewed"
+            },
+            "owner": "proposed",
+            "source": {
+              "original_id": "observed-A-retry",
+              "locator": "/fields/1"
+            }
+          }
+        ],
+        "capture_id": "capture-observed-A-retry"
+      },
+      {
+        "id": "3b986588f455e171e555143f",
+        "step_id": "retry",
+        "kind": "gates",
+        "code": "readiness_observation_changed",
+        "key": "[\"SHIP-A\",\"invoice-ready\"]",
+        "expected": {
+          "shipment": "SHIP-A",
+          "gate": "invoice-ready",
+          "status": "blocked",
+          "missing": [
+            "po_number"
+          ]
+        },
+        "actual": [
+          {
+            "shipment": "SHIP-A",
+            "gate": "invoice-ready",
+            "status": "ready",
+            "missing": [],
+            "source": {
+              "original_id": "observed-A-retry",
+              "locator": "/gates/0"
+            }
+          }
+        ],
+        "capture_id": "capture-observed-A-retry"
+      },
+      {
+        "id": "4bd666a0fd13c6df5c386bf6",
+        "step_id": "late",
+        "kind": "bindings",
+        "code": "wrong_shipment_binding",
+        "key": "[\"DOC-B\"]",
+        "expected": {
+          "document": "DOC-B",
+          "shipment": "SHIP-B"
+        },
+        "actual": [
+          {
+            "document": "DOC-B",
+            "shipment": "SHIP-A",
+            "source": {
+              "original_id": "observed-A-late",
+              "locator": "/documents/1"
+            }
+          }
+        ],
+        "capture_id": "capture-observed-A-late"
+      },
+      {
+        "id": "63e34fbc31014e7605b6f2bd",
+        "step_id": "late",
+        "kind": "fields",
+        "code": "field_value_changed",
+        "key": "[\"SHIP-A\",\"quantity\"]",
+        "expected": {
+          "shipment": "SHIP-A",
+          "field": "quantity",
+          "value": {
+            "type": "number",
+            "text": "90"
+          },
+          "owner": "proposed"
+        },
+        "actual": [
+          {
+            "shipment": "SHIP-A",
+            "field": "quantity",
+            "value": {
+              "type": "number",
+              "text": "100"
+            },
+            "owner": "proposed",
+            "source": {
+              "original_id": "observed-A-late",
+              "locator": "/fields/0"
+            }
+          }
+        ],
+        "capture_id": "capture-observed-A-late"
+      },
+      {
+        "id": "1712a26c0c960c9b2e40a5f7",
+        "step_id": "late",
+        "kind": "fields",
+        "code": "protected_field_changed",
+        "key": "[\"SHIP-A\",\"consignee\"]",
+        "expected": {
+          "shipment": "SHIP-A",
+          "field": "consignee",
+          "value": {
+            "type": "string",
+            "text": "Example Alpha reviewed"
+          },
+          "owner": "locked"
+        },
+        "actual": [
+          {
+            "shipment": "SHIP-A",
+            "field": "consignee",
+            "value": {
+              "type": "string",
+              "text": "Example Alpha unreviewed"
+            },
+            "owner": "proposed",
+            "source": {
+              "original_id": "observed-A-late",
+              "locator": "/fields/1"
+            }
+          }
+        ],
+        "capture_id": "capture-observed-A-late"
+      },
+      {
+        "id": "eacc5ddaaa92107b583e2f74",
+        "step_id": "late",
+        "kind": "gates",
+        "code": "readiness_observation_changed",
+        "key": "[\"SHIP-A\",\"invoice-ready\"]",
+        "expected": {
+          "shipment": "SHIP-A",
+          "gate": "invoice-ready",
+          "status": "blocked",
+          "missing": [
+            "po_number"
+          ]
+        },
+        "actual": [
+          {
+            "shipment": "SHIP-A",
+            "gate": "invoice-ready",
+            "status": "ready",
+            "missing": [],
+            "source": {
+              "original_id": "observed-A-late",
+              "locator": "/gates/0"
+            }
+          }
+        ],
+        "capture_id": "capture-observed-A-late"
+      }
+    ],
+    "current_review": null,
+    "note": "Exact reference comparison. A readiness label is an observed/approved reference value, not a customs or release authorization. Uncaptured checkpoints remain uncovered, including checkpoints with zero expected rows."
+  },
+  "reportB": {
+    "run_id": "observed-B",
+    "case_id": "CASE-01",
+    "reference_hash": "196238c18692821486e8e8bb87359af86500f82e1c2e9c9d5ac356e89b2dac89",
+    "current_reference": true,
+    "authored_reference": true,
+    "method": "observed-B",
+    "product_edition": "Authored output fixture observed-B; no live product run",
+    "basis": "c1ec2d2822e18dde892d700486e69401baded49f5d95c52b6e4d82ab59b445cb",
+    "complete": true,
+    "steps": [
+      {
+        "step_id": "initial",
+        "title": "Two distinct bookings sharing a weak container reference",
+        "capture_id": "capture-observed-B-initial",
+        "covered": true,
+        "reference": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        },
+        "matched": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        },
+        "candidate": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        }
+      },
+      {
+        "step_id": "amendment",
+        "title": "Accepted quantity amendment",
+        "capture_id": "capture-observed-B-amendment",
+        "covered": true,
+        "reference": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        },
+        "matched": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        },
+        "candidate": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        }
+      },
+      {
+        "step_id": "retry",
+        "title": "Duplicate delivery of the same amendment",
+        "capture_id": "capture-observed-B-retry",
+        "covered": true,
+        "reference": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        },
+        "matched": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        },
+        "candidate": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        }
+      },
+      {
+        "step_id": "late",
+        "title": "Late delivery of original booking",
+        "capture_id": "capture-observed-B-late",
+        "covered": true,
+        "reference": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        },
+        "matched": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        },
+        "candidate": {
+          "bindings": 2,
+          "fields": 3,
+          "gates": 2
+        }
+      }
+    ],
+    "findings": [],
+    "current_review": null,
+    "note": "Exact reference comparison. A readiness label is an observed/approved reference value, not a customs or release authorization. Uncaptured checkpoints remain uncovered, including checkpoints with zero expected rows."
+  },
+  "effort": {
+    "a": "observed-A",
+    "b": "observed-B",
+    "case_equal": true,
+    "phases_a": [
+      "handover",
+      "review"
+    ],
+    "phases_b": [
+      "handover",
+      "review"
+    ],
+    "missing_a": [],
+    "missing_b": [],
+    "comparable": true,
+    "seconds_a": 1500,
+    "seconds_b": 1260,
+    "difference_seconds": 240,
+    "note": "Same frozen case and matching phase coverage are necessary; operator comparability declarations and retained measurement conditions remain part of the result."
+  }
+}

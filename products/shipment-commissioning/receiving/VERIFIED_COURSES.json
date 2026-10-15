@@ -1,0 +1,60 @@
+{
+  "schema": "shipment.installed-source-verification.v1",
+  "originalDomain": {
+    "checks": 14,
+    "revision": 32,
+    "differences": [
+      13,
+      0
+    ]
+  },
+  "installedBrowser": {
+    "checks": 20,
+    "milliseconds": 184812,
+    "surface": "Assembled production HTML handlers with explicit DOM and atomic IndexedDB"
+  },
+  "capacity": {
+    "schema": "shipment.installed-capacity-course.v1",
+    "surface": "Actual assembled handlers with a reduced injected capacity and complete production validation",
+    "checks": [
+      "Full pending input remains visible when the complete session exceeds capacity",
+      "Rejected context selection re-renders the original selected state",
+      "Complete pending carrier downloads with exact full input above the normal capacity",
+      "Explicit download-and-clear preserves actor and permits continued work",
+      "Saving continues after the capacity recovery",
+      "Complete-content cache refuses a changed already-validated journal"
+    ],
+    "capacity": 9501,
+    "pendingBytes": 13610
+  },
+  "host": {
+    "checks": 8,
+    "originalCommands": 32,
+    "requests": 35,
+    "editions": 36,
+    "milliseconds": 142744,
+    "surface": "Actual Merchant dispatcher, declared original reads and production model; filesystem/listener injected"
+  },
+  "sourcePreservation": {
+    "originalDomainUnchanged": false,
+    "genericFixtures": "Regenerated complete command journal with provider-neutral authored labels",
+    "originalUIChange": "Retain full pending editor before switching output mappings",
+    "originalDomainExtension": {
+      "members": 27,
+      "originalMs": 6175,
+      "cachedMs": 317,
+      "everyContentExact": true,
+      "extension": "Original exportFiles accepts replay option default true; validated wrapper uses false after exact full-content validation"
+    }
+  },
+  "pendingOriginal": {
+    "schema": "shipment.installed-pending-original-course.v1",
+    "surface": "Actual assembled generated handlers with original file read and retry",
+    "checks": [
+      "Rejected original intake retains exact bytes, full metadata, read time and failure",
+      "Failed original persists and reopens from the atomic browser store",
+      "Pending original downloads byte-exact after file control is cleared",
+      "Ordinary correction and retry commits exact original while retaining the failed preimage"
+    ]
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "schema": "shipment-commissioning.zip-readback.v1",
+  "execution": "Actual V8 maintained ZIP writer and reader",
+  "files": 26,
+  "bytes": 242189,
+  "sha256": "29db6518d1187c25090d7159190b76f458790b95bd8bdb0be1b21b64c9508f58",
+  "all_text_members_exact": true
+}
