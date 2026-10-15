@@ -1,0 +1,8 @@
+{
+  "status": "terminated before completion",
+  "reason": "Core validation repeatedly canonicalizes and hashes whole workspace on each preview/report/export/handover, plus quadratic receipt row membership; source owner implementing immutable verified workspace cache and row index before same capacity course rerun.",
+  "rows": 1000,
+  "fields": 25,
+  "completed": false,
+  "recordedAt": "2026-10-14T23:53:34.344Z"
+}

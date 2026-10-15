@@ -1,0 +1,68 @@
+{
+  "runtime": "V8 production core11",
+  "sourceSha256": "b532df84e3abf397db66935f3a07a0169fcef71c06e5944831d5d19580814300",
+  "objectOrder": {
+    "counts": {
+      "matched": 1,
+      "divergent": 1,
+      "rejected": 0,
+      "uncertain": 0,
+      "unobserved": 0,
+      "skipped": 0
+    },
+    "firstStatus": "divergent",
+    "expected": {
+      "type": "object",
+      "entries": [
+        {
+          "key": "x",
+          "value": {
+            "type": "number",
+            "value": "1"
+          }
+        },
+        {
+          "key": "y",
+          "value": {
+            "type": "number",
+            "value": "2"
+          }
+        }
+      ]
+    },
+    "actual": {
+      "type": "object",
+      "entries": [
+        {
+          "key": "y",
+          "value": {
+            "type": "number",
+            "value": "2"
+          }
+        },
+        {
+          "key": "x",
+          "value": {
+            "type": "number",
+            "value": "1"
+          }
+        }
+      ]
+    }
+  },
+  "collapsedCreates": {
+    "counts": {
+      "matched": 2,
+      "divergent": 0,
+      "rejected": 0,
+      "uncertain": 0,
+      "unobserved": 0,
+      "skipped": 0
+    },
+    "targets": [
+      "host-a",
+      "host-a"
+    ],
+    "findings": []
+  }
+}

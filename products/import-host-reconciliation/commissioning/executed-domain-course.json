@@ -1,0 +1,49 @@
+{
+  "evidence": "Actual production factories executed against authored offline observations. No Filio SDK, real webhook, host network, native filesystem or browser execution is claimed.",
+  "checks": {
+    "originalRows": 5,
+    "imports": 3,
+    "batches": 2,
+    "reconciliations": 2,
+    "comparisons": 1,
+    "reviewRevisions": 2,
+    "originalNumericToken": "9007199254740993",
+    "sameRequestReplays": 20,
+    "sourceChangedPairs": 1,
+    "firstCounts": {
+      "matched": 1,
+      "divergent": 1,
+      "rejected": 1,
+      "uncertain": 1,
+      "unobserved": 0,
+      "skipped": 1
+    },
+    "laterCounts": {
+      "matched": 4,
+      "divergent": 0,
+      "rejected": 0,
+      "uncertain": 0,
+      "unobserved": 0,
+      "skipped": 1
+    },
+    "fullReopen": true,
+    "originalWorkspaceUnchanged": true
+  },
+  "rejections": [
+    {
+      "name": "changed original request",
+      "message": "Operation ID reused with changed request"
+    },
+    {
+      "name": "altered full source",
+      "message": "Working envelope checksum/schema differs"
+    },
+    {
+      "name": "stale reviewed batch",
+      "message": "Batch preview is stale or altered"
+    }
+  ],
+  "workingSha256": "dbc571ebdbb9fbb1904c3419ba584bb88820231de7bea0550038b8f7fead9929",
+  "execution": "V8 production factories",
+  "runtimeMs": 5692
+}

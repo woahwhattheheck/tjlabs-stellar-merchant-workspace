@@ -1,0 +1,4422 @@
+{
+  "schema": "tjlabs.import-host-export.v1",
+  "sha256": "dbc571ebdbb9fbb1904c3419ba584bb88820231de7bea0550038b8f7fead9929",
+  "workspace": {
+    "schema": "tjlabs.import-host-workspace.v1",
+    "id": "authored-import-host-workspace",
+    "label": "Authored inventory import and host acceptance",
+    "createdAt": "2026-10-14T12:00:00Z",
+    "revision": 20,
+    "sources": [
+      {
+        "id": "source-original",
+        "body": {
+          "name": "inventory-original.csv",
+          "text": "sku,name,quantity,active,notes\r\n001,\"Café crate\",1.00,true,\"First line\r\nSecond line\"\r\n002,\"Small crate\",2,false,\"Keep leading zero SKU\"\r\n003,\"Rejected crate\",3,true,\"Authored validation rejection\"\r\n004,\"Uncertain crate\",4,true,\"Authored interrupted host write\"\r\n005,\"Skipped crate\",5,false,\"Reviewer excluded this row\"\r\n",
+          "role": "original",
+          "bytes": 321,
+          "sha256": "0763a67e6536c39281b59d7aebe4d5c973fd1d1cde1dcf6596796d042a9d4295"
+        },
+        "sha256": "0dd4f21e4afc7384dc0fc8dac51f75ffb783496eb442d37aa5c37abbbfcd273e"
+      },
+      {
+        "id": "source-webhook-1",
+        "body": {
+          "name": "authored-successful-import.json",
+          "text": "{\"import_id\":\"authored-import-1\",\"template_id\":\"template-inventory-v1\",\"row_count\":5,\"imported_at\":\"2026-10-14T12:01:00Z\",\"rows\":[{\"sku\":\"001\",\"name\":\"Café crate\",\"quantity\":1.00,\"active\":true,\"external_number\":9007199254740993,\"notes\":\"First line\\r\\nSecond line\"},{\"sku\":\"002\",\"name\":\"Small crate\",\"quantity\":2,\"active\":false,\"external_number\":9007199254740994,\"notes\":\"Keep leading zero SKU\"},{\"sku\":\"003\",\"name\":\"Rejected crate\",\"quantity\":3,\"active\":true,\"external_number\":9007199254740995,\"notes\":\"Authored validation rejection\"},{\"sku\":\"004\",\"name\":\"Uncertain crate\",\"quantity\":4,\"active\":true,\"external_number\":9007199254740996,\"notes\":\"Authored interrupted host write\"},{\"sku\":\"005\",\"name\":\"Skipped crate\",\"quantity\":5,\"active\":false,\"external_number\":9007199254740997,\"notes\":\"Reviewer excluded this row\"}],\"retained_extension\":{\"label\":\"Unknown provider metadata retained\"}}",
+          "role": "import",
+          "bytes": 885,
+          "sha256": "8ddabd4f9f0083557da2905c4660e161ef2816a9534c39a113d99cf7a613bc34"
+        },
+        "sha256": "4992d76add78d139e80d9bb73f1f4cb9ee4fcd37bc3e57871e9b511b3b39c34b"
+      },
+      {
+        "id": "source-callback-1",
+        "body": {
+          "name": "authored-callback-array.json",
+          "text": "[{\"sku\":\"001\",\"name\":\"Café crate\",\"quantity\":1.00,\"active\":true,\"external_number\":9007199254740993,\"notes\":\"First line\\r\\nSecond line\"},{\"sku\":\"002\",\"name\":\"Small crate\",\"quantity\":2,\"active\":false,\"external_number\":9007199254740994,\"notes\":\"Keep leading zero SKU\"},{\"sku\":\"003\",\"name\":\"Rejected crate\",\"quantity\":3,\"active\":true,\"external_number\":9007199254740995,\"notes\":\"Authored validation rejection\"},{\"sku\":\"004\",\"name\":\"Uncertain crate\",\"quantity\":4,\"active\":true,\"external_number\":9007199254740996,\"notes\":\"Authored interrupted host write\"},{\"sku\":\"005\",\"name\":\"Skipped crate\",\"quantity\":5,\"active\":false,\"external_number\":9007199254740997,\"notes\":\"Reviewer excluded this row\"}]",
+          "role": "import",
+          "bytes": 687,
+          "sha256": "79fdf91c409aef4ee07adb82a293e7f02bc869b74547e0137b3a0297c406c60e"
+        },
+        "sha256": "740bee3c25925b15d9cfd69231e2888320676c169e080e4de5d8921d1cd8441f"
+      },
+      {
+        "id": "receipt-1",
+        "body": {
+          "name": "authored-host-receipt-1.json",
+          "text": "{\n  \"schema\": \"tjlabs.import-host-result.v1\",\n  \"batchId\": \"batch-1\",\n  \"batchSha256\": \"19c97ee8009bc9f565ae8a4e20f8d0529d861d1a2217ca06116b6934144e7f6f\",\n  \"scope\": {\n    \"application\": \"authored-inventory\",\n    \"tenant\": \"example-tenant\",\n    \"environment\": \"authored-offline\",\n    \"templateId\": \"template-inventory-v1\"\n  },\n  \"attemptId\": \"authored-attempt-1\",\n  \"observedAt\": \"2026-10-14T12:10:00Z\",\n  \"providerReference\": \"AUTHORED-NOT-PROVIDER-EVIDENCE-1\",\n  \"rows\": [\n    {\n      \"row\": 1,\n      \"status\": \"accepted\",\n      \"targetId\": \"host-1\",\n      \"error\": null\n    },\n    {\n      \"row\": 2,\n      \"status\": \"accepted\",\n      \"targetId\": \"host-2\",\n      \"error\": null\n    },\n    {\n      \"row\": 3,\n      \"status\": \"rejected\",\n      \"targetId\": null,\n      \"error\": \"Authored host rule rejected this record\"\n    },\n    {\n      \"row\": 4,\n      \"status\": \"uncertain\",\n      \"targetId\": null,\n      \"error\": \"Authored process ended before authoritative receipt\"\n    },\n    {\n      \"row\": 5,\n      \"status\": \"not_attempted\",\n      \"targetId\": null,\n      \"error\": null\n    }\n  ]\n}",
+          "role": "host_receipt",
+          "bytes": 1084,
+          "sha256": "ba83ec62fe188d5b319826ea1f998aa136a4365beea36ab0f2dff10bfda9fbbb"
+        },
+        "sha256": "39f8e7cc5c7af9baf7eaa6a37bc9acad1283b295cc3482224773d31008f1f31d"
+      },
+      {
+        "id": "readback-1",
+        "body": {
+          "name": "authored-readback-1.json",
+          "text": "{\"schema\":\"tjlabs.import-host-readback.v1\",\"scope\":{\"application\":\"authored-inventory\",\"tenant\":\"example-tenant\",\"environment\":\"authored-offline\",\"templateId\":\"template-inventory-v1\"},\"observedAt\":\"2026-10-14T12:11:00Z\",\"coverage\":{\"kind\":\"selected_records\",\"requestedIds\":[\"host-1\",\"host-2\"]},\"records\":[{\"id\":\"host-1\",\"values\":{\"sku\":\"001\",\"name\":\"Café crate\",\"quantity\":\"1.0\",\"active\":true,\"external_number\":9007199254740993}},{\"id\":\"host-2\",\"values\":{\"sku\":\"002\",\"name\":\"Small crate\",\"quantity\":2,\"active\":\"false\",\"external_number\":9007199254740994}}]}",
+          "role": "readback",
+          "bytes": 557,
+          "sha256": "bc702eb46ce46d10882e55a075481a04276db99861f4ae355a254d093c302265"
+        },
+        "sha256": "c3ef63765d6f6cf2d54dc0352142caf2d4108a754e75124f6043c5812620eb53"
+      },
+      {
+        "id": "source-webhook-2",
+        "body": {
+          "name": "authored-corrected-import.json",
+          "text": "{\"import_id\":\"authored-import-2\",\"template_id\":\"template-inventory-v1\",\"row_count\":5,\"imported_at\":\"2026-10-14T12:20:00Z\",\"rows\":[{\"sku\":\"001\",\"name\":\"Café crate\",\"quantity\":1.00,\"active\":true,\"external_number\":9007199254740993,\"notes\":\"First line\\r\\nSecond line\"},{\"sku\":\"002\",\"name\":\"Small crate corrected\",\"quantity\":2,\"active\":false,\"external_number\":9007199254740994,\"notes\":\"Keep leading zero SKU\"},{\"sku\":\"003\",\"name\":\"Rejected crate\",\"quantity\":3,\"active\":true,\"external_number\":9007199254740995,\"notes\":\"Authored validation rejection\"},{\"sku\":\"004\",\"name\":\"Uncertain crate\",\"quantity\":4,\"active\":true,\"external_number\":9007199254740996,\"notes\":\"Authored interrupted host write\"},{\"sku\":\"005\",\"name\":\"Skipped crate\",\"quantity\":5,\"active\":false,\"external_number\":9007199254740997,\"notes\":\"Reviewer excluded this row\"}]}",
+          "role": "import",
+          "bytes": 827,
+          "sha256": "5948275d88a27ade3d2b83417c7fd3b7a06b9357d89c0e560519b7787a2e052e"
+        },
+        "sha256": "6c1deec4e4af4a8dae164cd433ecb166d5cfb127ea4755a6364e203135063ab7"
+      },
+      {
+        "id": "receipt-2",
+        "body": {
+          "name": "authored-host-receipt-2.json",
+          "text": "{\n  \"schema\": \"tjlabs.import-host-result.v1\",\n  \"batchId\": \"batch-2\",\n  \"batchSha256\": \"b42d5ad8288fa2b7983d5f987145055927b92f9e699170122724db171e53669a\",\n  \"scope\": {\n    \"application\": \"authored-inventory\",\n    \"tenant\": \"example-tenant\",\n    \"environment\": \"authored-offline\",\n    \"templateId\": \"template-inventory-v1\"\n  },\n  \"attemptId\": \"authored-attempt-2\",\n  \"observedAt\": \"2026-10-14T12:21:00Z\",\n  \"providerReference\": \"AUTHORED-NOT-PROVIDER-EVIDENCE-2\",\n  \"rows\": [\n    {\n      \"row\": 1,\n      \"status\": \"accepted\",\n      \"targetId\": \"host-1\",\n      \"error\": null\n    },\n    {\n      \"row\": 2,\n      \"status\": \"accepted\",\n      \"targetId\": \"host-2\",\n      \"error\": null\n    },\n    {\n      \"row\": 3,\n      \"status\": \"accepted\",\n      \"targetId\": \"host-3\",\n      \"error\": null\n    },\n    {\n      \"row\": 4,\n      \"status\": \"accepted\",\n      \"targetId\": \"host-4\",\n      \"error\": null\n    },\n    {\n      \"row\": 5,\n      \"status\": \"not_attempted\",\n      \"targetId\": null,\n      \"error\": null\n    }\n  ]\n}",
+          "role": "host_receipt",
+          "bytes": 1005,
+          "sha256": "392564ec021077e8548988d9565c561b34c184559dc5f13a620de67a33a5ea31"
+        },
+        "sha256": "1e9e2e6c1b33793dfb415228d7b009ecc3fbbc88ad1de89943bb915ac0c508c9"
+      },
+      {
+        "id": "readback-2",
+        "body": {
+          "name": "authored-readback-2.json",
+          "text": "{\"schema\":\"tjlabs.import-host-readback.v1\",\"scope\":{\"application\":\"authored-inventory\",\"tenant\":\"example-tenant\",\"environment\":\"authored-offline\",\"templateId\":\"template-inventory-v1\"},\"observedAt\":\"2026-10-14T12:22:00Z\",\"coverage\":{\"kind\":\"selected_records\",\"requestedIds\":[\"host-1\",\"host-2\",\"host-3\",\"host-4\"]},\"records\":[{\"id\":\"host-1\",\"values\":{\"sku\":\"001\",\"name\":\"Café crate\",\"quantity\":1.00,\"active\":true,\"external_number\":9007199254740993,\"notes\":\"First line\\r\\nSecond line\"}},{\"id\":\"host-2\",\"values\":{\"sku\":\"002\",\"name\":\"Small crate corrected\",\"quantity\":2,\"active\":false,\"external_number\":9007199254740994,\"notes\":\"Keep leading zero SKU\"}},{\"id\":\"host-3\",\"values\":{\"sku\":\"003\",\"name\":\"Rejected crate\",\"quantity\":3,\"active\":true,\"external_number\":9007199254740995,\"notes\":\"Authored validation rejection\"}},{\"id\":\"host-4\",\"values\":{\"sku\":\"004\",\"name\":\"Uncertain crate\",\"quantity\":4,\"active\":true,\"external_number\":9007199254740996,\"notes\":\"Authored interrupted host write\"}}]}",
+          "role": "readback",
+          "bytes": 983,
+          "sha256": "8ff6c14db94fb86d6d54cbcfadcb4d619398a5027c7bbac34d567b76817be3ad"
+        },
+        "sha256": "6c9840337934dae938374c0ec02e6f57f15ba63bbf3bbb91393065f1e0ca23b3"
+      }
+    ],
+    "imports": [
+      {
+        "id": "import-webhook-1",
+        "body": {
+          "importId": "import-webhook-1",
+          "label": "Authored successful-import envelope",
+          "sourceId": "source-webhook-1",
+          "kind": "webhook",
+          "scope": {
+            "application": "authored-inventory",
+            "tenant": "example-tenant",
+            "environment": "authored-offline",
+            "templateId": "template-inventory-v1"
+          },
+          "externalImportId": "authored-import-1",
+          "note": "Published-shape authored fixture; no verified signature or live delivery."
+        },
+        "sha256": "339322928c17b1601acbd2b7fdb8dcebd04df2bd3661faa2e933793c5d51b9cf"
+      },
+      {
+        "id": "import-callback-1",
+        "body": {
+          "importId": "import-callback-1",
+          "label": "Same authored rows, callback serialization",
+          "sourceId": "source-callback-1",
+          "kind": "callback",
+          "scope": {
+            "application": "authored-inventory",
+            "tenant": "example-tenant",
+            "environment": "authored-offline",
+            "templateId": "template-inventory-v1"
+          },
+          "externalImportId": "authored-import-1",
+          "note": "Explicit authored correlation; no real cross-channel guarantee inferred."
+        },
+        "sha256": "8a0df73b5763af845c9eb5f76a8437e3f89bdd0a4cdc0d47fa0184841c3ead23"
+      },
+      {
+        "id": "import-webhook-2",
+        "body": {
+          "importId": "import-webhook-2",
+          "label": "Authored corrected source edition",
+          "sourceId": "source-webhook-2",
+          "kind": "webhook",
+          "scope": {
+            "application": "authored-inventory",
+            "tenant": "example-tenant",
+            "environment": "authored-offline",
+            "templateId": "template-inventory-v1"
+          },
+          "externalImportId": "authored-import-2",
+          "note": "New source identity; original remains retained."
+        },
+        "sha256": "2f25aaadf8331585c740f901021334b636eddaeb8d297818ef04f772da2f9b82"
+      }
+    ],
+    "mappings": [
+      {
+        "id": "mapping-1",
+        "body": {
+          "mappingId": "mapping-1",
+          "label": "Inventory host fields",
+          "importId": "import-webhook-1",
+          "keyPointers": [
+            "/sku"
+          ],
+          "fields": [
+            {
+              "id": "sku",
+              "label": "SKU",
+              "sourcePointer": "/sku",
+              "targetPointer": "/sku",
+              "mode": "text"
+            },
+            {
+              "id": "name",
+              "label": "Name",
+              "sourcePointer": "/name",
+              "targetPointer": "/name",
+              "mode": "text"
+            },
+            {
+              "id": "quantity",
+              "label": "Quantity",
+              "sourcePointer": "/quantity",
+              "targetPointer": "/quantity",
+              "mode": "decimal"
+            },
+            {
+              "id": "active",
+              "label": "Active",
+              "sourcePointer": "/active",
+              "targetPointer": "/active",
+              "mode": "typed"
+            },
+            {
+              "id": "external_number",
+              "label": "Original external number",
+              "sourcePointer": "/external_number",
+              "targetPointer": "/external_number",
+              "mode": "typed"
+            }
+          ],
+          "note": "Explicit SKU key and exact typed/text/decimal rules."
+        },
+        "sha256": "620e50a08926a0faf8e1deb20afc5cf0566dd76fa8ab0b2a0b578a8331db5fab"
+      },
+      {
+        "id": "mapping-2",
+        "body": {
+          "mappingId": "mapping-2",
+          "label": "Same host contract, corrected source",
+          "importId": "import-webhook-2",
+          "keyPointers": [
+            "/sku"
+          ],
+          "fields": [
+            {
+              "id": "sku",
+              "label": "SKU",
+              "sourcePointer": "/sku",
+              "targetPointer": "/sku",
+              "mode": "text"
+            },
+            {
+              "id": "name",
+              "label": "Name",
+              "sourcePointer": "/name",
+              "targetPointer": "/name",
+              "mode": "text"
+            },
+            {
+              "id": "quantity",
+              "label": "Quantity",
+              "sourcePointer": "/quantity",
+              "targetPointer": "/quantity",
+              "mode": "decimal"
+            },
+            {
+              "id": "active",
+              "label": "Active",
+              "sourcePointer": "/active",
+              "targetPointer": "/active",
+              "mode": "typed"
+            },
+            {
+              "id": "external_number",
+              "label": "Original external number",
+              "sourcePointer": "/external_number",
+              "targetPointer": "/external_number",
+              "mode": "typed"
+            }
+          ],
+          "note": "Explicit SKU key and exact typed/text/decimal rules."
+        },
+        "sha256": "b4cef9d24c6a966ac3ebf4e22edfe7da8c26fd38f9f7d8b6813f1dd7ef66929d"
+      }
+    ],
+    "batches": [
+      {
+        "id": "batch-1",
+        "body": {
+          "batchId": "batch-1",
+          "label": "Authored first host plan",
+          "mappingId": "mapping-1",
+          "parentId": null,
+          "actions": [
+            {
+              "row": 1,
+              "action": "create",
+              "targetId": null,
+              "reason": "New SKU"
+            },
+            {
+              "row": 2,
+              "action": "update",
+              "targetId": "host-2",
+              "reason": "Explicit preselected host record"
+            },
+            {
+              "row": 3,
+              "action": "create",
+              "targetId": null,
+              "reason": "New SKU"
+            },
+            {
+              "row": 4,
+              "action": "create",
+              "targetId": null,
+              "reason": "New SKU"
+            },
+            {
+              "row": 5,
+              "action": "skip",
+              "targetId": null,
+              "reason": "Reviewer deliberately excludes this original row"
+            }
+          ],
+          "reviewer": "Example engineer",
+          "note": "Prepared only; no network execution.",
+          "rows": [
+            {
+              "row": 1,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "001"
+                }
+              ],
+              "keyComplete": true,
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "001"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "Café crate"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "value": {
+                    "type": "number",
+                    "value": "1.00"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "value": {
+                    "type": "boolean",
+                    "value": true
+                  },
+                  "present": true
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "value": {
+                    "type": "number",
+                    "value": "9007199254740993"
+                  },
+                  "present": true
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-1",
+                "pointer": "/rows/0",
+                "record": 1
+              },
+              "findings": [],
+              "action": "create",
+              "targetId": null,
+              "reason": "New SKU"
+            },
+            {
+              "row": 2,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "002"
+                }
+              ],
+              "keyComplete": true,
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "002"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "Small crate"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "value": {
+                    "type": "number",
+                    "value": "2"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "value": {
+                    "type": "boolean",
+                    "value": false
+                  },
+                  "present": true
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "value": {
+                    "type": "number",
+                    "value": "9007199254740994"
+                  },
+                  "present": true
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-1",
+                "pointer": "/rows/1",
+                "record": 2
+              },
+              "findings": [],
+              "action": "update",
+              "targetId": "host-2",
+              "reason": "Explicit preselected host record"
+            },
+            {
+              "row": 3,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "003"
+                }
+              ],
+              "keyComplete": true,
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "003"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "Rejected crate"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "value": {
+                    "type": "number",
+                    "value": "3"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "value": {
+                    "type": "boolean",
+                    "value": true
+                  },
+                  "present": true
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "value": {
+                    "type": "number",
+                    "value": "9007199254740995"
+                  },
+                  "present": true
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-1",
+                "pointer": "/rows/2",
+                "record": 3
+              },
+              "findings": [],
+              "action": "create",
+              "targetId": null,
+              "reason": "New SKU"
+            },
+            {
+              "row": 4,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "004"
+                }
+              ],
+              "keyComplete": true,
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "004"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "Uncertain crate"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "value": {
+                    "type": "number",
+                    "value": "4"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "value": {
+                    "type": "boolean",
+                    "value": true
+                  },
+                  "present": true
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "value": {
+                    "type": "number",
+                    "value": "9007199254740996"
+                  },
+                  "present": true
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-1",
+                "pointer": "/rows/3",
+                "record": 4
+              },
+              "findings": [],
+              "action": "create",
+              "targetId": null,
+              "reason": "New SKU"
+            },
+            {
+              "row": 5,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "005"
+                }
+              ],
+              "keyComplete": true,
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "005"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "Skipped crate"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "value": {
+                    "type": "number",
+                    "value": "5"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "value": {
+                    "type": "boolean",
+                    "value": false
+                  },
+                  "present": true
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "value": {
+                    "type": "number",
+                    "value": "9007199254740997"
+                  },
+                  "present": true
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-1",
+                "pointer": "/rows/4",
+                "record": 5
+              },
+              "findings": [],
+              "action": "skip",
+              "targetId": null,
+              "reason": "Reviewer deliberately excludes this original row"
+            }
+          ],
+          "scope": {
+            "application": "authored-inventory",
+            "tenant": "example-tenant",
+            "environment": "authored-offline",
+            "templateId": "template-inventory-v1"
+          },
+          "importId": "import-webhook-1",
+          "importSha256": "339322928c17b1601acbd2b7fdb8dcebd04df2bd3661faa2e933793c5d51b9cf",
+          "mappingSha256": "620e50a08926a0faf8e1deb20afc5cf0566dd76fa8ab0b2a0b578a8331db5fab",
+          "findings": [
+            {
+              "code": "REPEATED_IMPORT_DELIVERY",
+              "message": "Same scoped import rows retained in import-callback-1",
+              "row": null,
+              "field": null,
+              "severity": "info"
+            }
+          ]
+        },
+        "sha256": "19c97ee8009bc9f565ae8a4e20f8d0529d861d1a2217ca06116b6934144e7f6f"
+      },
+      {
+        "id": "batch-2",
+        "body": {
+          "batchId": "batch-2",
+          "label": "Authored successor host plan",
+          "mappingId": "mapping-2",
+          "parentId": "batch-1",
+          "actions": [
+            {
+              "row": 1,
+              "action": "update",
+              "targetId": "host-1",
+              "reason": "Existing record from original accepted receipt"
+            },
+            {
+              "row": 2,
+              "action": "update",
+              "targetId": "host-2",
+              "reason": "Explicit preselected host record"
+            },
+            {
+              "row": 3,
+              "action": "create",
+              "targetId": null,
+              "reason": "New SKU"
+            },
+            {
+              "row": 4,
+              "action": "create",
+              "targetId": null,
+              "reason": "New SKU"
+            },
+            {
+              "row": 5,
+              "action": "skip",
+              "targetId": null,
+              "reason": "Reviewer deliberately excludes this original row"
+            }
+          ],
+          "reviewer": "Example engineer",
+          "note": "Prepared only; no network execution.",
+          "rows": [
+            {
+              "row": 1,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "001"
+                }
+              ],
+              "keyComplete": true,
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "001"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "Café crate"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "value": {
+                    "type": "number",
+                    "value": "1.00"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "value": {
+                    "type": "boolean",
+                    "value": true
+                  },
+                  "present": true
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "value": {
+                    "type": "number",
+                    "value": "9007199254740993"
+                  },
+                  "present": true
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-2",
+                "pointer": "/rows/0",
+                "record": 1
+              },
+              "findings": [],
+              "action": "update",
+              "targetId": "host-1",
+              "reason": "Existing record from original accepted receipt"
+            },
+            {
+              "row": 2,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "002"
+                }
+              ],
+              "keyComplete": true,
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "002"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "Small crate corrected"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "value": {
+                    "type": "number",
+                    "value": "2"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "value": {
+                    "type": "boolean",
+                    "value": false
+                  },
+                  "present": true
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "value": {
+                    "type": "number",
+                    "value": "9007199254740994"
+                  },
+                  "present": true
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-2",
+                "pointer": "/rows/1",
+                "record": 2
+              },
+              "findings": [],
+              "action": "update",
+              "targetId": "host-2",
+              "reason": "Explicit preselected host record"
+            },
+            {
+              "row": 3,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "003"
+                }
+              ],
+              "keyComplete": true,
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "003"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "Rejected crate"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "value": {
+                    "type": "number",
+                    "value": "3"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "value": {
+                    "type": "boolean",
+                    "value": true
+                  },
+                  "present": true
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "value": {
+                    "type": "number",
+                    "value": "9007199254740995"
+                  },
+                  "present": true
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-2",
+                "pointer": "/rows/2",
+                "record": 3
+              },
+              "findings": [],
+              "action": "create",
+              "targetId": null,
+              "reason": "New SKU"
+            },
+            {
+              "row": 4,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "004"
+                }
+              ],
+              "keyComplete": true,
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "004"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "Uncertain crate"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "value": {
+                    "type": "number",
+                    "value": "4"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "value": {
+                    "type": "boolean",
+                    "value": true
+                  },
+                  "present": true
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "value": {
+                    "type": "number",
+                    "value": "9007199254740996"
+                  },
+                  "present": true
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-2",
+                "pointer": "/rows/3",
+                "record": 4
+              },
+              "findings": [],
+              "action": "create",
+              "targetId": null,
+              "reason": "New SKU"
+            },
+            {
+              "row": 5,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "005"
+                }
+              ],
+              "keyComplete": true,
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "005"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "value": {
+                    "type": "string",
+                    "value": "Skipped crate"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "value": {
+                    "type": "number",
+                    "value": "5"
+                  },
+                  "present": true
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "value": {
+                    "type": "boolean",
+                    "value": false
+                  },
+                  "present": true
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "value": {
+                    "type": "number",
+                    "value": "9007199254740997"
+                  },
+                  "present": true
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-2",
+                "pointer": "/rows/4",
+                "record": 5
+              },
+              "findings": [],
+              "action": "skip",
+              "targetId": null,
+              "reason": "Reviewer deliberately excludes this original row"
+            }
+          ],
+          "scope": {
+            "application": "authored-inventory",
+            "tenant": "example-tenant",
+            "environment": "authored-offline",
+            "templateId": "template-inventory-v1"
+          },
+          "importId": "import-webhook-2",
+          "importSha256": "2f25aaadf8331585c740f901021334b636eddaeb8d297818ef04f772da2f9b82",
+          "mappingSha256": "b4cef9d24c6a966ac3ebf4e22edfe7da8c26fd38f9f7d8b6813f1dd7ef66929d",
+          "findings": []
+        },
+        "sha256": "b42d5ad8288fa2b7983d5f987145055927b92f9e699170122724db171e53669a"
+      }
+    ],
+    "reconciliations": [
+      {
+        "id": "reconciliation-1",
+        "body": {
+          "reconciliationId": "reconciliation-1",
+          "label": "Authored partial first result",
+          "batchId": "batch-1",
+          "receiptSourceId": "receipt-1",
+          "readbackSourceId": "readback-1",
+          "reviewer": "Example engineer",
+          "note": "Every source row retained, including partial and uncertain outcomes.",
+          "batchSha256": "19c97ee8009bc9f565ae8a4e20f8d0529d861d1a2217ca06116b6934144e7f6f",
+          "scope": {
+            "application": "authored-inventory",
+            "tenant": "example-tenant",
+            "environment": "authored-offline",
+            "templateId": "template-inventory-v1"
+          },
+          "rows": [
+            {
+              "rowId": "row:1",
+              "row": 1,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "001"
+                }
+              ],
+              "action": "create",
+              "targetId": "host-1",
+              "status": "matched",
+              "providerOutcome": {
+                "row": 1,
+                "status": "accepted",
+                "targetId": "host-1",
+                "error": null,
+                "_ref": {
+                  "sourceId": "receipt-1",
+                  "pointer": "/rows/0",
+                  "record": 1
+                }
+              },
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "status": "matched",
+                  "expected": {
+                    "type": "string",
+                    "value": "001"
+                  },
+                  "actual": {
+                    "type": "string",
+                    "value": "001"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "status": "matched",
+                  "expected": {
+                    "type": "string",
+                    "value": "Café crate"
+                  },
+                  "actual": {
+                    "type": "string",
+                    "value": "Café crate"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "status": "matched",
+                  "expected": {
+                    "type": "number",
+                    "value": "1.00"
+                  },
+                  "actual": {
+                    "type": "string",
+                    "value": "1.0"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "status": "matched",
+                  "expected": {
+                    "type": "boolean",
+                    "value": true
+                  },
+                  "actual": {
+                    "type": "boolean",
+                    "value": true
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "status": "matched",
+                  "expected": {
+                    "type": "number",
+                    "value": "9007199254740993"
+                  },
+                  "actual": {
+                    "type": "number",
+                    "value": "9007199254740993"
+                  },
+                  "detail": "Matches selected comparison mode"
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-1",
+                "pointer": "/rows/0",
+                "record": 1
+              },
+              "receiptRef": {
+                "sourceId": "receipt-1",
+                "pointer": "/rows/0",
+                "record": 1
+              },
+              "readbackRef": {
+                "sourceId": "readback-1",
+                "pointer": "/records/0",
+                "record": 1
+              },
+              "findings": []
+            },
+            {
+              "rowId": "row:2",
+              "row": 2,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "002"
+                }
+              ],
+              "action": "update",
+              "targetId": "host-2",
+              "status": "divergent",
+              "providerOutcome": {
+                "row": 2,
+                "status": "accepted",
+                "targetId": "host-2",
+                "error": null,
+                "_ref": {
+                  "sourceId": "receipt-1",
+                  "pointer": "/rows/1",
+                  "record": 2
+                }
+              },
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "status": "matched",
+                  "expected": {
+                    "type": "string",
+                    "value": "002"
+                  },
+                  "actual": {
+                    "type": "string",
+                    "value": "002"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "status": "matched",
+                  "expected": {
+                    "type": "string",
+                    "value": "Small crate"
+                  },
+                  "actual": {
+                    "type": "string",
+                    "value": "Small crate"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "status": "matched",
+                  "expected": {
+                    "type": "number",
+                    "value": "2"
+                  },
+                  "actual": {
+                    "type": "number",
+                    "value": "2"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "status": "divergent",
+                  "expected": {
+                    "type": "boolean",
+                    "value": false
+                  },
+                  "actual": {
+                    "type": "string",
+                    "value": "false"
+                  },
+                  "detail": "Observed target differs"
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "status": "matched",
+                  "expected": {
+                    "type": "number",
+                    "value": "9007199254740994"
+                  },
+                  "actual": {
+                    "type": "number",
+                    "value": "9007199254740994"
+                  },
+                  "detail": "Matches selected comparison mode"
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-1",
+                "pointer": "/rows/1",
+                "record": 2
+              },
+              "receiptRef": {
+                "sourceId": "receipt-1",
+                "pointer": "/rows/1",
+                "record": 2
+              },
+              "readbackRef": {
+                "sourceId": "readback-1",
+                "pointer": "/records/1",
+                "record": 2
+              },
+              "findings": []
+            },
+            {
+              "rowId": "row:3",
+              "row": 3,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "003"
+                }
+              ],
+              "action": "create",
+              "targetId": null,
+              "status": "rejected",
+              "providerOutcome": {
+                "row": 3,
+                "status": "rejected",
+                "targetId": null,
+                "error": "Authored host rule rejected this record",
+                "_ref": {
+                  "sourceId": "receipt-1",
+                  "pointer": "/rows/2",
+                  "record": 3
+                }
+              },
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "string",
+                    "value": "003"
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "string",
+                    "value": "Rejected crate"
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "number",
+                    "value": "3"
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "boolean",
+                    "value": true
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "number",
+                    "value": "9007199254740995"
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-1",
+                "pointer": "/rows/2",
+                "record": 3
+              },
+              "receiptRef": {
+                "sourceId": "receipt-1",
+                "pointer": "/rows/2",
+                "record": 3
+              },
+              "readbackRef": null,
+              "findings": []
+            },
+            {
+              "rowId": "row:4",
+              "row": 4,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "004"
+                }
+              ],
+              "action": "create",
+              "targetId": null,
+              "status": "uncertain",
+              "providerOutcome": {
+                "row": 4,
+                "status": "uncertain",
+                "targetId": null,
+                "error": "Authored process ended before authoritative receipt",
+                "_ref": {
+                  "sourceId": "receipt-1",
+                  "pointer": "/rows/3",
+                  "record": 4
+                }
+              },
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "string",
+                    "value": "004"
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "string",
+                    "value": "Uncertain crate"
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "number",
+                    "value": "4"
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "boolean",
+                    "value": true
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "number",
+                    "value": "9007199254740996"
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-1",
+                "pointer": "/rows/3",
+                "record": 4
+              },
+              "receiptRef": {
+                "sourceId": "receipt-1",
+                "pointer": "/rows/3",
+                "record": 4
+              },
+              "readbackRef": null,
+              "findings": []
+            },
+            {
+              "rowId": "row:5",
+              "row": 5,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "005"
+                }
+              ],
+              "action": "skip",
+              "targetId": null,
+              "status": "skipped",
+              "providerOutcome": {
+                "row": 5,
+                "status": "not_attempted",
+                "targetId": null,
+                "error": null,
+                "_ref": {
+                  "sourceId": "receipt-1",
+                  "pointer": "/rows/4",
+                  "record": 5
+                }
+              },
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "string",
+                    "value": "005"
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "string",
+                    "value": "Skipped crate"
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "number",
+                    "value": "5"
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "boolean",
+                    "value": false
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "number",
+                    "value": "9007199254740997"
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-1",
+                "pointer": "/rows/4",
+                "record": 5
+              },
+              "receiptRef": {
+                "sourceId": "receipt-1",
+                "pointer": "/rows/4",
+                "record": 5
+              },
+              "readbackRef": null,
+              "findings": []
+            }
+          ],
+          "counts": {
+            "matched": 1,
+            "divergent": 1,
+            "rejected": 1,
+            "uncertain": 1,
+            "unobserved": 0,
+            "skipped": 1
+          },
+          "coverage": {
+            "kind": "selected_records",
+            "originalRows": 5,
+            "receiptRows": 5,
+            "requestedIds": [
+              "host-1",
+              "host-2"
+            ],
+            "observedRecords": 2,
+            "receiptObservedAt": "2026-10-14T12:10:00Z",
+            "readbackObservedAt": "2026-10-14T12:11:00Z",
+            "wholeTargetComplete": false
+          },
+          "findings": []
+        },
+        "sha256": "44ff6723303e3a6bdfde1b43099c6381876f2ff3394cf5fd8432dab76475a404"
+      },
+      {
+        "id": "reconciliation-2",
+        "body": {
+          "reconciliationId": "reconciliation-2",
+          "label": "Authored corrected source and host observation",
+          "batchId": "batch-2",
+          "receiptSourceId": "receipt-2",
+          "readbackSourceId": "readback-2",
+          "reviewer": "Example engineer",
+          "note": "Every source row retained, including partial and uncertain outcomes.",
+          "batchSha256": "b42d5ad8288fa2b7983d5f987145055927b92f9e699170122724db171e53669a",
+          "scope": {
+            "application": "authored-inventory",
+            "tenant": "example-tenant",
+            "environment": "authored-offline",
+            "templateId": "template-inventory-v1"
+          },
+          "rows": [
+            {
+              "rowId": "row:1",
+              "row": 1,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "001"
+                }
+              ],
+              "action": "update",
+              "targetId": "host-1",
+              "status": "matched",
+              "providerOutcome": {
+                "row": 1,
+                "status": "accepted",
+                "targetId": "host-1",
+                "error": null,
+                "_ref": {
+                  "sourceId": "receipt-2",
+                  "pointer": "/rows/0",
+                  "record": 1
+                }
+              },
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "status": "matched",
+                  "expected": {
+                    "type": "string",
+                    "value": "001"
+                  },
+                  "actual": {
+                    "type": "string",
+                    "value": "001"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "status": "matched",
+                  "expected": {
+                    "type": "string",
+                    "value": "Café crate"
+                  },
+                  "actual": {
+                    "type": "string",
+                    "value": "Café crate"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "status": "matched",
+                  "expected": {
+                    "type": "number",
+                    "value": "1.00"
+                  },
+                  "actual": {
+                    "type": "number",
+                    "value": "1.00"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "status": "matched",
+                  "expected": {
+                    "type": "boolean",
+                    "value": true
+                  },
+                  "actual": {
+                    "type": "boolean",
+                    "value": true
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "status": "matched",
+                  "expected": {
+                    "type": "number",
+                    "value": "9007199254740993"
+                  },
+                  "actual": {
+                    "type": "number",
+                    "value": "9007199254740993"
+                  },
+                  "detail": "Matches selected comparison mode"
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-2",
+                "pointer": "/rows/0",
+                "record": 1
+              },
+              "receiptRef": {
+                "sourceId": "receipt-2",
+                "pointer": "/rows/0",
+                "record": 1
+              },
+              "readbackRef": {
+                "sourceId": "readback-2",
+                "pointer": "/records/0",
+                "record": 1
+              },
+              "findings": []
+            },
+            {
+              "rowId": "row:2",
+              "row": 2,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "002"
+                }
+              ],
+              "action": "update",
+              "targetId": "host-2",
+              "status": "matched",
+              "providerOutcome": {
+                "row": 2,
+                "status": "accepted",
+                "targetId": "host-2",
+                "error": null,
+                "_ref": {
+                  "sourceId": "receipt-2",
+                  "pointer": "/rows/1",
+                  "record": 2
+                }
+              },
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "status": "matched",
+                  "expected": {
+                    "type": "string",
+                    "value": "002"
+                  },
+                  "actual": {
+                    "type": "string",
+                    "value": "002"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "status": "matched",
+                  "expected": {
+                    "type": "string",
+                    "value": "Small crate corrected"
+                  },
+                  "actual": {
+                    "type": "string",
+                    "value": "Small crate corrected"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "status": "matched",
+                  "expected": {
+                    "type": "number",
+                    "value": "2"
+                  },
+                  "actual": {
+                    "type": "number",
+                    "value": "2"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "status": "matched",
+                  "expected": {
+                    "type": "boolean",
+                    "value": false
+                  },
+                  "actual": {
+                    "type": "boolean",
+                    "value": false
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "status": "matched",
+                  "expected": {
+                    "type": "number",
+                    "value": "9007199254740994"
+                  },
+                  "actual": {
+                    "type": "number",
+                    "value": "9007199254740994"
+                  },
+                  "detail": "Matches selected comparison mode"
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-2",
+                "pointer": "/rows/1",
+                "record": 2
+              },
+              "receiptRef": {
+                "sourceId": "receipt-2",
+                "pointer": "/rows/1",
+                "record": 2
+              },
+              "readbackRef": {
+                "sourceId": "readback-2",
+                "pointer": "/records/1",
+                "record": 2
+              },
+              "findings": []
+            },
+            {
+              "rowId": "row:3",
+              "row": 3,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "003"
+                }
+              ],
+              "action": "create",
+              "targetId": "host-3",
+              "status": "matched",
+              "providerOutcome": {
+                "row": 3,
+                "status": "accepted",
+                "targetId": "host-3",
+                "error": null,
+                "_ref": {
+                  "sourceId": "receipt-2",
+                  "pointer": "/rows/2",
+                  "record": 3
+                }
+              },
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "status": "matched",
+                  "expected": {
+                    "type": "string",
+                    "value": "003"
+                  },
+                  "actual": {
+                    "type": "string",
+                    "value": "003"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "status": "matched",
+                  "expected": {
+                    "type": "string",
+                    "value": "Rejected crate"
+                  },
+                  "actual": {
+                    "type": "string",
+                    "value": "Rejected crate"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "status": "matched",
+                  "expected": {
+                    "type": "number",
+                    "value": "3"
+                  },
+                  "actual": {
+                    "type": "number",
+                    "value": "3"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "status": "matched",
+                  "expected": {
+                    "type": "boolean",
+                    "value": true
+                  },
+                  "actual": {
+                    "type": "boolean",
+                    "value": true
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "status": "matched",
+                  "expected": {
+                    "type": "number",
+                    "value": "9007199254740995"
+                  },
+                  "actual": {
+                    "type": "number",
+                    "value": "9007199254740995"
+                  },
+                  "detail": "Matches selected comparison mode"
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-2",
+                "pointer": "/rows/2",
+                "record": 3
+              },
+              "receiptRef": {
+                "sourceId": "receipt-2",
+                "pointer": "/rows/2",
+                "record": 3
+              },
+              "readbackRef": {
+                "sourceId": "readback-2",
+                "pointer": "/records/2",
+                "record": 3
+              },
+              "findings": []
+            },
+            {
+              "rowId": "row:4",
+              "row": 4,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "004"
+                }
+              ],
+              "action": "create",
+              "targetId": "host-4",
+              "status": "matched",
+              "providerOutcome": {
+                "row": 4,
+                "status": "accepted",
+                "targetId": "host-4",
+                "error": null,
+                "_ref": {
+                  "sourceId": "receipt-2",
+                  "pointer": "/rows/3",
+                  "record": 4
+                }
+              },
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "status": "matched",
+                  "expected": {
+                    "type": "string",
+                    "value": "004"
+                  },
+                  "actual": {
+                    "type": "string",
+                    "value": "004"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "status": "matched",
+                  "expected": {
+                    "type": "string",
+                    "value": "Uncertain crate"
+                  },
+                  "actual": {
+                    "type": "string",
+                    "value": "Uncertain crate"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "status": "matched",
+                  "expected": {
+                    "type": "number",
+                    "value": "4"
+                  },
+                  "actual": {
+                    "type": "number",
+                    "value": "4"
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "status": "matched",
+                  "expected": {
+                    "type": "boolean",
+                    "value": true
+                  },
+                  "actual": {
+                    "type": "boolean",
+                    "value": true
+                  },
+                  "detail": "Matches selected comparison mode"
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "status": "matched",
+                  "expected": {
+                    "type": "number",
+                    "value": "9007199254740996"
+                  },
+                  "actual": {
+                    "type": "number",
+                    "value": "9007199254740996"
+                  },
+                  "detail": "Matches selected comparison mode"
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-2",
+                "pointer": "/rows/3",
+                "record": 4
+              },
+              "receiptRef": {
+                "sourceId": "receipt-2",
+                "pointer": "/rows/3",
+                "record": 4
+              },
+              "readbackRef": {
+                "sourceId": "readback-2",
+                "pointer": "/records/3",
+                "record": 4
+              },
+              "findings": []
+            },
+            {
+              "rowId": "row:5",
+              "row": 5,
+              "key": [
+                {
+                  "type": "string",
+                  "value": "005"
+                }
+              ],
+              "action": "skip",
+              "targetId": null,
+              "status": "skipped",
+              "providerOutcome": {
+                "row": 5,
+                "status": "not_attempted",
+                "targetId": null,
+                "error": null,
+                "_ref": {
+                  "sourceId": "receipt-2",
+                  "pointer": "/rows/4",
+                  "record": 5
+                }
+              },
+              "fields": [
+                {
+                  "id": "sku",
+                  "label": "SKU",
+                  "sourcePointer": "/sku",
+                  "targetPointer": "/sku",
+                  "mode": "text",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "string",
+                    "value": "005"
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                },
+                {
+                  "id": "name",
+                  "label": "Name",
+                  "sourcePointer": "/name",
+                  "targetPointer": "/name",
+                  "mode": "text",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "string",
+                    "value": "Skipped crate"
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                },
+                {
+                  "id": "quantity",
+                  "label": "Quantity",
+                  "sourcePointer": "/quantity",
+                  "targetPointer": "/quantity",
+                  "mode": "decimal",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "number",
+                    "value": "5"
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                },
+                {
+                  "id": "active",
+                  "label": "Active",
+                  "sourcePointer": "/active",
+                  "targetPointer": "/active",
+                  "mode": "typed",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "boolean",
+                    "value": false
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                },
+                {
+                  "id": "external_number",
+                  "label": "Original external number",
+                  "sourcePointer": "/external_number",
+                  "targetPointer": "/external_number",
+                  "mode": "typed",
+                  "status": "unobserved",
+                  "expected": {
+                    "type": "number",
+                    "value": "9007199254740997"
+                  },
+                  "actual": null,
+                  "detail": "No eligible target observation"
+                }
+              ],
+              "sourceRef": {
+                "sourceId": "source-webhook-2",
+                "pointer": "/rows/4",
+                "record": 5
+              },
+              "receiptRef": {
+                "sourceId": "receipt-2",
+                "pointer": "/rows/4",
+                "record": 5
+              },
+              "readbackRef": null,
+              "findings": []
+            }
+          ],
+          "counts": {
+            "matched": 4,
+            "divergent": 0,
+            "rejected": 0,
+            "uncertain": 0,
+            "unobserved": 0,
+            "skipped": 1
+          },
+          "coverage": {
+            "kind": "selected_records",
+            "originalRows": 5,
+            "receiptRows": 5,
+            "requestedIds": [
+              "host-1",
+              "host-2",
+              "host-3",
+              "host-4"
+            ],
+            "observedRecords": 4,
+            "receiptObservedAt": "2026-10-14T12:21:00Z",
+            "readbackObservedAt": "2026-10-14T12:22:00Z",
+            "wholeTargetComplete": false
+          },
+          "findings": []
+        },
+        "sha256": "70e6868fe0b94e82f0c803c51bb51df7e7ec977a5822e66558fa6b5a6883f3ea"
+      }
+    ],
+    "comparisons": [
+      {
+        "id": "comparison-1",
+        "body": {
+          "comparisonId": "comparison-1",
+          "label": "Authored first versus corrected edition",
+          "leftId": "reconciliation-1",
+          "rightId": "reconciliation-2",
+          "pairs": [
+            {
+              "leftRow": 1,
+              "rightRow": 1,
+              "note": "Suggested exact unique explicit source key; reviewer must confirm."
+            },
+            {
+              "leftRow": 2,
+              "rightRow": 2,
+              "note": "Suggested exact unique explicit source key; reviewer must confirm."
+            },
+            {
+              "leftRow": 3,
+              "rightRow": 3,
+              "note": "Suggested exact unique explicit source key; reviewer must confirm."
+            },
+            {
+              "leftRow": 4,
+              "rightRow": 4,
+              "note": "Suggested exact unique explicit source key; reviewer must confirm."
+            },
+            {
+              "leftRow": 5,
+              "rightRow": 5,
+              "note": "Suggested exact unique explicit source key; reviewer must confirm."
+            }
+          ],
+          "reviewer": "Example engineer",
+          "note": "Confirm exact unique SKU pairs; changed source expectation is not evidence of repairing the original name.",
+          "rows": [
+            {
+              "rowId": "pair:1",
+              "leftRow": 1,
+              "rightRow": 1,
+              "left": {
+                "rowId": "row:1",
+                "row": 1,
+                "key": [
+                  {
+                    "type": "string",
+                    "value": "001"
+                  }
+                ],
+                "action": "create",
+                "targetId": "host-1",
+                "status": "matched",
+                "providerOutcome": {
+                  "row": 1,
+                  "status": "accepted",
+                  "targetId": "host-1",
+                  "error": null,
+                  "_ref": {
+                    "sourceId": "receipt-1",
+                    "pointer": "/rows/0",
+                    "record": 1
+                  }
+                },
+                "fields": [
+                  {
+                    "id": "sku",
+                    "label": "SKU",
+                    "sourcePointer": "/sku",
+                    "targetPointer": "/sku",
+                    "mode": "text",
+                    "status": "matched",
+                    "expected": {
+                      "type": "string",
+                      "value": "001"
+                    },
+                    "actual": {
+                      "type": "string",
+                      "value": "001"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "name",
+                    "label": "Name",
+                    "sourcePointer": "/name",
+                    "targetPointer": "/name",
+                    "mode": "text",
+                    "status": "matched",
+                    "expected": {
+                      "type": "string",
+                      "value": "Café crate"
+                    },
+                    "actual": {
+                      "type": "string",
+                      "value": "Café crate"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "quantity",
+                    "label": "Quantity",
+                    "sourcePointer": "/quantity",
+                    "targetPointer": "/quantity",
+                    "mode": "decimal",
+                    "status": "matched",
+                    "expected": {
+                      "type": "number",
+                      "value": "1.00"
+                    },
+                    "actual": {
+                      "type": "string",
+                      "value": "1.0"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "active",
+                    "label": "Active",
+                    "sourcePointer": "/active",
+                    "targetPointer": "/active",
+                    "mode": "typed",
+                    "status": "matched",
+                    "expected": {
+                      "type": "boolean",
+                      "value": true
+                    },
+                    "actual": {
+                      "type": "boolean",
+                      "value": true
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "external_number",
+                    "label": "Original external number",
+                    "sourcePointer": "/external_number",
+                    "targetPointer": "/external_number",
+                    "mode": "typed",
+                    "status": "matched",
+                    "expected": {
+                      "type": "number",
+                      "value": "9007199254740993"
+                    },
+                    "actual": {
+                      "type": "number",
+                      "value": "9007199254740993"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  }
+                ],
+                "sourceRef": {
+                  "sourceId": "source-webhook-1",
+                  "pointer": "/rows/0",
+                  "record": 1
+                },
+                "receiptRef": {
+                  "sourceId": "receipt-1",
+                  "pointer": "/rows/0",
+                  "record": 1
+                },
+                "readbackRef": {
+                  "sourceId": "readback-1",
+                  "pointer": "/records/0",
+                  "record": 1
+                },
+                "findings": []
+              },
+              "right": {
+                "rowId": "row:1",
+                "row": 1,
+                "key": [
+                  {
+                    "type": "string",
+                    "value": "001"
+                  }
+                ],
+                "action": "update",
+                "targetId": "host-1",
+                "status": "matched",
+                "providerOutcome": {
+                  "row": 1,
+                  "status": "accepted",
+                  "targetId": "host-1",
+                  "error": null,
+                  "_ref": {
+                    "sourceId": "receipt-2",
+                    "pointer": "/rows/0",
+                    "record": 1
+                  }
+                },
+                "fields": [
+                  {
+                    "id": "sku",
+                    "label": "SKU",
+                    "sourcePointer": "/sku",
+                    "targetPointer": "/sku",
+                    "mode": "text",
+                    "status": "matched",
+                    "expected": {
+                      "type": "string",
+                      "value": "001"
+                    },
+                    "actual": {
+                      "type": "string",
+                      "value": "001"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "name",
+                    "label": "Name",
+                    "sourcePointer": "/name",
+                    "targetPointer": "/name",
+                    "mode": "text",
+                    "status": "matched",
+                    "expected": {
+                      "type": "string",
+                      "value": "Café crate"
+                    },
+                    "actual": {
+                      "type": "string",
+                      "value": "Café crate"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "quantity",
+                    "label": "Quantity",
+                    "sourcePointer": "/quantity",
+                    "targetPointer": "/quantity",
+                    "mode": "decimal",
+                    "status": "matched",
+                    "expected": {
+                      "type": "number",
+                      "value": "1.00"
+                    },
+                    "actual": {
+                      "type": "number",
+                      "value": "1.00"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "active",
+                    "label": "Active",
+                    "sourcePointer": "/active",
+                    "targetPointer": "/active",
+                    "mode": "typed",
+                    "status": "matched",
+                    "expected": {
+                      "type": "boolean",
+                      "value": true
+                    },
+                    "actual": {
+                      "type": "boolean",
+                      "value": true
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "external_number",
+                    "label": "Original external number",
+                    "sourcePointer": "/external_number",
+                    "targetPointer": "/external_number",
+                    "mode": "typed",
+                    "status": "matched",
+                    "expected": {
+                      "type": "number",
+                      "value": "9007199254740993"
+                    },
+                    "actual": {
+                      "type": "number",
+                      "value": "9007199254740993"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  }
+                ],
+                "sourceRef": {
+                  "sourceId": "source-webhook-2",
+                  "pointer": "/rows/0",
+                  "record": 1
+                },
+                "receiptRef": {
+                  "sourceId": "receipt-2",
+                  "pointer": "/rows/0",
+                  "record": 1
+                },
+                "readbackRef": {
+                  "sourceId": "readback-2",
+                  "pointer": "/records/0",
+                  "record": 1
+                },
+                "findings": []
+              },
+              "change": "same_observed_status",
+              "sourceChanged": false,
+              "targetChanged": false,
+              "note": "Suggested exact unique explicit source key; reviewer must confirm."
+            },
+            {
+              "rowId": "pair:2",
+              "leftRow": 2,
+              "rightRow": 2,
+              "left": {
+                "rowId": "row:2",
+                "row": 2,
+                "key": [
+                  {
+                    "type": "string",
+                    "value": "002"
+                  }
+                ],
+                "action": "update",
+                "targetId": "host-2",
+                "status": "divergent",
+                "providerOutcome": {
+                  "row": 2,
+                  "status": "accepted",
+                  "targetId": "host-2",
+                  "error": null,
+                  "_ref": {
+                    "sourceId": "receipt-1",
+                    "pointer": "/rows/1",
+                    "record": 2
+                  }
+                },
+                "fields": [
+                  {
+                    "id": "sku",
+                    "label": "SKU",
+                    "sourcePointer": "/sku",
+                    "targetPointer": "/sku",
+                    "mode": "text",
+                    "status": "matched",
+                    "expected": {
+                      "type": "string",
+                      "value": "002"
+                    },
+                    "actual": {
+                      "type": "string",
+                      "value": "002"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "name",
+                    "label": "Name",
+                    "sourcePointer": "/name",
+                    "targetPointer": "/name",
+                    "mode": "text",
+                    "status": "matched",
+                    "expected": {
+                      "type": "string",
+                      "value": "Small crate"
+                    },
+                    "actual": {
+                      "type": "string",
+                      "value": "Small crate"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "quantity",
+                    "label": "Quantity",
+                    "sourcePointer": "/quantity",
+                    "targetPointer": "/quantity",
+                    "mode": "decimal",
+                    "status": "matched",
+                    "expected": {
+                      "type": "number",
+                      "value": "2"
+                    },
+                    "actual": {
+                      "type": "number",
+                      "value": "2"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "active",
+                    "label": "Active",
+                    "sourcePointer": "/active",
+                    "targetPointer": "/active",
+                    "mode": "typed",
+                    "status": "divergent",
+                    "expected": {
+                      "type": "boolean",
+                      "value": false
+                    },
+                    "actual": {
+                      "type": "string",
+                      "value": "false"
+                    },
+                    "detail": "Observed target differs"
+                  },
+                  {
+                    "id": "external_number",
+                    "label": "Original external number",
+                    "sourcePointer": "/external_number",
+                    "targetPointer": "/external_number",
+                    "mode": "typed",
+                    "status": "matched",
+                    "expected": {
+                      "type": "number",
+                      "value": "9007199254740994"
+                    },
+                    "actual": {
+                      "type": "number",
+                      "value": "9007199254740994"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  }
+                ],
+                "sourceRef": {
+                  "sourceId": "source-webhook-1",
+                  "pointer": "/rows/1",
+                  "record": 2
+                },
+                "receiptRef": {
+                  "sourceId": "receipt-1",
+                  "pointer": "/rows/1",
+                  "record": 2
+                },
+                "readbackRef": {
+                  "sourceId": "readback-1",
+                  "pointer": "/records/1",
+                  "record": 2
+                },
+                "findings": []
+              },
+              "right": {
+                "rowId": "row:2",
+                "row": 2,
+                "key": [
+                  {
+                    "type": "string",
+                    "value": "002"
+                  }
+                ],
+                "action": "update",
+                "targetId": "host-2",
+                "status": "matched",
+                "providerOutcome": {
+                  "row": 2,
+                  "status": "accepted",
+                  "targetId": "host-2",
+                  "error": null,
+                  "_ref": {
+                    "sourceId": "receipt-2",
+                    "pointer": "/rows/1",
+                    "record": 2
+                  }
+                },
+                "fields": [
+                  {
+                    "id": "sku",
+                    "label": "SKU",
+                    "sourcePointer": "/sku",
+                    "targetPointer": "/sku",
+                    "mode": "text",
+                    "status": "matched",
+                    "expected": {
+                      "type": "string",
+                      "value": "002"
+                    },
+                    "actual": {
+                      "type": "string",
+                      "value": "002"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "name",
+                    "label": "Name",
+                    "sourcePointer": "/name",
+                    "targetPointer": "/name",
+                    "mode": "text",
+                    "status": "matched",
+                    "expected": {
+                      "type": "string",
+                      "value": "Small crate corrected"
+                    },
+                    "actual": {
+                      "type": "string",
+                      "value": "Small crate corrected"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "quantity",
+                    "label": "Quantity",
+                    "sourcePointer": "/quantity",
+                    "targetPointer": "/quantity",
+                    "mode": "decimal",
+                    "status": "matched",
+                    "expected": {
+                      "type": "number",
+                      "value": "2"
+                    },
+                    "actual": {
+                      "type": "number",
+                      "value": "2"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "active",
+                    "label": "Active",
+                    "sourcePointer": "/active",
+                    "targetPointer": "/active",
+                    "mode": "typed",
+                    "status": "matched",
+                    "expected": {
+                      "type": "boolean",
+                      "value": false
+                    },
+                    "actual": {
+                      "type": "boolean",
+                      "value": false
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "external_number",
+                    "label": "Original external number",
+                    "sourcePointer": "/external_number",
+                    "targetPointer": "/external_number",
+                    "mode": "typed",
+                    "status": "matched",
+                    "expected": {
+                      "type": "number",
+                      "value": "9007199254740994"
+                    },
+                    "actual": {
+                      "type": "number",
+                      "value": "9007199254740994"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  }
+                ],
+                "sourceRef": {
+                  "sourceId": "source-webhook-2",
+                  "pointer": "/rows/1",
+                  "record": 2
+                },
+                "receiptRef": {
+                  "sourceId": "receipt-2",
+                  "pointer": "/rows/1",
+                  "record": 2
+                },
+                "readbackRef": {
+                  "sourceId": "readback-2",
+                  "pointer": "/records/1",
+                  "record": 2
+                },
+                "findings": []
+              },
+              "change": "now_matches_selected_expectation",
+              "sourceChanged": true,
+              "targetChanged": false,
+              "note": "Suggested exact unique explicit source key; reviewer must confirm."
+            },
+            {
+              "rowId": "pair:3",
+              "leftRow": 3,
+              "rightRow": 3,
+              "left": {
+                "rowId": "row:3",
+                "row": 3,
+                "key": [
+                  {
+                    "type": "string",
+                    "value": "003"
+                  }
+                ],
+                "action": "create",
+                "targetId": null,
+                "status": "rejected",
+                "providerOutcome": {
+                  "row": 3,
+                  "status": "rejected",
+                  "targetId": null,
+                  "error": "Authored host rule rejected this record",
+                  "_ref": {
+                    "sourceId": "receipt-1",
+                    "pointer": "/rows/2",
+                    "record": 3
+                  }
+                },
+                "fields": [
+                  {
+                    "id": "sku",
+                    "label": "SKU",
+                    "sourcePointer": "/sku",
+                    "targetPointer": "/sku",
+                    "mode": "text",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "string",
+                      "value": "003"
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  },
+                  {
+                    "id": "name",
+                    "label": "Name",
+                    "sourcePointer": "/name",
+                    "targetPointer": "/name",
+                    "mode": "text",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "string",
+                      "value": "Rejected crate"
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  },
+                  {
+                    "id": "quantity",
+                    "label": "Quantity",
+                    "sourcePointer": "/quantity",
+                    "targetPointer": "/quantity",
+                    "mode": "decimal",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "number",
+                      "value": "3"
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  },
+                  {
+                    "id": "active",
+                    "label": "Active",
+                    "sourcePointer": "/active",
+                    "targetPointer": "/active",
+                    "mode": "typed",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "boolean",
+                      "value": true
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  },
+                  {
+                    "id": "external_number",
+                    "label": "Original external number",
+                    "sourcePointer": "/external_number",
+                    "targetPointer": "/external_number",
+                    "mode": "typed",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "number",
+                      "value": "9007199254740995"
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  }
+                ],
+                "sourceRef": {
+                  "sourceId": "source-webhook-1",
+                  "pointer": "/rows/2",
+                  "record": 3
+                },
+                "receiptRef": {
+                  "sourceId": "receipt-1",
+                  "pointer": "/rows/2",
+                  "record": 3
+                },
+                "readbackRef": null,
+                "findings": []
+              },
+              "right": {
+                "rowId": "row:3",
+                "row": 3,
+                "key": [
+                  {
+                    "type": "string",
+                    "value": "003"
+                  }
+                ],
+                "action": "create",
+                "targetId": "host-3",
+                "status": "matched",
+                "providerOutcome": {
+                  "row": 3,
+                  "status": "accepted",
+                  "targetId": "host-3",
+                  "error": null,
+                  "_ref": {
+                    "sourceId": "receipt-2",
+                    "pointer": "/rows/2",
+                    "record": 3
+                  }
+                },
+                "fields": [
+                  {
+                    "id": "sku",
+                    "label": "SKU",
+                    "sourcePointer": "/sku",
+                    "targetPointer": "/sku",
+                    "mode": "text",
+                    "status": "matched",
+                    "expected": {
+                      "type": "string",
+                      "value": "003"
+                    },
+                    "actual": {
+                      "type": "string",
+                      "value": "003"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "name",
+                    "label": "Name",
+                    "sourcePointer": "/name",
+                    "targetPointer": "/name",
+                    "mode": "text",
+                    "status": "matched",
+                    "expected": {
+                      "type": "string",
+                      "value": "Rejected crate"
+                    },
+                    "actual": {
+                      "type": "string",
+                      "value": "Rejected crate"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "quantity",
+                    "label": "Quantity",
+                    "sourcePointer": "/quantity",
+                    "targetPointer": "/quantity",
+                    "mode": "decimal",
+                    "status": "matched",
+                    "expected": {
+                      "type": "number",
+                      "value": "3"
+                    },
+                    "actual": {
+                      "type": "number",
+                      "value": "3"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "active",
+                    "label": "Active",
+                    "sourcePointer": "/active",
+                    "targetPointer": "/active",
+                    "mode": "typed",
+                    "status": "matched",
+                    "expected": {
+                      "type": "boolean",
+                      "value": true
+                    },
+                    "actual": {
+                      "type": "boolean",
+                      "value": true
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "external_number",
+                    "label": "Original external number",
+                    "sourcePointer": "/external_number",
+                    "targetPointer": "/external_number",
+                    "mode": "typed",
+                    "status": "matched",
+                    "expected": {
+                      "type": "number",
+                      "value": "9007199254740995"
+                    },
+                    "actual": {
+                      "type": "number",
+                      "value": "9007199254740995"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  }
+                ],
+                "sourceRef": {
+                  "sourceId": "source-webhook-2",
+                  "pointer": "/rows/2",
+                  "record": 3
+                },
+                "receiptRef": {
+                  "sourceId": "receipt-2",
+                  "pointer": "/rows/2",
+                  "record": 3
+                },
+                "readbackRef": {
+                  "sourceId": "readback-2",
+                  "pointer": "/records/2",
+                  "record": 3
+                },
+                "findings": []
+              },
+              "change": "now_matches_selected_expectation",
+              "sourceChanged": false,
+              "targetChanged": true,
+              "note": "Suggested exact unique explicit source key; reviewer must confirm."
+            },
+            {
+              "rowId": "pair:4",
+              "leftRow": 4,
+              "rightRow": 4,
+              "left": {
+                "rowId": "row:4",
+                "row": 4,
+                "key": [
+                  {
+                    "type": "string",
+                    "value": "004"
+                  }
+                ],
+                "action": "create",
+                "targetId": null,
+                "status": "uncertain",
+                "providerOutcome": {
+                  "row": 4,
+                  "status": "uncertain",
+                  "targetId": null,
+                  "error": "Authored process ended before authoritative receipt",
+                  "_ref": {
+                    "sourceId": "receipt-1",
+                    "pointer": "/rows/3",
+                    "record": 4
+                  }
+                },
+                "fields": [
+                  {
+                    "id": "sku",
+                    "label": "SKU",
+                    "sourcePointer": "/sku",
+                    "targetPointer": "/sku",
+                    "mode": "text",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "string",
+                      "value": "004"
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  },
+                  {
+                    "id": "name",
+                    "label": "Name",
+                    "sourcePointer": "/name",
+                    "targetPointer": "/name",
+                    "mode": "text",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "string",
+                      "value": "Uncertain crate"
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  },
+                  {
+                    "id": "quantity",
+                    "label": "Quantity",
+                    "sourcePointer": "/quantity",
+                    "targetPointer": "/quantity",
+                    "mode": "decimal",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "number",
+                      "value": "4"
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  },
+                  {
+                    "id": "active",
+                    "label": "Active",
+                    "sourcePointer": "/active",
+                    "targetPointer": "/active",
+                    "mode": "typed",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "boolean",
+                      "value": true
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  },
+                  {
+                    "id": "external_number",
+                    "label": "Original external number",
+                    "sourcePointer": "/external_number",
+                    "targetPointer": "/external_number",
+                    "mode": "typed",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "number",
+                      "value": "9007199254740996"
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  }
+                ],
+                "sourceRef": {
+                  "sourceId": "source-webhook-1",
+                  "pointer": "/rows/3",
+                  "record": 4
+                },
+                "receiptRef": {
+                  "sourceId": "receipt-1",
+                  "pointer": "/rows/3",
+                  "record": 4
+                },
+                "readbackRef": null,
+                "findings": []
+              },
+              "right": {
+                "rowId": "row:4",
+                "row": 4,
+                "key": [
+                  {
+                    "type": "string",
+                    "value": "004"
+                  }
+                ],
+                "action": "create",
+                "targetId": "host-4",
+                "status": "matched",
+                "providerOutcome": {
+                  "row": 4,
+                  "status": "accepted",
+                  "targetId": "host-4",
+                  "error": null,
+                  "_ref": {
+                    "sourceId": "receipt-2",
+                    "pointer": "/rows/3",
+                    "record": 4
+                  }
+                },
+                "fields": [
+                  {
+                    "id": "sku",
+                    "label": "SKU",
+                    "sourcePointer": "/sku",
+                    "targetPointer": "/sku",
+                    "mode": "text",
+                    "status": "matched",
+                    "expected": {
+                      "type": "string",
+                      "value": "004"
+                    },
+                    "actual": {
+                      "type": "string",
+                      "value": "004"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "name",
+                    "label": "Name",
+                    "sourcePointer": "/name",
+                    "targetPointer": "/name",
+                    "mode": "text",
+                    "status": "matched",
+                    "expected": {
+                      "type": "string",
+                      "value": "Uncertain crate"
+                    },
+                    "actual": {
+                      "type": "string",
+                      "value": "Uncertain crate"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "quantity",
+                    "label": "Quantity",
+                    "sourcePointer": "/quantity",
+                    "targetPointer": "/quantity",
+                    "mode": "decimal",
+                    "status": "matched",
+                    "expected": {
+                      "type": "number",
+                      "value": "4"
+                    },
+                    "actual": {
+                      "type": "number",
+                      "value": "4"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "active",
+                    "label": "Active",
+                    "sourcePointer": "/active",
+                    "targetPointer": "/active",
+                    "mode": "typed",
+                    "status": "matched",
+                    "expected": {
+                      "type": "boolean",
+                      "value": true
+                    },
+                    "actual": {
+                      "type": "boolean",
+                      "value": true
+                    },
+                    "detail": "Matches selected comparison mode"
+                  },
+                  {
+                    "id": "external_number",
+                    "label": "Original external number",
+                    "sourcePointer": "/external_number",
+                    "targetPointer": "/external_number",
+                    "mode": "typed",
+                    "status": "matched",
+                    "expected": {
+                      "type": "number",
+                      "value": "9007199254740996"
+                    },
+                    "actual": {
+                      "type": "number",
+                      "value": "9007199254740996"
+                    },
+                    "detail": "Matches selected comparison mode"
+                  }
+                ],
+                "sourceRef": {
+                  "sourceId": "source-webhook-2",
+                  "pointer": "/rows/3",
+                  "record": 4
+                },
+                "receiptRef": {
+                  "sourceId": "receipt-2",
+                  "pointer": "/rows/3",
+                  "record": 4
+                },
+                "readbackRef": {
+                  "sourceId": "readback-2",
+                  "pointer": "/records/3",
+                  "record": 4
+                },
+                "findings": []
+              },
+              "change": "now_matches_selected_expectation",
+              "sourceChanged": false,
+              "targetChanged": true,
+              "note": "Suggested exact unique explicit source key; reviewer must confirm."
+            },
+            {
+              "rowId": "pair:5",
+              "leftRow": 5,
+              "rightRow": 5,
+              "left": {
+                "rowId": "row:5",
+                "row": 5,
+                "key": [
+                  {
+                    "type": "string",
+                    "value": "005"
+                  }
+                ],
+                "action": "skip",
+                "targetId": null,
+                "status": "skipped",
+                "providerOutcome": {
+                  "row": 5,
+                  "status": "not_attempted",
+                  "targetId": null,
+                  "error": null,
+                  "_ref": {
+                    "sourceId": "receipt-1",
+                    "pointer": "/rows/4",
+                    "record": 5
+                  }
+                },
+                "fields": [
+                  {
+                    "id": "sku",
+                    "label": "SKU",
+                    "sourcePointer": "/sku",
+                    "targetPointer": "/sku",
+                    "mode": "text",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "string",
+                      "value": "005"
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  },
+                  {
+                    "id": "name",
+                    "label": "Name",
+                    "sourcePointer": "/name",
+                    "targetPointer": "/name",
+                    "mode": "text",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "string",
+                      "value": "Skipped crate"
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  },
+                  {
+                    "id": "quantity",
+                    "label": "Quantity",
+                    "sourcePointer": "/quantity",
+                    "targetPointer": "/quantity",
+                    "mode": "decimal",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "number",
+                      "value": "5"
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  },
+                  {
+                    "id": "active",
+                    "label": "Active",
+                    "sourcePointer": "/active",
+                    "targetPointer": "/active",
+                    "mode": "typed",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "boolean",
+                      "value": false
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  },
+                  {
+                    "id": "external_number",
+                    "label": "Original external number",
+                    "sourcePointer": "/external_number",
+                    "targetPointer": "/external_number",
+                    "mode": "typed",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "number",
+                      "value": "9007199254740997"
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  }
+                ],
+                "sourceRef": {
+                  "sourceId": "source-webhook-1",
+                  "pointer": "/rows/4",
+                  "record": 5
+                },
+                "receiptRef": {
+                  "sourceId": "receipt-1",
+                  "pointer": "/rows/4",
+                  "record": 5
+                },
+                "readbackRef": null,
+                "findings": []
+              },
+              "right": {
+                "rowId": "row:5",
+                "row": 5,
+                "key": [
+                  {
+                    "type": "string",
+                    "value": "005"
+                  }
+                ],
+                "action": "skip",
+                "targetId": null,
+                "status": "skipped",
+                "providerOutcome": {
+                  "row": 5,
+                  "status": "not_attempted",
+                  "targetId": null,
+                  "error": null,
+                  "_ref": {
+                    "sourceId": "receipt-2",
+                    "pointer": "/rows/4",
+                    "record": 5
+                  }
+                },
+                "fields": [
+                  {
+                    "id": "sku",
+                    "label": "SKU",
+                    "sourcePointer": "/sku",
+                    "targetPointer": "/sku",
+                    "mode": "text",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "string",
+                      "value": "005"
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  },
+                  {
+                    "id": "name",
+                    "label": "Name",
+                    "sourcePointer": "/name",
+                    "targetPointer": "/name",
+                    "mode": "text",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "string",
+                      "value": "Skipped crate"
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  },
+                  {
+                    "id": "quantity",
+                    "label": "Quantity",
+                    "sourcePointer": "/quantity",
+                    "targetPointer": "/quantity",
+                    "mode": "decimal",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "number",
+                      "value": "5"
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  },
+                  {
+                    "id": "active",
+                    "label": "Active",
+                    "sourcePointer": "/active",
+                    "targetPointer": "/active",
+                    "mode": "typed",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "boolean",
+                      "value": false
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  },
+                  {
+                    "id": "external_number",
+                    "label": "Original external number",
+                    "sourcePointer": "/external_number",
+                    "targetPointer": "/external_number",
+                    "mode": "typed",
+                    "status": "unobserved",
+                    "expected": {
+                      "type": "number",
+                      "value": "9007199254740997"
+                    },
+                    "actual": null,
+                    "detail": "No eligible target observation"
+                  }
+                ],
+                "sourceRef": {
+                  "sourceId": "source-webhook-2",
+                  "pointer": "/rows/4",
+                  "record": 5
+                },
+                "receiptRef": {
+                  "sourceId": "receipt-2",
+                  "pointer": "/rows/4",
+                  "record": 5
+                },
+                "readbackRef": null,
+                "findings": []
+              },
+              "change": "same_observed_status",
+              "sourceChanged": false,
+              "targetChanged": false,
+              "note": "Suggested exact unique explicit source key; reviewer must confirm."
+            }
+          ],
+          "unmatchedLeft": [],
+          "unmatchedRight": [],
+          "counts": {
+            "pairs": 5,
+            "unmatchedLeft": 0,
+            "unmatchedRight": 0
+          },
+          "findings": [
+            {
+              "code": "SOURCE_CHANGED",
+              "message": "Some paired expectations changed; later matches are not proof the original requirement was repaired.",
+              "row": null,
+              "field": null,
+              "severity": "info"
+            },
+            {
+              "code": "TARGET_RESELECTED",
+              "message": "Some paired host record IDs differ; selection remains explicit.",
+              "row": null,
+              "field": null,
+              "severity": "info"
+            }
+          ],
+          "leftSha256": "44ff6723303e3a6bdfde1b43099c6381876f2ff3394cf5fd8432dab76475a404",
+          "rightSha256": "70e6868fe0b94e82f0c803c51bb51df7e7ec977a5822e66558fa6b5a6883f3ea"
+        },
+        "sha256": "9fc563be0115624fca773acf7c4feffb6eae958ab5dcfcf01e716bec6cb85c82"
+      }
+    ],
+    "reviews": [
+      {
+        "id": "review-1",
+        "body": {
+          "reviewId": "review-1",
+          "subjectType": "comparison",
+          "subjectId": "comparison-1",
+          "rowId": "pair:2",
+          "status": "investigate",
+          "owner": "Example engineer",
+          "reviewer": "Example reviewer",
+          "note": "Original active field was a string; original name expectation also changed.",
+          "parentId": null,
+          "subjectSha256": "9fc563be0115624fca773acf7c4feffb6eae958ab5dcfcf01e716bec6cb85c82"
+        },
+        "sha256": "4f306e859f00b166f0ae2fbb2d68db6da56893f57b3e16ba3aacb7ff07ba13ab"
+      },
+      {
+        "id": "review-2",
+        "body": {
+          "reviewId": "review-2",
+          "subjectType": "comparison",
+          "subjectId": "comparison-1",
+          "rowId": "pair:2",
+          "status": "accept",
+          "owner": "Example engineer",
+          "reviewer": "Example reviewer",
+          "note": "Accept the selected corrected edition; retain original divergence and source change.",
+          "parentId": "review-1",
+          "subjectSha256": "9fc563be0115624fca773acf7c4feffb6eae958ab5dcfcf01e716bec6cb85c82"
+        },
+        "sha256": "11291cd7d26053c4d6390b650c2ae43201ee21f20eaf0fef58074b364e976b5a"
+      }
+    ],
+    "operations": [
+      {
+        "request": {
+          "id": "authored-operation-1",
+          "type": "source.add",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "sourceId": "source-original",
+            "name": "inventory-original.csv",
+            "text": "sku,name,quantity,active,notes\r\n001,\"Café crate\",1.00,true,\"First line\r\nSecond line\"\r\n002,\"Small crate\",2,false,\"Keep leading zero SKU\"\r\n003,\"Rejected crate\",3,true,\"Authored validation rejection\"\r\n004,\"Uncertain crate\",4,true,\"Authored interrupted host write\"\r\n005,\"Skipped crate\",5,false,\"Reviewer excluded this row\"\r\n",
+            "role": "original"
+          },
+          "expectedRevision": 0
+        },
+        "result": {
+          "collection": "sources",
+          "id": "source-original"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-2",
+          "type": "source.add",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "sourceId": "source-webhook-1",
+            "name": "authored-successful-import.json",
+            "text": "{\"import_id\":\"authored-import-1\",\"template_id\":\"template-inventory-v1\",\"row_count\":5,\"imported_at\":\"2026-10-14T12:01:00Z\",\"rows\":[{\"sku\":\"001\",\"name\":\"Café crate\",\"quantity\":1.00,\"active\":true,\"external_number\":9007199254740993,\"notes\":\"First line\\r\\nSecond line\"},{\"sku\":\"002\",\"name\":\"Small crate\",\"quantity\":2,\"active\":false,\"external_number\":9007199254740994,\"notes\":\"Keep leading zero SKU\"},{\"sku\":\"003\",\"name\":\"Rejected crate\",\"quantity\":3,\"active\":true,\"external_number\":9007199254740995,\"notes\":\"Authored validation rejection\"},{\"sku\":\"004\",\"name\":\"Uncertain crate\",\"quantity\":4,\"active\":true,\"external_number\":9007199254740996,\"notes\":\"Authored interrupted host write\"},{\"sku\":\"005\",\"name\":\"Skipped crate\",\"quantity\":5,\"active\":false,\"external_number\":9007199254740997,\"notes\":\"Reviewer excluded this row\"}],\"retained_extension\":{\"label\":\"Unknown provider metadata retained\"}}",
+            "role": "import"
+          },
+          "expectedRevision": 1
+        },
+        "result": {
+          "collection": "sources",
+          "id": "source-webhook-1"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-3",
+          "type": "source.add",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "sourceId": "source-callback-1",
+            "name": "authored-callback-array.json",
+            "text": "[{\"sku\":\"001\",\"name\":\"Café crate\",\"quantity\":1.00,\"active\":true,\"external_number\":9007199254740993,\"notes\":\"First line\\r\\nSecond line\"},{\"sku\":\"002\",\"name\":\"Small crate\",\"quantity\":2,\"active\":false,\"external_number\":9007199254740994,\"notes\":\"Keep leading zero SKU\"},{\"sku\":\"003\",\"name\":\"Rejected crate\",\"quantity\":3,\"active\":true,\"external_number\":9007199254740995,\"notes\":\"Authored validation rejection\"},{\"sku\":\"004\",\"name\":\"Uncertain crate\",\"quantity\":4,\"active\":true,\"external_number\":9007199254740996,\"notes\":\"Authored interrupted host write\"},{\"sku\":\"005\",\"name\":\"Skipped crate\",\"quantity\":5,\"active\":false,\"external_number\":9007199254740997,\"notes\":\"Reviewer excluded this row\"}]",
+            "role": "import"
+          },
+          "expectedRevision": 2
+        },
+        "result": {
+          "collection": "sources",
+          "id": "source-callback-1"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-4",
+          "type": "import.capture",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "importId": "import-webhook-1",
+            "label": "Authored successful-import envelope",
+            "sourceId": "source-webhook-1",
+            "kind": "webhook",
+            "scope": {
+              "application": "authored-inventory",
+              "tenant": "example-tenant",
+              "environment": "authored-offline",
+              "templateId": "template-inventory-v1"
+            },
+            "externalImportId": "authored-import-1",
+            "note": "Published-shape authored fixture; no verified signature or live delivery."
+          },
+          "expectedRevision": 3
+        },
+        "result": {
+          "collection": "imports",
+          "id": "import-webhook-1"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-5",
+          "type": "import.capture",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "importId": "import-callback-1",
+            "label": "Same authored rows, callback serialization",
+            "sourceId": "source-callback-1",
+            "kind": "callback",
+            "scope": {
+              "application": "authored-inventory",
+              "tenant": "example-tenant",
+              "environment": "authored-offline",
+              "templateId": "template-inventory-v1"
+            },
+            "externalImportId": "authored-import-1",
+            "note": "Explicit authored correlation; no real cross-channel guarantee inferred."
+          },
+          "expectedRevision": 4
+        },
+        "result": {
+          "collection": "imports",
+          "id": "import-callback-1"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-6",
+          "type": "mapping.save",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "mappingId": "mapping-1",
+            "label": "Inventory host fields",
+            "importId": "import-webhook-1",
+            "keyPointers": [
+              "/sku"
+            ],
+            "fields": [
+              {
+                "id": "sku",
+                "label": "SKU",
+                "sourcePointer": "/sku",
+                "targetPointer": "/sku",
+                "mode": "text"
+              },
+              {
+                "id": "name",
+                "label": "Name",
+                "sourcePointer": "/name",
+                "targetPointer": "/name",
+                "mode": "text"
+              },
+              {
+                "id": "quantity",
+                "label": "Quantity",
+                "sourcePointer": "/quantity",
+                "targetPointer": "/quantity",
+                "mode": "decimal"
+              },
+              {
+                "id": "active",
+                "label": "Active",
+                "sourcePointer": "/active",
+                "targetPointer": "/active",
+                "mode": "typed"
+              },
+              {
+                "id": "external_number",
+                "label": "Original external number",
+                "sourcePointer": "/external_number",
+                "targetPointer": "/external_number",
+                "mode": "typed"
+              }
+            ],
+            "note": "Explicit SKU key and exact typed/text/decimal rules."
+          },
+          "expectedRevision": 5
+        },
+        "result": {
+          "collection": "mappings",
+          "id": "mapping-1"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-7",
+          "type": "batch.prepare",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "batchId": "batch-1",
+            "label": "Authored first host plan",
+            "mappingId": "mapping-1",
+            "parentId": null,
+            "actions": [
+              {
+                "row": 1,
+                "action": "create",
+                "targetId": null,
+                "reason": "New SKU"
+              },
+              {
+                "row": 2,
+                "action": "update",
+                "targetId": "host-2",
+                "reason": "Explicit preselected host record"
+              },
+              {
+                "row": 3,
+                "action": "create",
+                "targetId": null,
+                "reason": "New SKU"
+              },
+              {
+                "row": 4,
+                "action": "create",
+                "targetId": null,
+                "reason": "New SKU"
+              },
+              {
+                "row": 5,
+                "action": "skip",
+                "targetId": null,
+                "reason": "Reviewer deliberately excludes this original row"
+              }
+            ],
+            "reviewer": "Example engineer",
+            "note": "Prepared only; no network execution.",
+            "previewSha256": "19c97ee8009bc9f565ae8a4e20f8d0529d861d1a2217ca06116b6934144e7f6f"
+          },
+          "expectedRevision": 6
+        },
+        "result": {
+          "collection": "batches",
+          "id": "batch-1"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-8",
+          "type": "source.add",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "sourceId": "receipt-1",
+            "name": "authored-host-receipt-1.json",
+            "text": "{\n  \"schema\": \"tjlabs.import-host-result.v1\",\n  \"batchId\": \"batch-1\",\n  \"batchSha256\": \"19c97ee8009bc9f565ae8a4e20f8d0529d861d1a2217ca06116b6934144e7f6f\",\n  \"scope\": {\n    \"application\": \"authored-inventory\",\n    \"tenant\": \"example-tenant\",\n    \"environment\": \"authored-offline\",\n    \"templateId\": \"template-inventory-v1\"\n  },\n  \"attemptId\": \"authored-attempt-1\",\n  \"observedAt\": \"2026-10-14T12:10:00Z\",\n  \"providerReference\": \"AUTHORED-NOT-PROVIDER-EVIDENCE-1\",\n  \"rows\": [\n    {\n      \"row\": 1,\n      \"status\": \"accepted\",\n      \"targetId\": \"host-1\",\n      \"error\": null\n    },\n    {\n      \"row\": 2,\n      \"status\": \"accepted\",\n      \"targetId\": \"host-2\",\n      \"error\": null\n    },\n    {\n      \"row\": 3,\n      \"status\": \"rejected\",\n      \"targetId\": null,\n      \"error\": \"Authored host rule rejected this record\"\n    },\n    {\n      \"row\": 4,\n      \"status\": \"uncertain\",\n      \"targetId\": null,\n      \"error\": \"Authored process ended before authoritative receipt\"\n    },\n    {\n      \"row\": 5,\n      \"status\": \"not_attempted\",\n      \"targetId\": null,\n      \"error\": null\n    }\n  ]\n}",
+            "role": "host_receipt"
+          },
+          "expectedRevision": 7
+        },
+        "result": {
+          "collection": "sources",
+          "id": "receipt-1"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-9",
+          "type": "source.add",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "sourceId": "readback-1",
+            "name": "authored-readback-1.json",
+            "text": "{\"schema\":\"tjlabs.import-host-readback.v1\",\"scope\":{\"application\":\"authored-inventory\",\"tenant\":\"example-tenant\",\"environment\":\"authored-offline\",\"templateId\":\"template-inventory-v1\"},\"observedAt\":\"2026-10-14T12:11:00Z\",\"coverage\":{\"kind\":\"selected_records\",\"requestedIds\":[\"host-1\",\"host-2\"]},\"records\":[{\"id\":\"host-1\",\"values\":{\"sku\":\"001\",\"name\":\"Café crate\",\"quantity\":\"1.0\",\"active\":true,\"external_number\":9007199254740993}},{\"id\":\"host-2\",\"values\":{\"sku\":\"002\",\"name\":\"Small crate\",\"quantity\":2,\"active\":\"false\",\"external_number\":9007199254740994}}]}",
+            "role": "readback"
+          },
+          "expectedRevision": 8
+        },
+        "result": {
+          "collection": "sources",
+          "id": "readback-1"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-10",
+          "type": "reconciliation.save",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "reconciliationId": "reconciliation-1",
+            "label": "Authored partial first result",
+            "batchId": "batch-1",
+            "receiptSourceId": "receipt-1",
+            "readbackSourceId": "readback-1",
+            "reviewer": "Example engineer",
+            "note": "Every source row retained, including partial and uncertain outcomes.",
+            "previewSha256": "44ff6723303e3a6bdfde1b43099c6381876f2ff3394cf5fd8432dab76475a404"
+          },
+          "expectedRevision": 9
+        },
+        "result": {
+          "collection": "reconciliations",
+          "id": "reconciliation-1"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-11",
+          "type": "source.add",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "sourceId": "source-webhook-2",
+            "name": "authored-corrected-import.json",
+            "text": "{\"import_id\":\"authored-import-2\",\"template_id\":\"template-inventory-v1\",\"row_count\":5,\"imported_at\":\"2026-10-14T12:20:00Z\",\"rows\":[{\"sku\":\"001\",\"name\":\"Café crate\",\"quantity\":1.00,\"active\":true,\"external_number\":9007199254740993,\"notes\":\"First line\\r\\nSecond line\"},{\"sku\":\"002\",\"name\":\"Small crate corrected\",\"quantity\":2,\"active\":false,\"external_number\":9007199254740994,\"notes\":\"Keep leading zero SKU\"},{\"sku\":\"003\",\"name\":\"Rejected crate\",\"quantity\":3,\"active\":true,\"external_number\":9007199254740995,\"notes\":\"Authored validation rejection\"},{\"sku\":\"004\",\"name\":\"Uncertain crate\",\"quantity\":4,\"active\":true,\"external_number\":9007199254740996,\"notes\":\"Authored interrupted host write\"},{\"sku\":\"005\",\"name\":\"Skipped crate\",\"quantity\":5,\"active\":false,\"external_number\":9007199254740997,\"notes\":\"Reviewer excluded this row\"}]}",
+            "role": "import"
+          },
+          "expectedRevision": 10
+        },
+        "result": {
+          "collection": "sources",
+          "id": "source-webhook-2"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-12",
+          "type": "import.capture",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "importId": "import-webhook-2",
+            "label": "Authored corrected source edition",
+            "sourceId": "source-webhook-2",
+            "kind": "webhook",
+            "scope": {
+              "application": "authored-inventory",
+              "tenant": "example-tenant",
+              "environment": "authored-offline",
+              "templateId": "template-inventory-v1"
+            },
+            "externalImportId": "authored-import-2",
+            "note": "New source identity; original remains retained."
+          },
+          "expectedRevision": 11
+        },
+        "result": {
+          "collection": "imports",
+          "id": "import-webhook-2"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-13",
+          "type": "mapping.save",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "mappingId": "mapping-2",
+            "label": "Same host contract, corrected source",
+            "importId": "import-webhook-2",
+            "keyPointers": [
+              "/sku"
+            ],
+            "fields": [
+              {
+                "id": "sku",
+                "label": "SKU",
+                "sourcePointer": "/sku",
+                "targetPointer": "/sku",
+                "mode": "text"
+              },
+              {
+                "id": "name",
+                "label": "Name",
+                "sourcePointer": "/name",
+                "targetPointer": "/name",
+                "mode": "text"
+              },
+              {
+                "id": "quantity",
+                "label": "Quantity",
+                "sourcePointer": "/quantity",
+                "targetPointer": "/quantity",
+                "mode": "decimal"
+              },
+              {
+                "id": "active",
+                "label": "Active",
+                "sourcePointer": "/active",
+                "targetPointer": "/active",
+                "mode": "typed"
+              },
+              {
+                "id": "external_number",
+                "label": "Original external number",
+                "sourcePointer": "/external_number",
+                "targetPointer": "/external_number",
+                "mode": "typed"
+              }
+            ],
+            "note": "Explicit SKU key and exact typed/text/decimal rules."
+          },
+          "expectedRevision": 12
+        },
+        "result": {
+          "collection": "mappings",
+          "id": "mapping-2"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-14",
+          "type": "batch.prepare",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "batchId": "batch-2",
+            "label": "Authored successor host plan",
+            "mappingId": "mapping-2",
+            "parentId": "batch-1",
+            "actions": [
+              {
+                "row": 1,
+                "action": "update",
+                "targetId": "host-1",
+                "reason": "Existing record from original accepted receipt"
+              },
+              {
+                "row": 2,
+                "action": "update",
+                "targetId": "host-2",
+                "reason": "Explicit preselected host record"
+              },
+              {
+                "row": 3,
+                "action": "create",
+                "targetId": null,
+                "reason": "New SKU"
+              },
+              {
+                "row": 4,
+                "action": "create",
+                "targetId": null,
+                "reason": "New SKU"
+              },
+              {
+                "row": 5,
+                "action": "skip",
+                "targetId": null,
+                "reason": "Reviewer deliberately excludes this original row"
+              }
+            ],
+            "reviewer": "Example engineer",
+            "note": "Prepared only; no network execution.",
+            "previewSha256": "b42d5ad8288fa2b7983d5f987145055927b92f9e699170122724db171e53669a"
+          },
+          "expectedRevision": 13
+        },
+        "result": {
+          "collection": "batches",
+          "id": "batch-2"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-15",
+          "type": "source.add",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "sourceId": "receipt-2",
+            "name": "authored-host-receipt-2.json",
+            "text": "{\n  \"schema\": \"tjlabs.import-host-result.v1\",\n  \"batchId\": \"batch-2\",\n  \"batchSha256\": \"b42d5ad8288fa2b7983d5f987145055927b92f9e699170122724db171e53669a\",\n  \"scope\": {\n    \"application\": \"authored-inventory\",\n    \"tenant\": \"example-tenant\",\n    \"environment\": \"authored-offline\",\n    \"templateId\": \"template-inventory-v1\"\n  },\n  \"attemptId\": \"authored-attempt-2\",\n  \"observedAt\": \"2026-10-14T12:21:00Z\",\n  \"providerReference\": \"AUTHORED-NOT-PROVIDER-EVIDENCE-2\",\n  \"rows\": [\n    {\n      \"row\": 1,\n      \"status\": \"accepted\",\n      \"targetId\": \"host-1\",\n      \"error\": null\n    },\n    {\n      \"row\": 2,\n      \"status\": \"accepted\",\n      \"targetId\": \"host-2\",\n      \"error\": null\n    },\n    {\n      \"row\": 3,\n      \"status\": \"accepted\",\n      \"targetId\": \"host-3\",\n      \"error\": null\n    },\n    {\n      \"row\": 4,\n      \"status\": \"accepted\",\n      \"targetId\": \"host-4\",\n      \"error\": null\n    },\n    {\n      \"row\": 5,\n      \"status\": \"not_attempted\",\n      \"targetId\": null,\n      \"error\": null\n    }\n  ]\n}",
+            "role": "host_receipt"
+          },
+          "expectedRevision": 14
+        },
+        "result": {
+          "collection": "sources",
+          "id": "receipt-2"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-16",
+          "type": "source.add",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "sourceId": "readback-2",
+            "name": "authored-readback-2.json",
+            "text": "{\"schema\":\"tjlabs.import-host-readback.v1\",\"scope\":{\"application\":\"authored-inventory\",\"tenant\":\"example-tenant\",\"environment\":\"authored-offline\",\"templateId\":\"template-inventory-v1\"},\"observedAt\":\"2026-10-14T12:22:00Z\",\"coverage\":{\"kind\":\"selected_records\",\"requestedIds\":[\"host-1\",\"host-2\",\"host-3\",\"host-4\"]},\"records\":[{\"id\":\"host-1\",\"values\":{\"sku\":\"001\",\"name\":\"Café crate\",\"quantity\":1.00,\"active\":true,\"external_number\":9007199254740993,\"notes\":\"First line\\r\\nSecond line\"}},{\"id\":\"host-2\",\"values\":{\"sku\":\"002\",\"name\":\"Small crate corrected\",\"quantity\":2,\"active\":false,\"external_number\":9007199254740994,\"notes\":\"Keep leading zero SKU\"}},{\"id\":\"host-3\",\"values\":{\"sku\":\"003\",\"name\":\"Rejected crate\",\"quantity\":3,\"active\":true,\"external_number\":9007199254740995,\"notes\":\"Authored validation rejection\"}},{\"id\":\"host-4\",\"values\":{\"sku\":\"004\",\"name\":\"Uncertain crate\",\"quantity\":4,\"active\":true,\"external_number\":9007199254740996,\"notes\":\"Authored interrupted host write\"}}]}",
+            "role": "readback"
+          },
+          "expectedRevision": 15
+        },
+        "result": {
+          "collection": "sources",
+          "id": "readback-2"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-17",
+          "type": "reconciliation.save",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "reconciliationId": "reconciliation-2",
+            "label": "Authored corrected source and host observation",
+            "batchId": "batch-2",
+            "receiptSourceId": "receipt-2",
+            "readbackSourceId": "readback-2",
+            "reviewer": "Example engineer",
+            "note": "Every source row retained, including partial and uncertain outcomes.",
+            "previewSha256": "70e6868fe0b94e82f0c803c51bb51df7e7ec977a5822e66558fa6b5a6883f3ea"
+          },
+          "expectedRevision": 16
+        },
+        "result": {
+          "collection": "reconciliations",
+          "id": "reconciliation-2"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-18",
+          "type": "comparison.save",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "comparisonId": "comparison-1",
+            "label": "Authored first versus corrected edition",
+            "leftId": "reconciliation-1",
+            "rightId": "reconciliation-2",
+            "pairs": [
+              {
+                "leftRow": 1,
+                "rightRow": 1,
+                "note": "Suggested exact unique explicit source key; reviewer must confirm."
+              },
+              {
+                "leftRow": 2,
+                "rightRow": 2,
+                "note": "Suggested exact unique explicit source key; reviewer must confirm."
+              },
+              {
+                "leftRow": 3,
+                "rightRow": 3,
+                "note": "Suggested exact unique explicit source key; reviewer must confirm."
+              },
+              {
+                "leftRow": 4,
+                "rightRow": 4,
+                "note": "Suggested exact unique explicit source key; reviewer must confirm."
+              },
+              {
+                "leftRow": 5,
+                "rightRow": 5,
+                "note": "Suggested exact unique explicit source key; reviewer must confirm."
+              }
+            ],
+            "reviewer": "Example engineer",
+            "note": "Confirm exact unique SKU pairs; changed source expectation is not evidence of repairing the original name.",
+            "previewSha256": "9fc563be0115624fca773acf7c4feffb6eae958ab5dcfcf01e716bec6cb85c82"
+          },
+          "expectedRevision": 17
+        },
+        "result": {
+          "collection": "comparisons",
+          "id": "comparison-1"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-19",
+          "type": "review.save",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "reviewId": "review-1",
+            "subjectType": "comparison",
+            "subjectId": "comparison-1",
+            "rowId": "pair:2",
+            "status": "investigate",
+            "owner": "Example engineer",
+            "reviewer": "Example reviewer",
+            "note": "Original active field was a string; original name expectation also changed.",
+            "parentId": null
+          },
+          "expectedRevision": 18
+        },
+        "result": {
+          "collection": "reviews",
+          "id": "review-1"
+        }
+      },
+      {
+        "request": {
+          "id": "authored-operation-20",
+          "type": "review.save",
+          "actor": "Authored course reviewer",
+          "at": "2026-10-14T12:00:00Z",
+          "input": {
+            "reviewId": "review-2",
+            "subjectType": "comparison",
+            "subjectId": "comparison-1",
+            "rowId": "pair:2",
+            "status": "accept",
+            "owner": "Example engineer",
+            "reviewer": "Example reviewer",
+            "note": "Accept the selected corrected edition; retain original divergence and source change.",
+            "parentId": "review-1"
+          },
+          "expectedRevision": 19
+        },
+        "result": {
+          "collection": "reviews",
+          "id": "review-2"
+        }
+      }
+    ]
+  }
+}
