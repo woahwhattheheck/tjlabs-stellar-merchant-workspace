@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "orkyo-native-import",
+  "description": "Complete native import preparation, frozen batches, actual outcome reconciliation and recoverable editable sessions",
+  "components": [
+    "integrations/orkyo-native-import"
+  ],
+  "commands": {
+    "orkyo-workspace": "integrations/orkyo-native-import/cli.mjs",
+    "orkyo-managed": "integrations/orkyo-native-import/managed.mjs"
+  },
+  "commandDescriptions": {
+    "orkyo-workspace": "Create, receive and export complete Orkyo import readiness sessions",
+    "orkyo-managed": "Open the managed orkyo operator through Applications"
+  },
+  "exports": {
+    "./products/orkyo": "./source/integrations/orkyo-native-import/runtime.mjs",
+    "./products/orkyo/client": "./source/integrations/orkyo-native-import/host/client.mjs",
+    "./products/orkyo/server": "./source/integrations/orkyo-native-import/host/server.mjs"
+  },
+  "applicationProviders": {
+    "orkyo-native-import": "integrations/orkyo-native-import/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "orkyo-native-import": "integrations/orkyo-native-import/merchant-provider.mjs"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "domain": {
+    "schema": "stellar-forge.orkyo-installed-course.v1",
+    "operationId": "ORKYO-PRODUCTION-IMPORT-WORKSHARE-20261015",
+    "sourceCommit": "9b773566ecbfb0947f51f6e20ea925c03ddb2a22",
+    "domainRevision": 21,
+    "head": "e8324770893b89952e9c7c9b122e48f36c757dc01b0ce6816731516239a429c1",
+    "originals": 3,
+    "sourceEditions": 5,
+    "batches": 4,
+    "actualOutcomeId": "authored-job-installed-703",
+    "retainedPreCorrectionDraftSha256": "a2bfe5391315cfa29ce2d65d4a21648dd39be20698bf131f790710ba3d850434",
+    "pendingOriginalSha256": "9bdaa439de52d0c7b55ff4a4c9c71a29e4cba84a5b443a826e380d0d757b5203",
+    "nativeRoughHours": 5,
+    "nativeRoughEnd": "2026-10-20T00:00:00Z",
+    "duplicateCreateResult": "Row Jobs:7 is already prepared, unresolved or bound",
+    "elapsedMilliseconds": 2785
+  },
+  "controller": {
+    "schema": "stellar-forge.orkyo-controller-receiving.v1",
+    "runtime": "Connected V8 execution of actual operator with an injected document adapter",
+    "savedCarrierOpenedUnchanged": true,
+    "initialRevision": 21,
+    "correctedRevision": 22,
+    "unfinishedReviewRetained": true,
+    "pendingOriginalSha256": "9bdaa439de52d0c7b55ff4a4c9c71a29e4cba84a5b443a826e380d0d757b5203",
+    "outcomeRow": "Jobs:7"
+  },
+  "nativeXlsx": {
+    "sourceBytes": 2508,
+    "sourceSha256": "9bdaa439de52d0c7b55ff4a4c9c71a29e4cba84a5b443a826e380d0d757b5203",
+    "sheets": 2,
+    "jobs": [
+      {
+        "row": 6,
+        "hours": 5,
+        "end": "2026-10-20T00:00:00Z"
+      },
+      {
+        "row": 7,
+        "hours": 1.25,
+        "end": "2026-10-20T00:00:00Z"
+      }
+    ],
+    "members": 6
+  }
+}
