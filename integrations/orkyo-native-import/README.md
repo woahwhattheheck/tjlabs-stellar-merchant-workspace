@@ -67,3 +67,7 @@ Original source rows and unrecognized columns remain in the plan. String cells i
 - SOURCE_CONTRACT.md and WORKBOOK_GUIDE.md: full operational semantics and recovery sequence.
 
 See [third-party notices](THIRD_PARTY_NOTICES.md) before distributing the combined source.
+
+## Installed Applications, native host and agent operation
+
+The complete maintained desk is available as **Orkyo import readiness** in Applications. See [OPERATING.md](OPERATING.md) for create/open/resume, original-file intake, native/MCP review and outcome reconciliation, complete editor recovery and source handover. The current builder preserves the complete installed source; the original standalone artifact above remains retained.
