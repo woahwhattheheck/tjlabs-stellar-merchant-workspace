@@ -4299,8 +4299,8 @@
     },
     {
       "path": "host/domain.mjs",
-      "bytes": 9218,
-      "sha256": "fd0d85e210c5edddd7e5a098c1a72f6fbc68508c2ed90321a15e095cbd550cd8"
+      "bytes": 9342,
+      "sha256": "165bce74daf19c89d62fa28d8c2e9fb8d29b59c84cb54b79be60205e368a87e0"
     },
     {
       "path": "host/export-core.mjs",
@@ -4444,8 +4444,8 @@
     },
     {
       "path": "receiving/host-course.cjs",
-      "bytes": 15718,
-      "sha256": "638794df3403f0cc3c91ddf1c9f41b3f95045cb5fb0e5aa54db4d8fdaed0049a"
+      "bytes": 15722,
+      "sha256": "1b7a45ac8d1f26671dafda12bab69800d3248fc99c1c495e74e624917404bb46"
     },
     {
       "path": "receiving/portable-course.cjs",
