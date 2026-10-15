@@ -1,0 +1,3 @@
+line_id,account_id,item_id,quantity,unit,status
+ORDER-1-L1,ACCT-1,KEG-HALF,2,each,open
+ORDER-2-L1,ACCT-1,CASE-12,1,each,cancelled

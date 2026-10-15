@@ -1,0 +1,48 @@
+
+function runBreweryReceiving(core){
+ const checks=[],check=(name,condition)=>{if(!condition)throw Error("Receiving failed: "+name);checks.push({name,passed:true})};
+ const rejects=(name,fn)=>{let failed=false;try{fn()}catch{failed=true}check(name,failed)};
+ const sample=core.sampleSources(),seed=core.create({id:"authored-brewery-onboarding",label:"Authored brewery opening-to-cutoff migration"});
+ let w=core.receive(seed,{id:"opening-to-cutoff-1",label:"Initial source count comparison",...sample});
+ const initial=core.analyse(w,"opening-to-cutoff-1"),bucket=(a,id,lot)=>a.buckets.find(b=>b.itemId===id&&(!lot||b.lotId===lot));
+ check("All eight full original bodies retain exact bytes and BOM",Object.entries(sample.sources).every(([k,s])=>core.editions(w)[0].sources[k].text===s.text));
+ check("Independent hand calculation: malt100+25-10=115kg",bucket(initial,"MALT").expected.display==="115"&&bucket(initial,"MALT").delta.display==="0");
+ check("Exact pound conversion: hops5000+453.59237-953.59237=4500g",bucket(initial,"HOPS","hop-1").expected.display==="4500"&&core.convert("1","lb","g").display==="453.59237");
+ check("Independent beer calculation retains exact delta",bucket(initial,"BEER").expected.display==="175.214588216"&&bucket(initial,"BEER").delta.display==="-1.214588216");
+ check("Opening excluded, cutoff included and nanosecond boundaries exact",initial.movements.find(m=>m.eventId==="before").included===false&&initial.movements.find(m=>m.eventId==="beer-receipt").included===true&&initial.movements.find(m=>m.eventId==="at-cutoff").included===true&&initial.movements.find(m=>m.eventId==="after").included===false);
+ check("Identical source event counted once with both source row references",initial.counts.movements===14&&initial.counts.identicalDuplicates===1&&initial.duplicates[0].table==="movements"&&initial.duplicates[0].duplicateSourceRow!==initial.duplicates[0].firstSourceRow);
+ check("Package SKUs remain count items; open orders are not movements",bucket(initial,"KEG-HALF").expected.display==="7"&&bucket(initial,"CASE-12").expected.display==="18"&&initial.orders.length===2&&initial.orders[0].status==="open");
+ check("Recipe versions and exact ingredient references remain separate",initial.recipes.length===2&&initial.recipes[0].ingredients.find(i=>i.itemId==="MALT").quantity.display==="20"&&initial.recipes[1].ingredients.find(i=>i.itemId==="MALT").quantity.display==="22");
+ check("Missing target is distinct from zero; negative stock and missing opening visible",bucket(initial,"CANS").target===null&&bucket(initial,"CANS").delta===null&&bucket(initial,"WHEAT").expected.display==="-1"&&initial.exceptions.some(e=>e.type==="missing-opening"&&e.lotId==="hop-new"));
+ const before=JSON.stringify(w);
+ for(const ex of initial.exceptions)w=core.review(w,{editionId:"opening-to-cutoff-1",exceptionId:ex.id,disposition:ex.itemId==="BEER"?"accept-difference":"source-correction-needed",reviewer:"Authored migration reviewer",reason:ex.itemId==="BEER"?"Authored review acknowledges the target count174L and retains its exact source delta for follow-up.":"Authored source owner will supply the missing or corrected original balance.",evidence:{name:"authored-review-"+ex.type+".txt",text:"Authored exercise only. This note demonstrates full original review evidence retention for "+ex.id+".\r\n"}});
+ check("Reviews append without mutating earlier workspace or numeric delta",JSON.stringify(core.reopen(JSON.parse(before)))===before&&core.analyse(w,"opening-to-cutoff-1").counts.reviewedExceptions===5&&bucket(core.analyse(w,"opening-to-cutoff-1"),"BEER").delta.display==="-1.214588216");
+ const beerException=initial.exceptions.find(e=>e.itemId==="BEER");
+ w=core.review(w,{editionId:"opening-to-cutoff-1",exceptionId:beerException.id,disposition:"source-correction-needed",reviewer:"Authored migration reviewer",reason:"Authored correction: request the independently confirmed target count in a new source edition."});
+ check("Review correction retains predecessor and complete evidence",core.analyse(w,"opening-to-cutoff-1").exceptions.find(e=>e.id===beerException.id).reviewHistory.length===2);
+ const corrected=JSON.parse(JSON.stringify(sample));
+ const opening=core.parseCSV(corrected.sources.opening.text,core.columns.opening,"Opening").map(r=>r.item_id==="WHEAT"?{...r,quantity:"6"}:r);
+ opening.push({row_id:"o-hnew",item_id:"HOPS",lot_id:"hop-new",location:"cold",quantity:"0",unit:"g"});
+ const target=core.parseCSV(corrected.sources.target.text,core.columns.target,"Target").map(r=>r.item_id==="BEER"?{...r,quantity:"175.214588216"}:r);
+ target.push({row_id:"t-cans",item_id:"CANS",lot_id:"can-1",location:"dry",quantity:"100",unit:"each"});
+ corrected.sources.opening={name:"authored-corrected-opening.csv",text:core.encodeCSV(core.columns.opening,opening)};
+ corrected.sources.target={name:"authored-corrected-target.csv",text:core.encodeCSV(core.columns.target,target)};
+ corrected.notes+=" CORRECTION EDITION: authored wheat opening6kg, explicit new-hop opening0g, returned can count100each, confirmed beer target175.214588216L. The prior original sources remain unchanged in edition1.";
+ w=core.receive(w,{id:"opening-to-cutoff-2",label:"Corrected original-source edition",...corrected});
+ const final=core.analyse(w,"opening-to-cutoff-2");
+ check("Corrected edition balances while prior discrepancies/history remain",final.counts.exceptions===0&&final.counts.balancedBuckets===8&&core.analyse(w,"opening-to-cutoff-1").counts.exceptions===5&&core.editions(w).length===2);
+ const rejectInput=(name,modify)=>{const s=JSON.parse(JSON.stringify(sample));modify(s);rejects(name,()=>core.receive(seed,{id:"rejected",label:"Rejected authored candidate",...s}))};
+ rejectInput("Conflicting duplicate event identity rejects",s=>{const rows=core.parseCSV(s.sources.movements.text,core.columns.movements,"Movements");rows.push({...rows[0],quantity:"26"});s.sources.movements.text=core.encodeCSV(core.columns.movements,rows)});
+ rejectInput("Competing target counts for same bucket reject",s=>{const rows=core.parseCSV(s.sources.target.text,core.columns.target,"Target");rows.push({...rows[0],row_id:"different-count-id"});s.sources.target.text=core.encodeCSV(core.columns.target,rows)});
+ rejectInput("Conflicting alias mapping rejects",s=>{const rows=core.parseCSV(s.sources.aliases.text,core.columns.aliases,"Aliases");rows.push({...rows[0],item_id:"HOPS"});s.sources.aliases.text=core.encodeCSV(core.columns.aliases,rows)});
+ rejectInput("Mass-volume mismatch and fractional count do not silently convert",s=>{const rows=core.parseCSV(s.sources.target.text,core.columns.target,"Target");rows[0].unit="L";s.sources.target.text=core.encodeCSV(core.columns.target,rows)});
+ rejects("Fractional package count rejects",()=>core.convert("0.5","each","each"));
+ rejects("Invalid calendar date and unspecified gallon reject",()=>core.timestamp("2026-02-30T00:00:00Z"));rejects("Ambiguous gallons require an explicit unit",()=>core.convert("1","gal","L"));
+ const raw=JSON.stringify(w),changed=JSON.parse(raw);changed.commands[0].payload.sources.opening.text+="changed";
+ rejects("Changed original source rejects without adopting candidate",()=>core.reopen(changed));check("Portable current workspace remains exact after rejection",JSON.stringify(w)===raw);
+ const wrong=JSON.parse(raw),r=wrong.commands.find(c=>c.type==="review");r.payload.sourceSha256="0".repeat(64);let previous=core.digest({schema:wrong.schema,id:wrong.id,label:wrong.label});for(const c of wrong.commands){c.previous=previous;c.sha256=core.digest({id:c.id,sequence:c.sequence,type:c.type,payload:c.payload,previous:c.previous});previous=c.sha256}wrong.head=previous;
+ rejects("Review source binding rejects even with recomputed outer hashes",()=>core.reopen(wrong));
+ const reopened=core.reopen(raw);
+ check("Full JSON reopen and all eight CSVs/report reproduce",JSON.stringify(reopened)===raw&&["buckets","movements","exceptions","reviews","duplicates","recipes","accounts","orders"].every(k=>core.csv(reopened,"opening-to-cutoff-1",k)===core.csv(w,"opening-to-cutoff-1",k))&&core.report(reopened,"opening-to-cutoff-1")===core.report(w,"opening-to-cutoff-1"));
+ return {schema:"tjlabs.brewery-receiving-result.v1",authored:true,runtime:"caller identifies actual environment",checks,workspace:w,initialAnalysis:initial,correctedAnalysis:final,handCalculation:{malt:"100kg+25kg-10kg=115kg",hops:"5000g+453.59237g-953.59237g=4500g",beer:"200L+10L-30L-3.785411784L-1L=175.214588216L; target174L; delta-1.214588216L",kegs:"10each-3each=7each; open order2each does not subtract",cases:"20each-2each=18each",wheat:"5kg-6kg=-1kg; target0kg; delta+1kg",newHops:"missing opening flagged; provisional0g+100g=100g target",cans:"opening100each; target absent is not zero"},sample,corrected};
+}

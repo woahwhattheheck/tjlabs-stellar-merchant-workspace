@@ -1,0 +1,9 @@
+bucket_id,item_id,name,kind,lot_id,location,base_unit,opening,movement,expected,target,delta,opening_present,target_present,status,exception_ids
+bucket-72b217c88243cebeef93612e,MALT,Pale malt,ingredient,malt-1,grain,kg,100,15,115,115,0,true,true,balanced,[]
+bucket-cbed7080a521db5d882b47ca,HOPS,Cascade hops,ingredient,hop-1,cold,g,5000,-500,4500,4500,0,true,true,balanced,[]
+bucket-00e8cae82b02db641f4ddab8,BEER,IPA bulk,finished-beer,brew-17,tank,L,200,-24.785411784,175.214588216,174,-1.214588216,true,true,attention,"[""exception-e123e4ad975935f4a5160eb1""]"
+bucket-d2bdd42cac21970a298f2095,KEG-HALF,IPA half-barrel keg SKU,packaged-beer,brew-17,packaged,each,10,-3,7,7,0,true,true,balanced,[]
+bucket-e961d3b28319aeb34c64011b,CASE-12,IPA twelve-can case SKU,packaged-beer,brew-17,packaged,each,20,-2,18,18,0,true,true,balanced,[]
+bucket-acee7ffc5dfb432396c8d2c2,CANS,Empty cans,packaging,can-1,dry,each,100,0,100,,,true,false,attention,"[""exception-275ee5f75b92d010d31d184c""]"
+bucket-8f02246717d07fbec7a43614,WHEAT,Wheat malt,ingredient,wheat-1,grain,kg,5,-6,-1,0,1,true,true,attention,"[""exception-93121fcffb61101c99d67b32"",""exception-8a8ba64e3b9e373eeb2890cf""]"
+bucket-736af83d2c08c4f0bcce1974,HOPS,Cascade hops,ingredient,hop-new,cold,g,,100,100,100,0,false,true,attention,"[""exception-661893680fc520b82a053cd3""]"

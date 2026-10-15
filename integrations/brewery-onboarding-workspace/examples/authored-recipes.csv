@@ -1,0 +1,5 @@
+recipeId,version,targetYield,targetUnit,itemId,itemName,originalQuantity,originalUnit,baseUnit,quantity
+IPA,1,100,L,MALT,Pale malt,20,kg,kg,20
+IPA,1,100,L,HOPS,Cascade hops,100,g,g,100
+IPA,2,100,L,MALT,Pale malt,22,kg,kg,22
+IPA,2,100,L,HOPS,Cascade hops,110,g,g,110

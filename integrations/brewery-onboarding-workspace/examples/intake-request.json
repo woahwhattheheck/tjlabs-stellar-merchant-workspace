@@ -1,0 +1,19 @@
+{
+  "id": "opening-to-cutoff-1",
+  "label": "Authored first receiving",
+  "settings": {
+    "openingAt": "2026-10-15T00:00:00-04:00",
+    "cutoffAt": "2026-10-15T12:00:00-04:00"
+  },
+  "sources": {
+    "items": "originals/authored-items.csv",
+    "aliases": "originals/authored-aliases.csv",
+    "opening": "originals/authored-opening.csv",
+    "movements": "originals/authored-movements.csv",
+    "target": "originals/authored-target.csv",
+    "recipes": "originals/authored-recipes.csv",
+    "accounts": "originals/authored-accounts.csv",
+    "orders": "originals/authored-orders.csv"
+  },
+  "notes": "AUTHORED EXAMPLE. Quantities illustrate opening-to-cutoff inventory reconciliation. Source count basis: one declared item/lot/location opening balance and one independent target count. Movement source systems are authoritative for the specified event IDs."
+}

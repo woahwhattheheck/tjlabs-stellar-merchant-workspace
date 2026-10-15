@@ -1,0 +1,15 @@
+sourceSystem,eventId,sourceItemId,itemId,lotId,location,occurredAt,originalQuantity,originalUnit,baseUnit,quantity,included,windowDisposition
+erp,m-receipt,MALT,MALT,malt-1,grain,2026-10-15T05:00:00Z,25,kg,kg,25,true,included
+erp,m-brew,MALT,MALT,malt-1,grain,2026-10-15T06:00:00Z,-10,kg,kg,-10,true,included
+erp,h-receipt,HOPS,HOPS,hop-1,cold,2026-10-15T05:00:00Z,1,lb,g,453.59237,true,included
+erp,h-brew,HOPS,HOPS,hop-1,cold,2026-10-15T06:00:00Z,-953.59237,g,g,-953.59237,true,included
+pos,before,DRAFTIPA,BEER,brew-17,tank,2026-10-15T04:00:00Z,-999,L,L,-999,false,at-or-before-opening
+erp,beer-receipt,BEER,BEER,brew-17,tank,2026-10-15T04:00:00.000000001Z,10,L,L,10,true,included
+pos,tap-draw,DRAFTIPA,BEER,brew-17,tank,2026-10-15T11:00:00Z,-30,L,L,-30,true,included
+pos,sample-gallon,DRAFTIPA,BEER,brew-17,tank,2026-10-15T12:00:00Z,-1,us_gal,L,-3.785411784,true,included
+pos,at-cutoff,DRAFTIPA,BEER,brew-17,tank,2026-10-15T16:00:00Z,-1,L,L,-1,true,included
+pos,after,DRAFTIPA,BEER,brew-17,tank,2026-10-15T16:00:00.000000001Z,-100,L,L,-100,false,after-cutoff
+wholesale,wh-keg,KEGHALF,KEG-HALF,brew-17,packaged,2026-10-15T13:00:00Z,-3,each,each,-3,true,included
+wholesale,wh-case,CASE12,CASE-12,brew-17,packaged,2026-10-15T13:00:00Z,-2,each,each,-2,true,included
+erp,w-brew,WHEAT,WHEAT,wheat-1,grain,2026-10-15T07:00:00Z,-6,kg,kg,-6,true,included
+erp,new-hops,HOPSNEW,HOPS,hop-new,cold,2026-10-15T08:00:00Z,100,g,g,100,true,included
