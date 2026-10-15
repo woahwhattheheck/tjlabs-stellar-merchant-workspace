@@ -41,5 +41,17 @@
     "expandedBytes": 716835,
     "proposalMetadataBytes": 156084
   },
-  "equippedReceiving": "C0BU51F1PL3/1792032859.612189"
+  "equippedReceiving": "C0BU51F1PL3/1792032859.612189",
+  "programmePrivacy": {
+    "generic": {
+      "termsPresent": false,
+      "statusPreserved": true
+    },
+    "custom": {
+      "termsPresent": true,
+      "statusPreserved": true
+    },
+    "originalAndInstalledOperatorParsed": true,
+    "currentStandaloneBodiesCorrected": true
+  }
 }

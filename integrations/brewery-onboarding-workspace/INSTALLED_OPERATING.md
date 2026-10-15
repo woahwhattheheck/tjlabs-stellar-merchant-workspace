@@ -62,3 +62,7 @@ merchant_brewery_file reads retained ZIPs by exact hash and byte range, includin
 Build/install source selection brewery-onboarding-workspace. Its contribution installs brewery-workspace and brewery-managed, plus Applications and Merchant providers and their shared runtime dependencies. GitHub Actions remains disabled.
 
 The installed read adapter has a bounded 32 MiB / 24-entry cache keyed by the entire serialized input and read arguments. Initial results come from the unchanged original engine and returned results are copied. Changed source, history or arguments select distinct entries.
+
+## Supplied programme metadata
+
+Generic workspaces carry neutral operational statuses and no default commercial terms. A private loaded programme may supply statusLabels and terms; its selected profile export preserves those exact supplied terms. Existing custom status values remain selectable. Programme data stays in the workspace and full handover.

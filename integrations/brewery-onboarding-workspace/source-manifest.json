@@ -19,13 +19,13 @@
     },
     {
       "path": "Brewery_Onboarding_Desk.html",
-      "bytes": 69782,
-      "sha256": "04142e61d674d7dea65176cae6db7260f5adf80289016f92b60431609df2edfc"
+      "bytes": 69843,
+      "sha256": "e751f1818d0491af5b1932d9bacc9485744f89fdc13edde4f2dea4a5dd056e84"
     },
     {
       "path": "Brewery_Worked_Example.html",
-      "bytes": 86740,
-      "sha256": "e02a51b38316591565eb609953ced977a2f066eaf9077e0995a9e833d0d46abc"
+      "bytes": 86801,
+      "sha256": "e23ea3e8f491bb4fa37160eac8c76f3f14f50b38c42a0031c74646486f72bdae"
     },
     {
       "path": "cli.mjs",
@@ -219,8 +219,8 @@
     },
     {
       "path": "INSTALLED_OPERATING.md",
-      "bytes": 6780,
-      "sha256": "85c649946cfcd8fa34bce60d5f95cccc6a283c0f835f89767eb28038ae0c2e28"
+      "bytes": 7134,
+      "sha256": "fd15f665c3faf59c8cabd7aae07361b70efe80058f2ef8b20f278d4569cc7bf8"
     },
     {
       "path": "INSTALLED_RECEIVING.md",
@@ -289,8 +289,8 @@
     },
     {
       "path": "operator/installed-operator.js",
-      "bytes": 20308,
-      "sha256": "bbc9e3b5f53ee2a015911a1257f5e3f98116833ca4dfe75004911b65d3a3811f"
+      "bytes": 20369,
+      "sha256": "ab11a002b4f9f3810cf1579a58f6550e1f7025184d0110c17c8806bf64dfa71b"
     },
     {
       "path": "operator/installed-template.html",
@@ -299,8 +299,8 @@
     },
     {
       "path": "operator/operator.js",
-      "bytes": 16496,
-      "sha256": "e557b6a49a418c79225836168a8fbba6d5096634afc3ce5efebb971617b57427"
+      "bytes": 16557,
+      "sha256": "ff528da185089f6042140cdabf73abb996e979cb84986d88c46bf3350a8ddc9c"
     },
     {
       "path": "operator/style.css",
@@ -339,8 +339,8 @@
     },
     {
       "path": "receiving/installed-result.json",
-      "bytes": 1295,
-      "sha256": "bb790f4e53e10dde924b65ba38e168d6f2cad3e63204900a4875fb108b310af6"
+      "bytes": 1581,
+      "sha256": "dd8a6696086bc15745a825500b7d9229be18e80db01d5fb2309c45f8dcfde6f6"
     },
     {
       "path": "runtime.mjs",
