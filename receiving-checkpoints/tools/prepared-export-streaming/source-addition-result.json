@@ -1,0 +1,93 @@
+{
+  "schema": "commons.source-addition-result.v1",
+  "actualAddedManifest": {
+    "bytes": 202216,
+    "sha256": "1d25915516ebe2e7840be90fa6ee610236b9b7882399118ef1c3a0bab5c09533"
+  },
+  "receipt": {
+    "schema": "commons.streamed-complete-export.v1",
+    "identity": "8b2d1523f3e7140eaa2974346ca7fece56ba290417a396f36c64c13239a212dd",
+    "bytes": 53915,
+    "sha256": "5c3eabdcd820cacb960591b7e265fb769b922c432dd535835cdb8848f8426995",
+    "members": 7,
+    "uncompressedBytes": 203472,
+    "metadataBytes": 2297,
+    "maxInputFragmentBytes": 69796,
+    "maxOutputChunkBytes": 52344,
+    "receivingSource": {
+      "sourceVersion": "original-complete-course",
+      "requests": 1
+    },
+    "derivation": {
+      "schema": "commons.source-successor-derivation.v1",
+      "parentIdentity": "8f2fdb019c8574182c94c443d00124116cc7bb9dba437b3871a9598f44b07427",
+      "parentIndexSha256": "1a8fc68afde16b782d1c6b3762488688ff3e3bf2a0d410f9c0fb425f491665ed",
+      "sourceVersion": "complete-manifest-successor",
+      "compression": {
+        "engine": "pako",
+        "level": 1
+      },
+      "changes": [
+        {
+          "name": "source/source-manifest.json",
+          "before": null,
+          "after": {
+            "bytes": 202216,
+            "sha256": "1d25915516ebe2e7840be90fa6ee610236b9b7882399118ef1c3a0bab5c09533"
+          }
+        },
+        {
+          "name": "source/empty.txt",
+          "before": null,
+          "after": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          }
+        },
+        {
+          "name": "source/README.md",
+          "before": {
+            "bytes": 30,
+            "sha256": "fbbcad8465201a170d2b3137f5cc2b40e5c7de4dd29ba5d8580bd0f8d2d1d179"
+          },
+          "after": {
+            "bytes": 67,
+            "sha256": "60b5def517abd8b78d81dae33c91fe6683698fab0b84e6e556b2d8ae20db40e1"
+          }
+        },
+        {
+          "name": "working/Study_Editable.html",
+          "before": {
+            "bytes": 73,
+            "sha256": "b8c7bba4ad130ed493a60ca30436d2e3dfe0eacfe40f63e13b08e5406afe5a1d"
+          },
+          "after": {
+            "bytes": 95,
+            "sha256": "da704dcc527d8cabdb03d574dfcbc28cf6cea4822d89ebc8ea25dff0adc663a8"
+          }
+        },
+        {
+          "name": "EXPORT_MANIFEST.json",
+          "before": {
+            "bytes": 691,
+            "sha256": "aaa845529d64cd36c24cca14a81305bedccbf6c72a7ff126d7a6b084d13c1967"
+          },
+          "after": {
+            "bytes": 1003,
+            "sha256": "d3a14e3d0d88c83c6da76b73896240e68bb9ed26279a639f402ca6d1e657ed66"
+          }
+        }
+      ]
+    }
+  },
+  "reopenedMembers": 7,
+  "unchangedOriginalBytesExact": true,
+  "ordinaryZipByteExact": true,
+  "rejected": [
+    "missing absent preimage",
+    "null preimage for existing member",
+    "new protected history member",
+    "source path case collision",
+    "source path parent collision"
+  ]
+}
