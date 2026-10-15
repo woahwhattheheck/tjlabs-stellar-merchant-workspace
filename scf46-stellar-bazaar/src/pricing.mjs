@@ -80,7 +80,10 @@ export function describeCatalogPricing(entry, filters = {}, budgetAtomic = null)
     Object.hasOwn(filters, k));
   const offers = (entry?.accepts ?? []).filter(option =>
     paymentKeys.every(key => option?.[key] === filters[key]));
-  const distinctDenominations = new Set(offers.map(o => `${o?.network}\u0000${o?.asset}`));
+  // The unqualified typical amount belongs to the original entry, not to a
+  // buyer's filtered view. Filtering cannot establish its denomination.
+  const distinctDenominations = new Set((entry?.accepts ?? [])
+    .map(o => `${o?.network}\u0000${o?.asset}`));
   const pricing = sanitizeBazaarPricing(entry?.extensions?.bazaar?.pricing);
   return offers.map(option => describePricingOption(option, pricing, budgetAtomic, {
     typicalUnambiguous: distinctDenominations.size === 1
