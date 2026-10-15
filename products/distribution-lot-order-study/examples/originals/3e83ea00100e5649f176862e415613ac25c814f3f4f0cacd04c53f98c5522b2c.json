@@ -1,0 +1,21 @@
+{
+  "data_class": "authored_course",
+  "family": "lot_holds",
+  "record": {
+    "id": "HOLD-B",
+    "record_key": "HOLD-B",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T07:00:00Z",
+    "available_at": "2026-10-01T07:00:00Z",
+    "source_document_id": "SRC-HOLD-B",
+    "source_ref": "Authored original lot_holds/HOLD-B",
+    "hold_id": "HOLD-B",
+    "lot_record_id": "LOT-B",
+    "warehouse_id": "W-EAST",
+    "raised_at": "2026-10-01T07:00:00Z",
+    "raised_by": "QA",
+    "reason": "Await amended certificate and actual QA review."
+  }
+}

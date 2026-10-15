@@ -1,0 +1,27 @@
+{
+  "data_class": "authored_course",
+  "family": "effort",
+  "record": {
+    "id": "EFFORT-MEM-ORDER-4-baseline_process-receiving_reconciliation",
+    "record_key": "EFFORT-MEM-ORDER-4-baseline_process-receiving_reconciliation",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-09-30T12:23:00.000Z",
+    "available_at": "2026-09-30T12:23:00.000Z",
+    "source_document_id": "SRC-EFFORT-MEM-ORDER-4-baseline_process-receiving_reconciliation",
+    "source_ref": "Authored original effort/EFFORT-MEM-ORDER-4-baseline_process-receiving_reconciliation",
+    "effort_id": "EFFORT-MEM-ORDER-4-baseline_process-receiving_reconciliation",
+    "member_id": "MEM-ORDER-4",
+    "phase": "receiving_reconciliation",
+    "method": "baseline_process",
+    "person_id": "BASELINE",
+    "started_at": "2026-09-30T12:19:00.000Z",
+    "ended_at": "2026-09-30T12:23:00.000Z",
+    "person_minutes": "4",
+    "work_key": "EFFORT-MEM-ORDER-4-baseline_process-receiving_reconciliation",
+    "matched_group_id": "MATCH-MEM-ORDER-4",
+    "population_complete": "true",
+    "phase_complete": "true"
+  }
+}

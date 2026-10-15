@@ -1,0 +1,5 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,dispatch_line_id,dispatch_record_id,order_line_record_id,allocation_record_id,pick_record_id,lot_record_id,quantity,unit
+DL-1,DL-1,1,,active,2026-10-01T10:45:00.000Z,2026-10-01T10:45:00.000Z,document-2f0809fed6ef8aaebf1632b44a1b6314,Authored original dispatch_lines/DL-1,DL-1,DISPATCH-1,ORDER-1,ALLOC-1,PICK-1,LOT-D,1,bag
+DL-2,DL-2,1,,active,2026-10-01T12:45:00.000Z,2026-10-01T12:45:00.000Z,document-3f8a5b79896f1d33612cb16862abcbc0,Authored original dispatch_lines/DL-2,DL-2,DISPATCH-2,ORDER-2,ALLOC-2,PICK-2,LOT-B,50,kg
+DL-3,DL-3,1,,active,2026-10-01T10:45:00.000Z,2026-10-01T10:45:00.000Z,document-668a3673eea40ae31dbdd40b78b2b3ce,Authored original dispatch_lines/DL-3,DL-3,DISPATCH-3,ORDER-3,ALLOC-3,PICK-3,LOT-A,30,kg
+DL-4,DL-4,1,,active,2026-10-01T10:45:00.000Z,2026-10-01T10:45:00.000Z,document-efba32ba4f45cc3c560c2f18fe5135f4,Authored original dispatch_lines/DL-4,DL-4,DISPATCH-4,ORDER-4,ALLOC-4,PICK-4,LOT-E,10,kg

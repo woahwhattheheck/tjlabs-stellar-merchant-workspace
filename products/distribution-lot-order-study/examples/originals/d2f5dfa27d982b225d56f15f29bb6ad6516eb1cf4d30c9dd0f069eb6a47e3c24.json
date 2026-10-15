@@ -1,0 +1,24 @@
+{
+  "data_class": "authored_course",
+  "family": "picks",
+  "record": {
+    "id": "PICK-1",
+    "record_key": "PICK-1",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:30:00Z",
+    "available_at": "2026-10-01T10:30:00Z",
+    "source_document_id": "SRC-PICK-1",
+    "source_ref": "Authored original picks/PICK-1",
+    "pick_id": "PICK-1",
+    "allocation_record_id": "ALLOC-1",
+    "lot_record_id": "LOT-D",
+    "warehouse_id": "W-EAST",
+    "quantity": "1",
+    "unit": "bag",
+    "picked_at": "2026-10-01T10:30:00Z",
+    "picked_by": "DISPATCH",
+    "external_ref": "PHYSICAL-PICK-1"
+  }
+}

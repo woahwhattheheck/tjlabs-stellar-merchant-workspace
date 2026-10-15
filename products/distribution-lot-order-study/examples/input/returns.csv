@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,return_id,dispatch_line_record_id,warehouse_id,received_at,quantity,unit,received_by,external_ref
+RETURN-B,RETURN-B,1,,active,2026-10-01T15:00:00Z,2026-10-01T15:00:00Z,document-f06248b1c26f564910c762df34b664ea,Authored original returns/RETURN-B,RETURN-B,DL-2,W-EAST,2026-10-01T15:00:00Z,5,kg,RECEIVER,ACTUAL-RETURN-001

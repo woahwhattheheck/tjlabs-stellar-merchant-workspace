@@ -1,0 +1,25 @@
+{
+  "data_class": "authored_course",
+  "family": "customer_rules",
+  "record": {
+    "id": "RULE-PACK",
+    "record_key": "RULE-PACK",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-09-30T06:00:00Z",
+    "available_at": "2026-09-30T06:00:00Z",
+    "source_document_id": "SRC-RULE-PACK",
+    "source_ref": "Authored original customer_rules/RULE-PACK",
+    "rule_id": "RULE-PACK",
+    "customer_id": "CUSTOMER-A",
+    "product_id": "PACK",
+    "minimum_remaining_days": "7",
+    "date_kind": "expiry",
+    "policy_record_id": "POL-W-EAST",
+    "approved_by": "PLANNER",
+    "approved_at": "2026-09-30T06:00:00Z",
+    "valid_from": "2026-09-01T00:00:00Z",
+    "valid_to": ""
+  }
+}

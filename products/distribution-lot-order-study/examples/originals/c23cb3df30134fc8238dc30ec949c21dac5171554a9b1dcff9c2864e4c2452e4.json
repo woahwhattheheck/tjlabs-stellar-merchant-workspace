@@ -1,0 +1,26 @@
+{
+  "data_class": "authored_course",
+  "family": "cost_entries",
+  "record": {
+    "id": "COST-WRITE",
+    "record_key": "COST-WRITE",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T16:10:00Z",
+    "available_at": "2026-10-01T16:10:00Z",
+    "source_document_id": "SRC-COST-WRITE",
+    "source_ref": "Authored original cost_entries/COST-WRITE",
+    "cost_id": "COST-WRITE",
+    "operator_id": "OP",
+    "warehouse_id": "W-EAST",
+    "lot_record_id": "LOT-C",
+    "order_line_record_id": "",
+    "posted_at": "2026-10-01T16:10:00Z",
+    "kind": "writeoff",
+    "amount": "60",
+    "currency": "GBP",
+    "external_ref": "POSTED-WRITEOFF-001",
+    "posted_by": "FINANCE"
+  }
+}

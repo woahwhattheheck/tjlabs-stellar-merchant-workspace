@@ -1,0 +1,27 @@
+{
+  "data_class": "authored_course",
+  "family": "effort",
+  "record": {
+    "id": "EFFORT-MEM-ORDER-6-study_process-source_capture",
+    "record_key": "EFFORT-MEM-ORDER-6-study_process-source_capture",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T16:05:00.000Z",
+    "available_at": "2026-10-01T16:05:00.000Z",
+    "source_document_id": "SRC-EFFORT-MEM-ORDER-6-study_process-source_capture",
+    "source_ref": "Authored original effort/EFFORT-MEM-ORDER-6-study_process-source_capture",
+    "effort_id": "EFFORT-MEM-ORDER-6-study_process-source_capture",
+    "member_id": "MEM-ORDER-6",
+    "phase": "source_capture",
+    "method": "study_process",
+    "person_id": "CURRENT",
+    "started_at": "2026-10-01T16:03:00.000Z",
+    "ended_at": "2026-10-01T16:05:00.000Z",
+    "person_minutes": "2",
+    "work_key": "EFFORT-MEM-ORDER-6-study_process-source_capture",
+    "matched_group_id": "MATCH-MEM-ORDER-6",
+    "population_complete": "true",
+    "phase_complete": "true"
+  }
+}

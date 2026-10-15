@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,purchase_line_id,operator_id,warehouse_id,supplier_id,external_order_ref,external_line_ref,product_id,ordered_at,expected_at,quantity,unit,approved_by
+PO-B,PO-B,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-35db7bdd93bbb08cf2fc4ba6b5688cbe,Authored original purchase_lines/PO-B,PO-B,OP,W-EAST,SUPPLIER,PO-100,1,BULK,2026-09-30T06:00:00Z,2026-10-01T07:00:00Z,100,kg,RECEIVER

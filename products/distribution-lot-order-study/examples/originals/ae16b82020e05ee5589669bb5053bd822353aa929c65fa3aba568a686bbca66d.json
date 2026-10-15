@@ -1,0 +1,22 @@
+{
+  "data_class": "authored_course",
+  "family": "opening_balances",
+  "record": {
+    "id": "OPEN-LOT-C",
+    "record_key": "OPEN-LOT-C",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T06:00:00Z",
+    "available_at": "2026-10-01T06:00:00Z",
+    "source_document_id": "SRC-OPEN-LOT-C",
+    "source_ref": "Authored original opening_balances/OPEN-LOT-C",
+    "opening_id": "OPEN-LOT-C",
+    "lot_record_id": "LOT-C",
+    "warehouse_id": "W-EAST",
+    "observed_at": "2026-10-01T06:00:00Z",
+    "quantity": "40",
+    "unit": "kg",
+    "counted_by": "RECEIVER"
+  }
+}

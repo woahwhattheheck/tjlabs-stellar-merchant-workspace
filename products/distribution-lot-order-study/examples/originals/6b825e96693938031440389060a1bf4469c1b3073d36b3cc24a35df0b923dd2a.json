@@ -1,0 +1,20 @@
+{
+  "data_class": "authored_course",
+  "family": "people",
+  "record": {
+    "id": "PLANNER",
+    "record_key": "PLANNER",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-09-30T06:00:00Z",
+    "available_at": "2026-09-30T06:00:00Z",
+    "source_document_id": "SRC-PLANNER",
+    "source_ref": "Authored original people/PLANNER",
+    "person_id": "PLANNER",
+    "operator_id": "OP",
+    "name": "Pat Planning",
+    "valid_from": "2026-09-01T00:00:00Z",
+    "valid_to": ""
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "data_class": "authored_course",
+  "family": "dispatch_lines",
+  "record": {
+    "id": "DL-3",
+    "record_key": "DL-3",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:45:00.000Z",
+    "available_at": "2026-10-01T10:45:00.000Z",
+    "source_document_id": "SRC-DL-3",
+    "source_ref": "Authored original dispatch_lines/DL-3",
+    "dispatch_line_id": "DL-3",
+    "dispatch_record_id": "DISPATCH-3",
+    "order_line_record_id": "ORDER-3",
+    "allocation_record_id": "ALLOC-3",
+    "pick_record_id": "PICK-3",
+    "lot_record_id": "LOT-A",
+    "quantity": "30",
+    "unit": "kg"
+  }
+}

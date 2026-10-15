@@ -1,0 +1,5 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,party_id,operator_id,name,party_type,valid_from,valid_to
+SUPPLIER,SUPPLIER,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-95868e6f56672f7a837dad188c8314a4,Authored original parties/SUPPLIER,SUPPLIER,OP,Fictional supplier,supplier,2026-09-01T00:00:00Z,
+CUSTOMER-A,CUSTOMER-A,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-5909559f826837d24cb01694285c4a55,Authored original parties/CUSTOMER-A,CUSTOMER-A,OP,Fictional industrial customer A,customer,2026-09-01T00:00:00Z,
+CUSTOMER-B,CUSTOMER-B,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-6aa0aee68909944a2cb89b3328738789,Authored original parties/CUSTOMER-B,CUSTOMER-B,OP,Fictional industrial customer B,customer,2026-09-01T00:00:00Z,
+LAB,LAB,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-9447bb8330237213ae0ef0dab12b042d,Authored original parties/LAB,LAB,OP,Fictional certificate issuer,supplier,2026-09-01T00:00:00Z,

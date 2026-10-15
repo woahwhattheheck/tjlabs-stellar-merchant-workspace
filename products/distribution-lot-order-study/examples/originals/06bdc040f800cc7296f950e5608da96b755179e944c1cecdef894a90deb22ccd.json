@@ -1,0 +1,24 @@
+{
+  "data_class": "authored_course",
+  "family": "picks",
+  "record": {
+    "id": "PICK-4",
+    "record_key": "PICK-4",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:30:00Z",
+    "available_at": "2026-10-01T10:30:00Z",
+    "source_document_id": "SRC-PICK-4",
+    "source_ref": "Authored original picks/PICK-4",
+    "pick_id": "PICK-4",
+    "allocation_record_id": "ALLOC-4",
+    "lot_record_id": "LOT-E",
+    "warehouse_id": "W-WEST",
+    "quantity": "10",
+    "unit": "kg",
+    "picked_at": "2026-10-01T10:30:00Z",
+    "picked_by": "DISPATCH",
+    "external_ref": "PHYSICAL-PICK-4"
+  }
+}

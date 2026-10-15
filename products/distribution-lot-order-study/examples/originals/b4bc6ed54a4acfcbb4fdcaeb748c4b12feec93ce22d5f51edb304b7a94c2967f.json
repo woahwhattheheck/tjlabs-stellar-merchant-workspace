@@ -1,0 +1,20 @@
+{
+  "data_class": "authored_course",
+  "family": "decision_inputs",
+  "record": {
+    "id": "DECISION-LATE-INPUT-022",
+    "record_key": "DECISION-LATE-INPUT-022",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T12:10:00Z",
+    "available_at": "2026-10-01T12:10:00Z",
+    "source_document_id": "SRC-DECISION-LATE-INPUT-022",
+    "source_ref": "Authored original decision_inputs/DECISION-LATE-INPUT-022",
+    "decision_input_id": "DECISION-LATE-INPUT-022",
+    "decision_case_record_id": "DECISION-LATE",
+    "family": "authorities",
+    "record_id": "AUTH-OWNER-warehouse-W-EAST",
+    "row_sha256": "bc93a15f8b44ee5acb1b38adbe2e84573df2d30c3de3e2fa5e5e86f8b9aba4a1"
+  }
+}

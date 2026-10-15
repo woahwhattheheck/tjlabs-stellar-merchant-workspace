@@ -1,0 +1,23 @@
+{
+  "data_class": "authored_course",
+  "family": "certificates",
+  "record": {
+    "id": "CERT-B-2",
+    "record_key": "CERT-B-1",
+    "revision": "2",
+    "supersedes_id": "CERT-B-1",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T11:00:00Z",
+    "available_at": "2026-10-01T11:00:00Z",
+    "source_document_id": "SRC-CERT-B-2",
+    "source_ref": "Authored original certificates/CERT-B-2",
+    "certificate_id": "CERT-B-1",
+    "lot_record_id": "LOT-B",
+    "certificate_kind": "analysis",
+    "issuer_id": "LAB",
+    "certificate_ref": "CERTIFICATE-LOT-B-AMENDMENT",
+    "issued_at": "2026-10-01T09:00:00Z",
+    "valid_until": "2026-12-31T23:59:59Z",
+    "method_document_id": "POLICY-METHOD"
+  }
+}

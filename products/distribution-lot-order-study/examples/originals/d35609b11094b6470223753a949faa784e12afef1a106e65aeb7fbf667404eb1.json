@@ -1,0 +1,22 @@
+{
+  "data_class": "authored_course",
+  "family": "decision_reviews",
+  "record": {
+    "id": "REVIEW-EAST-SAFE",
+    "record_key": "REVIEW-EAST-SAFE",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:07:00Z",
+    "available_at": "2026-10-01T10:07:00Z",
+    "source_document_id": "SRC-REVIEW-EAST-SAFE",
+    "source_ref": "Authored original decision_reviews/REVIEW-EAST-SAFE",
+    "decision_review_id": "REVIEW-EAST-SAFE",
+    "decision_case_record_id": "DECISION-EAST-SAFE",
+    "decision_basis_sha256": "6b3c29e1e295afc45c4379ca4e4d8aa6f62f07262f28eccd0c348b48d451769c",
+    "reviewed_at": "2026-10-01T10:07:00Z",
+    "reviewed_by": "PLANNER",
+    "decision": "accepted",
+    "notes": "Exact supplied decision and frozen source context; early B proposal remains rejected."
+  }
+}

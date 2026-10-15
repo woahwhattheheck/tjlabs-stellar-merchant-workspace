@@ -1,0 +1,18 @@
+{
+  "schema": "distribution-lot-order.installed-source-join/v1",
+  "donor": {
+    "files": 886,
+    "bytes": 13464401,
+    "sha256": "f0df332cd7aea84f2ba4d4302dd1a0dc58317bb8e724bbad13cec01f9a880d79",
+    "canvas": "F0C9MLHB39P",
+    "edition": "distribution-complete-operator-source-final-20261015"
+  },
+  "substantiveMembersVerified": 885,
+  "donorChanges": [
+    "sha256.cjs"
+  ],
+  "sourcePreservation": "All original domain, ordinary operator, native commands, courses, templates and original documentary evidence remain exact. The additive installed SHA digest cache keeps its original source under contributions/original-source; source manifests are regenerated for the complete installation.",
+  "installedFamilyCount": 39,
+  "sourceBank": "gzip+base64, exact uncompressed bytes and SHA checked before module evaluation",
+  "executionNote": "Production browser/host courses use explicit V8 DOM/atomic IndexedDB or filesystem/transport adapters; actual Node/browser receiving uses the maintained native command."
+}

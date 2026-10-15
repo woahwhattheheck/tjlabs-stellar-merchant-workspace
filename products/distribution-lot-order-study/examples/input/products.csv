@@ -1,0 +1,3 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,product_id,operator_id,name,material_id,base_unit,grade,valid_from,valid_to
+BULK,BULK,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-11235ad544d59fb6ed6bf5761b8b7417,Authored original products/BULK,BULK,OP,"Authored polymer granules, bulk",MAT-G,kg,G1,2026-09-01T00:00:00Z,
+PACK,PACK,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-7d6b4a768171ee5a04c105aa24031942,Authored original products/PACK,PACK,OP,"Authored polymer granules, sealed 25 kg bags",MAT-G,kg,G1,2026-09-01T00:00:00Z,

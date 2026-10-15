@@ -1,0 +1,3 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,policy_id,operator_id,warehouse_id,material_id,ranking_rule,certificate_kinds,alert_days,method_document_id,valid_from,valid_to
+POL-W-EAST,POL-W-EAST,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-1b447c5054629e753064b3c9fe08c1b2,Authored original policies/POL-W-EAST,POL-W-EAST,OP,W-EAST,MAT-G,FEFO,"[""analysis""]",14,document-a8a103dce7ec384724d482a543caab02,2026-09-01T00:00:00Z,
+POL-W-WEST,POL-W-WEST,1,,active,2026-09-30T06:00:00Z,2026-09-30T06:00:00Z,document-1a514327c6765c1a392ffa0525e96994,Authored original policies/POL-W-WEST,POL-W-WEST,OP,W-WEST,MAT-G,FEFO,"[""analysis""]",14,document-a8a103dce7ec384724d482a543caab02,2026-09-01T00:00:00Z,

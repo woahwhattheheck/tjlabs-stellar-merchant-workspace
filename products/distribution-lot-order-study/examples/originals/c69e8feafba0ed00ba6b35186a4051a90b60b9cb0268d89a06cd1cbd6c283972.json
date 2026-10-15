@@ -1,0 +1,20 @@
+{
+  "data_class": "authored_course",
+  "family": "warehouses",
+  "record": {
+    "id": "W-EAST",
+    "record_key": "W-EAST",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-09-30T06:00:00Z",
+    "available_at": "2026-09-30T06:00:00Z",
+    "source_document_id": "SRC-W-EAST",
+    "source_ref": "Authored original warehouses/W-EAST",
+    "warehouse_id": "W-EAST",
+    "operator_id": "OP",
+    "name": "East distribution warehouse",
+    "valid_from": "2026-09-01T00:00:00Z",
+    "valid_to": ""
+  }
+}

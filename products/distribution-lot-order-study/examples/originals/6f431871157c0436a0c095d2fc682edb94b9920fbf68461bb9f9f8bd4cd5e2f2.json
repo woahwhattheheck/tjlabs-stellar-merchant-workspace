@@ -1,0 +1,27 @@
+{
+  "data_class": "authored_course",
+  "family": "effort",
+  "record": {
+    "id": "EFFORT-MEM-ORDER-5-baseline_process-source_capture",
+    "record_key": "EFFORT-MEM-ORDER-5-baseline_process-source_capture",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-09-30T12:53:00.000Z",
+    "available_at": "2026-09-30T12:53:00.000Z",
+    "source_document_id": "SRC-EFFORT-MEM-ORDER-5-baseline_process-source_capture",
+    "source_ref": "Authored original effort/EFFORT-MEM-ORDER-5-baseline_process-source_capture",
+    "effort_id": "EFFORT-MEM-ORDER-5-baseline_process-source_capture",
+    "member_id": "MEM-ORDER-5",
+    "phase": "source_capture",
+    "method": "baseline_process",
+    "person_id": "BASELINE",
+    "started_at": "2026-09-30T12:50:00.000Z",
+    "ended_at": "2026-09-30T12:53:00.000Z",
+    "person_minutes": "3",
+    "work_key": "EFFORT-MEM-ORDER-5-baseline_process-source_capture",
+    "matched_group_id": "MATCH-MEM-ORDER-5",
+    "population_complete": "true",
+    "phase_complete": "true"
+  }
+}

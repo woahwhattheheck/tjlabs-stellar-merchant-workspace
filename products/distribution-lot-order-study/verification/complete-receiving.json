@@ -1,0 +1,44 @@
+{
+  "schema": "distribution.complete-receiving.v1",
+  "scope": "Complete authored distribution lot and order study",
+  "families": 39,
+  "canonical_rows": 751,
+  "original_documents": 753,
+  "retained_csv_originals": 78,
+  "explicit_document_links": 1502,
+  "population_members": 12,
+  "whole_engine_checks": 9,
+  "business_countercases": 4,
+  "core_session_paths": 7,
+  "native_command_paths": 15,
+  "execution": {
+    "core": "Exact CommonJS source evaluated in V8",
+    "native_command": "Exact maintained Node command source evaluated with supplied filesystem, path, crypto and process services",
+    "browser": "Actual generated offline HTML handlers with injected DOM and IndexedDB services; no rendered browser claim"
+  },
+  "source_join": {
+    "course_origin_canvas": "F0C9DK45YM9",
+    "course_origin_sha256": "4748606efcbdf8340b2ef9637d08be787d1567bee1f5c29506fa920b0c6d2bc1"
+  },
+  "physical_account_kg": {
+    "opening": 220,
+    "receipts": 100,
+    "repack_loss": 5,
+    "gross_dispatch": 115,
+    "returns": 5,
+    "writeoffs": 10,
+    "closing": 195
+  },
+  "effort_person_minutes": {
+    "baseline": 324,
+    "current": 300,
+    "change": -24
+  },
+  "performance": {
+    "original_receiving_ms": 38656,
+    "core_session_ms": 73875,
+    "native_command_ms": 178053,
+    "browser_handler_ms": 436913
+  },
+  "browser_handler_paths": 27
+}

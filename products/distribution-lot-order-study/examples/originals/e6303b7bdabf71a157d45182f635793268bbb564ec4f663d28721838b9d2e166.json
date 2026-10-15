@@ -1,0 +1,25 @@
+{
+  "data_class": "authored_course",
+  "family": "lot_state_events",
+  "record": {
+    "id": "HOLD-STATE-B",
+    "record_key": "HOLD-STATE-B",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T07:15:00Z",
+    "available_at": "2026-10-01T07:15:00Z",
+    "source_document_id": "SRC-HOLD-STATE-B",
+    "source_ref": "Authored original lot_state_events/HOLD-STATE-B",
+    "state_event_id": "HOLD-STATE-B",
+    "lot_record_id": "LOT-B",
+    "warehouse_id": "W-EAST",
+    "event_at": "2026-10-01T07:15:00Z",
+    "state": "quarantined",
+    "policy_record_id": "POL-W-EAST",
+    "inputs_complete": "true",
+    "expected_inputs": "2",
+    "reviewed_by": "QA",
+    "reason": "Authored named lot-state decision."
+  }
+}

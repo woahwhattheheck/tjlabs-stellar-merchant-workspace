@@ -1,0 +1,22 @@
+{
+  "data_class": "authored_course",
+  "family": "decision_reviews",
+  "record": {
+    "id": "REVIEW-EARLY",
+    "record_key": "REVIEW-EARLY",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:05:00Z",
+    "available_at": "2026-10-01T10:05:00Z",
+    "source_document_id": "SRC-REVIEW-EARLY",
+    "source_ref": "Authored original decision_reviews/REVIEW-EARLY",
+    "decision_review_id": "REVIEW-EARLY",
+    "decision_case_record_id": "DECISION-EARLY",
+    "decision_basis_sha256": "6bf2159bdb98e91c698691818e843540939ce8f7cc1e69127cf79d463aedb973",
+    "reviewed_at": "2026-10-01T10:05:00Z",
+    "reviewed_by": "PLANNER",
+    "decision": "rejected",
+    "notes": "Exact supplied decision and frozen source context; early B proposal remains rejected."
+  }
+}

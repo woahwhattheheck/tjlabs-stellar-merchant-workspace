@@ -1,0 +1,27 @@
+{
+  "data_class": "authored_course",
+  "family": "purchase_lines",
+  "record": {
+    "id": "PO-B",
+    "record_key": "PO-B",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-09-30T06:00:00Z",
+    "available_at": "2026-09-30T06:00:00Z",
+    "source_document_id": "SRC-PO-B",
+    "source_ref": "Authored original purchase_lines/PO-B",
+    "purchase_line_id": "PO-B",
+    "operator_id": "OP",
+    "warehouse_id": "W-EAST",
+    "supplier_id": "SUPPLIER",
+    "external_order_ref": "PO-100",
+    "external_line_ref": "1",
+    "product_id": "BULK",
+    "ordered_at": "2026-09-30T06:00:00Z",
+    "expected_at": "2026-10-01T07:00:00Z",
+    "quantity": "100",
+    "unit": "kg",
+    "approved_by": "RECEIVER"
+  }
+}

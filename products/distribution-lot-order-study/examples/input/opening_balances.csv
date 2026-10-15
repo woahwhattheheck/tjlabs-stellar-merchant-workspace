@@ -1,0 +1,4 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,opening_id,lot_record_id,warehouse_id,observed_at,quantity,unit,counted_by
+OPEN-LOT-A,OPEN-LOT-A,1,,active,2026-10-01T06:00:00Z,2026-10-01T06:00:00Z,document-034e78ee415b96f54fdae3ac9af3d074,Authored original opening_balances/OPEN-LOT-A,OPEN-LOT-A,LOT-A,W-EAST,2026-10-01T06:00:00Z,120,kg,RECEIVER
+OPEN-LOT-C,OPEN-LOT-C,1,,active,2026-10-01T06:00:00Z,2026-10-01T06:00:00Z,document-790417a18f0db7764d70ea19cfae5d30,Authored original opening_balances/OPEN-LOT-C,OPEN-LOT-C,LOT-C,W-EAST,2026-10-01T06:00:00Z,40,kg,RECEIVER
+OPEN-LOT-E,OPEN-LOT-E,1,,active,2026-10-01T06:00:00Z,2026-10-01T06:00:00Z,document-e105a32c1b686da7efa69d95f0f4c0ff,Authored original opening_balances/OPEN-LOT-E,OPEN-LOT-E,LOT-E,W-WEST,2026-10-01T06:00:00Z,60,kg,RECEIVER

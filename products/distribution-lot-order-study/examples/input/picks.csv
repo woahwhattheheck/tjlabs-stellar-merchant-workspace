@@ -1,0 +1,5 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,pick_id,allocation_record_id,lot_record_id,warehouse_id,quantity,unit,picked_at,picked_by,external_ref
+PICK-1,PICK-1,1,,active,2026-10-01T10:30:00Z,2026-10-01T10:30:00Z,document-66e0aed613665380afd7a3db1c69512d,Authored original picks/PICK-1,PICK-1,ALLOC-1,LOT-D,W-EAST,1,bag,2026-10-01T10:30:00Z,DISPATCH,PHYSICAL-PICK-1
+PICK-2,PICK-2,1,,active,2026-10-01T12:30:00Z,2026-10-01T12:30:00Z,document-38b9273219d567f15d0a5e56fa69c594,Authored original picks/PICK-2,PICK-2,ALLOC-2,LOT-B,W-EAST,50,kg,2026-10-01T12:30:00Z,DISPATCH,PHYSICAL-PICK-2
+PICK-3,PICK-3,1,,active,2026-10-01T10:30:00Z,2026-10-01T10:30:00Z,document-3f1d61f5098145a730ca9dbc0f56e315,Authored original picks/PICK-3,PICK-3,ALLOC-3,LOT-A,W-EAST,30,kg,2026-10-01T10:30:00Z,DISPATCH,PHYSICAL-PICK-3
+PICK-4,PICK-4,1,,active,2026-10-01T10:30:00Z,2026-10-01T10:30:00Z,document-a063e0d47b077cd3ba1b3e9e0645bbfd,Authored original picks/PICK-4,PICK-4,ALLOC-4,LOT-E,W-WEST,10,kg,2026-10-01T10:30:00Z,DISPATCH,PHYSICAL-PICK-4

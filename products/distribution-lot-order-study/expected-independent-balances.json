@@ -1,0 +1,100 @@
+{
+  "data_class": "authored_course",
+  "calculation_basis": "Independent conservation arithmetic from the declared physical events; not a domain-engine result.",
+  "opening_and_receipts_kg": 320,
+  "repack_loss_kg": 5,
+  "gross_dispatched_kg": 115,
+  "returned_kg": 5,
+  "writeoff_kg": 10,
+  "physical_remaining_kg": 195,
+  "balances": [
+    {
+      "lot": "LOT-A",
+      "warehouse": "W-EAST",
+      "kg": 10
+    },
+    {
+      "lot": "LOT-B",
+      "warehouse": "W-EAST",
+      "kg": 55,
+      "returned_pending_disposition_kg": 5
+    },
+    {
+      "lot": "LOT-C",
+      "warehouse": "W-EAST",
+      "kg": 30,
+      "quality_hold": true
+    },
+    {
+      "lot": "LOT-D",
+      "warehouse": "W-EAST",
+      "kg": 50
+    },
+    {
+      "lot": "LOT-E",
+      "warehouse": "W-WEST",
+      "kg": 30
+    },
+    {
+      "lot": "LOT-E",
+      "warehouse": "W-EAST",
+      "kg": 20
+    }
+  ],
+  "orders": {
+    "retained": 6,
+    "customer_cancelled": 1,
+    "open_population": 5,
+    "retained_requested_kg": 175,
+    "noncancelled_requested_kg": 165,
+    "fully_dispatched_before_return": 3,
+    "partially_dispatched": 1,
+    "no_dispatch_unknown_customer_rule": 1,
+    "returned_kg": 5,
+    "gross_dispatch_kg": 115,
+    "net_after_return_kg": 110,
+    "compliant_fill_complete": false
+  },
+  "money": {
+    "currency": "GBP",
+    "posted_sale": 500,
+    "posted_credit": 50,
+    "posted_writeoff": 60,
+    "scope": "Separate observed categories; no claimed cash receipt, avoided loss or net-benefit aggregation."
+  },
+  "effort": {
+    "members": 12,
+    "phases": 8,
+    "rows": 192,
+    "baseline": 324,
+    "current": 300,
+    "signed_change": -24,
+    "phase_per_member": {
+      "baseline": [
+        3,
+        4,
+        5,
+        6,
+        2,
+        4,
+        2,
+        1
+      ],
+      "current": [
+        2,
+        3,
+        7,
+        4,
+        3,
+        3,
+        2,
+        1
+      ]
+    },
+    "increases": [
+      "certificate_qa_review: 5 to 7",
+      "exception_approval: 2 to 3"
+    ],
+    "setup": "Not included in recurring observations; no synthetic setup value."
+  }
+}

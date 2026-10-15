@@ -1,0 +1,20 @@
+{
+  "data_class": "authored_course",
+  "family": "decision_inputs",
+  "record": {
+    "id": "DECISION-WEST-INPUT-032",
+    "record_key": "DECISION-WEST-INPUT-032",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:00:00Z",
+    "available_at": "2026-10-01T10:00:00Z",
+    "source_document_id": "SRC-DECISION-WEST-INPUT-032",
+    "source_ref": "Authored original decision_inputs/DECISION-WEST-INPUT-032",
+    "decision_input_id": "DECISION-WEST-INPUT-032",
+    "decision_case_record_id": "DECISION-WEST",
+    "family": "authorities",
+    "record_id": "AUTH-PLANNER-operations-W-EAST",
+    "row_sha256": "d4c5dce03519b35c81905491cc74119a82ad588a5abc5407daffa9a867a393ec"
+  }
+}

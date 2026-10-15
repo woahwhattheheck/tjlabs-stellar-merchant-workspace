@@ -1,0 +1,27 @@
+{
+  "data_class": "authored_course",
+  "family": "effort",
+  "record": {
+    "id": "EFFORT-MEM-LOT-A-baseline_process-certificate_qa_review",
+    "record_key": "EFFORT-MEM-LOT-A-baseline_process-certificate_qa_review",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-09-30T07:14:00.000Z",
+    "available_at": "2026-09-30T07:14:00.000Z",
+    "source_document_id": "SRC-EFFORT-MEM-LOT-A-baseline_process-certificate_qa_review",
+    "source_ref": "Authored original effort/EFFORT-MEM-LOT-A-baseline_process-certificate_qa_review",
+    "effort_id": "EFFORT-MEM-LOT-A-baseline_process-certificate_qa_review",
+    "member_id": "MEM-LOT-A",
+    "phase": "certificate_qa_review",
+    "method": "baseline_process",
+    "person_id": "BASELINE",
+    "started_at": "2026-09-30T07:09:00.000Z",
+    "ended_at": "2026-09-30T07:14:00.000Z",
+    "person_minutes": "5",
+    "work_key": "EFFORT-MEM-LOT-A-baseline_process-certificate_qa_review",
+    "matched_group_id": "MATCH-MEM-LOT-A",
+    "population_complete": "true",
+    "phase_complete": "true"
+  }
+}

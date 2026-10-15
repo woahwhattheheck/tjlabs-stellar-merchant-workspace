@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "distribution-lot-order-study",
+  "description": "Complete physical-lot and order study with actual certificates and QA holds, warehouse movements and repacking, reviewed allocation decisions, dispatches, returns, cost observations and whole-population recurring effort.",
+  "components": [
+    "products/distribution-lot-order-study"
+  ],
+  "commands": {
+    "distribution-lot-order-study-workspace": "products/distribution-lot-order-study/installed-cli.mjs",
+    "distribution-lot-order-study-managed": "products/distribution-lot-order-study/managed.mjs"
+  },
+  "commandDescriptions": {
+    "distribution-lot-order-study-workspace": "Create, receive and export complete Distribution Lot and Order Study sessions",
+    "distribution-lot-order-study-managed": "Open the complete distribution lot and order study through Applications"
+  },
+  "exports": {
+    "./products/distribution-lot-order-study": "./source/products/distribution-lot-order-study/runtime.mjs",
+    "./products/distribution-lot-order-study/client": "./source/products/distribution-lot-order-study/host/client.mjs",
+    "./products/distribution-lot-order-study/server": "./source/products/distribution-lot-order-study/host/server.mjs"
+  },
+  "applicationProviders": {
+    "distribution-lot-order-study": "products/distribution-lot-order-study/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "distribution-lot-order-study": "products/distribution-lot-order-study/merchant-provider.mjs"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "data_class": "authored_course",
+  "family": "order_lines",
+  "record": {
+    "id": "ORDER-1",
+    "record_key": "ORDER-1",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T06:00:00Z",
+    "available_at": "2026-10-01T06:00:00Z",
+    "source_document_id": "SRC-ORDER-1",
+    "source_ref": "Authored original order_lines/ORDER-1",
+    "order_line_id": "ORDER-1",
+    "operator_id": "OP",
+    "warehouse_id": "W-EAST",
+    "customer_id": "CUSTOMER-A",
+    "external_order_ref": "CUSTOMER-ORDER-1",
+    "external_line_ref": "1",
+    "product_id": "PACK",
+    "ordered_at": "2026-10-01T06:00:00Z",
+    "due_at": "2026-10-03T12:00:00Z",
+    "quantity": "2",
+    "unit": "bag",
+    "rule_record_id": "RULE-PACK",
+    "approved_by": "PLANNER"
+  }
+}

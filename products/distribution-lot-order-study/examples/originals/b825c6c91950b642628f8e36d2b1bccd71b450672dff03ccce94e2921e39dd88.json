@@ -1,0 +1,25 @@
+{
+  "data_class": "authored_course",
+  "family": "receipts",
+  "record": {
+    "id": "RECEIPT-B",
+    "record_key": "RECEIPT-B",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T07:00:00Z",
+    "available_at": "2026-10-01T07:00:00Z",
+    "source_document_id": "SRC-RECEIPT-B",
+    "source_ref": "Authored original receipts/RECEIPT-B",
+    "receipt_id": "RECEIPT-B",
+    "purchase_line_record_id": "PO-B",
+    "lot_id": "LOT-B",
+    "warehouse_id": "W-EAST",
+    "received_at": "2026-10-01T07:00:00Z",
+    "quantity": "100",
+    "unit": "kg",
+    "supplier_ref": "DELIVERY-100",
+    "received_by": "RECEIVER",
+    "disposition": "quarantined"
+  }
+}

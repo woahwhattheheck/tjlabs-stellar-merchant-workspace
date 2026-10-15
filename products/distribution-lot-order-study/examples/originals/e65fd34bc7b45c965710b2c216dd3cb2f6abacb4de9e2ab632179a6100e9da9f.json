@@ -1,0 +1,20 @@
+{
+  "data_class": "authored_course",
+  "family": "decision_inputs",
+  "record": {
+    "id": "DECISION-EAST-SAFE-INPUT-036",
+    "record_key": "DECISION-EAST-SAFE-INPUT-036",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:06:00Z",
+    "available_at": "2026-10-01T10:06:00Z",
+    "source_document_id": "SRC-DECISION-EAST-SAFE-INPUT-036",
+    "source_ref": "Authored original decision_inputs/DECISION-EAST-SAFE-INPUT-036",
+    "decision_input_id": "DECISION-EAST-SAFE-INPUT-036",
+    "decision_case_record_id": "DECISION-EAST-SAFE",
+    "family": "authorities",
+    "record_id": "AUTH-FINANCE-operations-W-EAST",
+    "row_sha256": "78c841a59001873fed3d8780b97242aecdf3f9c89e10b4bba1a6cacd52facd6a"
+  }
+}

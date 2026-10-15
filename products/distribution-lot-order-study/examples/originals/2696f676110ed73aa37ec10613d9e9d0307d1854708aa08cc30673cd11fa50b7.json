@@ -1,0 +1,24 @@
+{
+  "data_class": "authored_course",
+  "family": "picks",
+  "record": {
+    "id": "PICK-2",
+    "record_key": "PICK-2",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T12:30:00Z",
+    "available_at": "2026-10-01T12:30:00Z",
+    "source_document_id": "SRC-PICK-2",
+    "source_ref": "Authored original picks/PICK-2",
+    "pick_id": "PICK-2",
+    "allocation_record_id": "ALLOC-2",
+    "lot_record_id": "LOT-B",
+    "warehouse_id": "W-EAST",
+    "quantity": "50",
+    "unit": "kg",
+    "picked_at": "2026-10-01T12:30:00Z",
+    "picked_by": "DISPATCH",
+    "external_ref": "PHYSICAL-PICK-2"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "data_class": "authored_course",
+  "family": "lots",
+  "record": {
+    "id": "LOT-A",
+    "record_key": "LOT-A",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-09-30T06:00:00Z",
+    "available_at": "2026-09-30T06:00:00Z",
+    "source_document_id": "SRC-LOT-A",
+    "source_ref": "Authored original lots/LOT-A",
+    "lot_id": "LOT-A",
+    "operator_id": "OP",
+    "physical_key": "PHYSICAL-LOT-A",
+    "product_id": "BULK",
+    "supplier_id": "SUPPLIER",
+    "supplier_lot": "SUP-LOT-A",
+    "created_at": "2026-09-30T05:00:00Z",
+    "manufacture_at": "2026-09-01T00:00:00Z",
+    "expiry_at": "2026-10-12T23:59:59Z",
+    "retest_at": "",
+    "date_kind": "expiry",
+    "origin_kind": "opening"
+  }
+}
