@@ -23,6 +23,21 @@
       "sha256": "80661fb0a281bf39ed5082ab2f97632238f9fbbedce32902014ee896786a4fe3"
     },
     {
+      "path": "DIRECT_GIT_ASSEMBLY.md",
+      "bytes": 2543,
+      "sha256": "d44ace22e0c123d21dd2d550d7755b5f25394e3905d72936a04ba61c148143af"
+    },
+    {
+      "path": "direct-git-assembly-focused-result.json",
+      "bytes": 406,
+      "sha256": "0525cee46bdf16580e2c6f4fd20365f7c07f82d4f30362426ae39903c67fedaf"
+    },
+    {
+      "path": "fetch-and-assemble.mjs",
+      "bytes": 11035,
+      "sha256": "5f8029af4b58ea620b158c1864b3a5b08e726545783d77c98c589e72b8d2b8be"
+    },
+    {
       "path": "finish-prepared.mjs",
       "bytes": 4670,
       "sha256": "95f561294733f206a92b754fc5dc18c8daf04bf465017eb7457f0ba0ee52fc60"

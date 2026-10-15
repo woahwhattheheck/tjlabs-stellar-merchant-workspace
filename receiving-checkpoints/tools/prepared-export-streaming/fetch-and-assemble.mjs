@@ -117,8 +117,9 @@ async function existingOutput(path,manifest){
 export async function fetchAndAssemble(options,{readGithub=ghJson,progress=()=>{}}={}){
  const {repository,commit,manifest:manifestPath,manifestSha256}=options;
  if(typeof repository!=='string'||!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository)||
+    repository.split('/').some(x=>x==='.'||x==='..')||
     !GIT.test(commit)||!HEX.test(manifestSha256)||typeof manifestPath!=='string'||
-    manifestPath.startsWith('/')||manifestPath.includes('\\')||
+    manifestPath.startsWith('/')||manifestPath.includes('\\')||/[\u0000-\u001f\u007f]/.test(manifestPath)||
     manifestPath.split('/').some(x=>!x||x==='.'||x==='..')||typeof options.output!=='string'||!options.output)
   fail('Bind repository, immutable commit, safe manifest path, manifest SHA-256 and output');
  const output=resolve(options.output),cache=resolve(options.cache||output+'.parts');
