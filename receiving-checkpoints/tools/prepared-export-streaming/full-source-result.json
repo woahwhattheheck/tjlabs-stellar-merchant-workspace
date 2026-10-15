@@ -1,0 +1,98 @@
+{
+  "schema": "commons.prepared-stream-full-source-result.v1",
+  "sourceFiles": 612,
+  "receipt": {
+    "schema": "commons.streamed-complete-export.v1",
+    "identity": "8794d27746f1bdbc74b70f14ad00592482f84cf98cec91dadeda516e755723f4",
+    "bytes": 3769111,
+    "sha256": "b321ee3d48794dd8116cd92438522d75e5cbe7e8de8c4a197872fb4d652e49d0",
+    "members": 617,
+    "uncompressedBytes": 11577362,
+    "metadataBytes": 294868,
+    "maxInputFragmentBytes": 650000,
+    "maxOutputChunkBytes": 487500,
+    "receivingSource": null,
+    "derivation": null
+  },
+  "sourceSuccessor": {
+    "schema": "commons.streamed-complete-export.v1",
+    "identity": "277086486f2afad64241d58d0b3c14cbf353c769eeabe83c1be5b7a55806c8a3",
+    "bytes": 3769185,
+    "sha256": "de3442ba09468b8f2772d591d68642d0e03fe4187bba159a232fa5810eeb9ca8",
+    "members": 617,
+    "uncompressedBytes": 11577473,
+    "metadataBytes": 294868,
+    "maxInputFragmentBytes": 650000,
+    "maxOutputChunkBytes": 487500,
+    "receivingSource": null,
+    "derivation": {
+      "schema": "commons.source-successor-derivation.v1",
+      "parentIdentity": "8794d27746f1bdbc74b70f14ad00592482f84cf98cec91dadeda516e755723f4",
+      "parentIndexSha256": "9d3472a1bfccf6235f001159ecdccbc868753ff33edd634c315af012ab13c9d0",
+      "sourceVersion": "verification-source-successor",
+      "compression": {
+        "engine": "pako",
+        "level": 1
+      },
+      "changes": [
+        {
+          "name": "source/sha256.cjs",
+          "before": {
+            "bytes": 19696,
+            "sha256": "f37a1319db3aa8b9bd15ae2fea89cf0b79677e2a2eb295e63efa4d34f8308230"
+          },
+          "after": {
+            "bytes": 19731,
+            "sha256": "b564ad5e6e8bb8c102f161af61d0b004d4fbd4b5fea11f37122769bce00709f7"
+          }
+        },
+        {
+          "name": "source/binary.cjs",
+          "before": {
+            "bytes": 1021,
+            "sha256": "99479b36e6f6e2e08da08d9faf25f02ca0f344df41902b08e8df06a1c6acf291"
+          },
+          "after": {
+            "bytes": 1056,
+            "sha256": "8f9210bd3bf346e2a0ff6615cbf609a8f889071580bff1237fa9dd9309b6f0f8"
+          }
+        },
+        {
+          "name": "working/Procurement_Editable.html",
+          "before": {
+            "bytes": 2602878,
+            "sha256": "10786941e9825a6f49da728d988f4b275be5139cea0fc37dc2d93d985e5b92fb"
+          },
+          "after": {
+            "bytes": 2602919,
+            "sha256": "91c89de8849e84e42737e3865b6ff2bd540d9bfa295622820e33898e485ae9e3"
+          }
+        },
+        {
+          "name": "EXPORT_MANIFEST.json",
+          "before": {
+            "bytes": 131561,
+            "sha256": "4ae03316d83a5553865f7d11c56e57cec1eb8ba6f71d069d560fe4218f967dd6"
+          },
+          "after": {
+            "bytes": 131561,
+            "sha256": "e628c72d531e131ae295efdae4a027e2a24d05a6bd01592f8ba69c262057ce8a"
+          }
+        }
+      ]
+    }
+  },
+  "publishedParts": 476,
+  "unalignedPartCharacters": 4099,
+  "rejected": [
+    "missing durable object",
+    "changed durable fragment",
+    "incomplete job",
+    "protected historical output",
+    "changed source preimage",
+    "output failure stops finalization",
+    "unacknowledged publication",
+    "failed publication finalization"
+  ],
+  "elapsedMs": 174106
+}
