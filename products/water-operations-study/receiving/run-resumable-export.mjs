@@ -17,12 +17,12 @@ const inputSha=input.compactSha256||input.sha256;if(codec.hashText(compact)!==in
 const workload=reader(JSON.parse(compact)),state=workload.read(workload.field(workload.root,'state')),records=workload.sequence(workload.field(workload.root,'records')),editions=workload.sequence(workload.field(workload.root,'editions')),output=args.output;
 await fs.mkdir(path.join(output,'objects'),{recursive:true});
 async function atomic(name,body){const destination=path.join(output,name),temporary=destination+'.pending';await fs.writeFile(temporary,body);await fs.rename(temporary,destination);}
-const indexPath=path.join(output,'checkpoint.json');let checkpoint=null;
-let indexText;try{indexText=await fs.readFile(indexPath,'utf8');}catch(e){if(e.code!=='ENOENT')throw e;}if(indexText!==undefined)checkpoint=await storage.restore(JSON.parse(indexText),p=>fs.readFile(path.join(output,p),'utf8'),codec);
+const indexPath=path.join(output,'checkpoint.json'),durableObjects=new Set();let checkpoint=null;
+let indexText;try{indexText=await fs.readFile(indexPath,'utf8');}catch(e){if(e.code!=='ENOENT')throw e;}if(indexText!==undefined){const priorIndex=JSON.parse(indexText);checkpoint=await storage.restore(priorIndex,p=>fs.readFile(path.join(output,p),'utf8'),codec);for(const p of [...priorIndex.metadata.parts,...priorIndex.payloads.flatMap(x=>x.parts)])durableObjects.add(p.path);}
 const job=createWaterOperationsStudyExportJob(files,state,records,editions,{codec,core,originalSessions,sessions,buildDesk:buildWaterOperationsStudyDesk,zip},{verifiedInputSha256:inputSha,checkpoint});
-let progress=job.statistics();
-while(!progress.done){progress=job.run({maxGroups:8,maxMilliseconds:25000});const saved=storage.prepare(job.checkpoint(),codec);
- for(const [name,content]of Object.entries(saved.objects)){let existing;try{existing=await fs.readFile(path.join(output,name),'utf8');}catch(e){if(e.code!=='ENOENT')throw e;}if(existing!==undefined){if(existing!==content)throw Error('Existing checkpoint object differs');}else await atomic(name,content);}
+const prepare=storage.createPreparer(codec);let progress=job.statistics();
+while(!progress.done){progress=job.run({maxGroups:8,maxMilliseconds:25000});const saved=prepare(job.checkpoint());
+ for(const [name,content]of Object.entries(saved.objects)){if(durableObjects.has(name))continue;let existing;try{existing=await fs.readFile(path.join(output,name),'utf8');}catch(e){if(e.code!=='ENOENT')throw e;}if(existing!==undefined){if(existing!==content)throw Error('Existing checkpoint object differs');}else await atomic(name,content);durableObjects.add(name);}
  await atomic('checkpoint.json',JSON.stringify(saved.manifest,null,2)+'\n');process.stdout.write(JSON.stringify(progress)+'\n');
 }
 const checkpointComplete=job.checkpoint(),bytes=job.finish(),expected=new Map(checkpointComplete.entries.map(x=>[x.name,x]));let manifest=null;

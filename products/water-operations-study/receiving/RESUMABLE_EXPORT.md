@@ -33,3 +33,7 @@ Iterator advancement and source-group validation are part of the same interrupti
 
 
 Run the installed complete receiver with `node receiving/run-resumable-export.mjs --input-manifest /absolute/manifest.json --input-root /absolute/repository --output /absolute/export-directory`. Repeat that command after interruption to resume verified, content-addressed source groups. The output retains every checkpoint object, the complete ZIP and its exact member readback receipt.
+
+## Repeated checkpoint cost
+
+Prepared ZIP snapshots reuse canonical base64 for their private immutable packed payloads. The native receiver uses one stateful createPreparer(codec) per export, reuses unchanged fragment references, and checks only objects it has not already durably written or verified on restore. Metadata is rebuilt for every checkpoint. A failed write cannot mark a merely computed object durable. The complete old/new/restored 962-source comparison is retained at receiving-checkpoints/tools/prepared-checkpoint-cache/full-source-result.json in commit4319b2d0674f2d053fd426dc8d20c78dfb128648; its 963-member ZIP is byte-identical and every member is independently read back. The repeated checkpoint preparation in that V8 course changed from5,021 to332ms.
