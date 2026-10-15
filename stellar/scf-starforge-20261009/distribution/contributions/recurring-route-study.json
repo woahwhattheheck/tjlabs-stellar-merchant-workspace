@@ -11,7 +11,7 @@
   },
   "commandDescriptions": {
     "recurringroute-workspace": "Create, receive and export complete Recurring Route Study sessions",
-    "recurringroute-managed": "Open the complete field quote study through Applications"
+    "recurringroute-managed": "Open the complete recurring route study through Applications"
   },
   "exports": {
     "./products/recurringroute": "./source/products/recurring-route-study/runtime.mjs",

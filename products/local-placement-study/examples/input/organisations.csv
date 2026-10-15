@@ -1,0 +1,5 @@
+id,name,kind,source_ref
+OP,Authored placement operator,provider,authored/organisations
+HOST,Authored host,host,authored/organisations
+ADV,Authored HVAC advertiser,advertiser,authored/organisations
+RIVAL,Authored competing advertiser,advertiser,authored/organisations

@@ -1,0 +1,4 @@
+id,venue_id,agreement_id,asset_ref,format,nearby_group,prepaid_installation,installation_required_line_kinds,screen_ad_share_limit,source_ref
+SCREEN,V1,H-V1,AUTH-SCREEN-1,screen,SURVEY-1,no,,0.4,authored/asset-screen
+BENCH,V2,H-V2,AUTH-BENCH-1,bench,SURVEY-2,yes,placement|panel,,authored/asset-bench
+PLANTER,V2,H-V2,AUTH-PLANTER-1,planter,SURVEY-2,no,,,authored/asset-planter
