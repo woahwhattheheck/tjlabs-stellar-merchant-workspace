@@ -19,3 +19,7 @@ The CLI pins exact index-file bytes, streams into an exclusive temporary file, h
 `verify-prepared-stream.cjs` accepts a complete maintained text source bank and its real generated HTML. It compares the full ordinary/streamed ZIP, reopens every member, verifies fixed-size durable publication, arbitrary 4,099-character input fragmentation, precise source-successor output against a freshly built ordinary ZIP, and failure propagation. The receiver itself uses only maintained connected ZIP, UTF-8, incremental SHA-256 and pinned Pako. Their existing license notices remain in source.
 
 `verify-source-addition.cjs` exercises an actual full native source manifest, mixed additions/replacements, unchanged retained request bytes, complete group coverage and fresh ordinary ZIP equivalence. It also checks explicit absent preimages and path collisions. Its focused result accompanies the maintained source; the earlier complete-source streaming course remains retained.
+
+## Complete default ZIP codec
+
+connected_gzip.cjs is the exact maintained, dependency-free raw DEFLATE/GZIP implementation required by connected_zip.cjs when callers use its ordinary default codec. The prepared streaming path retains its explicit Pako hooks. The included default-codec-result.json records actual default pack/read execution across the complete codec source, Unicode text, original binary bytes and an empty member.

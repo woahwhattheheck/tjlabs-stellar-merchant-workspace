@@ -1,0 +1,36 @@
+{
+  "schema": "commons.complete-zip-default-codec.v1",
+  "source": {
+    "path": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/connected_gzip.cjs",
+    "commit": "b2c216f07468f7fa32d96423ddacab904bd99bdb",
+    "bytes": 47127,
+    "sha256": "1fc9f3b218c60d029c96bf9f1c1e4de5fcb86918ed5a0570586dc81488440119"
+  },
+  "execution": "Production packZip/readZip default require path, without injected codec hooks",
+  "members": [
+    {
+      "name": "empty.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "original.bin",
+      "bytes": 6,
+      "sha256": "790573355bd27552f225dd8b7d96507317bfd6ee2ae778920db8f43f805b36d4"
+    },
+    {
+      "name": "source/connected_gzip.cjs",
+      "bytes": 47127,
+      "sha256": "1fc9f3b218c60d029c96bf9f1c1e4de5fcb86918ed5a0570586dc81488440119"
+    },
+    {
+      "name": "unicode/α.txt",
+      "bytes": 3200,
+      "sha256": "194d28279a77761374b248550e9d50ebd3423c3db97c1f9adb944296fa05772a"
+    }
+  ],
+  "zip": {
+    "bytes": 15808,
+    "sha256": "06d127be012259a8475fb546a815ea4c076b0dd5c801dcbbb2f9441fe85cb2a4"
+  }
+}
