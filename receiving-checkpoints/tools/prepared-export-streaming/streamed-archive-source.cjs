@@ -18,6 +18,7 @@ function createStreamedArchiveSource(manifest,readPart,options={}){
  fail('Choose a complete independently encoded archive');
  if(manifest.receipt&&(manifest.receipt.bytes!==manifest.bytes||manifest.receipt.sha256!==manifest.sha256))
  fail('Streamed archive receipt differs');
+ const archiveBytes=manifest.bytes,archiveSha256=manifest.sha256;
  const parts=[],starts=[];let total=0;
  for(const input of manifest.parts){
   const p={...input};
@@ -25,10 +26,10 @@ function createStreamedArchiveSource(manifest,readPart,options={}){
   !integer(p.bytes,maxPartBytes)||!p.bytes||!integer(p.decodedBytes,maxPartBytes)||!p.decodedBytes||
   p.bytes!==Math.ceil(p.decodedBytes/3)*4)fail('Invalid independently encoded archive part');
   starts.push(total);total+=p.decodedBytes;
-  if(!Number.isSafeInteger(total)||total>manifest.bytes)fail('Archive part lengths exceed the declared archive');
+  if(!Number.isSafeInteger(total)||total>archiveBytes)fail('Archive part lengths exceed the declared archive');
   parts.push(Object.freeze(p));
  }
- if(total!==manifest.bytes||(!parts.length&&manifest.bytes))fail('Archive part lengths differ');
+ if(total!==archiveBytes||(!parts.length&&archiveBytes))fail('Archive part lengths differ');
  const cache=new Map(),inflight=new Map();let fetchedParts=0,textBytes=0,decodedBytes=0;
  async function part(index){
   if(cache.has(index)){const data=cache.get(index);cache.delete(index);cache.set(index,data);return data;}
@@ -53,7 +54,7 @@ function createStreamedArchiveSource(manifest,readPart,options={}){
   return low;
  }
  async function read(offset,length){
-  if(!integer(offset,manifest.bytes)||!integer(length,manifest.bytes-offset))fail('Archive range exceeds its original boundary');
+  if(!integer(offset,archiveBytes)||!integer(length,archiveBytes-offset))fail('Archive range exceeds its original boundary');
   const out=new Uint8Array(length);let cursor=offset,at=0;
   while(at<length){
    const index=find(cursor),data=await part(index),inside=cursor-starts[index],take=Math.min(length-at,data.length-inside);
@@ -62,7 +63,7 @@ function createStreamedArchiveSource(manifest,readPart,options={}){
   }
   return out;
  }
- return Object.freeze({bytes:manifest.bytes,sha256:manifest.sha256,read,
+ return Object.freeze({bytes:archiveBytes,sha256:archiveSha256,read,
  stats:()=>({fetchedParts,textBytes,decodedBytes,cachedParts:cache.size,declaredParts:parts.length})});
 }
 module.exports={createStreamedArchiveSource};
