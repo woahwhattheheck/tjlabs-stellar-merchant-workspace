@@ -1,0 +1,565 @@
+{
+  "schema": "tjlabs.roastery-workspace.v1",
+  "caseName": "Worked example — two lots and mixed orders",
+  "tables": {
+    "lots": [
+      {
+        "lot_id": "ETH-01",
+        "coffee": "Example washed coffee",
+        "green_g": "20000"
+      },
+      {
+        "lot_id": "COL-01",
+        "coffee": "Example Colombian coffee",
+        "green_g": "18000"
+      }
+    ],
+    "profiles": [
+      {
+        "profile_id": "LIGHT",
+        "roast_loss_pct": "15",
+        "min_green_g": "1000",
+        "max_green_g": "6000"
+      },
+      {
+        "profile_id": "MEDIUM",
+        "roast_loss_pct": "18",
+        "min_green_g": "1000",
+        "max_green_g": "6000"
+      }
+    ],
+    "products": [
+      {
+        "sku": "SINGLE-340",
+        "name": "Example single origin 340g",
+        "bag_g": "340",
+        "pack_loss_pct": "1"
+      },
+      {
+        "sku": "BLEND-1000",
+        "name": "Example 60/40 blend 1kg",
+        "bag_g": "1000",
+        "pack_loss_pct": "2"
+      }
+    ],
+    "recipes": [
+      {
+        "sku": "SINGLE-340",
+        "lot_id": "ETH-01",
+        "profile_id": "LIGHT",
+        "share_pct": "100"
+      },
+      {
+        "sku": "BLEND-1000",
+        "lot_id": "ETH-01",
+        "profile_id": "LIGHT",
+        "share_pct": "60"
+      },
+      {
+        "sku": "BLEND-1000",
+        "lot_id": "COL-01",
+        "profile_id": "MEDIUM",
+        "share_pct": "40"
+      }
+    ],
+    "orders": [
+      {
+        "line_id": "L1",
+        "order_id": "WEB-1001",
+        "sku": "SINGLE-340",
+        "units": "20",
+        "due_date": "2026-10-16"
+      },
+      {
+        "line_id": "L2",
+        "order_id": "WHOLESALE-2001",
+        "sku": "BLEND-1000",
+        "units": "10",
+        "due_date": "2026-10-17"
+      },
+      {
+        "line_id": "L3",
+        "order_id": "WEB-1002",
+        "sku": "SINGLE-340",
+        "units": "4",
+        "due_date": "2026-10-18"
+      }
+    ],
+    "roasted": [
+      {
+        "stock_id": "R1",
+        "lot_id": "ETH-01",
+        "profile_id": "LIGHT",
+        "roasted_g": "1200"
+      },
+      {
+        "stock_id": "R2",
+        "lot_id": "COL-01",
+        "profile_id": "MEDIUM",
+        "roasted_g": "300"
+      }
+    ],
+    "packaged": [
+      {
+        "sku": "SINGLE-340",
+        "units": "3"
+      },
+      {
+        "sku": "BLEND-1000",
+        "units": "1"
+      }
+    ]
+  },
+  "captures": [
+    {
+      "id": "capture-1",
+      "table": "lots",
+      "filename": "example-lots.csv",
+      "text": "lot_id,coffee,green_g\nETH-01,Example washed coffee,20000\nCOL-01,Example Colombian coffee,18000\n",
+      "capturedAt": "2026-10-15"
+    },
+    {
+      "id": "capture-2",
+      "table": "profiles",
+      "filename": "example-profiles.csv",
+      "text": "profile_id,roast_loss_pct,min_green_g,max_green_g\nLIGHT,15,1000,6000\nMEDIUM,18,1000,6000\n",
+      "capturedAt": "2026-10-15"
+    },
+    {
+      "id": "capture-3",
+      "table": "products",
+      "filename": "example-products.csv",
+      "text": "sku,name,bag_g,pack_loss_pct\nSINGLE-340,Example single origin 340g,340,1\nBLEND-1000,Example 60/40 blend 1kg,1000,2\n",
+      "capturedAt": "2026-10-15"
+    },
+    {
+      "id": "capture-4",
+      "table": "recipes",
+      "filename": "example-recipes.csv",
+      "text": "sku,lot_id,profile_id,share_pct\nSINGLE-340,ETH-01,LIGHT,100\nBLEND-1000,ETH-01,LIGHT,60\nBLEND-1000,COL-01,MEDIUM,40\n",
+      "capturedAt": "2026-10-15"
+    },
+    {
+      "id": "capture-5",
+      "table": "orders",
+      "filename": "example-orders.csv",
+      "text": "line_id,order_id,sku,units,due_date\nL1,WEB-1001,SINGLE-340,20,2026-10-16\nL2,WHOLESALE-2001,BLEND-1000,10,2026-10-17\nL3,WEB-1002,SINGLE-340,4,2026-10-18\n",
+      "capturedAt": "2026-10-15"
+    },
+    {
+      "id": "capture-6",
+      "table": "roasted",
+      "filename": "example-roasted.csv",
+      "text": "stock_id,lot_id,profile_id,roasted_g\nR1,ETH-01,LIGHT,1200\nR2,COL-01,MEDIUM,300\n",
+      "capturedAt": "2026-10-15"
+    },
+    {
+      "id": "capture-7",
+      "table": "packaged",
+      "filename": "example-packaged.csv",
+      "text": "sku,units\nSINGLE-340,3\nBLEND-1000,1\n",
+      "capturedAt": "2026-10-15"
+    }
+  ],
+  "bindings": {
+    "lots": "capture-1",
+    "profiles": "capture-2",
+    "products": "capture-3",
+    "recipes": "capture-4",
+    "orders": "capture-5",
+    "roasted": "capture-6",
+    "packaged": "capture-7"
+  },
+  "frozenPlans": [
+    {
+      "id": "plan-1",
+      "reviewer": "Example reviewer",
+      "note": "Authored worked plan; demonstrates the full receiving flow.",
+      "createdAt": "2026-10-15",
+      "inputIdentity": "{\"tables\":{\"lots\":[{\"lot_id\":\"ETH-01\",\"coffee\":\"Example washed coffee\",\"green_g\":\"20000\"},{\"lot_id\":\"COL-01\",\"coffee\":\"Example Colombian coffee\",\"green_g\":\"18000\"}],\"profiles\":[{\"profile_id\":\"LIGHT\",\"roast_loss_pct\":\"15\",\"min_green_g\":\"1000\",\"max_green_g\":\"6000\"},{\"profile_id\":\"MEDIUM\",\"roast_loss_pct\":\"18\",\"min_green_g\":\"1000\",\"max_green_g\":\"6000\"}],\"products\":[{\"sku\":\"SINGLE-340\",\"name\":\"Example single origin 340g\",\"bag_g\":\"340\",\"pack_loss_pct\":\"1\"},{\"sku\":\"BLEND-1000\",\"name\":\"Example 60/40 blend 1kg\",\"bag_g\":\"1000\",\"pack_loss_pct\":\"2\"}],\"recipes\":[{\"sku\":\"SINGLE-340\",\"lot_id\":\"ETH-01\",\"profile_id\":\"LIGHT\",\"share_pct\":\"100\"},{\"sku\":\"BLEND-1000\",\"lot_id\":\"ETH-01\",\"profile_id\":\"LIGHT\",\"share_pct\":\"60\"},{\"sku\":\"BLEND-1000\",\"lot_id\":\"COL-01\",\"profile_id\":\"MEDIUM\",\"share_pct\":\"40\"}],\"orders\":[{\"line_id\":\"L1\",\"order_id\":\"WEB-1001\",\"sku\":\"SINGLE-340\",\"units\":\"20\",\"due_date\":\"2026-10-16\"},{\"line_id\":\"L2\",\"order_id\":\"WHOLESALE-2001\",\"sku\":\"BLEND-1000\",\"units\":\"10\",\"due_date\":\"2026-10-17\"},{\"line_id\":\"L3\",\"order_id\":\"WEB-1002\",\"sku\":\"SINGLE-340\",\"units\":\"4\",\"due_date\":\"2026-10-18\"}],\"roasted\":[{\"stock_id\":\"R1\",\"lot_id\":\"ETH-01\",\"profile_id\":\"LIGHT\",\"roasted_g\":\"1200\"},{\"stock_id\":\"R2\",\"lot_id\":\"COL-01\",\"profile_id\":\"MEDIUM\",\"roasted_g\":\"300\"}],\"packaged\":[{\"sku\":\"SINGLE-340\",\"units\":\"3\"},{\"sku\":\"BLEND-1000\",\"units\":\"1\"}]},\"bindings\":{\"lots\":\"capture-1\",\"profiles\":\"capture-2\",\"products\":\"capture-3\",\"recipes\":\"capture-4\",\"orders\":\"capture-5\",\"roasted\":\"capture-6\",\"packaged\":\"capture-7\"}}",
+      "tables": {
+        "lots": [
+          {
+            "lot_id": "ETH-01",
+            "coffee": "Example washed coffee",
+            "green_g": "20000"
+          },
+          {
+            "lot_id": "COL-01",
+            "coffee": "Example Colombian coffee",
+            "green_g": "18000"
+          }
+        ],
+        "profiles": [
+          {
+            "profile_id": "LIGHT",
+            "roast_loss_pct": "15",
+            "min_green_g": "1000",
+            "max_green_g": "6000"
+          },
+          {
+            "profile_id": "MEDIUM",
+            "roast_loss_pct": "18",
+            "min_green_g": "1000",
+            "max_green_g": "6000"
+          }
+        ],
+        "products": [
+          {
+            "sku": "SINGLE-340",
+            "name": "Example single origin 340g",
+            "bag_g": "340",
+            "pack_loss_pct": "1"
+          },
+          {
+            "sku": "BLEND-1000",
+            "name": "Example 60/40 blend 1kg",
+            "bag_g": "1000",
+            "pack_loss_pct": "2"
+          }
+        ],
+        "recipes": [
+          {
+            "sku": "SINGLE-340",
+            "lot_id": "ETH-01",
+            "profile_id": "LIGHT",
+            "share_pct": "100"
+          },
+          {
+            "sku": "BLEND-1000",
+            "lot_id": "ETH-01",
+            "profile_id": "LIGHT",
+            "share_pct": "60"
+          },
+          {
+            "sku": "BLEND-1000",
+            "lot_id": "COL-01",
+            "profile_id": "MEDIUM",
+            "share_pct": "40"
+          }
+        ],
+        "orders": [
+          {
+            "line_id": "L1",
+            "order_id": "WEB-1001",
+            "sku": "SINGLE-340",
+            "units": "20",
+            "due_date": "2026-10-16"
+          },
+          {
+            "line_id": "L2",
+            "order_id": "WHOLESALE-2001",
+            "sku": "BLEND-1000",
+            "units": "10",
+            "due_date": "2026-10-17"
+          },
+          {
+            "line_id": "L3",
+            "order_id": "WEB-1002",
+            "sku": "SINGLE-340",
+            "units": "4",
+            "due_date": "2026-10-18"
+          }
+        ],
+        "roasted": [
+          {
+            "stock_id": "R1",
+            "lot_id": "ETH-01",
+            "profile_id": "LIGHT",
+            "roasted_g": "1200"
+          },
+          {
+            "stock_id": "R2",
+            "lot_id": "COL-01",
+            "profile_id": "MEDIUM",
+            "roasted_g": "300"
+          }
+        ],
+        "packaged": [
+          {
+            "sku": "SINGLE-340",
+            "units": "3"
+          },
+          {
+            "sku": "BLEND-1000",
+            "units": "1"
+          }
+        ]
+      },
+      "bindings": {
+        "lots": "capture-1",
+        "profiles": "capture-2",
+        "products": "capture-3",
+        "recipes": "capture-4",
+        "orders": "capture-5",
+        "roasted": "capture-6",
+        "packaged": "capture-7"
+      },
+      "result": {
+        "issues": [],
+        "warnings": [],
+        "orders": [
+          {
+            "line_id": "L1",
+            "order_id": "WEB-1001",
+            "sku": "SINGLE-340",
+            "due_date": "2026-10-16",
+            "ordered_units": 20,
+            "from_packaged_units": 3,
+            "make_units": 17,
+            "packed_g": "5780",
+            "roasted_input_g": "5838.383839",
+            "packing_allowance_g": "58.383839"
+          },
+          {
+            "line_id": "L2",
+            "order_id": "WHOLESALE-2001",
+            "sku": "BLEND-1000",
+            "due_date": "2026-10-17",
+            "ordered_units": 10,
+            "from_packaged_units": 1,
+            "make_units": 9,
+            "packed_g": "9000",
+            "roasted_input_g": "9183.67347",
+            "packing_allowance_g": "183.67347"
+          },
+          {
+            "line_id": "L3",
+            "order_id": "WEB-1002",
+            "sku": "SINGLE-340",
+            "due_date": "2026-10-18",
+            "ordered_units": 4,
+            "from_packaged_units": 0,
+            "make_units": 4,
+            "packed_g": "1360",
+            "roasted_input_g": "1373.737374",
+            "packing_allowance_g": "13.737374"
+          }
+        ],
+        "components": [
+          {
+            "line_id": "L1",
+            "order_id": "WEB-1001",
+            "sku": "SINGLE-340",
+            "due_date": "2026-10-16",
+            "lot_id": "ETH-01",
+            "profile_id": "LIGHT",
+            "share_pct": "100",
+            "required_roasted_g": "5838.383839",
+            "from_roasted_stock_g": "1200",
+            "new_roast_needed_g": "4638.383839"
+          },
+          {
+            "line_id": "L2",
+            "order_id": "WHOLESALE-2001",
+            "sku": "BLEND-1000",
+            "due_date": "2026-10-17",
+            "lot_id": "ETH-01",
+            "profile_id": "LIGHT",
+            "share_pct": "60",
+            "required_roasted_g": "5510.204082",
+            "from_roasted_stock_g": "0",
+            "new_roast_needed_g": "5510.204082"
+          },
+          {
+            "line_id": "L2",
+            "order_id": "WHOLESALE-2001",
+            "sku": "BLEND-1000",
+            "due_date": "2026-10-17",
+            "lot_id": "COL-01",
+            "profile_id": "MEDIUM",
+            "share_pct": "40",
+            "required_roasted_g": "3673.469388",
+            "from_roasted_stock_g": "300",
+            "new_roast_needed_g": "3373.469388"
+          },
+          {
+            "line_id": "L3",
+            "order_id": "WEB-1002",
+            "sku": "SINGLE-340",
+            "due_date": "2026-10-18",
+            "lot_id": "ETH-01",
+            "profile_id": "LIGHT",
+            "share_pct": "100",
+            "required_roasted_g": "1373.737374",
+            "from_roasted_stock_g": "0",
+            "new_roast_needed_g": "1373.737374"
+          }
+        ],
+        "batches": [
+          {
+            "batch_id": "batch-0001",
+            "lot_id": "ETH-01",
+            "coffee": "Example washed coffee",
+            "profile_id": "LIGHT",
+            "green_g": "4518.55894",
+            "planned_roasted_g": "3840.775099",
+            "planned_loss_g": "677.783841",
+            "unallocated_roasted_g": "0",
+            "earliest_due": "2026-10-16",
+            "allocations": [
+              {
+                "line_id": "L1",
+                "order_id": "WEB-1001",
+                "sku": "SINGLE-340",
+                "due_date": "2026-10-16",
+                "roasted_g": "3840.775099"
+              }
+            ]
+          },
+          {
+            "batch_id": "batch-0002",
+            "lot_id": "ETH-01",
+            "coffee": "Example washed coffee",
+            "profile_id": "LIGHT",
+            "green_g": "4518.558939",
+            "planned_roasted_g": "3840.775098",
+            "planned_loss_g": "677.783841",
+            "unallocated_roasted_g": "0",
+            "earliest_due": "2026-10-16",
+            "allocations": [
+              {
+                "line_id": "L1",
+                "order_id": "WEB-1001",
+                "sku": "SINGLE-340",
+                "due_date": "2026-10-16",
+                "roasted_g": "797.60874"
+              },
+              {
+                "line_id": "L2",
+                "order_id": "WHOLESALE-2001",
+                "sku": "BLEND-1000",
+                "due_date": "2026-10-17",
+                "roasted_g": "3043.166358"
+              }
+            ]
+          },
+          {
+            "batch_id": "batch-0003",
+            "lot_id": "ETH-01",
+            "coffee": "Example washed coffee",
+            "profile_id": "LIGHT",
+            "green_g": "4518.558939",
+            "planned_roasted_g": "3840.775098",
+            "planned_loss_g": "677.783841",
+            "unallocated_roasted_g": "0",
+            "earliest_due": "2026-10-17",
+            "allocations": [
+              {
+                "line_id": "L2",
+                "order_id": "WHOLESALE-2001",
+                "sku": "BLEND-1000",
+                "due_date": "2026-10-17",
+                "roasted_g": "2467.037724"
+              },
+              {
+                "line_id": "L3",
+                "order_id": "WEB-1002",
+                "sku": "SINGLE-340",
+                "due_date": "2026-10-18",
+                "roasted_g": "1373.737374"
+              }
+            ]
+          },
+          {
+            "batch_id": "batch-0004",
+            "lot_id": "COL-01",
+            "coffee": "Example Colombian coffee",
+            "profile_id": "MEDIUM",
+            "green_g": "4113.987059",
+            "planned_roasted_g": "3373.469388",
+            "planned_loss_g": "740.517671",
+            "unallocated_roasted_g": "0",
+            "earliest_due": "2026-10-17",
+            "allocations": [
+              {
+                "line_id": "L2",
+                "order_id": "WHOLESALE-2001",
+                "sku": "BLEND-1000",
+                "due_date": "2026-10-17",
+                "roasted_g": "3373.469388"
+              }
+            ]
+          }
+        ],
+        "lots": [
+          {
+            "lot_id": "ETH-01",
+            "coffee": "Example washed coffee",
+            "on_hand_green_g": "20000",
+            "planned_green_g": "13555.676818",
+            "remaining_green_g": "6444.323182",
+            "shortage_g": "0"
+          },
+          {
+            "lot_id": "COL-01",
+            "coffee": "Example Colombian coffee",
+            "on_hand_green_g": "18000",
+            "planned_green_g": "4113.987059",
+            "remaining_green_g": "13886.012941",
+            "shortage_g": "0"
+          }
+        ],
+        "roastedStock": [
+          {
+            "lot_id": "ETH-01",
+            "profile_id": "LIGHT",
+            "on_hand_g": "1200",
+            "used_g": "1200",
+            "remaining_original_g": "0",
+            "planned_surplus_g": "0"
+          },
+          {
+            "lot_id": "COL-01",
+            "profile_id": "MEDIUM",
+            "on_hand_g": "300",
+            "used_g": "300",
+            "remaining_original_g": "0",
+            "planned_surplus_g": "0"
+          }
+        ],
+        "packagedStock": [
+          {
+            "sku": "SINGLE-340",
+            "on_hand_units": 3,
+            "used_units": 3,
+            "remaining_units": 0
+          },
+          {
+            "sku": "BLEND-1000",
+            "on_hand_units": 1,
+            "used_units": 1,
+            "remaining_units": 0
+          }
+        ],
+        "totals": {
+          "orders": 3,
+          "batches": 4,
+          "orderedUnits": 34,
+          "makeUnits": 30,
+          "plannedGreenG": "17669.663877",
+          "plannedRoastedG": "14895.794683"
+        }
+      }
+    }
+  ],
+  "outcomes": [
+    {
+      "id": "outcome-1",
+      "planId": "plan-1",
+      "batchId": "batch-0001",
+      "green_g": "4518.55894",
+      "roasted_g": "3840.775099",
+      "reference": "EXAMPLE-BATCH-001",
+      "note": "Authored outcome; enter measured values for real work.",
+      "recordedAt": "2026-10-15",
+      "supersedes": null
+    }
+  ],
+  "notes": "Authored planning example. Replace these seven source tables with current roastery records before an operational decision. Blends are assembled after roasting; shares are by roasted mass.",
+  "session": {
+    "selectedPlan": "plan-1",
+    "outcomeDraft": {},
+    "table": "orders"
+  }
+}

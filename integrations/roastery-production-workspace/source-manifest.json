@@ -1,0 +1,125 @@
+{
+  "schema": "tjlabs.roastery-source-manifest.v1",
+  "files": [
+    {
+      "path": "README.md",
+      "bytes": 1702,
+      "sha256": "8d43c387bfeb06500f91d75c6973a1a2c912c83add1e0b5a5bf0a5241d336a2c"
+    },
+    {
+      "path": "src/roastery-core.js",
+      "bytes": 25804,
+      "sha256": "284dc629243a8d2cfa3478927c138eb04f28ad2a62af0d856fe788c8ac4395df"
+    },
+    {
+      "path": "src/roastery-core.mjs",
+      "bytes": 25835,
+      "sha256": "d536d9a487e0ab40a5e41aa99ca28782a9f1ee29e23ef73f18cacb01b711aca7"
+    },
+    {
+      "path": "src/browser-store.js",
+      "bytes": 2774,
+      "sha256": "aa30766bcbc5c470431c1001df85984b01fc09d082e525840dd1e39c0c97115f"
+    },
+    {
+      "path": "src/operator.js",
+      "bytes": 15843,
+      "sha256": "8873f625f5d0f8a777a6619cd859d69c67f1ae6ba9f55d81ed604f9dff899e51"
+    },
+    {
+      "path": "src/style.css",
+      "bytes": 3104,
+      "sha256": "55dba51ea758c848104ce85e58d5b6df55c609037b89db73ad993229f5190fb4"
+    },
+    {
+      "path": "src/template.html",
+      "bytes": 4107,
+      "sha256": "5b02ed26cf05c8ba2fd2e69784a31c7596eae76a311a72f40c016b6df05cb55b"
+    },
+    {
+      "path": "src/build.mjs",
+      "bytes": 1089,
+      "sha256": "17ab3d275a46e2defd7b19d08a12152f25587f757456ad7f3554a111bc3a9a1c"
+    },
+    {
+      "path": "native/build.mjs",
+      "bytes": 1442,
+      "sha256": "394c17bb77e4d3964fca5fbb8212829dd4488f6aa1ea22203c9b78be869f298d"
+    },
+    {
+      "path": "native/cli.mjs",
+      "bytes": 2335,
+      "sha256": "1cf19224dd77c51ece81eb808fd39d77a365cc70b000ec547e2f7166ed569fd1"
+    },
+    {
+      "path": "native/README.md",
+      "bytes": 3036,
+      "sha256": "86ae32604c781e52f19f47aaf55dff8c2e575ec8d91ea60befeee7b1a24d25a9"
+    },
+    {
+      "path": "materialize.mjs",
+      "bytes": 1386,
+      "sha256": "97dd1f0ed425d5f97f68865d0c4235bcf8eebc925a4dd0347346c0de7f11c7f2"
+    },
+    {
+      "path": "docs/OPERATOR.md",
+      "bytes": 8592,
+      "sha256": "3aafa9dba3dcec84bb543446041c4cbb3aa99ff50aee8c40247117f30f7511e5"
+    },
+    {
+      "path": "examples/worked-workspace.json",
+      "bytes": 17694,
+      "sha256": "e9bf3de5a6bf06a9bb7ac17c11f4e5f4c10b5dee7928cc901c04c381fce83f44"
+    },
+    {
+      "path": "examples/originals/commands.json",
+      "bytes": 927,
+      "sha256": "4b16aa526d9107484cdf9db4be8fe73a8f205fe2f844bdc127060fa76a0d88e9"
+    },
+    {
+      "path": "Roastery_Production_Desk.html",
+      "bytes": 52501,
+      "sha256": "2504a9fca14096ae1395011ebc46e4af00730c034364390c4e99854d520a7979"
+    },
+    {
+      "path": "Roastery_Worked_Example.html",
+      "bytes": 63693,
+      "sha256": "2393ee437a92dec54aad9dad1a9d714d6ccfa9c9e5b15397d56f2ebfaed23120"
+    },
+    {
+      "path": "examples/originals/lots.csv",
+      "bytes": 95,
+      "sha256": "c9130b38540f35882ea4d16febffb4961fa10409e889703446353dd624eb7b73"
+    },
+    {
+      "path": "examples/originals/profiles.csv",
+      "bytes": 89,
+      "sha256": "03c5dde32c90064b3c100308471ed9831042d87ab2f44b2be93331243a14a639"
+    },
+    {
+      "path": "examples/originals/products.csv",
+      "bytes": 115,
+      "sha256": "6a9db22bf864b1b90cf2fa4db4a7c4d6dd12c65eac3c4e04322668a996e63f7f"
+    },
+    {
+      "path": "examples/originals/recipes.csv",
+      "bytes": 115,
+      "sha256": "74756367800b1ecbde2c89f8501a9c6fd92b47c0c7627cfe75ff961c34ca3545"
+    },
+    {
+      "path": "examples/originals/orders.csv",
+      "bytes": 152,
+      "sha256": "d6d277a104c46823655171b1a35074918af87a52a6544289eedfca8e4b865cd8"
+    },
+    {
+      "path": "examples/originals/roasted.csv",
+      "bytes": 79,
+      "sha256": "27b31ceeab845fe65c06eef31eedb8232121ca93bef0e9ed4556cabb4ffa4bbc"
+    },
+    {
+      "path": "examples/originals/packaged.csv",
+      "bytes": 36,
+      "sha256": "8a43f157c766f61cfcd4dca50560292fe45de54e790a833845da384f30141954"
+    }
+  ]
+}
