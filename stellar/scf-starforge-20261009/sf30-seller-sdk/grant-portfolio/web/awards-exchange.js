@@ -97,23 +97,228 @@ function GrantAwardsExchange(H){
     need(exact(plan,complete),"The saved import must match the complete original CSV, mappings, identities and action.");
     return {plan:complete,basis};
   }
-  async function open({roundId=""}={}){
-    const portfolio=clone(current());currentSelection(portfolio);
+  async function open({roundId="",libraryOnly=false,continuationSeed=null}={}){
+    const portfolio=clone(current());need(portfolio,"Open a saved portfolio first.");if(!libraryOnly)currentSelection(portfolio);
     const module=await core();
     const I={portfolio,module,step:"file",bytes:null,parsed:null,filename:"",roundId,actor:portfolio.review.reviewer||"",
       status:"draft",mapping:{profile:{},answers:Object.create(null)},identities:{applications:Object.create(null),partners:Object.create(null),projects:Object.create(null)},
       operationId:"award-csv-"+crypto.randomUUID(),documentId:crypto.randomUUID(),plan:null,resuming:false,busy:false,error:"",
       session:null,batch:null,observation:null,batchRows:1000,sessionId:crypto.randomUUID(),batchDocumentIds:Array.from({length:25000},()=>crypto.randomUUID()),
-      rowDecisions:null,rowReview:null,reviewId:crypto.randomUUID(),reviewDocumentId:crypto.randomUUID(),rowFilter:"all",rowSearch:"",rowOffset:0};
+      rowDecisions:null,rowReview:null,reviewId:crypto.randomUUID(),reviewDocumentId:crypto.randomUUID(),rowFilter:"all",rowSearch:"",rowOffset:0,
+      continuation:null,continuationDocumentId:null,continuationWorking:null};
     const root=node("div",null,"awards-intake"),error=node("p","","awards-intake-error"),body=node("div");
     error.setAttribute("role","alert");root.append(error,body);
-    const attempt=fn=>async()=>{
+    const attempt=(fn,{persist=true}={})=>async()=>{
       if(I.busy)return;I.busy=true;I.error="";error.textContent="";
       const controls=[...root.querySelectorAll("input,select,textarea,button")].map(n=>[n,n.disabled]);
       controls.forEach(([n])=>{n.disabled=true;});
       try{await fn();}catch(e){const row=Number.isInteger(e.details?.rowIndex)?"Original row "+(e.details.rowIndex+1)+": ":"";I.error=row+(e.message||String(e));error.textContent=I.error;}
-      finally{I.busy=false;controls.forEach(([n,value])=>{if(n.isConnected)n.disabled=value;});}
+      finally{I.busy=false;controls.forEach(([n,value])=>{if(n.isConnected)n.disabled=value;});if(persist&&I.bytes)changed();}
     };
+
+    const workingEngine=await import("/awards-intake-working.mjs"),library=workingEngine.createIntakeLibrary();
+    const binding={id:portfolio.id,revision:portfolio.revision,snapshot:portfolio.snapshot},workspaceId=state().state.workspaceId;
+    let localRecord=null,localSource=null,saveTimer=null,savePromise=null,changeNumber=0,savedNumber=0,saveError=null,
+      candidate=null,libraryRows=[],libraryOffset=0,libraryTerm="",restoring=false,originalRead=null,downloadProof=null;
+    const libraryPanel=panel("Saved intake work","This browser retains complete original CSVs and unfinished intake work. A portable working file carries both into a fresh browser. Opening or restoring data does not submit an application."),
+      saveStatus=node("p","Select an original CSV to begin local retention.","small"),libraryBody=node("div"),
+      libraryDetail=node("div"),libraryPager=node("div",null,"pager"),libraryChoice=field("Retained intake working copy","select"),
+      librarySearch=field("Find saved intake work","search"),checkpointChoice=field("Retained checkpoint","select","current",[["current","Current working state"]]),
+      localLabel=field("Working-copy label","text",""),workingInput=field("Open complete intake working file","file");
+    libraryPanel.id="intake-library";saveStatus.id="intake-working-status";saveStatus.setAttribute("role","status");
+    libraryChoice.input.id="intake-library-list";workingInput.input.id="intake-working-open";workingInput.input.accept=".json,application/json";
+    localLabel.input.maxLength=4000;localLabel.input.id="intake-working-label";
+    root.insertBefore(libraryPanel,body);
+    const controlled=(label,id,fn)=>{const b=button(label,attempt(fn,{persist:false}));b.id=id;return b;};
+    function snapshotWork(){
+      const keys=["filename","roundId","actor","status","mapping","identities","operationId","documentId","plan","resuming","session","batch",
+        "batchRows","sessionId","batchDocumentIds","rowDecisions","rowReview","reviewId","reviewDocumentId","rowFilter","rowSearch","rowOffset","continuation","continuationDocumentId","continuationWorking"];
+      const w={stage:I.step,editorRow:I.editorRow??null,editorColumnOffset:I.editorColumnOffset??0,batchRowsLiteral:I.batchRowsLiteral??String(I.batchRows)};
+      for(const k of keys)w[k]=I[k]===undefined?null:clone(I[k]);return w;
+    }
+    function reportSave(error){
+      saveError=error;saveStatus.textContent="Local save needs attention: "+(error.message||String(error))+" Current work remains open. Download its complete working file; Close can then retain that exact downloaded state."
+    }
+    function changed(){
+      if(restoring||!I.bytes)return;
+      changeNumber++;saveStatus.textContent="Saving complete working state…";
+      clearTimeout(saveTimer);saveTimer=setTimeout(()=>{saveTimer=null;flushWorking().catch(reportSave);},200);
+    }
+    async function originalSource(){
+      need(I.bytes,"Select the complete original CSV first.");
+      if(!localSource||localSource.bytesObject!==I.bytes)localSource={bytesObject:I.bytes,descriptor:{bytes:I.bytes.length,sha256:await hash(I.bytes),filename:I.filename}};
+      return localSource.descriptor;
+    }
+    async function flushWorking({checkpointLabel=null,separate=false}={}){
+      clearTimeout(saveTimer);saveTimer=null;
+      if(savePromise){await savePromise;if(savedNumber===changeNumber&&!checkpointLabel&&!separate)return localRecord;}
+      if(!I.bytes)return null;
+      if(!checkpointLabel&&!separate&&localRecord&&savedNumber===changeNumber&&!saveError)return localRecord;
+      const perform=async()=>{
+        do{
+          const version=changeNumber,work=snapshotWork(),source=await originalSource();
+          let next;
+          if(!localRecord||separate){
+            next=workingEngine.createIntakeRecord({id:crypto.randomUUID(),label:localLabel.input.value||I.filename,
+              workspaceId,portfolio:binding,source,work});
+            if(localRecord){next.origin={id:localRecord.id,label:localRecord.label,revision:localRecord.revision,workspaceId:localRecord.workspaceId};
+              next.checkpoints=clone(localRecord.checkpoints);if(localRecord.importedRecord)next.importedRecord=clone(localRecord.importedRecord);}
+          }else next=workingEngine.updateIntakeRecord(localRecord,work,{label:localLabel.input.value||I.filename,
+            ...(checkpointLabel?{checkpointId:crypto.randomUUID(),checkpointLabel}:{})});
+          const fresh=!localRecord||separate;
+          const written=await library.put(next,{expectedRevision:fresh?null:localRecord.revision,...(fresh?{csv:I.bytes}:{})});
+          localRecord=written;savedNumber=version;saveError=null;checkpointLabel=null;separate=false;
+        }while(savedNumber!==changeNumber);
+        saveStatus.textContent="Saved locally · "+localRecord.label+" · revision "+localRecord.revision;
+        return localRecord;
+      };
+      savePromise=perform();try{return await savePromise;}catch(error){reportSave(error);throw error;}finally{savePromise=null;}
+    }
+    async function preserveCurrent(){
+      if(I.bytes)await flushWorking({checkpointLabel:"Before replacing this intake work"});
+    }
+    async function currentWorkingFile(){
+      need(I.bytes,"Select an original CSV or inspect a retained working copy.");
+      const source=await originalSource(),work=snapshotWork();
+      // A complete download remains available even if IndexedDB is unavailable.
+      let record=localRecord&&exact(localRecord.work,work)&&localRecord.label===(localLabel.input.value||I.filename)?clone(localRecord):localRecord?workingEngine.updateIntakeRecord(localRecord,work,{label:localLabel.input.value||I.filename}):
+        workingEngine.createIntakeRecord({id:crypto.randomUUID(),label:localLabel.input.value||I.filename,workspaceId,portfolio:binding,source,work});
+      return {record,csv:I.bytes};
+    }
+    async function downloadComplete(){
+      const selected=I.bytes?await currentWorkingFile():candidate;
+      need(selected,"Choose current work or inspect a retained copy.");
+      const bytes=workingEngine.encodeIntakeWorkingFile(selected.record,selected.csv);
+      download(bytes,"Grant_Intake_"+selected.record.id+".working.json","application/json");
+      if(I.bytes)downloadProof={work:await hash(utf8(JSON.stringify(canonical(snapshotWork())))),source:(await originalSource()).sha256,label:localLabel.input.value||I.filename};
+    }
+    async function currentDownloadRetained(){
+      return Boolean(I.bytes&&downloadProof&&downloadProof.source===(await originalSource()).sha256&&
+        downloadProof.label===(localLabel.input.value||I.filename)&&downloadProof.work===await hash(utf8(JSON.stringify(canonical(snapshotWork())))));
+    }
+    function paintLibrary(){
+      const filtered=libraryRows.filter(r=>!libraryTerm||(r.label+" "+r.source.filename+" "+r.id).toLocaleLowerCase().includes(libraryTerm));
+      if(libraryOffset>=filtered.length)libraryOffset=0;
+      const selected=libraryChoice.input.value,rows=filtered.slice(libraryOffset,libraryOffset+25);
+      libraryChoice.input.replaceChildren(node("option","Choose retained work"));libraryChoice.input.firstChild.value="";
+      for(const r of rows){const o=node("option",r.label+" · "+r.stage+" · "+r.updatedAt);o.value=r.id;libraryChoice.input.append(o);}
+      if(rows.some(r=>r.id===selected))libraryChoice.input.value=selected;
+      const previous=button("Previous saved work",()=>{libraryOffset=Math.max(0,libraryOffset-25);paintLibrary();}),
+        next=button("Next saved work",()=>{libraryOffset+=25;paintLibrary();});
+      previous.disabled=libraryOffset===0;next.disabled=libraryOffset+25>=filtered.length;
+      libraryPager.replaceChildren(node("span",filtered.length?(libraryOffset+1)+"–"+Math.min(libraryOffset+25,filtered.length)+" of "+filtered.length:"No saved intake work for this workspace and portfolio","small"),previous,next);
+    }
+    async function refreshLibrary(){
+      await flushWorking();libraryRows=await library.list(workspaceId,portfolio.id);paintLibrary();
+    }
+    function inspectCandidate(){
+      need(candidate,"Inspect a retained copy or open a complete working file first.");
+      const r=candidate.record,comparison=workingEngine.compareIntakeContext(r,{workspaceId,portfolio:binding});
+      checkpointChoice.input.replaceChildren();for(const [id,title] of [["current","Current working state"],...r.checkpoints.map(c=>[c.id,c.label+" · "+c.createdAt])]){
+        const o=node("option",title);o.value=id;checkpointChoice.input.append(o);
+      }
+      libraryDetail.replaceChildren(node("h4",r.label),node("p",r.source.bytes+" original CSV bytes · "+r.source.sha256,"small"),
+        node("p","Workspace "+r.workspaceId+" · portfolio "+r.portfolio.id+" · original revision "+r.portfolio.revision,"small"),
+        node("p",comparison.message),rawDetails("Complete retained working state and checkpoints",r),
+        controlled("Download inspected complete working file","intake-inspected-download",async()=>download(workingEngine.encodeIntakeWorkingFile(r,candidate.csv),"Grant_Intake_"+r.id+".working.json","application/json")));
+    }
+    async function inspectSelected(){
+      const id=libraryChoice.input.value;need(id,"Choose a retained intake working copy.");
+      const record=await library.get(id);need(record,"The selected working copy is no longer available.");
+      const csv=await library.source(record.source.sha256);candidate={record,csv,origin:"library"};inspectCandidate();
+    }
+    async function restoreCandidate(){
+      need(candidate,"Inspect the complete copy before restoring it.");
+      const selected=candidate,record=selected.record,cp=checkpointChoice.input.value;
+      const work=cp==="current"?record.work:record.checkpoints.find(c=>c.id===cp)?.work;
+      need(work,"Choose an original retained checkpoint.");
+      const context=workingEngine.compareIntakeContext({...record,work},{workspaceId,portfolio:binding});
+      need(context.canRestore,context.message);
+      const parsed=module.parseAwardCsvText(new TextDecoder("utf-8",{fatal:true}).decode(selected.csv));
+      if(work.rowDecisions){
+        need(work.rowDecisions.length===parsed.rows.length,"Keep a decision for every original CSV row.");
+        for(const row of work.rowDecisions)for(const key of [...Object.keys(row.corrections),...Object.keys(row.correctionDrafts??{})])
+          need(parsed.headers.includes(key),"A retained correction selects an unknown original column.");
+      }
+      let observation=null,basis=portfolio;
+      if(work.session){
+        need(work.session.workspaceId===workspaceId&&work.session.portfolio.id===portfolio.id,"The saved session belongs to another native workspace or portfolio.");
+        const engine=await sessions();observation=await engine.inspectAwardCsvImportSession(sessionClient,work.session,selected.csv);
+        if(work.batch){
+          const checked=await engine.reviewAwardCsvSessionBatch(sessionClient,work.session,selected.csv,work.batch.index);
+          need(exact(checked.batch,work.batch),"Inspect the original operation and explicitly review this saved batch again before continuing.");
+        }
+      }else if(work.plan){const checked=await verifiedPlan(module,work.plan,selected.csv);basis=checked.basis;}
+      else {
+        if(work.continuation){
+          const actual=await (await sessions()).readAwardCsvImportContinuation(sessionClient,work.continuation.previous,selected.csv);
+          need(exact(actual.continuation,work.continuation),"The retained working continuation differs from its original completed native operations.");
+        }
+        currentSelection(portfolio);
+      }
+      // Validate and reconcile first. Retain the entire displaced state before
+      // changing any current field or adopting a different source.
+      const portable=selected.origin==="file";
+      const before=portable?null:await library.get(record.id);
+      if(!portable)need(before&&exact(before,record),"This selected local copy changed. Inspect its current revision before restoration.");
+      const restoringCurrent=!portable&&localRecord?.id===record.id;
+      await preserveCurrent();
+      const latest=portable?null:await library.get(record.id),expected=restoringCurrent?localRecord:record;
+      if(!portable)need(latest&&exact(latest,expected),"This selected local copy changed. Inspect its current revision before restoration.");
+      let adopted;
+      if(latest){
+        adopted=workingEngine.updateIntakeRecord(latest,work,{checkpointId:crypto.randomUUID(),checkpointLabel:"Before explicit restore"});
+        await library.put(adopted,{expectedRevision:latest.revision,csv:selected.csv});
+      }else{
+        adopted=workingEngine.createIntakeRecord({id:crypto.randomUUID(),label:record.label,workspaceId,portfolio:record.portfolio,source:record.source,work});
+        adopted.importedRecord=clone(record);
+        adopted.checkpoints=clone(record.checkpoints);
+        await library.put(adopted,{csv:selected.csv});
+      }
+      restoring=true;
+      try{
+        const keys=["filename","roundId","actor","status","mapping","identities","operationId","documentId","plan","resuming","session","batch",
+          "batchRows","sessionId","batchDocumentIds","rowDecisions","rowReview","reviewId","reviewDocumentId","rowFilter","rowSearch","rowOffset","continuation","continuationDocumentId","continuationWorking"];
+        for(const key of keys)I[key]=work[key]===undefined?null:clone(work[key]);
+        I.bytes=selected.csv;I.parsed=parsed;I.portfolio=basis;I.observation=observation;
+        I.step=work.stage;I.editorRow=work.editorRow;I.editorColumnOffset=work.editorColumnOffset??0;I.batchRowsLiteral=work.batchRowsLiteral??String(I.batchRows);
+        localRecord=adopted;localSource={bytesObject:I.bytes,descriptor:record.source};localLabel.input.value=adopted.label;
+        changeNumber++;savedNumber=changeNumber;saveError=null;
+        if(I.session)sessionPage();else if(I.plan)reviewPage();else if(I.step==="rows"&&I.rowDecisions)rowReviewPage();
+        else if(I.step==="identities"&&I.rowDecisions)identitiesPage();else if(I.step==="mapping")mappingPage();else filePage();
+        saveStatus.textContent="Restored original working data · "+adopted.label+" · no application was submitted";
+      }finally{restoring=false;}
+      libraryRows=await library.list(workspaceId,portfolio.id);paintLibrary();
+    }
+    librarySearch.input.addEventListener("input",()=>{libraryTerm=librarySearch.input.value.toLocaleLowerCase();libraryOffset=0;paintLibrary();});
+    localLabel.input.addEventListener("input",changed);
+    workingInput.input.addEventListener("change",attempt(async()=>{
+      const file=workingInput.input.files[0];need(file&&file.size>0&&file.size<=512*1024*1024,"Choose a complete intake working file up to 512 MiB.");
+      const opened=workingEngine.parseIntakeWorkingFile(new Uint8Array(await file.arrayBuffer()));
+      candidate={...opened,origin:"file"};inspectCandidate();
+    },{persist:false}));
+    libraryPanel.append(localLabel.wrapper,saveStatus,
+      controlled("Save working checkpoint","intake-working-save",async()=>{await flushWorking({checkpointLabel:"Named working checkpoint"});await refreshLibrary();}),
+      controlled("Keep as separate working copy","intake-working-separate",async()=>{await flushWorking({separate:true});await refreshLibrary();}),
+      controlled("Download complete working file","intake-working-download",downloadComplete),
+      workingInput.wrapper,librarySearch.wrapper,libraryChoice.wrapper,libraryPager,
+      controlled("Refresh saved intake work","intake-library-refresh",refreshLibrary),
+      controlled("Inspect retained intake work","intake-library-inspect",inspectSelected),checkpointChoice.wrapper,
+      controlled("Restore inspected working state","intake-library-restore",restoreCandidate),libraryDetail);
+    const workingHelp=node("a","Read saved-intake guide");workingHelp.href="/awards-intake-working-guide";workingHelp.target="_blank";workingHelp.rel="noopener";libraryPanel.append(workingHelp);
+    // Target handlers first update literal application state; delegated events
+    // then coalesce a complete local save without re-reading the CSV.
+    root.addEventListener("input",event=>{if(body.contains(event.target))changed();});
+    root.addEventListener("change",event=>{if(body.contains(event.target))changed();});
+    root.addEventListener("click",event=>{if(body.contains(event.target))queueMicrotask(changed);});
+    const onUnload=event=>{if(I.bytes&&(changeNumber!==savedNumber||savePromise||saveError)){event.preventDefault();event.returnValue="";}};
+    window.addEventListener("beforeunload",onUnload);
+    const registerRetention=()=>{
+      if(H.retainDetail)H.retainDetail(root,async()=>{try{if(originalRead)await originalRead;await flushWorking();}catch(error){reportSave(error);if(!await currentDownloadRetained())throw error;}
+        window.removeEventListener("beforeunload",onUnload);});
+    };
+    const showIntake=()=>{registerRetention();return showDialog("Application CSV intake",[root]);};
+
     const chooseColumn=(name,key,group=null,required=false)=>{
       const map=group?I.mapping[group]:I.mapping;
       const f=field(name+(required?" *":""),"select",map[key]||"",[["","Choose a column"],...I.parsed.headers.map(h=>[h,h])]);
@@ -123,6 +328,7 @@ function GrantAwardsExchange(H){
     };
     const clearPlan=()=>{I.plan=null;I.resuming=false;I.session=null;I.batch=null;I.observation=null;};
     function filePage(){
+      I.step="file";
       body.replaceChildren(node("h3","1. Select the original CSV"));
       body.append(node("p","Import applications into a published funding round. The complete original CSV and its reviewed column mapping are saved with the applications."));
       const file=field("Original application CSV","file"),filename=field("Retained filename","text",I.filename),
@@ -133,19 +339,24 @@ function GrantAwardsExchange(H){
       file.input.addEventListener("change",()=>{
         const selected=file.input.files[0];if(selected)filename.input.value=selected.name.replace(/[^A-Za-z0-9._-]/g,"_").replace(/^[^A-Za-z0-9]+/,"")||"Applications.csv";
       });
+      for(const [input,key]of [[filename.input,"filename"],[round.input,"roundId"],[actor.input,"actor"],[status.input,"status"]])input.addEventListener(input.tagName==="SELECT"?"change":"input",()=>{I[key]=input.value;});
+      if(I.bytes)body.append(node("p","Retained complete CSV: "+I.filename+" · "+I.bytes.length+" bytes. Keep it or choose an explicit replacement.","small"));
       body.append(file.wrapper,filename.wrapper,round.wrapper,actor.wrapper,status.wrapper);
       if(I.rowDecisions)body.append(button("Download current unfinished source review",attempt(downloadWorkingReview)),
         button("Download current original CSV",()=>download(I.bytes,I.filename,"text/csv")));
       body.append(node("p","Use complete UTF-8 CSV up to 64 MiB and 25,000 rows. Sources over 2,000 rows support up to 50 columns and use reviewed batches. Quoted commas, line breaks and decimal strings stay in the original. Submitted applications require a mapped submission date.","small"));
-      const load=async()=>{
-        currentSelection(portfolio);
-        const selected=file.input.files[0];need(selected&&selected.size>0&&selected.size<=64*1024*1024,"Select the complete original application CSV, up to 64 MiB.");
-        const bytes=module.originalAwardCsvBytes(new Uint8Array(await selected.arrayBuffer())),
+      const selectedSourceContext=()=>need(current()?.id===portfolio.id&&current()?.revision===portfolio.revision&&current()?.snapshot===portfolio.snapshot,
+        "The selected portfolio changed. Reopen saved intake work for the intended portfolio.");
+      const load=()=>originalRead??=(async()=>{
+        selectedSourceContext();
+        const selected=file.input.files[0];need(selected?selected.size>0&&selected.size<=64*1024*1024:Boolean(I.bytes),"Select the complete original application CSV, up to 64 MiB.");
+        const bytes=selected?module.originalAwardCsvBytes(new Uint8Array(await selected.arrayBuffer())):I.bytes,
           parsed=module.parseAwardCsvText(new TextDecoder("utf-8",{fatal:true}).decode(bytes)),name=filename.input.value;
         need(/^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$/.test(name),"Use a retained filename made of letters, numbers, dots, dashes and underscores.");
-        currentSelection(portfolio);
+        selectedSourceContext();
         if(!I.bytes||await hash(I.bytes)!==await hash(bytes)){
-          await retainBeforeReplacing();
+          await retainBeforeReplacing();localRecord=null;localSource=null;localLabel.input.value=name;
+          I.continuation=null;I.continuationDocumentId=null;I.continuationWorking=null;
           I.rowDecisions=null;I.rowReview=null;I.mapping={profile:{},answers:Object.create(null)};
           I.identities={applications:Object.create(null),partners:Object.create(null),projects:Object.create(null)};
           I.reviewId=crypto.randomUUID();I.reviewDocumentId=crypto.randomUUID();I.sessionId=crypto.randomUUID();
@@ -153,9 +364,11 @@ function GrantAwardsExchange(H){
           I.batchDocumentIds=Array.from({length:25000},()=>crypto.randomUUID());
         }
         I.bytes=bytes;I.parsed=parsed;I.filename=name;I.roundId=round.input.value;I.actor=actor.input.value;I.status=status.input.value;
-      };
+        changed();await flushWorking();
+      })().finally(()=>{originalRead=null;});
+      file.input.addEventListener("change",attempt(async()=>{if(file.input.files[0])await load();}));
       body.append(button("Map CSV columns",attempt(async()=>{
-        await load();need(I.roundId&&I.actor.trim(),"Choose the funding round and recording actor.");
+        await load();currentSelection(portfolio);need(I.roundId&&I.actor.trim(),"Choose the funding round and recording actor.");
         clearPlan();I.step="mapping";mappingPage();
       }),"primary"));
       const resume=panel("Resume a saved import","Select the original CSV above and your complete session with reviewed batch, or the original single-import plan. Standalone batch plans are for inspection and the CLI."),
@@ -163,13 +376,13 @@ function GrantAwardsExchange(H){
       planFile.input.accept=".json,application/json";
       resume.append(planFile.wrapper,button("Review original saved import",attempt(async()=>{
         const selected=planFile.input.files[0];need(selected&&selected.size<=512*1024*1024,"Choose the complete saved review, import plan or session, up to 512 MiB.");
-        const csv=file.input.files[0];need(csv&&csv.size>0&&csv.size<=64*1024*1024,"Select the complete original application CSV above.");
-        const bytes=module.originalAwardCsvBytes(new Uint8Array(await csv.arrayBuffer()));
+        const csv=file.input.files[0];need(csv?csv.size>0&&csv.size<=64*1024*1024:Boolean(I.bytes),"Select the complete original application CSV above.");
+        const bytes=csv?module.originalAwardCsvBytes(new Uint8Array(await csv.arrayBuffer())):I.bytes;
         const saved=JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(await selected.arrayBuffer()));
         if(saved.schema==="stellar-forge.awards-row-review-working.v1"){
           await restoreWorkingReview(saved,bytes);return;
         }
-        if(saved.schema==="stellar-forge.awards-csv-import-session.v1"||saved.schema==="stellar-forge.awards-csv-import-session.v2"||
+        if(saved.schema==="stellar-forge.awards-csv-import-session.v1"||saved.schema==="stellar-forge.awards-csv-import-session.v2"||saved.schema==="stellar-forge.awards-csv-import-session.v3"||
           saved.schema==="stellar-forge.awards-browser-session.v1"){
           const selectedSession=saved.schema==="stellar-forge.awards-browser-session.v1"?saved.session:saved;
           need(selectedSession.portfolio?.id===current()?.id,"Open the portfolio named by this saved session.");
@@ -179,18 +392,20 @@ function GrantAwardsExchange(H){
             const actual=await engine.reviewAwardCsvSessionBatch(sessionClient,selectedSession,bytes,selectedBatch.index);
             need(exact(actual.batch,selectedBatch),"The saved batch needs an explicit new review against its original request and history.");
           }
-          await retainBeforeReplacing();
+          await retainBeforeReplacing();localRecord=null;localSource=null;
           I.bytes=bytes;I.session=selectedSession;I.batch=selectedBatch;I.filename=selectedSession.source.filename;I.observation=observation;
-          I.rowDecisions=null;I.rowReview=null;
+          I.rowDecisions=null;I.rowReview=null;I.continuation=selectedSession.input.continuation??null;
+          I.continuationDocumentId=selectedSession.input.continuationDocumentId??null;I.continuationWorking=null;
           sessionPage();return;
         }
         const checked=await verifiedPlan(module,saved,bytes);
-        await retainBeforeReplacing();
+        await retainBeforeReplacing();localRecord=null;localSource=null;
         I.bytes=bytes;I.plan=checked.plan;I.portfolio=checked.basis;I.resuming=true;I.rowDecisions=null;I.rowReview=null;I.step="review";reviewPage();
       })));
       body.append(resume);
     }
     function mappingPage(){
+      I.step="mapping";
       body.replaceChildren(node("h3","2. Map the application fields"));
       body.append(node("p",I.parsed.rows.length+" original rows · "+I.filename+" · "+label(portfolio.definition.awards.records.rounds.find(r=>r.id===I.roundId))));
       const grid=node("div",null,"form-grid");
@@ -222,6 +437,9 @@ function GrantAwardsExchange(H){
       }),"primary"));
     }
 
+    function carriedIndex(index){
+      return Boolean(I.continuation&&I.continuation.previous.input.rowReview.rows[index]?.disposition==="accepted");
+    }
     function effectiveRow(index){
       return {...I.parsed.rows[index],...(I.rowDecisions?.[index]?.corrections??{})};
     }
@@ -229,7 +447,8 @@ function GrantAwardsExchange(H){
       return {reviewId:I.reviewId,csv:I.bytes,filename:I.filename,roundId:I.roundId,actor:I.actor,status:I.status,
         mapping:clone(I.mapping),identities:clone(I.identities),
         decisions:I.rowDecisions.map(row=>({rowIndex:row.rowIndex,disposition:row.disposition,reason:row.reason,
-          ...(row.disposition==="accepted"?{applicationId:row.applicationId}:{}),corrections:clone(row.corrections)}))};
+          ...(row.disposition==="accepted"?{applicationId:row.applicationId}:{}),corrections:clone(row.corrections)})),
+        ...(I.continuation?{previousReviewSha256:I.continuation.previous.input.rowReview.sha256}:{})};
     }
     async function workingReviewValue(){
       need(I.bytes&&I.parsed,"Choose the complete original CSV first.");
@@ -238,7 +457,8 @@ function GrantAwardsExchange(H){
         selection:{roundId:I.roundId,actor:I.actor,status:I.status,mapping:clone(I.mapping),identities:clone(I.identities)},
         decisions:clone(I.rowDecisions),reviewId:I.reviewId,reviewDocumentId:I.reviewDocumentId,
         sessionId:I.sessionId,operationId:I.operationId,documentId:I.documentId,batchDocumentIds:[...I.batchDocumentIds],batchRows:I.batchRows,
-        position:{filter:I.rowFilter,search:I.rowSearch,offset:I.rowOffset}};
+        position:{filter:I.rowFilter,search:I.rowSearch,offset:I.rowOffset},
+        ...(I.continuation?{continuation:clone(I.continuation),continuationDocumentId:I.continuationDocumentId,continuationWorking:clone(I.continuationWorking)}:{})};
     }
     async function downloadWorkingReview(){
       const value=await workingReviewValue(),digest=await hash(utf8(JSON.stringify(canonical(value))));
@@ -247,11 +467,7 @@ function GrantAwardsExchange(H){
       download(bytes,"Award_Unfinished_Review_"+I.reviewId+".json","application/json");
       I.lastWorkingSave=digest;
     }
-    async function retainBeforeReplacing(){
-      if(!I.rowDecisions)return;
-      need(I.lastWorkingSave===await hash(utf8(JSON.stringify(canonical(await workingReviewValue())))),
-        "Download the current unfinished source review and retain its original CSV before replacing this work.");
-    }
+    async function retainBeforeReplacing(){await preserveCurrent();}
     async function restoreWorkingReview(saved,bytes){
       const {sha256,...value}=saved;
       need(typeof sha256==="string"&&sha256===await hash(utf8(JSON.stringify(canonical(value)))),"The saved unfinished review changed.");
@@ -281,20 +497,29 @@ function GrantAwardsExchange(H){
           Object.entries(row.correctionDrafts).every(([key,text])=>parsed.headers.includes(key)&&typeof text==="string"&&!text.includes("\0")))),
         "Keep one complete literal decision for every original source row.");
       need(Number.isSafeInteger(value.batchRows)&&value.batchRows>=1&&value.batchRows<=2000,"Keep the selected reviewed batch size.");
+      if(value.continuation){
+        const actual=await (await sessions()).readAwardCsvImportContinuation(sessionClient,value.continuation.previous,bytes);
+        need(exact(actual.continuation,value.continuation),"The unfinished continuation differs from its original completed native outcomes.");
+        need(uuid.test(value.continuationDocumentId),"Keep the original continuation evidence document UUID.");
+      }
       currentSelection(portfolio);
-      await retainBeforeReplacing();
+      await retainBeforeReplacing();localRecord=null;localSource=null;
       I.bytes=bytes;I.parsed=parsed;I.filename=value.source.filename;
       Object.assign(I,clone(selection),{rowDecisions:clone(decisions).map(row=>({...row,correctionDrafts:row.correctionDrafts??clone(row.corrections)})),reviewId:value.reviewId,reviewDocumentId:value.reviewDocumentId,
         sessionId:value.sessionId,operationId:value.operationId,documentId:value.documentId,
         batchDocumentIds:[...value.batchDocumentIds],batchRows:value.batchRows,
         rowFilter:["all","pending","accepted","exception","non_application"].includes(value.position?.filter)?value.position.filter:"all",
         rowSearch:typeof value.position?.search==="string"?value.position.search:"",rowOffset:Number.isSafeInteger(value.position?.offset)?value.position.offset:0});
+      I.continuation=value.continuation??null;I.continuationDocumentId=value.continuationDocumentId??null;I.continuationWorking=value.continuationWorking??null;
       clearPlan();I.rowReview=null;I.step="rows";rowReviewPage();
     }
     function rowReviewPage(){
+      I.step="rows";
       need(I.rowDecisions,"Select the original source rows first.");
       body.replaceChildren(node("h3","3. Account for every original source row"));
       body.append(node("p","Accept an application, retain a reviewed exception, or record an agreed non-application. Literal corrections are separate from the unchanged original CSV. Pending rows must be decided before native saving."));
+      if(I.continuation)body.append(node("p","Previously completed accepted rows are retained as recorded outcomes. Review remaining exceptions or non-applications below; only newly accepted rows will be submitted."),
+        rawDetails("Complete prior session and native outcomes",I.continuation));
       const summary=node("p"),search=field("Find original or corrected row values","search",I.rowSearch),
         filter=field("Row disposition","select",I.rowFilter,[["all","All original rows"],["pending","Still to review"],["accepted","Accepted applications"],["exception","Reviewed exceptions"],["non_application","Agreed non-applications"]]),
         rowsHost=node("div"),pager=node("div",null,"pager"),editor=node("section",null,"panel");
@@ -306,24 +531,29 @@ function GrantAwardsExchange(H){
           " exceptions · "+counts.non_application+" non-applications · "+counts.pending+" still to review";
       };
       const openRow=index=>{
+        if(I.editorRow!==index)I.editorColumnOffset=0;I.editorRow=index;
         const decision=I.rowDecisions[index],original=I.parsed.rows[index];
         editor.replaceChildren(node("h4","Original source row "+(index+1)));
+        const carried=carriedIndex(index);
+        if(carried)editor.append(node("p","Recorded in a completed original operation. Its accepted decision, corrections and application identity remain unchanged."));
         editor.append(node("p","Only checked working corrections change the mapped application. Every original value remains in the source file and its row identity."));
         const disposition=field("Disposition for row "+(index+1),"select",decision.disposition,
           [["pending","Still to review"],["accepted","Accepted application"],["exception","Reviewed exception"],["non_application","Agreed non-application"]]),
           reason=field("Reason / agreement for row "+(index+1),"text",decision.reason);
+        disposition.input.disabled=carried;reason.input.disabled=carried;
         disposition.input.addEventListener("change",()=>{decision.disposition=disposition.input.value;invalidate();count();});
         reason.input.maxLength=4000;reason.input.addEventListener("input",()=>{decision.reason=reason.input.value;invalidate();});
         editor.append(disposition.wrapper,reason.wrapper,node("p","Stable application ID: "+decision.applicationId,"small"));
-        let offset=0;const fields=node("div"),controls=node("div",null,"pager");
+        let offset=Number.isSafeInteger(I.editorColumnOffset)?I.editorColumnOffset:0;if(offset>=I.parsed.headers.length)offset=0;
+        const fields=node("div"),controls=node("div",null,"pager");
         const paintColumns=()=>{
-          fields.replaceChildren();
+          I.editorColumnOffset=offset;fields.replaceChildren();
           for(const header of I.parsed.headers.slice(offset,offset+20)){
             const section=node("div",null,"panel"),originalText=node("pre",original[header]),labelText=node("label","Use a literal working correction"),
               enabled=node("input"),text=node("textarea");
-            enabled.type="checkbox";enabled.checked=Object.hasOwn(decision.corrections,header);
+            enabled.type="checkbox";enabled.checked=Object.hasOwn(decision.corrections,header);enabled.disabled=carried;
             enabled.setAttribute("aria-label","Correct "+header+" in row "+(index+1));
-            text.value=Object.hasOwn(decision.correctionDrafts??{},header)?decision.correctionDrafts[header]:enabled.checked?decision.corrections[header]:original[header];text.disabled=!enabled.checked;
+            text.value=Object.hasOwn(decision.correctionDrafts??{},header)?decision.correctionDrafts[header]:enabled.checked?decision.corrections[header]:original[header];text.disabled=carried||!enabled.checked;
             text.setAttribute("aria-label","Working "+header+" in row "+(index+1));
             enabled.addEventListener("change",()=>{text.disabled=!enabled.checked;setKey(decision.correctionDrafts??=(Object.create(null)),header,text.value);
               if(enabled.checked)setKey(decision.corrections,header,text.value);else delete decision.corrections[header];invalidate();});
@@ -335,7 +565,7 @@ function GrantAwardsExchange(H){
           prev.disabled=offset===0;next.disabled=offset+20>=I.parsed.headers.length;
           controls.replaceChildren(node("span",(offset+1)+"–"+Math.min(offset+20,I.parsed.headers.length)+" of "+I.parsed.headers.length+" columns","small"),prev,next);
         };
-        editor.append(fields,controls,button("Return to source row list",()=>{editor.replaceChildren();paint();}));
+        editor.append(fields,controls,button("Return to source row list",()=>{I.editorRow=null;I.editorColumnOffset=0;editor.replaceChildren();paint();}));
         paintColumns();editor.scrollIntoView({block:"start",behavior:"smooth"});
       };
       const paint=()=>{
@@ -348,6 +578,7 @@ function GrantAwardsExchange(H){
             const choice=field("Disposition row "+(row.rowIndex+1),"select",row.disposition,
               [["pending","Still to review"],["accepted","Accepted application"],["exception","Reviewed exception"],["non_application","Agreed non-application"]]),
               reason=field("Reason row "+(row.rowIndex+1),"text",row.reason);
+            choice.input.disabled=carriedIndex(row.rowIndex);reason.input.disabled=carriedIndex(row.rowIndex);
             choice.input.addEventListener("change",()=>{row.disposition=choice.input.value;invalidate();count();});
             reason.input.maxLength=4000;reason.input.addEventListener("input",()=>{row.reason=reason.input.value;invalidate();});
             return [String(row.rowIndex+1),effectiveRow(row.rowIndex)[I.mapping.reference],choice.wrapper,reason.wrapper,
@@ -369,7 +600,7 @@ function GrantAwardsExchange(H){
       body.append(summary,search.wrapper,filter.wrapper,markUnique,rowsHost,pager,editor,
         button("Download unfinished source review",attempt(downloadWorkingReview)),
         button("Download original CSV",()=>download(I.bytes,I.filename,"text/csv")),
-        button("Back to column mapping",()=>mappingPage()),
+        ...(I.continuation?[]:[button("Back to column mapping",()=>mappingPage())]),
         button("Match accepted programme records",attempt(async()=>{
           currentSelection(portfolio);
           need(I.rowDecisions.every(r=>r.disposition!=="pending"),"Decide every original row before preparing its accepted applications.");
@@ -382,7 +613,8 @@ function GrantAwardsExchange(H){
           for(const row of accepted){
             const ref=effectiveRow(row.rowIndex)[I.mapping.reference];
             need(ref&&pythonStrip(ref)===ref&&!refs.has(ref),"Accepted row "+(row.rowIndex+1)+" needs a nonempty unique reference without surrounding whitespace; retain a correction or change its disposition.");
-            refs.add(ref);const prior=I.identities.applications[ref];
+            refs.add(ref);if(carriedIndex(row.rowIndex)){need(!ids.has(row.applicationId),"Carried application identities remain distinct.");ids.add(row.applicationId);applications[ref]=row.applicationId;continue;}
+            const prior=I.identities.applications[ref];
             if(prior)row.applicationId=prior;
             const drafts=draftsByReference.get(ref)??[];
             if(!prior&&drafts.length===1)row.applicationId=drafts[0].id;
@@ -390,13 +622,14 @@ function GrantAwardsExchange(H){
           }
           I.identities.applications=applications;clearPlan();I.rowReview=null;I.step="identities";identitiesPage();
         }),"primary"));
-      paint();
+      paint();if(Number.isSafeInteger(I.editorRow)&&I.editorRow>=0&&I.editorRow<I.rowDecisions.length)openRow(I.editorRow);
     }
 
     function identitiesPage(){
+      I.step="identities";
       body.replaceChildren(node("h3","3. Match existing programme records"));
       body.append(node("p","Each CSV key selects an existing programme record. Review the application list to distinguish new records from updates to saved drafts."));
-      const accepted=I.rowDecisions?I.rowDecisions.filter(r=>r.disposition==="accepted").map(r=>({rowIndex:r.rowIndex,row:effectiveRow(r.rowIndex)})):I.parsed.rows.map((row,rowIndex)=>({rowIndex,row}));
+      const accepted=I.rowDecisions?I.rowDecisions.filter(r=>r.disposition==="accepted"&&!carriedIndex(r.rowIndex)).map(r=>({rowIndex:r.rowIndex,row:effectiveRow(r.rowIndex)})):I.parsed.rows.map((row,rowIndex)=>({rowIndex,row}));
       const partners=portfolio.definition.programme.records.partners.filter(r=>!r.archived),
         projects=portfolio.definition.programme.records.nodes.filter(r=>!r.archived&&r.kind==="project");
       for(const [group,column,pool,title]of [["partners",I.mapping.partnerKey,partners,"Partner"],["projects",I.mapping.projectKey,projects,"Project"]]){
@@ -404,7 +637,9 @@ function GrantAwardsExchange(H){
         const values=[...new Set(accepted.map(({row})=>row[column]))].filter(v=>group==="partners"||v);
         const section=panel(title+" identities",values.length+" distinct CSV keys");
         pagedRows(section,["Original CSV key","Existing programme record"],values,key=>[key,
-          entityPicker(pool,I.identities[group][key],id=>{setKey(I.identities[group],key,id);I.rowReview=null;},title+" for "+key)]);
+          I.continuation&&I.continuation.previous.input.rowReview.rows.some(r=>r.disposition==="accepted"&&effectiveRow(r.rowIndex)[column]===key)?
+            node("span",label(pool.find(r=>r.id===I.identities[group][key])??{id:I.identities[group][key]})+" · original carried binding"):
+            entityPicker(pool,I.identities[group][key],id=>{setKey(I.identities[group],key,id);I.rowReview=null;},title+" for "+key)]);
         body.append(section);
       }
       const apps=panel("Application identities","Each new application keeps the generated ID shown here throughout this import. Existing final editions remain in their recorded history.");
@@ -421,9 +656,9 @@ function GrantAwardsExchange(H){
           I.rowReview=null;idText.textContent=I.identities.applications[reference];});
         return [(rowIndex+1)+" · "+reference,f.wrapper,idText];
       },{searchText:({row,rowIndex})=>(rowIndex+1)+" "+row[I.mapping.reference]+" "+row[I.mapping.title]});
-      const batchRows=field("Maximum rows per reviewed batch","number",String(I.batchRows));
+      const batchRows=field("Maximum rows per reviewed batch","number",I.batchRowsLiteral??String(I.batchRows));
       batchRows.input.min="1";batchRows.input.max="2000";
-      batchRows.input.addEventListener("input",()=>{I.batchRows=Number(batchRows.input.value);});
+      batchRows.input.addEventListener("input",()=>{I.batchRowsLiteral=batchRows.input.value;I.batchRows=Number(batchRows.input.value);});
       body.append(apps,batchRows.wrapper,
         button("Prepare reviewed batches",attempt(prepareBatches)),
         button("Download unfinished source review",attempt(downloadWorkingReview)),
@@ -478,7 +713,8 @@ function GrantAwardsExchange(H){
       if(I.rowDecisions)I.rowReview=(await rowReviews()).prepareAwardCsvRowReview(portfolio,reviewInput());
       const common={csv:I.bytes,filename:I.filename,roundId:I.roundId,actor:I.actor,
         mapping:I.mapping,identities:I.identities,status:I.status,
-        ...(I.rowReview?{rowReview:I.rowReview,reviewDocumentId:I.reviewDocumentId}:{})};
+        ...(I.rowReview?{rowReview:I.rowReview,reviewDocumentId:I.reviewDocumentId}:{}),
+        ...(I.continuation?{continuation:I.continuation,continuationDocumentId:I.continuationDocumentId}:{})};
       const batches=engine.proposeAwardCsvImportBatches(portfolio,common,{
         operationPrefix:I.operationId,documentIds:I.batchDocumentIds,maxRows:I.batchRows});
       I.session=engine.prepareAwardCsvImportSession(portfolio,{...common,sessionId:I.sessionId,
@@ -487,10 +723,11 @@ function GrantAwardsExchange(H){
       currentSelection(portfolio);sessionPage();
     }
     function sessionPage(){
+      I.step="session";
       const session=I.session,observation=I.observation,enginePromise=sessions();
       body.replaceChildren(node("h3","4. Review the complete import session"));
       body.append(node("p",session.sourceRows+" original rows in "+session.batches.length+" separately reviewed batches · "+
-        (observation?.completedRows||0)+" rows recorded"),
+        (observation?.recordedRows??observation?.completedRows??0)+" rows recorded"),
         node("p",session.source.filename+" · "+session.source.bytes+" original bytes · SHA-256 "+session.source.sha256,"small"),
         node("p","Keep the original CSV and download this complete session before saving a batch. Each batch retains the same full source. Completed batches stay recorded when you close or reopen the session."));
       if(session.input.rowReview){
@@ -507,6 +744,15 @@ function GrantAwardsExchange(H){
           I.observation=await (await enginePromise).inspectAwardCsvImportSession(sessionClient,session,I.bytes);
           sessionPage();
         })));
+      if(session.input.continuation)body.append(node("p",(observation?.carriedRows??session.input.continuation.previous.input.rowReview.counts.accepted)+
+        " accepted rows retained from earlier completed operations · "+session.batches.reduce((n,b)=>n+b.rows,0)+" newly accepted rows in this successor"),
+        rawDetails("Carried original application outcomes",observation?.carriedOutcomes??session.input.continuation));
+      if(session.input.rowReview)body.append(button("Resolve remaining original rows",attempt(async()=>{
+        const prepared=await (await enginePromise).readAwardCsvImportContinuation(sessionClient,session,I.bytes);
+        currentSelection(prepared.portfolio);
+        await preserveCurrent();
+        await open({roundId:session.round.id,continuationSeed:{...prepared,csv:I.bytes.slice(),working:snapshotWork()}});
+      })));
       const batchList=panel("Original batches");
       pagedRows(batchList,["Batch","Original CSV rows","Original operation","State","Review"],session.batches,selected=>{
         const actual=observation?.batches.find(row=>row.index===selected.index),ranges=module.awardCsvRowRanges(selected.rowIndexes);
@@ -535,13 +781,14 @@ function GrantAwardsExchange(H){
           const request=await engine.submitAwardCsvSessionBatch(sessionClient,session,batch,I.bytes,{
             resumeFailed:actual?.state==="FAILED"});
           I.observation=await engine.inspectAwardCsvImportSession(sessionClient,session,I.bytes);
-          sessionPage();showDialog("Application CSV intake",[root]);
+          sessionPage();await showIntake();
         }),"primary"));
       }else selected.append(node("p","This original batch is recorded. Its complete plan and source remain available."));
       body.append(selected);
     }
 
     function reviewPage(){
+      I.step="review";
       const plan=I.plan,changes=plan.action.payload.awards.changes,
         updated=changes.filter(c=>c.expectedRevision>0).length,
         records=I.portfolio.definition.programme.records;
@@ -585,7 +832,21 @@ function GrantAwardsExchange(H){
       }),"primary"));
       body.append(controls);
     }
-    filePage();showDialog("Application CSV intake",[root]);
+    if(continuationSeed){
+      currentSelection(continuationSeed.portfolio);
+      need(exact(binding,{id:continuationSeed.portfolio.id,revision:continuationSeed.portfolio.revision,snapshot:continuationSeed.portfolio.snapshot}),
+        "Select the current original portfolio before resolving remaining rows.");
+      const previous=continuationSeed.continuation.previous,review=previous.input.rowReview;
+      I.bytes=continuationSeed.csv.slice();I.parsed=module.parseAwardCsvText(new TextDecoder("utf-8",{fatal:true}).decode(I.bytes));
+      I.filename=previous.source.filename;I.roundId=previous.round.id;I.actor=review.actor;I.status=review.status;
+      I.mapping=clone(review.mapping);I.identities=clone(review.identities);
+      I.continuation=clone(continuationSeed.continuation);I.continuationDocumentId=crypto.randomUUID();I.continuationWorking=clone(continuationSeed.working);
+      I.rowDecisions=review.rows.map(({originalRowSha256,...row})=>({...clone(row),applicationId:row.applicationId??crypto.randomUUID(),
+        correctionDrafts:clone(continuationSeed.working.rowDecisions?.[row.rowIndex]?.correctionDrafts??row.corrections)}));
+      I.rowFilter="exception";localLabel.input.value=I.filename+" · resolve remaining rows";
+      I.step="rows";rowReviewPage();changed();
+    }else filePage();
+    await showIntake();try{await refreshLibrary();}catch(error){reportSave(error);}
   }
   async function openExports({roundId=""}={}){
     const portfolio=clone(current());need(portfolio?.definition.awards,"Open a saved awards portfolio revision.");

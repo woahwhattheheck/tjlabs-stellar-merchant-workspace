@@ -228,6 +228,13 @@
     "xml/native.mjs",
     "xml/server.py",
     "xml/workspace.py",
-    "xml/xml_source.py"
+    "xml/xml_source.py",
+    "grant-portfolio/AWARDS_INTAKE_WORKING_FILES.md",
+    "grant-portfolio/awards-intake-working.mjs",
+    "grant-portfolio/awards-intake-working.d.mts",
+    "grant-portfolio/examples/awards/intake-working-receiving.mjs",
+    "grant-portfolio/awards-import-continuation.mjs",
+    "grant-portfolio/awards-import-continuation.d.mts",
+    "grant-portfolio/examples/awards/row-continuation-receiving.mjs"
   ]
 }

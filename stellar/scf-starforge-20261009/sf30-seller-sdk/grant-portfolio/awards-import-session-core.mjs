@@ -3,6 +3,7 @@ import {parseAwardCsvText,originalAwardCsvBytes,prepareAwardCsvImportStructure,
   createAwardCsvImportPlanner} from './awards-exchange-core.mjs';
 import {sha256Bytes,sha256Text} from './awards-import-hash.mjs';
 import {verifyAwardCsvRowReview,materializeAwardCsvRowReview,encodeAwardCsvRowReview} from './awards-import-row-review.mjs';
+import {prepareAwardCsvContinuation,verifyAwardCsvContinuation,carriedAwardCsvRows,completedAwardCsvRows,encodeAwardCsvContinuation} from './awards-import-continuation.mjs';
 const utf8=text=>new TextEncoder().encode(text);
 function prepareAwardCsvImport(portfolio,input){
   const csv=originalAwardCsvBytes(input.csv),plan=prepareAwardCsvImportStructure(portfolio,{...input,csv},sha256Bytes(csv));
@@ -12,6 +13,7 @@ function prepareAwardCsvImport(portfolio,input){
 export const AWARD_IMPORT_SESSION_SCHEMA='stellar-forge.awards-csv-import-session.v1';
 export const AWARD_IMPORT_BATCH_SCHEMA='stellar-forge.awards-csv-session-batch.v1';
 export const AWARD_REVIEWED_IMPORT_SESSION_SCHEMA='stellar-forge.awards-csv-import-session.v2';
+export const AWARD_CONTINUED_IMPORT_SESSION_SCHEMA='stellar-forge.awards-csv-import-session.v3';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const OPERATION=/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/;
 const HASH=/^[0-9a-f]{64}$/;
@@ -45,8 +47,14 @@ function checkRound(portfolio,session){
     'The selected published funding round changed. Keep the original session and explicitly review a successor.');
 }
 function record(records,id){return records.find(row=>row.id===id)??null;}
+function requireCarriedApplications(current,rows,roundId){
+  const applications=new Map(current.definition.awards.records.applications.map(row=>[row.id,row]));
+  for(const row of rows)need(applications.get(row.applicationId)?.roundId===roundId,
+    'The original carried application identity is missing from the current portfolio. Keep its historical completed outcome.');
+}
 function guardSelectedRecords(basis,current,session,index,csv,parsedSource){
   checkRound(current,session);
+  if(session.input.continuation)requireCarriedApplications(current,completedAwardCsvRows(session.input.continuation,csv),session.round.id);
   const parsed=parsedSource??(session.input.rowReview?materializeAwardCsvRowReview(session.input.rowReview,csv):
     parseAwardCsvText(new TextDecoder('utf-8',{fatal:true}).decode(csv)));
   const originalIndexes={applications:new Map(basis.definition.awards.records.applications.map(r=>[r.id,r])),
@@ -78,7 +86,7 @@ function guardSelectedRecords(basis,current,session,index,csv,parsedSource){
  * not future actions that bypass intervening portfolio revisions.
  */
 export function prepareAwardCsvImportSession(portfolio,input){
-  exact(input,['sessionId','workspaceId','csv','filename','roundId','actor','mapping','identities','status','batches','rowReview','reviewDocumentId'],
+  exact(input,['sessionId','workspaceId','csv','filename','roundId','actor','mapping','identities','status','batches','rowReview','reviewDocumentId','continuation','continuationDocumentId'],
     ['sessionId','workspaceId','csv','filename','roundId','actor','mapping','identities','batches']);
   need(UUID.test(input.sessionId??'')&&UUID.test(input.workspaceId??''),'Supply stable session and original workspace UUIDs.');
   need(Array.isArray(input.batches)&&input.batches.length>=1&&input.batches.length<=25000,
@@ -86,13 +94,38 @@ export function prepareAwardCsvImportSession(portfolio,input){
   const csv=originalCsv(input.csv),parsed=parseAwardCsvText(new TextDecoder('utf-8',{fatal:true}).decode(csv));
   const rowReview=input.rowReview?verifyAwardCsvRowReview(portfolio,input.rowReview,csv):null;
   const materialized=rowReview?materializeAwardCsvRowReview(rowReview,csv):null;
-  const acceptedIndexes=materialized?.acceptedRowIndexes??Array.from({length:parsed.rows.length},(_,i)=>i);
+  const continuation=input.continuation?verifyAwardCsvContinuation(input.continuation,csv):null;
+  need(!continuation||rowReview,'A continuation retains a complete current row review.');
+  need(continuation||input.continuationDocumentId===undefined,'A completed-history document needs its full continuation.');
+  const carried=continuation?carriedAwardCsvRows(continuation,rowReview,csv):[],carriedSet=new Set(carried.map(row=>row.rowIndex));
+  if(continuation){
+    need(continuation.previous.workspaceId===input.workspaceId&&continuation.previous.portfolio.id===portfolio.id,
+      'Continue the original native workspace and portfolio.');
+    need(portfolio.revision>=Math.max(...continuation.outcomes.map(row=>row.result.revision)),
+      'Choose a current portfolio revision containing all completed predecessor outcomes.');
+    requireCarriedApplications(portfolio,carried,rowReview.round.id);
+  }
+  const acceptedIndexes=(materialized?.acceptedRowIndexes??Array.from({length:parsed.rows.length},(_,i)=>i)).filter(i=>!carriedSet.has(i));
   const acceptedSet=new Set(acceptedIndexes);
   need(rowReview||input.reviewDocumentId===undefined,'A row-review document requires the complete retained review.');
   const indexes=new Set(),operations=new Set(),documents=new Set();
   const common={filename:input.filename,roundId:input.roundId,actor:input.actor,mapping:canonical(clone(input.mapping)),
     identities:canonical(clone(input.identities)),status:input.status??'draft',
-    ...(rowReview?{rowReview:canonical(clone(rowReview)),reviewDocumentId:input.reviewDocumentId}:{})};
+    ...(rowReview?{rowReview:canonical(clone(rowReview)),reviewDocumentId:input.reviewDocumentId}:{}),
+    ...(continuation?{continuation:canonical(continuation),continuationDocumentId:input.continuationDocumentId}:{})};
+  if(continuation){
+    let previous=continuation.previous;
+    while(previous){
+      for(const batch of previous.batches){operations.add(batch.operationId);documents.add(batch.documentId);}
+      documents.add(previous.input.reviewDocumentId);
+      if(previous.input.continuationDocumentId)documents.add(previous.input.continuationDocumentId);
+      need(previous.sessionId!==input.sessionId&&previous.input.rowReview.reviewId!==rowReview.reviewId,
+        'Allocate a new successor session and review identity; retain all previous identities unchanged.');
+      previous=previous.input.continuation?.previous;
+    }
+    need(!documents.has(input.reviewDocumentId)&&!documents.has(input.continuationDocumentId)&&UUID.test(input.continuationDocumentId??'')&&
+      input.reviewDocumentId!==input.continuationDocumentId,'Allocate fresh current review and completed-history evidence identities.');
+  }
   const planner=createAwardCsvImportPlanner(portfolio,{...common,csv},hash(csv));
   const preparedPlan=selection=>{const plan=planner.plan(selection);return {...plan,actionSha256:sha256Text(JSON.stringify(plan.action))};};
   const batches=[];
@@ -121,14 +154,14 @@ export function prepareAwardCsvImportSession(portfolio,input){
   need(indexes.size===acceptedIndexes.length,'Every accepted row must belong to exactly one batch; retained exceptions and non-applications are not written.');
   if(!rowReview)need(new Set(parsed.rows.map(row=>common.identities.applications[row[common.mapping.reference]])).size===parsed.rows.length,
     'Each original application reference must retain its own supplied record identity.');
-  const session=seal({schema:rowReview?AWARD_REVIEWED_IMPORT_SESSION_SCHEMA:AWARD_IMPORT_SESSION_SCHEMA,sessionId:input.sessionId,workspaceId:input.workspaceId,
+  const session=seal({schema:continuation?AWARD_CONTINUED_IMPORT_SESSION_SCHEMA:rowReview?AWARD_REVIEWED_IMPORT_SESSION_SCHEMA:AWARD_IMPORT_SESSION_SCHEMA,sessionId:input.sessionId,workspaceId:input.workspaceId,
     portfolio:selectedPortfolio(portfolio),source:first.source,round:first.round,input:common,
     sourceRows:parsed.rows.length,batches});
   need(encode(session).length<=32*1024*1024,'Keep the complete reviewed session within 32 MiB.');
   return session;
 }
 function verifySession(basis,session,csv){
-  need([AWARD_IMPORT_SESSION_SCHEMA,AWARD_REVIEWED_IMPORT_SESSION_SCHEMA].includes(session?.schema)&&HASH.test(session.sha256??''),
+  need([AWARD_IMPORT_SESSION_SCHEMA,AWARD_REVIEWED_IMPORT_SESSION_SCHEMA,AWARD_CONTINUED_IMPORT_SESSION_SCHEMA].includes(session?.schema)&&HASH.test(session.sha256??''),
     'Open the complete original reviewed import session.');
   const expected=prepareAwardCsvImportSession(basis,{...session.input,sessionId:session.sessionId,
     workspaceId:session.workspaceId,csv,batches:session.batches.map(({operationId,documentId,rowIndexes})=>
@@ -162,6 +195,19 @@ async function context(client,session,csv,options){
       completed:new Map()};
     scopes.set(client,scope);
   }
+  if(session.input.continuation){
+    const ids=[];let retained=session.input.continuation;
+    while(retained){ids.push(...retained.outcomes.map(row=>row.operationId));retained=retained.previous.input.continuation;}
+    const summaries=new Map((state.requests??[]).map(row=>[row.id,row]));
+    const observed=ids.map(id=>summaries.get(id)).filter(Boolean);
+    const proof=observed.length===ids.length&&observed.every(row=>row.state==='COMPLETED')?digest(observed.map(requestSummary)):null;
+    if(!proof||scope.continuationProof!==proof){
+      const actual=await completedContinuation(client,session.input.continuation.previous,bytes,options);
+      need(same(actual,session.input.continuation),'The carried outcomes differ from their actual original native requests or historical results.');
+      scope.continuationProof=proof;
+    }
+    scopes.set(client,scope);
+  }
   return {...scope,bytes,state};
 }
 function rememberCompleted(scope,request){
@@ -192,6 +238,44 @@ async function verifiedRequest(client,session,index,request,basis,csv,options,sc
   if(scope)rememberCompleted(scope,request);
   return plan;
 }
+
+/** Read complete original outcomes. Imported receipts never substitute for these native reads. */
+async function completedContinuation(client,previous,csv,options){
+  previous=clone(previous);
+  need(Boolean(previous.input?.rowReview),'Continue an original complete reviewed session.');
+  const scope=await context(client,previous,csv,options),outcomes=[];
+  for(const batch of previous.batches){
+    const request=await absentOrRequest(client,batch.operationId,options);
+    need(request?.state==='COMPLETED','Reconcile every original batch to COMPLETED before resolving remaining rows in a successor.');
+    await verifiedRequest(client,previous,batch.index,request,scope.basis,scope.bytes,options,scope);
+    const result=request.result;
+    need(result?.id===previous.portfolio.id&&Number.isSafeInteger(result.revision)&&
+      result.revision>request.input.payload.expectedPortfolioRevision&&HASH.test(result.snapshot??''),
+      'Keep the completed native portfolio result for this original operation.');
+    const historical=await client.portfolio(result.id,{...options,revision:result.revision});
+    need(same(historical,result),'The completed request result differs from its original historical portfolio.');
+    const applications=new Map(historical.definition.awards.records.applications.map(row=>[row.id,row]));
+    const rows=batch.rowIndexes.map(rowIndex=>{
+      const decision=previous.input.rowReview.rows[rowIndex],application=applications.get(decision.applicationId);
+      need(application&&application.roundId===previous.round.id&&!application.archived,
+        'The completed native result does not contain its original accepted application.');
+      return {rowIndex,originalRowSha256:decision.originalRowSha256,applicationId:application.id,
+        revision:application.revision,sha256:application.sha256};
+    });
+    outcomes.push({index:batch.index,operationId:batch.operationId,requestSha256:digest(request),inputSha256:request.inputSha256,
+      result:selectedPortfolio(historical),applications:rows});
+  }
+  return prepareAwardCsvContinuation(previous,outcomes,scope.bytes);
+}
+/** Read-only preparation for resolving remaining source rows on a fresh current basis. */
+export async function readAwardCsvImportContinuation(client,previous,csv,options={}){
+  const continuation=await completedContinuation(client,previous,csv,options);
+  const portfolio=await client.portfolio(previous.portfolio.id,options);
+  checkRound(portfolio,previous);
+  requireCarriedApplications(portfolio,completedAwardCsvRows(continuation,csv),previous.round.id);
+  return {continuation,portfolio};
+}
+
 async function previousReturns(client,session,index,basis,csv,options,scope){
   const prior=[];
   for(let before=0;before<index;before++){
@@ -266,6 +350,13 @@ export async function submitAwardCsvSessionBatch(client,session,batch,csv,{resum
     const uploadedReview=await client.uploadProgrammeDocument({body,bytes:body.length,sha256},options);
     need(uploadedReview.bytes===body.length&&uploadedReview.sha256===sha256,'The complete row-review evidence upload differs.');
   }
+  if(session.input.continuation){
+    const body=encodeAwardCsvContinuation(session.input.continuation),sha256=hash(body);
+    need(batch.plan.continuation?.object.sha256===sha256&&batch.plan.continuation.object.bytes===body.length,
+      'The retained original completion history differs from this batch.');
+    const uploaded=await client.uploadProgrammeDocument({body,bytes:body.length,sha256},options);
+    need(uploaded.bytes===body.length&&uploaded.sha256===sha256,'The complete original completion-history upload differs.');
+  }
   // If the transport outcome is uncertain, the caller reads this exact ID next.
   request=await client.action(batch.plan.action,options);
   await verifiedRequest(client,session,index,request,basis,bytes,options,scope);
@@ -292,11 +383,14 @@ export async function inspectAwardCsvImportSession(client,session,csv,options={}
       state:request?.state??'NOT_ADMITTED',request:request?{id:request.id,state:request.state,
         inputSha256:request.inputSha256,sha256:digest(request),error:clone(request.error??null)}:null});
   }
-  return {schema:session.input.rowReview?'stellar-forge.awards-csv-session-observation.v2':'stellar-forge.awards-csv-session-observation.v1',sessionId:session.sessionId,
+  const carried=session.input.continuation?completedAwardCsvRows(session.input.continuation,bytes):[];
+  return {schema:session.input.continuation?'stellar-forge.awards-csv-session-observation.v3':session.input.rowReview?'stellar-forge.awards-csv-session-observation.v2':'stellar-forge.awards-csv-session-observation.v1',sessionId:session.sessionId,
     sessionSha256:session.sha256,workspaceId:session.workspaceId,portfolioId:session.portfolio.id,
     source:clone(session.source),sourceRows:session.sourceRows,completedRows,
     ...(session.input.rowReview?{rowReview:{sha256:session.input.rowReview.sha256,counts:clone(session.input.rowReview.counts),
       documentId:session.input.reviewDocumentId}}:{}),
+    ...(session.input.continuation?{carriedRows:carried.length,recordedRows:carried.length+completedRows,
+      newlyAcceptedRows:session.batches.reduce((n,batch)=>n+batch.rows,0),carriedOutcomes:carried}:{}),
     state:batches.every(batch=>batch.state==='COMPLETED')?'COMPLETE':'INCOMPLETE',batches};
 }
 
