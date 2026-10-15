@@ -13,8 +13,8 @@
     },
     {
       "path": "browser/installed-ui.cjs",
-      "bytes": 33979,
-      "sha256": "1c18b16c0daf5136ef72f6179f40f074adb1ec014b10c3ab0b708de508e76b04"
+      "bytes": 36112,
+      "sha256": "785d62417b2779128f3f919446a139e24812c49ac8d47bae086a5850c22b66e2"
     },
     {
       "path": "browser/render-desk.cjs",
@@ -138,13 +138,13 @@
     },
     {
       "path": "INSTALLED_OPERATION.md",
-      "bytes": 7394,
-      "sha256": "7417d555870d2812ea589914f895e92437bc13698b70d3afb8f09254eb5f12a8"
+      "bytes": 7717,
+      "sha256": "16b2d59f50f012d7bf0d8c282036db3d5730b9d4ed334c199c46b4d010db95c4"
     },
     {
       "path": "INSTALLED_RECEIVING.md",
-      "bytes": 2536,
-      "sha256": "405f70d478670ecebe6999a1a58c8e3f22a08300ead5f363fe532092eceb7689"
+      "bytes": 2555,
+      "sha256": "7cbb3ce3d46e01e1889a797689f7721d3e4c2941bed78e79ae618ee748090b95"
     },
     {
       "path": "installed-cli.mjs",
@@ -192,9 +192,19 @@
       "sha256": "f89b10b7fb9df1004c6c8624fb6bfc3d10d08769f36fabb0368d49648d23b748"
     },
     {
+      "path": "receiving/export-course.cjs",
+      "bytes": 3780,
+      "sha256": "5af3ec9887dde424dcbe8081e68155f2e8147549a10bc6456eb80eb12134d7c0"
+    },
+    {
       "path": "receiving/host-course.cjs",
-      "bytes": 9282,
-      "sha256": "f399c67b235146f679839b59e98140b686ac369e2c62aa771764f95e6df0eb52"
+      "bytes": 9451,
+      "sha256": "518ff560ae7819e0f17e83e53b251bbe0421e9b83a2d96f5f983f3670995a689"
+    },
+    {
+      "path": "receiving/pending-original-course.cjs",
+      "bytes": 9057,
+      "sha256": "e8ef334ddaff69d60de0b9edf93f22ee26f878748cfb50d513d0534bff192070"
     },
     {
       "path": "receiving/portable-course.cjs",
@@ -203,8 +213,8 @@
     },
     {
       "path": "receiving/VERIFIED_COURSES.json",
-      "bytes": 1563,
-      "sha256": "b7a885c3a0512e426c0c803c6890106ecb52b9cc2fa386ff234ea8783f9513bc"
+      "bytes": 2030,
+      "sha256": "db52184abf127187359041bc71b601391ae84f4b42f97f04ab0383656137fb4c"
     },
     {
       "path": "runtime.mjs",
@@ -253,8 +263,8 @@
     },
     {
       "path": "Shipment_Commissioning_Desk.html",
-      "bytes": 1095147,
-      "sha256": "8d40f26cc97aeac406235eea49275ab23161cf095c7fe0d27c43095d4f72929e"
+      "bytes": 1113886,
+      "sha256": "85c85553ca5410d44ed710fb6d5e96b3e39643e8094ba7f9d733d0a2b10eaf40"
     },
     {
       "path": "src/archive.mjs",

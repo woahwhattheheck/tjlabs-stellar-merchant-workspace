@@ -31,6 +31,8 @@ Changing a reference requires renewed approval while earlier runs retain their f
 
 ## Drafts and recovery
 
+A file read that fails metadata, domain or capacity validation is retained as a pending original with exact bytes, filename, media type, full entered metadata, read time and reason. Originals provides ordinary Correct and retry and Download exact original controls; retry works after the browser file control has cleared.
+
 Every form, actor, view and selection travels in the original shipment-review-session.v1 editor. Mutating actions prepare and validate the complete successor before selection. Switching case or mapping retains the full unfinished editor. Browser saves use an atomic compare-and-swap and independently retain conflicting proposals. Explicit saved-branch adoption keeps both complete prior branches.
 
 Existing original browser sessions migrate from tjlabs.shipment-review.v1 into the managed immutable-object store on their first successful installed save; the original database remains intact. A provided portable opening retains the previously saved browser branch before selecting incoming work.

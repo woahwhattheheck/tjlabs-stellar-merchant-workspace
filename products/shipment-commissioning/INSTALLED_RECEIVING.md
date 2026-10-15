@@ -5,7 +5,7 @@ Use the merged product source and its source-manifest.json. The manifest is capt
 ## Execute maintained source
 
 ```sh
-node -e 'const f=require("node:fs");const p="products/shipment-commissioning/";const m=JSON.parse(f.readFileSync(p+"source-manifest.json","utf8"));const files=Object.fromEntries(m.files.map(x=>[x.path,f.readFileSync(p+x.path,"utf8")]));files["source-manifest.json"]=f.readFileSync(p+"source-manifest.json","utf8");(async()=>{for(const course of ["portable","capacity","host"]){const r=await require("./"+p+"receiving/"+course+"-course.cjs")(files);console.log(course,r.checks)}})().catch(e=>{console.error(e);process.exitCode=1})'
+node -e 'const f=require("node:fs");const p="products/shipment-commissioning/";const m=JSON.parse(f.readFileSync(p+"source-manifest.json","utf8"));const files=Object.fromEntries(m.files.map(x=>[x.path,f.readFileSync(p+x.path,"utf8")]));files["source-manifest.json"]=f.readFileSync(p+"source-manifest.json","utf8");(async()=>{for(const course of ["portable","capacity","pending-original","host"]){const r=await require("./"+p+"receiving/"+course+"-course.cjs")(files);console.log(course,r.checks)}})().catch(e=>{console.error(e);process.exitCode=1})'
 node products/shipment-commissioning/native/receive-installed.mjs
 ```
 

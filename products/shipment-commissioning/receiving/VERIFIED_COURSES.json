@@ -28,16 +28,25 @@
     "pendingBytes": 13610
   },
   "host": {
-    "checks": 7,
+    "checks": 8,
     "originalCommands": 32,
     "requests": 35,
     "editions": 36,
-    "milliseconds": 139782,
+    "milliseconds": 142744,
     "surface": "Actual Merchant dispatcher, declared original reads and production model; filesystem/listener injected"
   },
   "sourcePreservation": {
     "originalDomainUnchanged": true,
     "genericFixtures": "Regenerated complete command journal with provider-neutral authored labels",
     "originalUIChange": "Retain full pending editor before switching output mappings"
+  },
+  "pendingOriginal": {
+    "schema": "shipment.installed-pending-original-course.v1",
+    "surface": "Actual assembled generated handlers with original file read and retry",
+    "checks": [
+      "Rejected original intake retains exact bytes, full metadata, read time and failure",
+      "Pending original downloads byte-exact after file control is cleared",
+      "Ordinary correction and retry commits exact original while retaining the failed preimage"
+    ]
   }
 }
