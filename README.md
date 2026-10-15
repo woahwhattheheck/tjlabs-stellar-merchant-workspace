@@ -466,3 +466,7 @@ The [Tenderly operating guide](products/tenderly/OPERATING.md) covers the `tende
 ## Contractor pilot programme
 
 The [contractor pilot programme](integrations/contractor-pilot-programme/README.md) turns an authorized research programme into an offline working desk and fixed customer editions. It preserves saved work, observation corrections, exact selected profiles, successor buyer briefs and the original JSON/CSV/HTML delivery bodies. Build from your complete private programme or workspace with its native builder; full operating instructions are in the integration guide.
+
+## Manufacturing pilot programme
+
+The [manufacturing pilot programme](integrations/manufacturing-pilot-programme/README.md) retains complete ten-company research, editable single-station study setup, observations, saved working copies and exact customer editions. Its [source-based study processor](integrations/manufacturing-pilot-programme/STUDY_PROCESSOR.md) receives original cycle and effort tables, separates interval coverage from concurrent work and compares declared same-source analyst effort. Both native builders retain full original inputs and complete reports.
