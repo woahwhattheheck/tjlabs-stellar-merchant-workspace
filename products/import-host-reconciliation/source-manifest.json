@@ -47,6 +47,11 @@
       "sha256": "73566e29a521f793cac60b4c0c60fe83f44141a028cfa76a3b65f85a278cc0be"
     },
     {
+      "path": "commissioning/installed-authoring-result.json",
+      "bytes": 3502,
+      "sha256": "e46963c3e0296b724d7ee0028c102fd2a2756c1f30e2aadd7bea7740dab6db2e"
+    },
+    {
       "path": "commissioning/installed-model-result.json",
       "bytes": 448,
       "sha256": "b015b83841d0191f8664b8aeb8ef1145c6783ba8cd509e8f0a77996da678f992"
@@ -238,8 +243,8 @@
     },
     {
       "path": "managed.mjs",
-      "bytes": 2498,
-      "sha256": "685dbbb08b5442a03af59b745dcb557e3fc359c6bcff55d64bf0749969b8c74f"
+      "bytes": 2600,
+      "sha256": "11c0acc075ba0241225cc69549fb1337c9d944af8bfef835b5a6c219dba5354d"
     },
     {
       "path": "mcp.mjs",
@@ -308,13 +313,13 @@
     },
     {
       "path": "operator/controller.js",
-      "bytes": 34692,
-      "sha256": "0db7cf478c8daa47325e8ca9a6556521ac3fb62a81d1464edf136f0167220952"
+      "bytes": 34716,
+      "sha256": "8eff405877e2f6468439c4c36419ed403b7b7b42888b90b4bbf4484f271d6a0e"
     },
     {
       "path": "operator/managed.js",
-      "bytes": 10217,
-      "sha256": "007b3fde819a39913db1c3ed692b7d75c74ced1d36e741a048f558dd382ebd77"
+      "bytes": 12088,
+      "sha256": "d73b07bc84bb3e15c25acb1688c0bb42dd374001573517d86561dbede5eec941"
     },
     {
       "path": "operator/receive-course.js",

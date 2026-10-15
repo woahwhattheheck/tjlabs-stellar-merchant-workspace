@@ -1,5 +1,5 @@
 /* MIT. Complete editable draft and original pending request live together in one IndexedDB transaction. */
-function createManagedSession({C,S,config,getSession,setSession,render,notice,download}){
+function createManagedSession({C,S,config,getSession,setSession,render,notice,download,isOperatorBusy=()=>false}){
  const hash=v=>S.hash(JSON.stringify(v)),copy=S.clone,key=config.installationId;let state=null,pending=null,history=[],db=null,lastStored=null,ready=false,working=false,needsRefresh=false,dirtyPersistence=false,tail=Promise.resolve();
  const token=new URLSearchParams(location.hash.slice(1)).get('token')||'';historyReplace();function historyReplace(){if(location.hash)globalThis.history.replaceState(null,'',location.pathname);}
  const pane=document.getElementById('managed-controls');
@@ -7,6 +7,22 @@ function createManagedSession({C,S,config,getSession,setSession,render,notice,do
  const status=message=>{document.getElementById('managed-status').textContent=message||(!ready?'Connecting…':pending?'An original save is pending. Recover it before further editing.':needsRefresh?'The save was rejected before commit. Open the newest edition; your complete local branch will be retained.':state?.carrier.sha256===S.pack(getSession()).sha256?'Complete session matches managed edition '+state.sequence+'.':'Local editable session has changes. Save it to the managed workspace.');};
  async function api(path,payload){const response=await fetch(path,{method:payload===undefined?'GET':'POST',headers:{authorization:'Bearer '+token,'x-import-host-instance':config.instanceId,...(payload===undefined?{}:{'content-type':'application/json'})},body:payload===undefined?undefined:JSON.stringify(payload),redirect:'error'});const r=await response.json();if(!response.ok)throw Object.assign(Error(r.error?.message||'Managed request failed'),{code:r.error?.code});return r;}
  function shell(){return {schema:'stellar-forge.import-host-recovery.v1',installationId:key,baseState:state,carrier:S.pack(getSession()),pending:copy(pending),history:copy(history),needsRefresh};}
+
+ function validateRecovery(value){
+  if(value?.schema!=='stellar-forge.import-host-recovery.v1'||value.installationId!==key||!value.baseState||!Array.isArray(value.history)||typeof value.needsRefresh!=='boolean')throw Error('Select this installation’s complete recovery JSON');
+  const b=value.baseState;if(b.schema!=='stellar-forge.import-host-view.v1'||b.installationId!==key||!Number.isSafeInteger(b.sequence)||b.sequence<0||!Array.isArray(b.receipts)||!Array.isArray(b.rejections))throw Error('Recovery base edition is incomplete');
+  S.receive(JSON.stringify(b.carrier));
+  const original={schema:'stellar-forge.import-host-state.v1',installationId:b.installationId,sequence:b.sequence,carrier:b.carrier,receipts:b.receipts,rejections:b.rejections};
+  if(hash(original)!==b.sha256)throw Error('Recovery base edition identity differs');
+  const incoming=S.receive(JSON.stringify(value.carrier)),r=value.pending;
+  if(r!==null){
+   const keys=['schema','installationId','id','baseSha256','actor','at','kind','carrier'];
+   if(!r||r.schema!=='stellar-forge.import-host-request.v1'||r.installationId!==key||r.kind!=='save'||r.baseSha256!==b.sha256||!keys.every(k=>Object.hasOwn(r,k))||Object.keys(r).some(k=>!keys.includes(k))||typeof r.id!=='string'||!r.id||r.id.length>120||typeof r.actor!=='string'||!r.actor||r.actor.length>240||typeof r.at!=='string'||r.at.length>40||!Number.isFinite(Date.parse(r.at)))throw Error('Recovery pending request is incomplete');
+   if(S.pack(S.receive(JSON.stringify(r.carrier))).sha256!==value.carrier.sha256)throw Error('Recovery editor differs from its exact pending successor');
+  }
+  return incoming;
+ }
+
  function savedDB(value){
   return new Promise((resolve,reject)=>{const tx=db.transaction('sessions','readwrite'),store=tx.objectStore('sessions'),read=store.get(key);
    read.onsuccess=()=>{try{const prior=read.result;if((prior?hash(prior):null)!==lastStored)throw Error('Another opening saved this complete browser branch. Save recovery JSON before selecting it.');store.put(value,key);}catch(e){tx.abort();reject(e);}};
@@ -17,7 +33,7 @@ function createManagedSession({C,S,config,getSession,setSession,render,notice,do
  async function finish(result){
   if(!['COMMITTED','REJECTED_NOT_COMMITTED'].includes(result.outcome))throw Error('Original request remains unresolved');
   if(result.record.requestSha256!==hash(pending)||JSON.stringify(result.record.request)!==JSON.stringify(pending))throw Error('Original request outcome identity differs');
-  history.push({request:copy(pending),record:result.record});pending=null;state=result.state;
+  history.push({requestId:pending.id,requestSha256:result.record.requestSha256,recordSha256:hash(result.record),outcome:result.outcome,sequence:result.record.sequence??null,editionSha256:result.state.sha256,error:result.record.error??null});pending=null;state=result.state;
   if(result.outcome==='COMMITTED'){setSession(S.receive(JSON.stringify(state.carrier)));needsRefresh=false;}
   else needsRefresh=true;
   await persist();render();status();notice(result.outcome==='COMMITTED'?'Complete managed session saved; original request retained.':'Save rejected before commit: '+result.record.error.message,true);
@@ -33,10 +49,10 @@ function createManagedSession({C,S,config,getSession,setSession,render,notice,do
   for(;;){const r=await api('/api/file?id='+file.fileId+'&offset='+offset+'&limit=196608');if(r.sha256!==file.sha256||r.bytes!==file.bytes||r.offset!==offset)throw Error('Retained export identity changed');const b=C.fromBase64(r.contentBase64);parts.push(b);offset+=b.length;if(r.nextOffset===null)break;if(r.nextOffset!==offset||!b.length)throw Error('Retained export continuation changed');}
   const bytes=new Uint8Array(offset);let at=0;for(const p of parts){bytes.set(p,at);at+=p.length;}if(offset!==file.bytes||C.sha256Bytes(bytes)!==file.sha256)throw Error('Complete retained export differs');download('Import_Host_Managed_Handover.zip',bytes,'application/zip');notice('Complete retained handover downloaded.');
  }
- function run(fn){if(working)return;working=true;status('Working with the original saved edition…');Promise.resolve().then(fn).catch(e=>notice(e.message,true)).finally(()=>{working=false;status();});}
+ function run(fn){if(working)return;if(isOperatorBusy()){notice('Wait for the current operator action before saving or receiving.',true);return;}if(!ready){notice('Open the current private connection before managed actions.',true);return;}working=true;status('Working with the original saved edition…');Promise.resolve().then(fn).catch(e=>notice(e.message,true)).finally(()=>{working=false;status();});}
  document.getElementById('managed-save').onclick=()=>run(save);document.getElementById('managed-refresh').onclick=()=>run(refresh);document.getElementById('managed-recover').onclick=()=>run(recover);document.getElementById('managed-export').onclick=()=>run(retainedExport);
  document.getElementById('managed-copy').onclick=()=>download('Import_Host_Recovery.json',JSON.stringify(shell(),null,2)+'\n');
- document.getElementById('managed-receive').onchange=e=>run(async()=>{const file=e.target.files[0];if(!file)return;if(file.size>256*1024*1024)throw Error('Recovery file exceeds the complete limit');const received=JSON.parse(C.utf8Decode(new Uint8Array(await file.arrayBuffer())));if(received.schema!=='stellar-forge.import-host-recovery.v1'||received.installationId!==key||!received.baseState||!Array.isArray(received.history))throw Error('Select this installation’s complete recovery JSON');const incoming=S.receive(JSON.stringify(received.carrier));if(pending&&JSON.stringify(pending)!==JSON.stringify(received.pending))throw Error('Recover the current original request before opening a different one');if(received.pending&&(received.pending.installationId!==key||received.pending.baseSha256!==received.baseState.sha256))throw Error('Recovery request binding differs');history.push({localRecoveryBeforeReceive:shell()});state=received.baseState;pending=received.pending;history.push(...received.history);needsRefresh=!!received.needsRefresh;setSession(incoming);await persist();render();status();notice('Complete recovery opened; recover its exact original request or select the newest managed edition.');});
+ document.getElementById('managed-receive').onchange=e=>run(async()=>{const file=e.target.files[0];if(!file)return;if(file.size>256*1024*1024)throw Error('Recovery file exceeds the complete limit');const originalBytes=new Uint8Array(await file.arrayBuffer()),originalText=C.utf8Decode(originalBytes);if(C.toBase64(C.utf8Encode(originalText))!==C.toBase64(originalBytes))throw Error('Select exact UTF-8 recovery JSON');const received=JSON.parse(originalText);const incoming=validateRecovery(received);if(pending&&JSON.stringify(pending)!==JSON.stringify(received.pending))throw Error('Recover the current original request before opening a different one');if(received.pending&&(received.pending.installationId!==key||received.pending.baseSha256!==received.baseState.sha256))throw Error('Recovery request binding differs');history.push({localRecoveryBeforeReceive:shell()});state=received.baseState;pending=received.pending;history.push(...received.history);needsRefresh=!!received.needsRefresh;setSession(incoming);await persist();render();status();notice('Complete recovery opened; recover its exact original request or select the newest managed edition.');});
  for(const event of ['click','input','change'])document.addEventListener(event,e=>{if((!ready||pending||working)&&!pane.contains(e.target)){e.preventDefault();e.stopImmediatePropagation();notice('Wait for connection or recover the original managed request before editing.',true);}},true);
  window.addEventListener('beforeunload',e=>{if(pending||dirtyPersistence||ready&&state.carrier.sha256!==S.pack(getSession()).sha256){e.preventDefault();e.returnValue='';}});
  async function initialize(){
@@ -45,7 +61,7 @@ function createManagedSession({C,S,config,getSession,setSession,render,notice,do
   const prior=await new Promise((resolve,reject)=>{const r=db.transaction('sessions','readonly').objectStore('sessions').get(key);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
   const current=await api('/api/state');if(current.installationId!==key)throw Error('The managed installation identity changed');
   lastStored=prior?hash(prior):null;
-  if(prior){if(prior.schema!=='stellar-forge.import-host-recovery.v1'||prior.installationId!==key)throw Error('Saved complete browser branch has a different identity');state=prior.baseState;pending=prior.pending;history=prior.history;needsRefresh=!!prior.needsRefresh;setSession(S.receive(JSON.stringify(prior.carrier)));if(!pending&&state.sha256!==current.sha256)needsRefresh=true;}
+  if(prior){validateRecovery(prior);state=prior.baseState;pending=prior.pending;history=prior.history;needsRefresh=!!prior.needsRefresh;setSession(S.receive(JSON.stringify(prior.carrier)));if(!pending&&state.sha256!==current.sha256)needsRefresh=true;}
   else{state=current;setSession(S.receive(JSON.stringify(current.carrier)));}
   ready=true;render();status();if(pending)notice('An exact original request is pending. Recover it with the current listener.');
  }

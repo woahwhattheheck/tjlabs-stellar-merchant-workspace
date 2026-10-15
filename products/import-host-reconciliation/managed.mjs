@@ -15,7 +15,7 @@ export function managedOptions(argv){
  return {newLabel:v['--new-label'],directory:absolute(v['--workspace']),installationId:v['--installation-id'],port:Number(v['--port']??0)};
 }
 export async function main(argv=process.argv.slice(2)){
- if(!argv.length||argv.includes('--help')){process.stdout.write('Import-to-host managed application\nimport-host-managed --workspace /physical/private/reconciliation [--port 0]\nCreate or receive the original workspace with import-host-workspace first.\n');return;}
+ if(!argv.length||argv.includes('--help')){process.stdout.write('Import-to-host managed application\nimport-host-managed --workspace /physical/private/reconciliation [--new-label "Project label"] [--port 0]\nUse --new-label to create an unused workspace; existing saved sessions resume. Receive a portable working file with import-host-workspace receive.\n');return;}
  const options=managedOptions(argv);
  if(options.newLabel){let existing;try{existing=(await readJSON(join(options.directory,'state.json'))).value;}catch(e){if(e.code!=='ENOENT')throw e;}if(!existing)await initializeStore(options.directory,sessions.pack(sessions.create(options.newLabel)),options.installationId);}
  const service=await startServer(options);let stop;

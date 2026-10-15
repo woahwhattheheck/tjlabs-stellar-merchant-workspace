@@ -1,0 +1,100 @@
+{
+  "schema": "stellar-forge.import-host-installed-authoring.v1",
+  "sourceHead": "851c5c0cc912e2c1447de18665aa9a6f1acbde52",
+  "runtime": "Functions V8; explicit original DOM/storage/download adapters",
+  "managedModel": {
+    "runtime": "actual Functions V8",
+    "checks": [
+      "complete authored domain workspace accepted",
+      "unfinished drafts persisted independently of domain acceptance",
+      "exact original retry returns latest session after later save",
+      "stale base produces retained definitely-not-committed rejection without changing session",
+      "changed reuse of original request ID rejected"
+    ],
+    "sequence": 2,
+    "receipts": 2,
+    "rejections": 1
+  },
+  "session": [
+    "Draft-only session preserves incomplete mapping and action text",
+    "Exact preview, explicit parent plan and source originals retain authority",
+    "Complete reports, exact value CSV and original handover survive working/domain cold reopen",
+    "Restoring zero-operation draft retains newer completed session",
+    "Changed received carrier rejects before adoption"
+  ],
+  "controller": {
+    "checks": [
+      "Exact source mapping and explicit actions frozen through actual UI handlers",
+      "Exact retained host originals yield matched/divergent/rejected/uncertain/skipped observations",
+      "Explicit paired comparison and named decision retained through actual UI handlers",
+      "All nine views and seven full export paths execute"
+    ],
+    "counts": {
+      "sources": 10,
+      "imports": 3,
+      "mappings": 3,
+      "batches": 3,
+      "reconciliations": 3,
+      "comparisons": 2,
+      "reviews": 3
+    },
+    "exports": [
+      {
+        "name": "Import_Host_Working.json",
+        "type": "application/json",
+        "bytes": 746421,
+        "sha256": "86a44d7f98ddc26bbf668efed3921643954663e96a735a2057244df3c0184ff9"
+      },
+      {
+        "name": "Import_Host_Editable.html",
+        "type": "text/html;charset=utf-8",
+        "bytes": 820179,
+        "sha256": "1cc46a3369bb7b2126c30fb0f4b0ad668f9d470f92c5dcee036414bbee22f083"
+      },
+      {
+        "name": "Import_Host_Application_Source.json",
+        "type": "application/json",
+        "bytes": 1284695,
+        "sha256": "403256e2b921436fc32e37140c9f2b1daaca8e8bdaf3a3cfdd5ddc352c7d5d11"
+      },
+      {
+        "name": "Import_Host_Workspace.json",
+        "type": "application/json",
+        "bytes": 259041,
+        "sha256": "3015bf8891106df9f60d1ebca1311b3bfe21cd7af438d54ee9d3f95ccabc4da3"
+      },
+      {
+        "name": "Import_Host_Report.json",
+        "type": "application/json",
+        "bytes": 120835,
+        "sha256": "b71412d23effc75eed7646a3912a7c035ead9760e3dbc0c69b71ee196b774924"
+      },
+      {
+        "name": "Import_Host_Report.csv",
+        "type": "text/csv;charset=utf-8",
+        "bytes": 6704,
+        "sha256": "3229c77f4f8e6cd4256ff792371aab6c9c1aac73c4bd201ed398b1b21e6b4851"
+      },
+      {
+        "name": "Import_Host_Complete_Handover.zip",
+        "type": "application/zip",
+        "bytes": 2892633,
+        "sha256": "0c1d1ca8ebf09a1ae5e6a1b107f9eaf17414e3c40e03078213ffe1d146cee018"
+      }
+    ]
+  },
+  "managedExport": {
+    "bytes": 2440893,
+    "sha256": "9b5be2f3be2a623879542b9d733ca54411c01a76e852d086299425413de243a0",
+    "members": 92,
+    "first": [
+      "name",
+      "mode",
+      "data",
+      "crc32",
+      "bytes"
+    ]
+  },
+  "nativeReceiving": "native/receive-installed.mjs",
+  "actualBrowserReceiving": "INSTALLED_RECEIVING.md"
+}
