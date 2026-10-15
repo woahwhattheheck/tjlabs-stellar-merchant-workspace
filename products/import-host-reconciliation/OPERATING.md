@@ -11,11 +11,13 @@ Use **Applications → Import-to-host reconciliation**. Choose a physical privat
 5. Retain actual host-result and selected-record readback files. **Reconcile results** separates matched, divergent, rejected, uncertain, unobserved and skipped rows. **Compare editions** preserves explicit row correspondence, changed expectations and unmatched populations.
 6. Append named decisions in **Review and report**. The complete working session also retains unfinished forms and raw JSON drafts. These drafts are editable preparation; frozen domain records carry separate operation history.
 7. Select **Save complete session**. The managed writer retains the exact original request and full successor before selecting the new current edition. Browser drafts are also saved to a transaction-bound IndexedDB copy.
-8. Select **Save retained handover ZIP** after saving. The host retains the complete source, editable offline operator, current working JSON, selected report, original evidence and every saved managed edition/request. The browser receives every chunk and verifies the complete SHA before download.
+8. Select **Save retained handover ZIP** after saving. The host retains the complete source, editable offline operator, current working JSON, selected report, original evidence and every saved managed edition/request. Its retained-history index distinguishes selected committed/rejected outcomes from prepared files left by an interrupted write. The browser receives every chunk and verifies the complete SHA before download.
 
 ## Interruption and concurrent work
 
 **Recover original request** reconciles the original request ID, installation identity, base edition SHA and complete content. A committed retry returns its original outcome and the newest saved session. A known validation rejection retains its original request without changing the session. A transport or storage failure remains pending until reconciliation.
+
+If another browser opening saved its local copy, use **Keep this browser branch; retain saved copy**. This explicit selection atomically reads and retains both complete preimages before acknowledging the current browser record. Download any retained branch as complete recovery JSON below the managed controls. A pending request from the other branch remains inside that full copy; reconcile the current pending request before opening the other one.
 
 If another operator saved a newer edition, select **Open newest saved edition**. The complete local branch is retained as a prior session in **Open and restore**, including its unfinished drafts. Restore that branch only when it is the edition you intend to continue, then save deliberately. Downloads never silently claim an old cached browser edition is the current saved result.
 

@@ -62,6 +62,11 @@
       "sha256": "15296cc5578ef83280f0dbef9e8149b1d829b155ff301fe86130a2e414e9df15"
     },
     {
+      "path": "commissioning/prepared-result-course.json",
+      "bytes": 386,
+      "sha256": "9ba0c6f48be5166a606536ea9730a1b78ba338f8988676b483c097d6342d8562"
+    },
+    {
       "path": "commissioning/RECEIVING.md",
       "bytes": 5980,
       "sha256": "f03596a684531f441f8b6345611e9497fa759abb661c6572f5948954a093504d"
@@ -198,8 +203,8 @@
     },
     {
       "path": "host/export.mjs",
-      "bytes": 2794,
-      "sha256": "2e68636a0751669a3d0e12c85981fefd22a79c6e7c0b3a69227571940765e42e"
+      "bytes": 3322,
+      "sha256": "fb284425e84216d322ed4b9a567eaa2aee54026d759fb79dbef3516b8a7cc4c6"
     },
     {
       "path": "host/io.mjs",
@@ -208,8 +213,8 @@
     },
     {
       "path": "host/model.cjs",
-      "bytes": 4832,
-      "sha256": "6f2f858c57490bf7f0a8adb65c2c298453755c33c5bb1cbde4692fda64edf8f5"
+      "bytes": 5073,
+      "sha256": "abd6cc06c919c2368ed59d0d216dc4c6582f4b6919fef4847ea36cd5590c77b5"
     },
     {
       "path": "host/server.mjs",
@@ -218,13 +223,13 @@
     },
     {
       "path": "host/store.mjs",
-      "bytes": 5691,
-      "sha256": "378c99ed1b9930b84d17b6b2a1bc76c906ba85c14414d84f32f0fcf8c5743fd0"
+      "bytes": 5617,
+      "sha256": "064ebd9856a3f0b918696827dc4afe6ea7df07455ecef25d683f29385d97c4e7"
     },
     {
       "path": "INSTALLED_RECEIVING.md",
-      "bytes": 7864,
-      "sha256": "ef5c9103e975afbb29ba779ea579cf778de5a8f49a17b9b30e5e639c30214e43"
+      "bytes": 8053,
+      "sha256": "df3ebaf04e362712d6b3b4628b1068b5489a86b6f6b0ad7451e880be226ccc7d"
     },
     {
       "path": "integration/CORE_API.md",
@@ -288,8 +293,8 @@
     },
     {
       "path": "OPERATING.md",
-      "bytes": 6188,
-      "sha256": "4368beee6962418d9c80d0937f96469f1aa73cd455be51189a0089cd71065bc0"
+      "bytes": 6767,
+      "sha256": "b61a49190c03313df2d1f2aaef10e5962973b04f59b7766462b93e24051bc7e3"
     },
     {
       "path": "operator/body.html",
@@ -318,8 +323,8 @@
     },
     {
       "path": "operator/managed.js",
-      "bytes": 12088,
-      "sha256": "d73b07bc84bb3e15c25acb1688c0bb42dd374001573517d86561dbede5eec941"
+      "bytes": 14766,
+      "sha256": "afac5a6e4bfe5ebd222e948965acfdd112da3c2114e0aa496538bdcd93fd78ab"
     },
     {
       "path": "operator/receive-course.js",

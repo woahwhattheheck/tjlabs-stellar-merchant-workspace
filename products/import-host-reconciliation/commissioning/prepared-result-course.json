@@ -1,0 +1,10 @@
+{
+  "runtime": "Functions V8 actual production model",
+  "checks": [
+    "Prepared successor is not a selected commit",
+    "Atomic current index establishes committed outcome",
+    "Prepared rejection is not selected before index",
+    "Retained rejection establishes definitely not committed outcome",
+    "Original committed replay returns newer rejection-aware current state"
+  ]
+}

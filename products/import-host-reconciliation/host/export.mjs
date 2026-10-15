@@ -23,6 +23,7 @@ export function buildExport(files,state,records=[],editions=[]){
  add('working/Import_Host_Editable.html',builder.buildImportHostDesk(files,codec,state.carrier).html);
  add('reports/Selected_Report.json',h.report);add('reports/Selected_Report.csv',core.csv(h.report));
  for(const original of h.originalFiles)add(original.path.startsWith('originals/')?original.path:'originals/'+original.path,original.content);
+ add('managed/RETAINED_HISTORY_INDEX.json',{schema:'stellar-forge.import-host-retained-history.v1',currentStateSha256:state.sha256,requests:records.map(row=>({sha256:row.id,requestId:row.value.request?.id,selection:state.receipts.some(x=>x.recordSha256===row.id)?'COMMITTED':state.rejections.some(x=>x.recordSha256===row.id)?'REJECTED_NOT_COMMITTED':'UNSELECTED_PREPARED_RECORD'})),editions:editions.map(row=>({sha256:row.id,sequence:row.value.sequence,selection:row.id===state.sha256?'CURRENT_EDITION':'RETAINED_EDITION'}))});
  for(const row of records)add('managed/requests/'+row.id+'.json',row.value);
  for(const row of editions)add('managed/editions/'+row.id+'.json',row.value);
  const manifest={schema:'stellar-forge.import-host-export.v1',installationId:state.installationId,editionSha256:state.sha256,sessionSha256:state.carrier.sha256,sequence:state.sequence,files:entries.map(e=>({path:e.name,bytes:e.data.length,sha256:codec.sha256Bytes(e.data)}))};

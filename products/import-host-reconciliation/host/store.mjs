@@ -39,8 +39,8 @@ export async function openStore(directory){
    if(p.entry)return model.record(state,r,await readRecord(p.entry));
    let planned;
    // Only pure validation has definitely made no managed commit. I/O failures stay ambiguous.
-   try{planned=model.plan(state,r);}catch(e){planned=model.reject(state,r,e);await commit(planned);return {outcome:planned.record.outcome,record:planned.record,state:model.view(current),reused:false};}
-   await commit(planned);return {outcome:planned.record.outcome,record:planned.record,state:model.view(current),reused:false};
+   try{planned=model.plan(state,r);}catch(e){planned=model.reject(state,r,e);await commit(planned);return {...model.record(current,r,planned.record),reused:false};}
+   await commit(planned);return {...model.record(current,r,planned.record),reused:false};
   }),
   retainedRecord:id=>queue(async()=>{const state=await reload(),row=[...state.receipts,...state.rejections].find(r=>r.id===id);need(row,'IMPORT_HOST_REQUEST','Choose an original request.',404);return readRecord(row);}),
   export: (expectedSha256,build)=>queue(async()=>{const state=await reload();need(model.hash(state)===expectedSha256,'IMPORT_HOST_BASE_CHANGED','Select the exact saved edition to export.',409);const records=[],editions=[];for(const sub of ['requests','editions'])for(const name of (await readdir(join(directory,sub))).sort()){need(/^[a-f0-9]{64}\.json$/.test(name),'IMPORT_HOST_HISTORY','Unexpected retained history file.');await sameDirectory();const value=(await readJSON(join(directory,sub,name))).value;need(model.hash(value)===name.slice(0,-5),'IMPORT_HOST_HISTORY','Retained complete history changed.',409);(sub==='requests'?records:editions).push({id:name.slice(0,-5),value});}const bytes=await build(model.view(state),records,editions);await sameDirectory();const id=codec.sha256Bytes(bytes);await writeBytes(join(directory,'exports',id+'.zip'),bytes);return {fileId:id,sha256:id,bytes:bytes.length,installationId:state.installationId,editionSha256:expectedSha256,sequence:state.sequence};}),

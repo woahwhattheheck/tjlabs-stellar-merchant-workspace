@@ -34,16 +34,16 @@ function createManagedModel({sessions:S,core,codec:C}){
    const result=core.apply(session.workspace,op);session.workspace=result.workspace;session.updatedAt=r.at;
   }
   const next=copy(state);next.sequence++;next.carrier=S.pack(session);
-  const record={schema:"stellar-forge.import-host-receipt.v1",request:copy(r),requestSha256:found.requestSha256,sequence:next.sequence,beforeSha256:hash(state),afterCarrierSha256:next.carrier.sha256,outcome:"COMMITTED"};
+  const record={schema:"stellar-forge.import-host-prepared-result.v1",request:copy(r),requestSha256:found.requestSha256,sequence:next.sequence,beforeSha256:hash(state),afterCarrierSha256:next.carrier.sha256,outcome:"PREPARED_SUCCESSOR"};
   const recordSha256=hash(record);next.receipts.push({id:r.id,requestSha256:found.requestSha256,recordSha256});
   return {record,recordSha256,next};
  }
  function reject(state,r,error){
   const found=prior(state,r);need(!found.entry,"IMPORT_HOST_EXISTING","Reconcile the original outcome first.");
-  const record={schema:"stellar-forge.import-host-rejection.v1",request:copy(r),requestSha256:found.requestSha256,outcome:"REJECTED_NOT_COMMITTED",error:{code:error.code||"IMPORT_HOST_INVALID_SUCCESSOR",message:error.message}};
+  const record={schema:"stellar-forge.import-host-prepared-rejection.v1",request:copy(r),requestSha256:found.requestSha256,outcome:"PREPARED_REJECTION",error:{code:error.code||"IMPORT_HOST_INVALID_SUCCESSOR",message:error.message}};
   const recordSha256=hash(record),next=copy(state);next.rejections.push({id:r.id,requestSha256:found.requestSha256,recordSha256});return {record,recordSha256,next};
  }
- function record(state,r,retained){const p=prior(state,r);need(p.entry&&hash(retained)===p.entry.recordSha256&&retained.requestSha256===p.requestSha256&&JSON.stringify(retained.request)===JSON.stringify(r),"IMPORT_HOST_RECEIPT","The retained original outcome differs.");return {outcome:retained.outcome,record:copy(retained),state:view(state),reused:true};}
+ function record(state,r,retained){const p=prior(state,r);need(p.entry&&hash(retained)===p.entry.recordSha256&&retained.requestSha256===p.requestSha256&&JSON.stringify(retained.request)===JSON.stringify(r),"IMPORT_HOST_RECEIPT","The retained original outcome differs.");const committed=state.receipts.some(x=>x.id===r.id);need(retained.outcome===(committed?"PREPARED_SUCCESSOR":"PREPARED_REJECTION"),"IMPORT_HOST_RECEIPT","The selected result kind differs.");return {outcome:committed?"COMMITTED":"REJECTED_NOT_COMMITTED",record:copy(retained),state:view(state),reused:true};}
  return {initial,validate,view,request,prior,plan,reject,record,hash,copy,need};
 }
 module.exports={createManagedModel};
