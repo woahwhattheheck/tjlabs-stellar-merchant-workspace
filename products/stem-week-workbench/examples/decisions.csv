@@ -1,0 +1,3 @@
+"id","sequence","revision","edition_id","week","basis","target_type","target_id","action","quantity","reviewer","reason","evidence","source_hash"
+"rose-action","1","1","original","2026-10-19","actual","variety","ROSE","buy-in","6","Authored grower","Ask the local grower for the six-stem shortage.","Authored action note1","332093d71013fa4381f1e36e3006a66146aef2c947f031327fc917b2a513a9d7"
+"rose-action","2","2","original","2026-10-19","actual","variety","ROSE","hold","","Authored grower","Corrected note: count a later own-grown cut before committing a purchase.","Authored correction note2","332093d71013fa4381f1e36e3006a66146aef2c947f031327fc917b2a513a9d7"

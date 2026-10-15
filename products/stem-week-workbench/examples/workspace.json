@@ -1,0 +1,108 @@
+{
+  "schema": "stemwise.week-workspace.v1",
+  "id": "authored-flower-week",
+  "label": "Authored weekly flower reconciliation",
+  "editions": [
+    {
+      "id": "original",
+      "label": "Original counted week",
+      "notes": "Authored operating example; not a researched farm's records. Recipe choices and date are declared. No-date bouquet memberships remain outside confirmed demand.",
+      "sources": {
+        "varieties": {
+          "name": "varieties.csv",
+          "text": "﻿variety_id,crop,variety,role\r\nROSE,rose,White O'Hara,focal\r\nZIN,zinnia,Benary White,secondary\r\nBAS,basil,Cinnamon,greenery\r\nDAH,dahlia,Cafe au Lait,premium\r\n",
+          "bytes": 160,
+          "sha256": "a0b73f7e5680721b14c8a65c66de75bddf6cf28e4b2b7f7fb4170c97a33146be"
+        },
+        "supply": {
+          "name": "weekly-supply.csv",
+          "text": "supply_id,variety_id,week_start,basis,stems,source_ref,origin\nRP,ROSE,2026-10-19,projected,40,Authored bed forecast A,own-grown\nRA,ROSE,2026-10-19,actual,30,Authored cut sheet A,own-grown\nRBP,ROSE,2026-10-19,projected,4,Authored local grower forecast,local-buy-in\nRBA,ROSE,2026-10-19,actual,4,Authored received local bunch,local-buy-in\nZP,ZIN,2026-10-19,projected,25,Authored bed forecast B,own-grown\nZA,ZIN,2026-10-19,actual,0,Authored measured zero B,own-grown\nBP,BAS,2026-10-19,projected,12,Authored bed forecast C,own-grown\nDP,DAH,2026-10-19,projected,5,Authored bed forecast D,own-grown\nDA,DAH,2026-10-19,actual,5,Authored cut sheet D,own-grown\n",
+          "bytes": 650,
+          "sha256": "11b838ef9ab14a8cf64b93e3f2a509294a4c438ca955294c7d7d0913d03c3f05"
+        },
+        "recipes": {
+          "name": "chosen-recipes.csv",
+          "text": "recipe_id,variety_id,stems_per_piece\nWEDDING,ROSE,8\nWEDDING,ZIN,3\nCSA,ROSE,4\nCSA,ZIN,2\nCSA,BAS,1\nMARKET,ROSE,10\nPREMIUM,DAH,4\n",
+          "bytes": 126,
+          "sha256": "47ca1fb1890dcf73d80525727949dbea012946ee1fe7128a92016fa5f665f21e"
+        },
+        "commitments": {
+          "name": "weekly-commitments.csv",
+          "text": "commitment_id,week_start,channel,recipe_id,quantity,buffer_bps,status,priority,source_ref\nW01,2026-10-19,wedding,WEDDING,2,1250,confirmed,0,Authored agreed wedding recipe\nC01,2026-10-19,csa,CSA,3,0,confirmed,1,Authored scheduled three-share pickup\nM01,2026-10-19,market,MARKET,1,0,confirmed,2,Authored firm market preparation\nT01,2026-10-19,wholesale,PREMIUM,2,0,tentative,3,Authored optional quote scenario\nX01,2026-10-19,wedding,WEDDING,1,0,cancelled,4,Authored cancellation retained\n",
+          "bytes": 486,
+          "sha256": "1916678b8c6c4627df22a79c66f315a259b402e3727b1824a2cdd1505c0a0590"
+        }
+      },
+      "sourceHash": "332093d71013fa4381f1e36e3006a66146aef2c947f031327fc917b2a513a9d7"
+    },
+    {
+      "id": "corrected",
+      "label": "Corrected actual cuts",
+      "notes": "New source edition retains original counts and both earlier decisions. Ten more roses and fifteen zinnias now counted; three basil stems explicitly counted.",
+      "sources": {
+        "varieties": {
+          "name": "varieties.csv",
+          "text": "﻿variety_id,crop,variety,role\r\nROSE,rose,White O'Hara,focal\r\nZIN,zinnia,Benary White,secondary\r\nBAS,basil,Cinnamon,greenery\r\nDAH,dahlia,Cafe au Lait,premium\r\n",
+          "bytes": 160,
+          "sha256": "a0b73f7e5680721b14c8a65c66de75bddf6cf28e4b2b7f7fb4170c97a33146be"
+        },
+        "supply": {
+          "name": "weekly-supply.csv",
+          "text": "supply_id,variety_id,week_start,basis,stems,source_ref,origin\nRP,ROSE,2026-10-19,projected,40,Authored bed forecast A,own-grown\nRA,ROSE,2026-10-19,actual,40,Authored corrected cut sheet A,own-grown\nRBP,ROSE,2026-10-19,projected,4,Authored local grower forecast,local-buy-in\nRBA,ROSE,2026-10-19,actual,4,Authored received local bunch,local-buy-in\nZP,ZIN,2026-10-19,projected,25,Authored bed forecast B,own-grown\nZA,ZIN,2026-10-19,actual,15,Authored later counted cut B,own-grown\nBP,BAS,2026-10-19,projected,12,Authored bed forecast C,own-grown\nDP,DAH,2026-10-19,projected,5,Authored bed forecast D,own-grown\nDA,DAH,2026-10-19,actual,5,Authored cut sheet D,own-grown\nBA,BAS,2026-10-19,actual,3,Authored completed count C,own-grown\n",
+          "bytes": 729,
+          "sha256": "5d9dea6862f37bf24c31e23c99b2624452432358ef3f361e9ce459770a75ef9c"
+        },
+        "recipes": {
+          "name": "chosen-recipes.csv",
+          "text": "recipe_id,variety_id,stems_per_piece\nWEDDING,ROSE,8\nWEDDING,ZIN,3\nCSA,ROSE,4\nCSA,ZIN,2\nCSA,BAS,1\nMARKET,ROSE,10\nPREMIUM,DAH,4\n",
+          "bytes": 126,
+          "sha256": "47ca1fb1890dcf73d80525727949dbea012946ee1fe7128a92016fa5f665f21e"
+        },
+        "commitments": {
+          "name": "weekly-commitments.csv",
+          "text": "commitment_id,week_start,channel,recipe_id,quantity,buffer_bps,status,priority,source_ref\nW01,2026-10-19,wedding,WEDDING,2,1250,confirmed,0,Authored agreed wedding recipe\nC01,2026-10-19,csa,CSA,3,0,confirmed,1,Authored scheduled three-share pickup\nM01,2026-10-19,market,MARKET,1,0,confirmed,2,Authored firm market preparation\nT01,2026-10-19,wholesale,PREMIUM,2,0,tentative,3,Authored optional quote scenario\nX01,2026-10-19,wedding,WEDDING,1,0,cancelled,4,Authored cancellation retained\n",
+          "bytes": 486,
+          "sha256": "1916678b8c6c4627df22a79c66f315a259b402e3727b1824a2cdd1505c0a0590"
+        }
+      },
+      "sourceHash": "b2426bf01f0b563a37ed257279a65c8af1fdf93f79e13e37a0e687e05ba35263"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "rose-action",
+      "sequence": 1,
+      "revision": 1,
+      "editionId": "original",
+      "week": "2026-10-19",
+      "basis": "actual",
+      "sourceHash": "332093d71013fa4381f1e36e3006a66146aef2c947f031327fc917b2a513a9d7",
+      "fingerprint": "b44ef9a01aa45af57e777a7d141e5b0692ae459fb18706a7971ebbacfdf5ae42",
+      "targetType": "variety",
+      "targetId": "ROSE",
+      "action": "buy-in",
+      "reviewer": "Authored grower",
+      "reason": "Ask the local grower for the six-stem shortage.",
+      "quantity": "6",
+      "evidence": "Authored action note1"
+    },
+    {
+      "id": "rose-action",
+      "sequence": 2,
+      "revision": 2,
+      "editionId": "original",
+      "week": "2026-10-19",
+      "basis": "actual",
+      "sourceHash": "332093d71013fa4381f1e36e3006a66146aef2c947f031327fc917b2a513a9d7",
+      "fingerprint": "b44ef9a01aa45af57e777a7d141e5b0692ae459fb18706a7971ebbacfdf5ae42",
+      "targetType": "variety",
+      "targetId": "ROSE",
+      "action": "hold",
+      "reviewer": "Authored grower",
+      "reason": "Corrected note: count a later own-grown cut before committing a purchase.",
+      "quantity": null,
+      "evidence": "Authored correction note2"
+    }
+  ],
+  "head": "b6caba7cf63aa50729326f9758ace5999dbed3333f06c54d2e07eda0f7b3b1fa"
+}

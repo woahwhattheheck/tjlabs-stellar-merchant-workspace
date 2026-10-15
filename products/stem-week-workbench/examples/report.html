@@ -1,0 +1,859 @@
+<!doctype html><html><head><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>Authored weekly flower reconciliation</title><style>body{font:15px system-ui;max-width:1300px;margin:24px auto;padding:0 20px;color:#171717}table{border-collapse:collapse;width:100%;margin:16px 0}td,th{border:1px solid #bbb;padding:7px;text-align:left}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f3f3;padding:12px}.scroll{overflow:auto}h1{font-size:26px}</style></head><body><h1>Authored weekly flower reconciliation</h1><p>Original counted week · 2026-10-19 · actual stems</p><p>Confirmed demand uses explicit exact-variety recipes. Missing counts remain missing; tentative scenarios and recorded decisions are shown separately. Origin totals distinguish own-grown and bought-in stems.</p><div class=scroll><table><thead><tr><th>Variety ID</th><th>Crop / variety</th><th>Known supply</th><th>Complete</th><th>Firm</th><th>Tentative</th><th>Delta</th><th>Short</th><th>Surplus</th><th>Projected</th><th>Actual</th></tr></thead><tbody><tr><td>BAS</td><td>basil / Cinnamon</td><td>Missing</td><td>false</td><td>3</td><td>0</td><td>Missing</td><td>Missing</td><td>Missing</td><td>12</td><td>Missing</td></tr><tr><td>DAH</td><td>dahlia / Cafe au Lait</td><td>5</td><td>true</td><td>0</td><td>8</td><td>5</td><td>0</td><td>5</td><td>5</td><td>5</td></tr><tr><td>ROSE</td><td>rose / White O&#39;Hara</td><td>34</td><td>true</td><td>40</td><td>0</td><td>-6</td><td>6</td><td>0</td><td>44</td><td>34</td></tr><tr><td>ZIN</td><td>zinnia / Benary White</td><td>0</td><td>true</td><td>13</td><td>0</td><td>-13</td><td>13</td><td>0</td><td>25</td><td>0</td></tr></tbody></table></div><h2>Attention and complete plan</h2><pre>{
+  &quot;schema&quot;: &quot;stemwise.week-plan.v1&quot;,
+  &quot;workspaceId&quot;: &quot;authored-flower-week&quot;,
+  &quot;editionId&quot;: &quot;original&quot;,
+  &quot;editionLabel&quot;: &quot;Original counted week&quot;,
+  &quot;sourceHash&quot;: &quot;332093d71013fa4381f1e36e3006a66146aef2c947f031327fc917b2a513a9d7&quot;,
+  &quot;week&quot;: &quot;2026-10-19&quot;,
+  &quot;basis&quot;: &quot;actual&quot;,
+  &quot;fingerprint&quot;: &quot;b44ef9a01aa45af57e777a7d141e5b0692ae459fb18706a7971ebbacfdf5ae42&quot;,
+  &quot;weeks&quot;: [
+    &quot;2026-10-19&quot;
+  ],
+  &quot;rows&quot;: [
+    {
+      &quot;varietyId&quot;: &quot;BAS&quot;,
+      &quot;crop&quot;: &quot;basil&quot;,
+      &quot;variety&quot;: &quot;Cinnamon&quot;,
+      &quot;role&quot;: &quot;greenery&quot;,
+      &quot;projected&quot;: 12,
+      &quot;actual&quot;: null,
+      &quot;originTotals&quot;: [
+        {
+          &quot;origin&quot;: &quot;own-grown&quot;,
+          &quot;projected&quot;: 12,
+          &quot;actual&quot;: null,
+          &quot;sourceRefs&quot;: [
+            &quot;Authored bed forecast C&quot;
+          ]
+        }
+      ],
+      &quot;selectedSupply&quot;: null,
+      &quot;selectedComplete&quot;: false,
+      &quot;missingOrigins&quot;: [
+        &quot;own-grown&quot;
+      ],
+      &quot;firmDemand&quot;: 3,
+      &quot;tentativeDemand&quot;: 0,
+      &quot;delta&quot;: null,
+      &quot;shortage&quot;: null,
+      &quot;surplus&quot;: null,
+      &quot;actualMinusProjected&quot;: null,
+      &quot;supplyRows&quot;: [
+        {
+          &quot;supply_id&quot;: &quot;BP&quot;,
+          &quot;variety_id&quot;: &quot;BAS&quot;,
+          &quot;week_start&quot;: &quot;2026-10-19&quot;,
+          &quot;basis&quot;: &quot;projected&quot;,
+          &quot;stems&quot;: &quot;12&quot;,
+          &quot;source_ref&quot;: &quot;Authored bed forecast C&quot;,
+          &quot;origin&quot;: &quot;own-grown&quot;
+        }
+      ]
+    },
+    {
+      &quot;varietyId&quot;: &quot;DAH&quot;,
+      &quot;crop&quot;: &quot;dahlia&quot;,
+      &quot;variety&quot;: &quot;Cafe au Lait&quot;,
+      &quot;role&quot;: &quot;premium&quot;,
+      &quot;projected&quot;: 5,
+      &quot;actual&quot;: 5,
+      &quot;originTotals&quot;: [
+        {
+          &quot;origin&quot;: &quot;own-grown&quot;,
+          &quot;projected&quot;: 5,
+          &quot;actual&quot;: 5,
+          &quot;sourceRefs&quot;: [
+            &quot;Authored bed forecast D&quot;,
+            &quot;Authored cut sheet D&quot;
+          ]
+        }
+      ],
+      &quot;selectedSupply&quot;: 5,
+      &quot;selectedComplete&quot;: true,
+      &quot;missingOrigins&quot;: [],
+      &quot;firmDemand&quot;: 0,
+      &quot;tentativeDemand&quot;: 8,
+      &quot;delta&quot;: 5,
+      &quot;shortage&quot;: 0,
+      &quot;surplus&quot;: 5,
+      &quot;actualMinusProjected&quot;: 0,
+      &quot;supplyRows&quot;: [
+        {
+          &quot;supply_id&quot;: &quot;DP&quot;,
+          &quot;variety_id&quot;: &quot;DAH&quot;,
+          &quot;week_start&quot;: &quot;2026-10-19&quot;,
+          &quot;basis&quot;: &quot;projected&quot;,
+          &quot;stems&quot;: &quot;5&quot;,
+          &quot;source_ref&quot;: &quot;Authored bed forecast D&quot;,
+          &quot;origin&quot;: &quot;own-grown&quot;
+        },
+        {
+          &quot;supply_id&quot;: &quot;DA&quot;,
+          &quot;variety_id&quot;: &quot;DAH&quot;,
+          &quot;week_start&quot;: &quot;2026-10-19&quot;,
+          &quot;basis&quot;: &quot;actual&quot;,
+          &quot;stems&quot;: &quot;5&quot;,
+          &quot;source_ref&quot;: &quot;Authored cut sheet D&quot;,
+          &quot;origin&quot;: &quot;own-grown&quot;
+        }
+      ]
+    },
+    {
+      &quot;varietyId&quot;: &quot;ROSE&quot;,
+      &quot;crop&quot;: &quot;rose&quot;,
+      &quot;variety&quot;: &quot;White O&#39;Hara&quot;,
+      &quot;role&quot;: &quot;focal&quot;,
+      &quot;projected&quot;: 44,
+      &quot;actual&quot;: 34,
+      &quot;originTotals&quot;: [
+        {
+          &quot;origin&quot;: &quot;local-buy-in&quot;,
+          &quot;projected&quot;: 4,
+          &quot;actual&quot;: 4,
+          &quot;sourceRefs&quot;: [
+            &quot;Authored local grower forecast&quot;,
+            &quot;Authored received local bunch&quot;
+          ]
+        },
+        {
+          &quot;origin&quot;: &quot;own-grown&quot;,
+          &quot;projected&quot;: 40,
+          &quot;actual&quot;: 30,
+          &quot;sourceRefs&quot;: [
+            &quot;Authored bed forecast A&quot;,
+            &quot;Authored cut sheet A&quot;
+          ]
+        }
+      ],
+      &quot;selectedSupply&quot;: 34,
+      &quot;selectedComplete&quot;: true,
+      &quot;missingOrigins&quot;: [],
+      &quot;firmDemand&quot;: 40,
+      &quot;tentativeDemand&quot;: 0,
+      &quot;delta&quot;: -6,
+      &quot;shortage&quot;: 6,
+      &quot;surplus&quot;: 0,
+      &quot;actualMinusProjected&quot;: -10,
+      &quot;supplyRows&quot;: [
+        {
+          &quot;supply_id&quot;: &quot;RP&quot;,
+          &quot;variety_id&quot;: &quot;ROSE&quot;,
+          &quot;week_start&quot;: &quot;2026-10-19&quot;,
+          &quot;basis&quot;: &quot;projected&quot;,
+          &quot;stems&quot;: &quot;40&quot;,
+          &quot;source_ref&quot;: &quot;Authored bed forecast A&quot;,
+          &quot;origin&quot;: &quot;own-grown&quot;
+        },
+        {
+          &quot;supply_id&quot;: &quot;RA&quot;,
+          &quot;variety_id&quot;: &quot;ROSE&quot;,
+          &quot;week_start&quot;: &quot;2026-10-19&quot;,
+          &quot;basis&quot;: &quot;actual&quot;,
+          &quot;stems&quot;: &quot;30&quot;,
+          &quot;source_ref&quot;: &quot;Authored cut sheet A&quot;,
+          &quot;origin&quot;: &quot;own-grown&quot;
+        },
+        {
+          &quot;supply_id&quot;: &quot;RBP&quot;,
+          &quot;variety_id&quot;: &quot;ROSE&quot;,
+          &quot;week_start&quot;: &quot;2026-10-19&quot;,
+          &quot;basis&quot;: &quot;projected&quot;,
+          &quot;stems&quot;: &quot;4&quot;,
+          &quot;source_ref&quot;: &quot;Authored local grower forecast&quot;,
+          &quot;origin&quot;: &quot;local-buy-in&quot;
+        },
+        {
+          &quot;supply_id&quot;: &quot;RBA&quot;,
+          &quot;variety_id&quot;: &quot;ROSE&quot;,
+          &quot;week_start&quot;: &quot;2026-10-19&quot;,
+          &quot;basis&quot;: &quot;actual&quot;,
+          &quot;stems&quot;: &quot;4&quot;,
+          &quot;source_ref&quot;: &quot;Authored received local bunch&quot;,
+          &quot;origin&quot;: &quot;local-buy-in&quot;
+        }
+      ]
+    },
+    {
+      &quot;varietyId&quot;: &quot;ZIN&quot;,
+      &quot;crop&quot;: &quot;zinnia&quot;,
+      &quot;variety&quot;: &quot;Benary White&quot;,
+      &quot;role&quot;: &quot;secondary&quot;,
+      &quot;projected&quot;: 25,
+      &quot;actual&quot;: 0,
+      &quot;originTotals&quot;: [
+        {
+          &quot;origin&quot;: &quot;own-grown&quot;,
+          &quot;projected&quot;: 25,
+          &quot;actual&quot;: 0,
+          &quot;sourceRefs&quot;: [
+            &quot;Authored bed forecast B&quot;,
+            &quot;Authored measured zero B&quot;
+          ]
+        }
+      ],
+      &quot;selectedSupply&quot;: 0,
+      &quot;selectedComplete&quot;: true,
+      &quot;missingOrigins&quot;: [],
+      &quot;firmDemand&quot;: 13,
+      &quot;tentativeDemand&quot;: 0,
+      &quot;delta&quot;: -13,
+      &quot;shortage&quot;: 13,
+      &quot;surplus&quot;: 0,
+      &quot;actualMinusProjected&quot;: -25,
+      &quot;supplyRows&quot;: [
+        {
+          &quot;supply_id&quot;: &quot;ZP&quot;,
+          &quot;variety_id&quot;: &quot;ZIN&quot;,
+          &quot;week_start&quot;: &quot;2026-10-19&quot;,
+          &quot;basis&quot;: &quot;projected&quot;,
+          &quot;stems&quot;: &quot;25&quot;,
+          &quot;source_ref&quot;: &quot;Authored bed forecast B&quot;,
+          &quot;origin&quot;: &quot;own-grown&quot;
+        },
+        {
+          &quot;supply_id&quot;: &quot;ZA&quot;,
+          &quot;variety_id&quot;: &quot;ZIN&quot;,
+          &quot;week_start&quot;: &quot;2026-10-19&quot;,
+          &quot;basis&quot;: &quot;actual&quot;,
+          &quot;stems&quot;: &quot;0&quot;,
+          &quot;source_ref&quot;: &quot;Authored measured zero B&quot;,
+          &quot;origin&quot;: &quot;own-grown&quot;
+        }
+      ]
+    }
+  ],
+  &quot;commitments&quot;: [
+    {
+      &quot;commitment_id&quot;: &quot;W01&quot;,
+      &quot;week_start&quot;: &quot;2026-10-19&quot;,
+      &quot;channel&quot;: &quot;wedding&quot;,
+      &quot;recipe_id&quot;: &quot;WEDDING&quot;,
+      &quot;quantity&quot;: 2,
+      &quot;buffer_bps&quot;: &quot;1250&quot;,
+      &quot;status&quot;: &quot;confirmed&quot;,
+      &quot;priority&quot;: 0,
+      &quot;source_ref&quot;: &quot;Authored agreed wedding recipe&quot;,
+      &quot;bufferBps&quot;: 1250,
+      &quot;lines&quot;: [
+        {
+          &quot;varietyId&quot;: &quot;ROSE&quot;,
+          &quot;stemsPerPiece&quot;: 8,
+          &quot;baseStems&quot;: 16,
+          &quot;bufferStems&quot;: 2,
+          &quot;demand&quot;: 18
+        },
+        {
+          &quot;varietyId&quot;: &quot;ZIN&quot;,
+          &quot;stemsPerPiece&quot;: 3,
+          &quot;baseStems&quot;: 6,
+          &quot;bufferStems&quot;: 1,
+          &quot;demand&quot;: 7
+        }
+      ]
+    },
+    {
+      &quot;commitment_id&quot;: &quot;C01&quot;,
+      &quot;week_start&quot;: &quot;2026-10-19&quot;,
+      &quot;channel&quot;: &quot;csa&quot;,
+      &quot;recipe_id&quot;: &quot;CSA&quot;,
+      &quot;quantity&quot;: 3,
+      &quot;buffer_bps&quot;: &quot;0&quot;,
+      &quot;status&quot;: &quot;confirmed&quot;,
+      &quot;priority&quot;: 1,
+      &quot;source_ref&quot;: &quot;Authored scheduled three-share pickup&quot;,
+      &quot;bufferBps&quot;: 0,
+      &quot;lines&quot;: [
+        {
+          &quot;varietyId&quot;: &quot;ROSE&quot;,
+          &quot;stemsPerPiece&quot;: 4,
+          &quot;baseStems&quot;: 12,
+          &quot;bufferStems&quot;: 0,
+          &quot;demand&quot;: 12
+        },
+        {
+          &quot;varietyId&quot;: &quot;ZIN&quot;,
+          &quot;stemsPerPiece&quot;: 2,
+          &quot;baseStems&quot;: 6,
+          &quot;bufferStems&quot;: 0,
+          &quot;demand&quot;: 6
+        },
+        {
+          &quot;varietyId&quot;: &quot;BAS&quot;,
+          &quot;stemsPerPiece&quot;: 1,
+          &quot;baseStems&quot;: 3,
+          &quot;bufferStems&quot;: 0,
+          &quot;demand&quot;: 3
+        }
+      ]
+    },
+    {
+      &quot;commitment_id&quot;: &quot;M01&quot;,
+      &quot;week_start&quot;: &quot;2026-10-19&quot;,
+      &quot;channel&quot;: &quot;market&quot;,
+      &quot;recipe_id&quot;: &quot;MARKET&quot;,
+      &quot;quantity&quot;: 1,
+      &quot;buffer_bps&quot;: &quot;0&quot;,
+      &quot;status&quot;: &quot;confirmed&quot;,
+      &quot;priority&quot;: 2,
+      &quot;source_ref&quot;: &quot;Authored firm market preparation&quot;,
+      &quot;bufferBps&quot;: 0,
+      &quot;lines&quot;: [
+        {
+          &quot;varietyId&quot;: &quot;ROSE&quot;,
+          &quot;stemsPerPiece&quot;: 10,
+          &quot;baseStems&quot;: 10,
+          &quot;bufferStems&quot;: 0,
+          &quot;demand&quot;: 10
+        }
+      ]
+    },
+    {
+      &quot;commitment_id&quot;: &quot;T01&quot;,
+      &quot;week_start&quot;: &quot;2026-10-19&quot;,
+      &quot;channel&quot;: &quot;wholesale&quot;,
+      &quot;recipe_id&quot;: &quot;PREMIUM&quot;,
+      &quot;quantity&quot;: 2,
+      &quot;buffer_bps&quot;: &quot;0&quot;,
+      &quot;status&quot;: &quot;tentative&quot;,
+      &quot;priority&quot;: 3,
+      &quot;source_ref&quot;: &quot;Authored optional quote scenario&quot;,
+      &quot;bufferBps&quot;: 0,
+      &quot;lines&quot;: [
+        {
+          &quot;varietyId&quot;: &quot;DAH&quot;,
+          &quot;stemsPerPiece&quot;: 4,
+          &quot;baseStems&quot;: 8,
+          &quot;bufferStems&quot;: 0,
+          &quot;demand&quot;: 8
+        }
+      ]
+    },
+    {
+      &quot;commitment_id&quot;: &quot;X01&quot;,
+      &quot;week_start&quot;: &quot;2026-10-19&quot;,
+      &quot;channel&quot;: &quot;wedding&quot;,
+      &quot;recipe_id&quot;: &quot;WEDDING&quot;,
+      &quot;quantity&quot;: 1,
+      &quot;buffer_bps&quot;: &quot;0&quot;,
+      &quot;status&quot;: &quot;cancelled&quot;,
+      &quot;priority&quot;: 4,
+      &quot;source_ref&quot;: &quot;Authored cancellation retained&quot;,
+      &quot;bufferBps&quot;: 0,
+      &quot;lines&quot;: [
+        {
+          &quot;varietyId&quot;: &quot;ROSE&quot;,
+          &quot;stemsPerPiece&quot;: 8,
+          &quot;baseStems&quot;: 8,
+          &quot;bufferStems&quot;: 0,
+          &quot;demand&quot;: 8
+        },
+        {
+          &quot;varietyId&quot;: &quot;ZIN&quot;,
+          &quot;stemsPerPiece&quot;: 3,
+          &quot;baseStems&quot;: 3,
+          &quot;bufferStems&quot;: 0,
+          &quot;demand&quot;: 3
+        }
+      ]
+    }
+  ],
+  &quot;pull&quot;: [
+    {
+      &quot;commitmentId&quot;: &quot;W01&quot;,
+      &quot;channel&quot;: &quot;wedding&quot;,
+      &quot;recipeId&quot;: &quot;WEDDING&quot;,
+      &quot;quantity&quot;: 2,
+      &quot;priority&quot;: 0,
+      &quot;sourceRef&quot;: &quot;Authored agreed wedding recipe&quot;,
+      &quot;varietyId&quot;: &quot;ROSE&quot;,
+      &quot;crop&quot;: &quot;rose&quot;,
+      &quot;variety&quot;: &quot;White O&#39;Hara&quot;,
+      &quot;baseStems&quot;: 16,
+      &quot;bufferStems&quot;: 2,
+      &quot;requiredStems&quot;: 18,
+      &quot;allocatedStems&quot;: 18,
+      &quot;shortStems&quot;: 0,
+      &quot;supplyBasis&quot;: &quot;actual&quot;
+    },
+    {
+      &quot;commitmentId&quot;: &quot;W01&quot;,
+      &quot;channel&quot;: &quot;wedding&quot;,
+      &quot;recipeId&quot;: &quot;WEDDING&quot;,
+      &quot;quantity&quot;: 2,
+      &quot;priority&quot;: 0,
+      &quot;sourceRef&quot;: &quot;Authored agreed wedding recipe&quot;,
+      &quot;varietyId&quot;: &quot;ZIN&quot;,
+      &quot;crop&quot;: &quot;zinnia&quot;,
+      &quot;variety&quot;: &quot;Benary White&quot;,
+      &quot;baseStems&quot;: 6,
+      &quot;bufferStems&quot;: 1,
+      &quot;requiredStems&quot;: 7,
+      &quot;allocatedStems&quot;: 0,
+      &quot;shortStems&quot;: 7,
+      &quot;supplyBasis&quot;: &quot;actual&quot;
+    },
+    {
+      &quot;commitmentId&quot;: &quot;C01&quot;,
+      &quot;channel&quot;: &quot;csa&quot;,
+      &quot;recipeId&quot;: &quot;CSA&quot;,
+      &quot;quantity&quot;: 3,
+      &quot;priority&quot;: 1,
+      &quot;sourceRef&quot;: &quot;Authored scheduled three-share pickup&quot;,
+      &quot;varietyId&quot;: &quot;ROSE&quot;,
+      &quot;crop&quot;: &quot;rose&quot;,
+      &quot;variety&quot;: &quot;White O&#39;Hara&quot;,
+      &quot;baseStems&quot;: 12,
+      &quot;bufferStems&quot;: 0,
+      &quot;requiredStems&quot;: 12,
+      &quot;allocatedStems&quot;: 12,
+      &quot;shortStems&quot;: 0,
+      &quot;supplyBasis&quot;: &quot;actual&quot;
+    },
+    {
+      &quot;commitmentId&quot;: &quot;C01&quot;,
+      &quot;channel&quot;: &quot;csa&quot;,
+      &quot;recipeId&quot;: &quot;CSA&quot;,
+      &quot;quantity&quot;: 3,
+      &quot;priority&quot;: 1,
+      &quot;sourceRef&quot;: &quot;Authored scheduled three-share pickup&quot;,
+      &quot;varietyId&quot;: &quot;ZIN&quot;,
+      &quot;crop&quot;: &quot;zinnia&quot;,
+      &quot;variety&quot;: &quot;Benary White&quot;,
+      &quot;baseStems&quot;: 6,
+      &quot;bufferStems&quot;: 0,
+      &quot;requiredStems&quot;: 6,
+      &quot;allocatedStems&quot;: 0,
+      &quot;shortStems&quot;: 6,
+      &quot;supplyBasis&quot;: &quot;actual&quot;
+    },
+    {
+      &quot;commitmentId&quot;: &quot;C01&quot;,
+      &quot;channel&quot;: &quot;csa&quot;,
+      &quot;recipeId&quot;: &quot;CSA&quot;,
+      &quot;quantity&quot;: 3,
+      &quot;priority&quot;: 1,
+      &quot;sourceRef&quot;: &quot;Authored scheduled three-share pickup&quot;,
+      &quot;varietyId&quot;: &quot;BAS&quot;,
+      &quot;crop&quot;: &quot;basil&quot;,
+      &quot;variety&quot;: &quot;Cinnamon&quot;,
+      &quot;baseStems&quot;: 3,
+      &quot;bufferStems&quot;: 0,
+      &quot;requiredStems&quot;: 3,
+      &quot;allocatedStems&quot;: null,
+      &quot;shortStems&quot;: null,
+      &quot;supplyBasis&quot;: &quot;actual&quot;
+    },
+    {
+      &quot;commitmentId&quot;: &quot;M01&quot;,
+      &quot;channel&quot;: &quot;market&quot;,
+      &quot;recipeId&quot;: &quot;MARKET&quot;,
+      &quot;quantity&quot;: 1,
+      &quot;priority&quot;: 2,
+      &quot;sourceRef&quot;: &quot;Authored firm market preparation&quot;,
+      &quot;varietyId&quot;: &quot;ROSE&quot;,
+      &quot;crop&quot;: &quot;rose&quot;,
+      &quot;variety&quot;: &quot;White O&#39;Hara&quot;,
+      &quot;baseStems&quot;: 10,
+      &quot;bufferStems&quot;: 0,
+      &quot;requiredStems&quot;: 10,
+      &quot;allocatedStems&quot;: 4,
+      &quot;shortStems&quot;: 6,
+      &quot;supplyBasis&quot;: &quot;actual&quot;
+    }
+  ],
+  &quot;shares&quot;: [
+    {
+      &quot;commitmentId&quot;: &quot;C01&quot;,
+      &quot;week&quot;: &quot;2026-10-19&quot;,
+      &quot;status&quot;: &quot;confirmed&quot;,
+      &quot;recipeId&quot;: &quot;CSA&quot;,
+      &quot;shares&quot;: 3,
+      &quot;bufferBps&quot;: 0,
+      &quot;sourceRef&quot;: &quot;Authored scheduled three-share pickup&quot;,
+      &quot;lines&quot;: [
+        {
+          &quot;varietyId&quot;: &quot;ROSE&quot;,
+          &quot;stemsPerPiece&quot;: 4,
+          &quot;baseStems&quot;: 12,
+          &quot;bufferStems&quot;: 0,
+          &quot;demand&quot;: 12
+        },
+        {
+          &quot;varietyId&quot;: &quot;ZIN&quot;,
+          &quot;stemsPerPiece&quot;: 2,
+          &quot;baseStems&quot;: 6,
+          &quot;bufferStems&quot;: 0,
+          &quot;demand&quot;: 6
+        },
+        {
+          &quot;varietyId&quot;: &quot;BAS&quot;,
+          &quot;stemsPerPiece&quot;: 1,
+          &quot;baseStems&quot;: 3,
+          &quot;bufferStems&quot;: 0,
+          &quot;demand&quot;: 3
+        }
+      ],
+      &quot;allocation&quot;: [
+        {
+          &quot;commitmentId&quot;: &quot;C01&quot;,
+          &quot;channel&quot;: &quot;csa&quot;,
+          &quot;recipeId&quot;: &quot;CSA&quot;,
+          &quot;quantity&quot;: 3,
+          &quot;priority&quot;: 1,
+          &quot;sourceRef&quot;: &quot;Authored scheduled three-share pickup&quot;,
+          &quot;varietyId&quot;: &quot;ROSE&quot;,
+          &quot;crop&quot;: &quot;rose&quot;,
+          &quot;variety&quot;: &quot;White O&#39;Hara&quot;,
+          &quot;baseStems&quot;: 12,
+          &quot;bufferStems&quot;: 0,
+          &quot;requiredStems&quot;: 12,
+          &quot;allocatedStems&quot;: 12,
+          &quot;shortStems&quot;: 0,
+          &quot;supplyBasis&quot;: &quot;actual&quot;
+        },
+        {
+          &quot;commitmentId&quot;: &quot;C01&quot;,
+          &quot;channel&quot;: &quot;csa&quot;,
+          &quot;recipeId&quot;: &quot;CSA&quot;,
+          &quot;quantity&quot;: 3,
+          &quot;priority&quot;: 1,
+          &quot;sourceRef&quot;: &quot;Authored scheduled three-share pickup&quot;,
+          &quot;varietyId&quot;: &quot;ZIN&quot;,
+          &quot;crop&quot;: &quot;zinnia&quot;,
+          &quot;variety&quot;: &quot;Benary White&quot;,
+          &quot;baseStems&quot;: 6,
+          &quot;bufferStems&quot;: 0,
+          &quot;requiredStems&quot;: 6,
+          &quot;allocatedStems&quot;: 0,
+          &quot;shortStems&quot;: 6,
+          &quot;supplyBasis&quot;: &quot;actual&quot;
+        },
+        {
+          &quot;commitmentId&quot;: &quot;C01&quot;,
+          &quot;channel&quot;: &quot;csa&quot;,
+          &quot;recipeId&quot;: &quot;CSA&quot;,
+          &quot;quantity&quot;: 3,
+          &quot;priority&quot;: 1,
+          &quot;sourceRef&quot;: &quot;Authored scheduled three-share pickup&quot;,
+          &quot;varietyId&quot;: &quot;BAS&quot;,
+          &quot;crop&quot;: &quot;basil&quot;,
+          &quot;variety&quot;: &quot;Cinnamon&quot;,
+          &quot;baseStems&quot;: 3,
+          &quot;bufferStems&quot;: 0,
+          &quot;requiredStems&quot;: 3,
+          &quot;allocatedStems&quot;: null,
+          &quot;shortStems&quot;: null,
+          &quot;supplyBasis&quot;: &quot;actual&quot;
+        }
+      ]
+    }
+  ],
+  &quot;attention&quot;: [
+    {
+      &quot;id&quot;: &quot;missing:BAS&quot;,
+      &quot;targetType&quot;: &quot;variety&quot;,
+      &quot;targetId&quot;: &quot;BAS&quot;,
+      &quot;code&quot;: &quot;selected_supply_missing&quot;,
+      &quot;message&quot;: &quot;Selected actual counts are missing for origin own-grown; an explicit zero is different.&quot;,
+      &quot;quantity&quot;: null
+    },
+    {
+      &quot;id&quot;: &quot;short:ROSE&quot;,
+      &quot;targetType&quot;: &quot;variety&quot;,
+      &quot;targetId&quot;: &quot;ROSE&quot;,
+      &quot;code&quot;: &quot;shortage&quot;,
+      &quot;message&quot;: &quot;Firm exact-variety demand exceeds complete selected-basis supply.&quot;,
+      &quot;quantity&quot;: 6
+    },
+    {
+      &quot;id&quot;: &quot;short:ZIN&quot;,
+      &quot;targetType&quot;: &quot;variety&quot;,
+      &quot;targetId&quot;: &quot;ZIN&quot;,
+      &quot;code&quot;: &quot;shortage&quot;,
+      &quot;message&quot;: &quot;Firm exact-variety demand exceeds complete selected-basis supply.&quot;,
+      &quot;quantity&quot;: 13
+    },
+    {
+      &quot;id&quot;: &quot;tentative:T01&quot;,
+      &quot;targetType&quot;: &quot;commitment&quot;,
+      &quot;targetId&quot;: &quot;T01&quot;,
+      &quot;code&quot;: &quot;tentative&quot;,
+      &quot;message&quot;: &quot;Tentative scenario is excluded from firm demand and harvest pull.&quot;,
+      &quot;quantity&quot;: 2
+    }
+  ],
+  &quot;decisions&quot;: [
+    {
+      &quot;id&quot;: &quot;rose-action&quot;,
+      &quot;sequence&quot;: 2,
+      &quot;revision&quot;: 2,
+      &quot;editionId&quot;: &quot;original&quot;,
+      &quot;week&quot;: &quot;2026-10-19&quot;,
+      &quot;basis&quot;: &quot;actual&quot;,
+      &quot;sourceHash&quot;: &quot;332093d71013fa4381f1e36e3006a66146aef2c947f031327fc917b2a513a9d7&quot;,
+      &quot;fingerprint&quot;: &quot;b44ef9a01aa45af57e777a7d141e5b0692ae459fb18706a7971ebbacfdf5ae42&quot;,
+      &quot;targetType&quot;: &quot;variety&quot;,
+      &quot;targetId&quot;: &quot;ROSE&quot;,
+      &quot;action&quot;: &quot;hold&quot;,
+      &quot;reviewer&quot;: &quot;Authored grower&quot;,
+      &quot;reason&quot;: &quot;Corrected note: count a later own-grown cut before committing a purchase.&quot;,
+      &quot;quantity&quot;: null,
+      &quot;evidence&quot;: &quot;Authored correction note2&quot;
+    }
+  ],
+  &quot;decisionHistory&quot;: [
+    {
+      &quot;id&quot;: &quot;rose-action&quot;,
+      &quot;sequence&quot;: 1,
+      &quot;revision&quot;: 1,
+      &quot;editionId&quot;: &quot;original&quot;,
+      &quot;week&quot;: &quot;2026-10-19&quot;,
+      &quot;basis&quot;: &quot;actual&quot;,
+      &quot;sourceHash&quot;: &quot;332093d71013fa4381f1e36e3006a66146aef2c947f031327fc917b2a513a9d7&quot;,
+      &quot;fingerprint&quot;: &quot;b44ef9a01aa45af57e777a7d141e5b0692ae459fb18706a7971ebbacfdf5ae42&quot;,
+      &quot;targetType&quot;: &quot;variety&quot;,
+      &quot;targetId&quot;: &quot;ROSE&quot;,
+      &quot;action&quot;: &quot;buy-in&quot;,
+      &quot;reviewer&quot;: &quot;Authored grower&quot;,
+      &quot;reason&quot;: &quot;Ask the local grower for the six-stem shortage.&quot;,
+      &quot;quantity&quot;: &quot;6&quot;,
+      &quot;evidence&quot;: &quot;Authored action note1&quot;
+    },
+    {
+      &quot;id&quot;: &quot;rose-action&quot;,
+      &quot;sequence&quot;: 2,
+      &quot;revision&quot;: 2,
+      &quot;editionId&quot;: &quot;original&quot;,
+      &quot;week&quot;: &quot;2026-10-19&quot;,
+      &quot;basis&quot;: &quot;actual&quot;,
+      &quot;sourceHash&quot;: &quot;332093d71013fa4381f1e36e3006a66146aef2c947f031327fc917b2a513a9d7&quot;,
+      &quot;fingerprint&quot;: &quot;b44ef9a01aa45af57e777a7d141e5b0692ae459fb18706a7971ebbacfdf5ae42&quot;,
+      &quot;targetType&quot;: &quot;variety&quot;,
+      &quot;targetId&quot;: &quot;ROSE&quot;,
+      &quot;action&quot;: &quot;hold&quot;,
+      &quot;reviewer&quot;: &quot;Authored grower&quot;,
+      &quot;reason&quot;: &quot;Corrected note: count a later own-grown cut before committing a purchase.&quot;,
+      &quot;quantity&quot;: null,
+      &quot;evidence&quot;: &quot;Authored correction note2&quot;
+    }
+  ],
+  &quot;summary&quot;: {
+    &quot;varieties&quot;: 4,
+    &quot;confirmedCommitments&quot;: 3,
+    &quot;tentativeCommitments&quot;: 1,
+    &quot;cancelledCommitments&quot;: 1,
+    &quot;knownSelectedSupply&quot;: 39,
+    &quot;firmDemand&quot;: 56,
+    &quot;knownShortage&quot;: 19,
+    &quot;knownSurplus&quot;: 5,
+    &quot;incompleteVarieties&quot;: 1
+  },
+  &quot;vendorComparison&quot;: {
+    &quot;scope&quot;: &quot;Only complete selected-basis variety counts; exact IDs encoded as UTF8 hex to preserve identity under vendor lowercase keys; CSA recipes included in firm named demand.&quot;,
+    &quot;includedVarietyIds&quot;: [
+      &quot;DAH&quot;,
+      &quot;ROSE&quot;,
+      &quot;ZIN&quot;
+    ],
+    &quot;excludedVarietyIds&quot;: [
+      &quot;BAS&quot;
+    ],
+    &quot;result&quot;: {
+      &quot;rows&quot;: [
+        {
+          &quot;name&quot;: &quot;5a494e&quot;,
+          &quot;variety&quot;: &quot;&quot;,
+          &quot;cut&quot;: 0,
+          &quot;need&quot;: 13,
+          &quot;net&quot;: -13
+        },
+        {
+          &quot;name&quot;: &quot;524f5345&quot;,
+          &quot;variety&quot;: &quot;&quot;,
+          &quot;cut&quot;: 34,
+          &quot;need&quot;: 40,
+          &quot;net&quot;: -6
+        },
+        {
+          &quot;name&quot;: &quot;444148&quot;,
+          &quot;variety&quot;: &quot;&quot;,
+          &quot;cut&quot;: 5,
+          &quot;need&quot;: 0,
+          &quot;net&quot;: 5
+        }
+      ],
+      &quot;surplusPool&quot;: 5,
+      &quot;shortfallTotal&quot;: 19,
+      &quot;shortfalls&quot;: [
+        {
+          &quot;name&quot;: &quot;5a494e&quot;,
+          &quot;variety&quot;: &quot;&quot;,
+          &quot;cut&quot;: 0,
+          &quot;need&quot;: 13,
+          &quot;net&quot;: -13,
+          &quot;buyIn&quot;: 13
+        },
+        {
+          &quot;name&quot;: &quot;524f5345&quot;,
+          &quot;variety&quot;: &quot;&quot;,
+          &quot;cut&quot;: 34,
+          &quot;need&quot;: 40,
+          &quot;net&quot;: -6,
+          &quot;buyIn&quot;: 6
+        }
+      ],
+      &quot;surpluses&quot;: [
+        {
+          &quot;name&quot;: &quot;444148&quot;,
+          &quot;variety&quot;: &quot;&quot;,
+          &quot;cut&quot;: 5,
+          &quot;need&quot;: 0,
+          &quot;net&quot;: 5,
+          &quot;surplus&quot;: 5
+        }
+      ],
+      &quot;csaShares&quot;: 0,
+      &quot;csaNeed&quot;: 0,
+      &quot;csaCovered&quot;: true,
+      &quot;marketLeftover&quot;: 5,
+      &quot;csaShort&quot;: 0
+    }
+  }
+}</pre><h2>Original sources in this edition</h2><details><summary>varieties · varieties.csv · 160 bytes · a0b73f7e5680721b14c8a65c66de75bddf6cf28e4b2b7f7fb4170c97a33146be</summary><pre>﻿variety_id,crop,variety,role
+ROSE,rose,White O&#39;Hara,focal
+ZIN,zinnia,Benary White,secondary
+BAS,basil,Cinnamon,greenery
+DAH,dahlia,Cafe au Lait,premium
+</pre></details><details><summary>supply · weekly-supply.csv · 650 bytes · 11b838ef9ab14a8cf64b93e3f2a509294a4c438ca955294c7d7d0913d03c3f05</summary><pre>supply_id,variety_id,week_start,basis,stems,source_ref,origin
+RP,ROSE,2026-10-19,projected,40,Authored bed forecast A,own-grown
+RA,ROSE,2026-10-19,actual,30,Authored cut sheet A,own-grown
+RBP,ROSE,2026-10-19,projected,4,Authored local grower forecast,local-buy-in
+RBA,ROSE,2026-10-19,actual,4,Authored received local bunch,local-buy-in
+ZP,ZIN,2026-10-19,projected,25,Authored bed forecast B,own-grown
+ZA,ZIN,2026-10-19,actual,0,Authored measured zero B,own-grown
+BP,BAS,2026-10-19,projected,12,Authored bed forecast C,own-grown
+DP,DAH,2026-10-19,projected,5,Authored bed forecast D,own-grown
+DA,DAH,2026-10-19,actual,5,Authored cut sheet D,own-grown
+</pre></details><details><summary>recipes · chosen-recipes.csv · 126 bytes · 47ca1fb1890dcf73d80525727949dbea012946ee1fe7128a92016fa5f665f21e</summary><pre>recipe_id,variety_id,stems_per_piece
+WEDDING,ROSE,8
+WEDDING,ZIN,3
+CSA,ROSE,4
+CSA,ZIN,2
+CSA,BAS,1
+MARKET,ROSE,10
+PREMIUM,DAH,4
+</pre></details><details><summary>commitments · weekly-commitments.csv · 486 bytes · 1916678b8c6c4627df22a79c66f315a259b402e3727b1824a2cdd1505c0a0590</summary><pre>commitment_id,week_start,channel,recipe_id,quantity,buffer_bps,status,priority,source_ref
+W01,2026-10-19,wedding,WEDDING,2,1250,confirmed,0,Authored agreed wedding recipe
+C01,2026-10-19,csa,CSA,3,0,confirmed,1,Authored scheduled three-share pickup
+M01,2026-10-19,market,MARKET,1,0,confirmed,2,Authored firm market preparation
+T01,2026-10-19,wholesale,PREMIUM,2,0,tentative,3,Authored optional quote scenario
+X01,2026-10-19,wedding,WEDDING,1,0,cancelled,4,Authored cancellation retained
+</pre></details><h2>Complete retained workspace</h2><pre>{
+  &quot;schema&quot;: &quot;stemwise.week-workspace.v1&quot;,
+  &quot;id&quot;: &quot;authored-flower-week&quot;,
+  &quot;label&quot;: &quot;Authored weekly flower reconciliation&quot;,
+  &quot;editions&quot;: [
+    {
+      &quot;id&quot;: &quot;original&quot;,
+      &quot;label&quot;: &quot;Original counted week&quot;,
+      &quot;notes&quot;: &quot;Authored operating example; not a researched farm&#39;s records. Recipe choices and date are declared. No-date bouquet memberships remain outside confirmed demand.&quot;,
+      &quot;sources&quot;: {
+        &quot;varieties&quot;: {
+          &quot;name&quot;: &quot;varieties.csv&quot;,
+          &quot;text&quot;: &quot;﻿variety_id,crop,variety,role\r\nROSE,rose,White O&#39;Hara,focal\r\nZIN,zinnia,Benary White,secondary\r\nBAS,basil,Cinnamon,greenery\r\nDAH,dahlia,Cafe au Lait,premium\r\n&quot;,
+          &quot;bytes&quot;: 160,
+          &quot;sha256&quot;: &quot;a0b73f7e5680721b14c8a65c66de75bddf6cf28e4b2b7f7fb4170c97a33146be&quot;
+        },
+        &quot;supply&quot;: {
+          &quot;name&quot;: &quot;weekly-supply.csv&quot;,
+          &quot;text&quot;: &quot;supply_id,variety_id,week_start,basis,stems,source_ref,origin\nRP,ROSE,2026-10-19,projected,40,Authored bed forecast A,own-grown\nRA,ROSE,2026-10-19,actual,30,Authored cut sheet A,own-grown\nRBP,ROSE,2026-10-19,projected,4,Authored local grower forecast,local-buy-in\nRBA,ROSE,2026-10-19,actual,4,Authored received local bunch,local-buy-in\nZP,ZIN,2026-10-19,projected,25,Authored bed forecast B,own-grown\nZA,ZIN,2026-10-19,actual,0,Authored measured zero B,own-grown\nBP,BAS,2026-10-19,projected,12,Authored bed forecast C,own-grown\nDP,DAH,2026-10-19,projected,5,Authored bed forecast D,own-grown\nDA,DAH,2026-10-19,actual,5,Authored cut sheet D,own-grown\n&quot;,
+          &quot;bytes&quot;: 650,
+          &quot;sha256&quot;: &quot;11b838ef9ab14a8cf64b93e3f2a509294a4c438ca955294c7d7d0913d03c3f05&quot;
+        },
+        &quot;recipes&quot;: {
+          &quot;name&quot;: &quot;chosen-recipes.csv&quot;,
+          &quot;text&quot;: &quot;recipe_id,variety_id,stems_per_piece\nWEDDING,ROSE,8\nWEDDING,ZIN,3\nCSA,ROSE,4\nCSA,ZIN,2\nCSA,BAS,1\nMARKET,ROSE,10\nPREMIUM,DAH,4\n&quot;,
+          &quot;bytes&quot;: 126,
+          &quot;sha256&quot;: &quot;47ca1fb1890dcf73d80525727949dbea012946ee1fe7128a92016fa5f665f21e&quot;
+        },
+        &quot;commitments&quot;: {
+          &quot;name&quot;: &quot;weekly-commitments.csv&quot;,
+          &quot;text&quot;: &quot;commitment_id,week_start,channel,recipe_id,quantity,buffer_bps,status,priority,source_ref\nW01,2026-10-19,wedding,WEDDING,2,1250,confirmed,0,Authored agreed wedding recipe\nC01,2026-10-19,csa,CSA,3,0,confirmed,1,Authored scheduled three-share pickup\nM01,2026-10-19,market,MARKET,1,0,confirmed,2,Authored firm market preparation\nT01,2026-10-19,wholesale,PREMIUM,2,0,tentative,3,Authored optional quote scenario\nX01,2026-10-19,wedding,WEDDING,1,0,cancelled,4,Authored cancellation retained\n&quot;,
+          &quot;bytes&quot;: 486,
+          &quot;sha256&quot;: &quot;1916678b8c6c4627df22a79c66f315a259b402e3727b1824a2cdd1505c0a0590&quot;
+        }
+      },
+      &quot;sourceHash&quot;: &quot;332093d71013fa4381f1e36e3006a66146aef2c947f031327fc917b2a513a9d7&quot;
+    },
+    {
+      &quot;id&quot;: &quot;corrected&quot;,
+      &quot;label&quot;: &quot;Corrected actual cuts&quot;,
+      &quot;notes&quot;: &quot;New source edition retains original counts and both earlier decisions. Ten more roses and fifteen zinnias now counted; three basil stems explicitly counted.&quot;,
+      &quot;sources&quot;: {
+        &quot;varieties&quot;: {
+          &quot;name&quot;: &quot;varieties.csv&quot;,
+          &quot;text&quot;: &quot;﻿variety_id,crop,variety,role\r\nROSE,rose,White O&#39;Hara,focal\r\nZIN,zinnia,Benary White,secondary\r\nBAS,basil,Cinnamon,greenery\r\nDAH,dahlia,Cafe au Lait,premium\r\n&quot;,
+          &quot;bytes&quot;: 160,
+          &quot;sha256&quot;: &quot;a0b73f7e5680721b14c8a65c66de75bddf6cf28e4b2b7f7fb4170c97a33146be&quot;
+        },
+        &quot;supply&quot;: {
+          &quot;name&quot;: &quot;weekly-supply.csv&quot;,
+          &quot;text&quot;: &quot;supply_id,variety_id,week_start,basis,stems,source_ref,origin\nRP,ROSE,2026-10-19,projected,40,Authored bed forecast A,own-grown\nRA,ROSE,2026-10-19,actual,40,Authored corrected cut sheet A,own-grown\nRBP,ROSE,2026-10-19,projected,4,Authored local grower forecast,local-buy-in\nRBA,ROSE,2026-10-19,actual,4,Authored received local bunch,local-buy-in\nZP,ZIN,2026-10-19,projected,25,Authored bed forecast B,own-grown\nZA,ZIN,2026-10-19,actual,15,Authored later counted cut B,own-grown\nBP,BAS,2026-10-19,projected,12,Authored bed forecast C,own-grown\nDP,DAH,2026-10-19,projected,5,Authored bed forecast D,own-grown\nDA,DAH,2026-10-19,actual,5,Authored cut sheet D,own-grown\nBA,BAS,2026-10-19,actual,3,Authored completed count C,own-grown\n&quot;,
+          &quot;bytes&quot;: 729,
+          &quot;sha256&quot;: &quot;5d9dea6862f37bf24c31e23c99b2624452432358ef3f361e9ce459770a75ef9c&quot;
+        },
+        &quot;recipes&quot;: {
+          &quot;name&quot;: &quot;chosen-recipes.csv&quot;,
+          &quot;text&quot;: &quot;recipe_id,variety_id,stems_per_piece\nWEDDING,ROSE,8\nWEDDING,ZIN,3\nCSA,ROSE,4\nCSA,ZIN,2\nCSA,BAS,1\nMARKET,ROSE,10\nPREMIUM,DAH,4\n&quot;,
+          &quot;bytes&quot;: 126,
+          &quot;sha256&quot;: &quot;47ca1fb1890dcf73d80525727949dbea012946ee1fe7128a92016fa5f665f21e&quot;
+        },
+        &quot;commitments&quot;: {
+          &quot;name&quot;: &quot;weekly-commitments.csv&quot;,
+          &quot;text&quot;: &quot;commitment_id,week_start,channel,recipe_id,quantity,buffer_bps,status,priority,source_ref\nW01,2026-10-19,wedding,WEDDING,2,1250,confirmed,0,Authored agreed wedding recipe\nC01,2026-10-19,csa,CSA,3,0,confirmed,1,Authored scheduled three-share pickup\nM01,2026-10-19,market,MARKET,1,0,confirmed,2,Authored firm market preparation\nT01,2026-10-19,wholesale,PREMIUM,2,0,tentative,3,Authored optional quote scenario\nX01,2026-10-19,wedding,WEDDING,1,0,cancelled,4,Authored cancellation retained\n&quot;,
+          &quot;bytes&quot;: 486,
+          &quot;sha256&quot;: &quot;1916678b8c6c4627df22a79c66f315a259b402e3727b1824a2cdd1505c0a0590&quot;
+        }
+      },
+      &quot;sourceHash&quot;: &quot;b2426bf01f0b563a37ed257279a65c8af1fdf93f79e13e37a0e687e05ba35263&quot;
+    }
+  ],
+  &quot;decisions&quot;: [
+    {
+      &quot;id&quot;: &quot;rose-action&quot;,
+      &quot;sequence&quot;: 1,
+      &quot;revision&quot;: 1,
+      &quot;editionId&quot;: &quot;original&quot;,
+      &quot;week&quot;: &quot;2026-10-19&quot;,
+      &quot;basis&quot;: &quot;actual&quot;,
+      &quot;sourceHash&quot;: &quot;332093d71013fa4381f1e36e3006a66146aef2c947f031327fc917b2a513a9d7&quot;,
+      &quot;fingerprint&quot;: &quot;b44ef9a01aa45af57e777a7d141e5b0692ae459fb18706a7971ebbacfdf5ae42&quot;,
+      &quot;targetType&quot;: &quot;variety&quot;,
+      &quot;targetId&quot;: &quot;ROSE&quot;,
+      &quot;action&quot;: &quot;buy-in&quot;,
+      &quot;reviewer&quot;: &quot;Authored grower&quot;,
+      &quot;reason&quot;: &quot;Ask the local grower for the six-stem shortage.&quot;,
+      &quot;quantity&quot;: &quot;6&quot;,
+      &quot;evidence&quot;: &quot;Authored action note1&quot;
+    },
+    {
+      &quot;id&quot;: &quot;rose-action&quot;,
+      &quot;sequence&quot;: 2,
+      &quot;revision&quot;: 2,
+      &quot;editionId&quot;: &quot;original&quot;,
+      &quot;week&quot;: &quot;2026-10-19&quot;,
+      &quot;basis&quot;: &quot;actual&quot;,
+      &quot;sourceHash&quot;: &quot;332093d71013fa4381f1e36e3006a66146aef2c947f031327fc917b2a513a9d7&quot;,
+      &quot;fingerprint&quot;: &quot;b44ef9a01aa45af57e777a7d141e5b0692ae459fb18706a7971ebbacfdf5ae42&quot;,
+      &quot;targetType&quot;: &quot;variety&quot;,
+      &quot;targetId&quot;: &quot;ROSE&quot;,
+      &quot;action&quot;: &quot;hold&quot;,
+      &quot;reviewer&quot;: &quot;Authored grower&quot;,
+      &quot;reason&quot;: &quot;Corrected note: count a later own-grown cut before committing a purchase.&quot;,
+      &quot;quantity&quot;: null,
+      &quot;evidence&quot;: &quot;Authored correction note2&quot;
+    }
+  ],
+  &quot;head&quot;: &quot;b6caba7cf63aa50729326f9758ace5999dbed3333f06c54d2e07eda0f7b3b1fa&quot;
+}</pre></body></html>
