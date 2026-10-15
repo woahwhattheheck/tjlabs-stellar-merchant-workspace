@@ -1,7 +1,8 @@
 /**
- * Bazaar resource service-metadata soft-drop boundary.
+ * Bazaar resource metadata soft-drop boundary.
  * Source pin: x402-foundation/x402@faa1c694c66a3732aaabbce93bdae140e521a67d
  * Bazaar spec blob: 442708e76d5a129e0c1393471d8ed71e3604c94e
+ * Core ResourceInfo schema blob: 2fd54484b1a3c44dce537315946d26a1e52467de
  * Facilitator extractor blob: 083013ee19544e182c2e3185d7853309c34b9d9c
  */
 import { domainToASCII } from 'node:url';
@@ -60,7 +61,7 @@ export function isValidIconUrl(value) {
 }
 
 export function sanitizeResourceServiceMetadata(resource) {
-  if (resource === null || typeof resource !== 'object' || Array.isArray(resource)) return {};
+  if (resource == null || typeof resource !== 'object' || Array.isArray(resource)) return {};
   const metadata = {};
   if (isValidServiceName(resource.serviceName)) metadata.serviceName = resource.serviceName;
   const tags = sanitizeTags(resource.tags);
@@ -71,6 +72,9 @@ export function sanitizeResourceServiceMetadata(resource) {
 
 export function sanitizeResourceForCatalog(resource) {
   const safe = structuredClone(resource);
+  for (const field of ['description', 'mimeType']) {
+    if (typeof safe[field] !== 'string') delete safe[field];
+  }
   delete safe.serviceName;
   delete safe.tags;
   delete safe.iconUrl;
