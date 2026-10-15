@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "hardware-revision",
+  "description": "Complete original hardware source reconciliation, revision proposals and named EE/FW/MFG reviews with recoverable editable sessions",
+  "components": [
+    "products/hardware-revision"
+  ],
+  "commands": {
+    "hardware-workspace": "products/hardware-revision/cli.mjs",
+    "hardware-managed": "products/hardware-revision/managed.mjs"
+  },
+  "commandDescriptions": {
+    "hardware-workspace": "Create, receive and export complete Hardware revision sessions",
+    "hardware-managed": "Open the managed hardware operator through Applications"
+  },
+  "exports": {
+    "./products/hardware": "./source/products/hardware-revision/runtime.mjs",
+    "./products/hardware/client": "./source/products/hardware-revision/host/client.mjs",
+    "./products/hardware/server": "./source/products/hardware-revision/host/server.mjs"
+  },
+  "applicationProviders": {
+    "hardware-revision": "products/hardware-revision/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "hardware-revision": "products/hardware-revision/merchant-provider.mjs"
+  }
+}

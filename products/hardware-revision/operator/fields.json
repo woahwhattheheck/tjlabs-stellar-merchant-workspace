@@ -1,0 +1,21 @@
+{
+  "inputSchema": "tjlabs.hardware-review-input.v1",
+  "tables": {
+    "bom": [
+      "partNumber",
+      "quantity",
+      "unit",
+      "references",
+      "notes"
+    ],
+    "firmware": [
+      "id",
+      "componentRef",
+      "pin",
+      "expectedNet",
+      "connection",
+      "symbol",
+      "notes"
+    ]
+  }
+}
