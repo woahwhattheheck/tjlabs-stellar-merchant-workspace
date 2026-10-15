@@ -1,0 +1,28 @@
+{
+  "schema": "stellar-forge.planning-installed-receiving.v1",
+  "runtime": "Actual production source in V8 with explicit DOM/storage/byte/download adapters",
+  "originalDomainChecks": 17,
+  "model": {
+    "originalChecks": 17,
+    "elapsedMs": 29679,
+    "sequence": 5,
+    "sources": 12,
+    "editions": 4,
+    "priorFullSessions": 5,
+    "status": "REVIEW_COMPLETE",
+    "comparisonCaveats": [
+      "Planning definitions, availability or materials changed; interpret scenario context before comparing costs"
+    ],
+    "originalRetry": true
+  },
+  "capacityDomain": {
+    "jobs": 250,
+    "operations": 500,
+    "elapsedMs": 28021,
+    "bytes": 6253645,
+    "sha256": "207d7f349731a83bbbe97709bca51a99aaab55f3207eda933e93d1386572acda",
+    "rootSha256": "582c7b62cc380b8f1660f2b7d6527ee58bd9923f14e59880cd220b2dd19f196f"
+  },
+  "originalControllerCourse": "Active complete original workflow through installed source",
+  "equippedReceiving": "D0BRUS0L36G/1792023737.575689"
+}

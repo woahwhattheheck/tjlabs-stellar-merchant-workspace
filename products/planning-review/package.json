@@ -1,0 +1,17 @@
+{
+  "name": "tjlabs-planning-review-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "planning": "node native/planning-cli.mjs",
+    "build:desk": "node native/build-desk.mjs",
+    "receive:operator": "node native/receive-operator.mjs",
+    "receive:installed": "node native/receive-installed.mjs",
+    "managed": "node managed.mjs",
+    "workspace": "node cli.mjs"
+  }
+}
