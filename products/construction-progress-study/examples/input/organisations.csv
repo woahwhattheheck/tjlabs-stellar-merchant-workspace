@@ -1,0 +1,4 @@
+organisation_id,legal_name,trading_name,country_code,registration_id,role,source_ref
+BUILDER,Authored BUILDER,,BE,,contractor,authored/organisations/BUILDER
+CLIENT,Authored CLIENT,,BE,,client,authored/organisations/CLIENT
+SUPPLIER,Authored SUPPLIER,,BE,,supplier,authored/organisations/SUPPLIER

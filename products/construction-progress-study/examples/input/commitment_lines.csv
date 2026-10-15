@@ -1,0 +1,2 @@
+commitment_line_id,commitment_id,scope_key,description,quantity,unit,unit_price,net,tax_code,tax_rate,source_ref
+POL1,PO1,tiles,Authored tiles,10,pack,100,1000,actual-standard,21,authored/commitment_lines/POL1

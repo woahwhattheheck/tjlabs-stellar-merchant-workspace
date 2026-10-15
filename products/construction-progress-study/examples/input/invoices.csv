@@ -1,0 +1,5 @@
+invoice_id,project_id,client_id,invoice_number,invoice_type,original_invoice_id,claim_id,certification_id,issued_at,due_at,period_from,period_until,currency,net,tax,gross,status,recorded_at,available_at,source_ref
+D1,P1,CLIENT,D1,invoice,,,,2026-08-02T12:00:00Z,2026-08-28T12:00:00Z,2026-08-01T00:00:00Z,2026-10-01T00:00:00Z,EUR,500,105,605,issued,2026-08-02T12:01:00Z,2026-08-02T12:02:00Z,authored/invoices/D1
+I1,P1,CLIENT,I1,invoice,,C1,CERT1,2026-09-04T12:00:00Z,2026-09-28T12:00:00Z,2026-08-01T00:00:00Z,2026-10-01T00:00:00Z,EUR,3300,693,3993,issued,2026-09-04T12:01:00Z,2026-09-04T12:02:00Z,authored/invoices/I1
+I2,P1,CLIENT,I2,invoice,,C2,CERT2,2026-10-04T12:00:00Z,2026-10-28T12:00:00Z,2026-08-01T00:00:00Z,2026-10-01T00:00:00Z,EUR,2187.5,459.37,2646.87,issued,2026-10-04T12:01:00Z,2026-10-04T12:02:00Z,authored/invoices/I2
+P2-I1,P2,CLIENT,P2-I1,invoice,,,,2026-08-02T12:00:00Z,2026-08-28T12:00:00Z,2026-08-01T00:00:00Z,2026-10-01T00:00:00Z,EUR,500,105,605,issued,2026-08-02T12:01:00Z,2026-08-02T12:02:00Z,authored/invoices/P2-I1

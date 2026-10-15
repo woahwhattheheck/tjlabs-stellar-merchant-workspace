@@ -1,0 +1,4 @@
+retention_event_id,project_id,claim_id,certification_id,invoice_id,event_type,amount,currency,effective_at,due_at,condition_ref,approved_by,approved_at,accounting_event_id,reverses_id,recorded_at,available_at,source_ref
+H1,P1,C1,CERT1,I1,held,200,EUR,2026-09-03T11:00:00Z,,,,,,,2026-09-03T11:01:00Z,2026-09-03T11:02:00Z,authored/retention_events/H1
+H2,P1,C2,CERT2,I2,held,112.5,EUR,2026-10-03T11:00:00Z,,,,,,,2026-10-03T11:01:00Z,2026-10-03T11:02:00Z,authored/retention_events/H2
+REL1,P1,C2,CERT2,I2,released,50,EUR,2026-10-03T11:00:00Z,2026-10-03T10:00:00Z,authored acceptance condition,OWNER,2026-10-03T10:30:00Z,,,2026-10-03T11:01:00Z,2026-10-03T11:02:00Z,authored/retention_events/REL1

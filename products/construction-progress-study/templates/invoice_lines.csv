@@ -1,0 +1,1 @@
+invoice_line_id,invoice_id,claim_line_id,certification_line_id,scope_key,line_type,quantity,unit,unit_price,discount_kind,discount_value,net,tax_code,tax_rate,tax,gross,retention_event_id,source_ref,milestone_id
