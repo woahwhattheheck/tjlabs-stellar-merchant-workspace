@@ -1,0 +1,56 @@
+{
+  "edition": "complete-archive-prepared-members-final-20261015",
+  "sha256": "3271cd93ffdee362711c19b8129bbcbfcb9f8085209014c39f0f2a82d91b8a59",
+  "priorWhole886": {
+    "schema": "commons.complete-prepared-zip-course.v1",
+    "source_members": 886,
+    "archive_bytes": 2706802,
+    "statistics": {
+      "entries": 886,
+      "uncompressedBytes": 12606633,
+      "archiveBytes": 2706802,
+      "retainedPackedBytes": 2499964
+    },
+    "midpoint_entries": 443,
+    "midpoint_payloads": 443,
+    "checkpoint_bytes": 2735665,
+    "elapsed_ms": {
+      "original_pack": 6623,
+      "prepared_including_checkpoint": 7427,
+      "resumed_remaining": 3306
+    },
+    "whole_archive_sha256": null,
+    "checks": [
+      "Complete ordinary source archive is byte-identical through early compression",
+      "Existing packZip API remains byte-identical",
+      "Serialized midpoint resumes the complete archive without repeating prior inputs",
+      "Every complete original is recovered from the archive",
+      "A changed mutable input and an owned alias preserve their respective bytes",
+      "Changed checkpoint original checksum is rejected",
+      "Missing checkpoint payload is rejected",
+      "Complete raw byte budget is enforced before compression",
+      "Case-folded path collision is rejected before output",
+      "Existing STORE-only output remains byte-identical"
+    ],
+    "exact_members": 886
+  },
+  "targetedFinal": {
+    "aliasedSnapshotByteIdentical": true,
+    "payloads": 1,
+    "entries": 2,
+    "rejections": [
+      {
+        "name": "string compressed length",
+        "rejected": "Prepared ZIP member metadata changed"
+      },
+      {
+        "name": "inconsistent alias payload size",
+        "rejected": "Prepared ZIP payload size changed or exceeds the selected limit"
+      },
+      {
+        "name": "remaining compressed budget",
+        "rejected": "Prepared ZIP payload size changed or exceeds the selected limit"
+      }
+    ]
+  }
+}

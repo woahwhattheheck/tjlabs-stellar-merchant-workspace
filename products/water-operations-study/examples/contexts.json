@@ -1,0 +1,110 @@
+{
+  "system": {
+    "SYS-A": {
+      "id": "SYS-A",
+      "available_at": "2026-10-15T07:00:00Z"
+    },
+    "SYS-B": {
+      "id": "SYS-B",
+      "available_at": "2026-10-15T07:00:00Z"
+    },
+    "SYS-C": {
+      "id": "SYS-C",
+      "available_at": "2026-10-15T07:00:00Z"
+    }
+  },
+  "location": {
+    "LOC-SYS-A": {
+      "id": "LOC-SYS-A",
+      "available_at": "2026-10-15T07:00:00Z",
+      "system_id": "SYS-A",
+      "purpose": "drinking-water"
+    },
+    "LOC-SYS-B": {
+      "id": "LOC-SYS-B",
+      "available_at": "2026-10-15T07:00:00Z",
+      "system_id": "SYS-B",
+      "purpose": "drinking-water"
+    },
+    "LOC-SYS-C": {
+      "id": "LOC-SYS-C",
+      "available_at": "2026-10-15T07:00:00Z",
+      "system_id": "SYS-C",
+      "purpose": "drinking-water"
+    }
+  },
+  "schedule": {
+    "SCH-SYS-A": {
+      "id": "SCH-SYS-A",
+      "available_at": "2026-10-15T07:00:00Z",
+      "system_id": "SYS-A",
+      "approved_at": "2026-10-15T07:00:00Z",
+      "valid_from": "2026-10-15T07:00:00Z",
+      "valid_to": "2026-10-15T18:00:00Z"
+    },
+    "SCH-SYS-B": {
+      "id": "SCH-SYS-B",
+      "available_at": "2026-10-15T07:00:00Z",
+      "system_id": "SYS-B",
+      "approved_at": "2026-10-15T07:00:00Z",
+      "valid_from": "2026-10-15T07:00:00Z",
+      "valid_to": "2026-10-15T18:00:00Z"
+    },
+    "SCH-SYS-C": {
+      "id": "SCH-SYS-C",
+      "available_at": "2026-10-15T07:00:00Z",
+      "system_id": "SYS-C",
+      "approved_at": "2026-10-15T07:00:00Z",
+      "valid_from": "2026-10-15T07:00:00Z",
+      "valid_to": "2026-10-15T18:00:00Z"
+    }
+  },
+  "person": {
+    "COLLECTOR": {
+      "id": "COLLECTOR",
+      "available_at": "2026-10-15T07:00:00Z"
+    },
+    "COURIER": {
+      "id": "COURIER",
+      "available_at": "2026-10-15T07:00:00Z"
+    },
+    "RECEIVER": {
+      "id": "RECEIVER",
+      "available_at": "2026-10-15T07:00:00Z"
+    },
+    "REVIEWER": {
+      "id": "REVIEWER",
+      "available_at": "2026-10-15T07:00:00Z"
+    },
+    "PREPARER": {
+      "id": "PREPARER",
+      "available_at": "2026-10-15T07:00:00Z"
+    }
+  },
+  "report": {
+    "TARGET-SYS-A": {
+      "id": "TARGET-SYS-A",
+      "available_at": "2026-10-15T10:00:00Z",
+      "system_id": "SYS-A",
+      "interval_start": "2026-10-15T08:00:00Z",
+      "interval_end": "2026-10-15T11:30:00Z",
+      "purpose": "drinking-water"
+    },
+    "TARGET-SYS-B": {
+      "id": "TARGET-SYS-B",
+      "available_at": "2026-10-15T10:00:00Z",
+      "system_id": "SYS-B",
+      "interval_start": "2026-10-15T08:00:00Z",
+      "interval_end": "2026-10-15T11:30:00Z",
+      "purpose": "drinking-water"
+    },
+    "TARGET-SYS-C": {
+      "id": "TARGET-SYS-C",
+      "available_at": "2026-10-15T10:00:00Z",
+      "system_id": "SYS-C",
+      "interval_start": "2026-10-15T08:00:00Z",
+      "interval_end": "2026-10-15T11:30:00Z",
+      "purpose": "drinking-water"
+    }
+  }
+}

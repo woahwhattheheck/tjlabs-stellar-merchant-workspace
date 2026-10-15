@@ -1,0 +1,2 @@
+"id","record_key","revision","supersedes_id","record_status","recorded_at","available_at","source_document_id","source_ref","laboratory_id","name","valid_from","valid_to","scope_document_id"
+"LAB1","LAB1","1","","active","2026-10-15T08:00:00Z","2026-10-15T08:00:00Z","DOC-LAB1","Authored water handover course / LAB1","LAB-EXAMPLE","Authored laboratory","2026-10-15T07:00:00Z","2026-10-15T18:00:00Z","AUTH-SCOPE"

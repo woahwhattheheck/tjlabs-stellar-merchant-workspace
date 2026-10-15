@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "water-operations-study",
+  "description": "Complete drinking-water operations study with original field readings, laboratory custody and amendments, exact historical report inputs, named reviews, actual filing, handovers, recurring work and full recovery.",
+  "components": [
+    "products/water-operations-study"
+  ],
+  "commands": {
+    "water-operations-study-workspace": "products/water-operations-study/installed-cli.mjs",
+    "water-operations-study-managed": "products/water-operations-study/managed.mjs"
+  },
+  "commandDescriptions": {
+    "water-operations-study-workspace": "Create, receive and export complete Water Operations Study sessions",
+    "water-operations-study-managed": "Open the complete water operations study through Applications"
+  },
+  "exports": {
+    "./products/water-operations-study": "./source/products/water-operations-study/runtime.mjs",
+    "./products/water-operations-study/client": "./source/products/water-operations-study/host/client.mjs",
+    "./products/water-operations-study/server": "./source/products/water-operations-study/host/server.mjs"
+  },
+  "applicationProviders": {
+    "water-operations-study": "products/water-operations-study/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "water-operations-study": "products/water-operations-study/merchant-provider.mjs"
+  }
+}

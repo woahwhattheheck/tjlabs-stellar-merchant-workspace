@@ -1,0 +1,2 @@
+"id","record_key","revision","supersedes_id","record_status","recorded_at","available_at","source_document_id","source_ref","link_id","sample_record_id","prior_sample_record_id","relationship","reason","linked_at","linked_by"
+"LINK-RESAMPLE","LINK-RESAMPLE","1","","active","2026-10-15T09:20:00Z","2026-10-15T09:20:00Z","DOC-LINK-RESAMPLE","Authored water handover course / LINK-RESAMPLE","LINK-RESAMPLE","S-A4","S-A3","resample","Replacement collection after damaged-container rejection","2026-10-15T09:20:00Z","COLLECTOR"

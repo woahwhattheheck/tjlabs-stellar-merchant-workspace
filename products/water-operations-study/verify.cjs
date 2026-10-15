@@ -1,0 +1,5 @@
+#!/usr/bin/env node
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+async function main(){const root=__dirname,text=fs.readFileSync(path.join(root,'SOURCE_MANIFEST.json'),'utf8'),m=JSON.parse(text),files=m.files.map(x=>{const content=fs.readFileSync(path.join(root,x.path),'utf8');if(crypto.createHash('sha256').update(content).digest('hex')!==x.sha256)throw Error('Source mismatch '+x.path);return{path:x.path,content};}).concat([{path:'SOURCE_MANIFEST.json',content:text}]);const model=require('./examples/build-course.cjs').run(),laboratory=require('./verify-lab.cjs').run(),browser=await require('./operator/browser-course.cjs')(files),native=require('./operator/native-course.cjs')(files,s=>new TextEncoder().encode(s),b=>new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(b));process.stdout.write(JSON.stringify({execution:'Actual maintained domain and generated handlers with explicitly injected browser/native services; see RECEIVING.md.',model:model.checks,laboratory,browser,native},null,2)+'\n');}
+main().catch(e=>{process.stderr.write(e.stack+'\n');process.exitCode=1;});

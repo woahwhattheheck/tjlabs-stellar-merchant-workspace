@@ -1,0 +1,99 @@
+{
+  "schema": "water.lab-verification.v1",
+  "runtime": "Actual water-lab.cjs executed in JavaScript; source callbacks supplied from the complete authored course",
+  "passed": 23,
+  "cases": [
+    {
+      "name": "Complete early and later populations preserve the original packet and partial amendment",
+      "passed": true
+    },
+    {
+      "name": "Nondetect preserves original qualifier and limits without becoming numeric zero",
+      "passed": true
+    },
+    {
+      "name": "A broken custody handoff prevents accession and downstream result use",
+      "passed": true
+    },
+    {
+      "name": "Duplicate custody sequence is unresolved instead of arbitrarily ordered",
+      "passed": true
+    },
+    {
+      "name": "An accepted accession cannot use a rejected receipt",
+      "passed": true
+    },
+    {
+      "name": "Duplicate laboratory sample identity invalidates both claims",
+      "passed": true
+    },
+    {
+      "name": "Reporting resolution worse than the actual order prevents accepted review",
+      "passed": true
+    },
+    {
+      "name": "An order method cannot be retrospectively introduced after analysis",
+      "passed": true
+    },
+    {
+      "name": "An accession entered after analysis cannot retrospectively authorise the analysis",
+      "passed": true
+    },
+    {
+      "name": "A faithful later extract retains original row availability for historical decisions",
+      "passed": true
+    },
+    {
+      "name": "An unknown laboratory scope end cannot become an explicitly open interval",
+      "passed": true
+    },
+    {
+      "name": "Changing a result without updating its exact human review hash is detected",
+      "passed": true
+    },
+    {
+      "name": "A later laboratory correction must account for unchanged results explicitly",
+      "passed": true
+    },
+    {
+      "name": "An amendment cannot replace another sample or requested analyte",
+      "passed": true
+    },
+    {
+      "name": "A target report cannot borrow another system source",
+      "passed": true
+    },
+    {
+      "name": "Later rejection supersedes an earlier accepted review for new selections",
+      "passed": true
+    },
+    {
+      "name": "A rejection after report selection preserves historical selection and requests reconciliation",
+      "passed": true
+    },
+    {
+      "name": "Repeated report selection is a conflict for all duplicate current rows",
+      "passed": true
+    },
+    {
+      "name": "A missing source document cannot support a record or its downstream result",
+      "passed": true
+    },
+    {
+      "name": "Wrong declared family population cannot be reported complete",
+      "passed": true
+    },
+    {
+      "name": "Future source edition cannot be visible at an earlier analysis cutoff",
+      "passed": true
+    },
+    {
+      "name": "Duplicate business sample identity is quarantined across both source records",
+      "passed": true
+    },
+    {
+      "name": "A result qualifier error remains an explicit unresolved row",
+      "passed": true
+    }
+  ]
+}

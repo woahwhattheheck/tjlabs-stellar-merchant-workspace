@@ -1,0 +1,3 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,source_use_id,system_id,asset_id,interval_start,interval_end,use_status,quantity,unit,observed_by
+USE-A,USE-A,1,,active,2026-10-15T09:40:00.000Z,2026-10-15T09:40:00.000Z,document-95be811b876c509487c6e5bf8f5e7659,Authored complete water operations workflow / USE-A,USE-A,SYS-A,WELL-SYS-A,2026-10-15T08:00:00.000Z,2026-10-15T09:30:00.000Z,used,1200,US gal,COLLECTOR
+NOT-USED-A,NOT-USED-A,1,,active,2026-10-15T09:40:00.000Z,2026-10-15T09:40:00.000Z,document-5c93d2b0f8fc7d3c806c9cd3be195f24,Authored complete water operations workflow / NOT-USED-A,NOT-USED-A,SYS-A,STANDBY-A,2026-10-15T08:00:00.000Z,2026-10-15T09:30:00.000Z,not_used,0,US gal,COLLECTOR

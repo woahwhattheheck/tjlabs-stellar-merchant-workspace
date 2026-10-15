@@ -1,0 +1,201 @@
+{
+  "schema": "commons.source-manifest.v1",
+  "edition": "water-lab-peer-reviewed-course-20261015",
+  "members": [
+    {
+      "path": "rational.cjs",
+      "bytes": 1350,
+      "sha256": "b2b38848a914a327cfecc271cf53ca0b52a6186b1d28bd38b3dc8677ca9974a2"
+    },
+    {
+      "path": "study-time.cjs",
+      "bytes": 4519,
+      "sha256": "3ecb1dd72248c5510d111eb0dee0a0f446adf58c74cbcbefee7837f38667aad9"
+    },
+    {
+      "path": "sha256.cjs",
+      "bytes": 19696,
+      "sha256": "f37a1319db3aa8b9bd15ae2fea89cf0b79677e2a2eb295e63efa4d34f8308230"
+    },
+    {
+      "path": "lab-schema.cjs",
+      "bytes": 4792,
+      "sha256": "4e8d7bda82c45d0d0cc023b01383894c4b83db78e5f3ce9c33fde69867735934"
+    },
+    {
+      "path": "ADAPTER_CONTRACT.md",
+      "bytes": 4625,
+      "sha256": "06e227179bc05d2fe3110629d11149624b425c747797b94e32d3405ead41f2bd"
+    },
+    {
+      "path": "water-lab.cjs",
+      "bytes": 29265,
+      "sha256": "df6eac18ceadcdad2040ed6c478eaaef3aa664df745c355291197419bacdba84"
+    },
+    {
+      "path": "lab-course.cjs",
+      "bytes": 9610,
+      "sha256": "5105873e3625b1465b6f1fe3d712dbb293a997bda470f45d65b9e0f0dee47f75"
+    },
+    {
+      "path": "verify-lab.cjs",
+      "bytes": 9858,
+      "sha256": "9ebaa3bef9a3db3e5bbe583c2f8f5905fd3b716f6ec914f00b33dd87326a1b8f"
+    },
+    {
+      "path": "examples/complete-input.json",
+      "bytes": 39077,
+      "sha256": "fcda0b3103b313f38ddfde427e6b5b3b120be060c8e253267c621aad7da5c6c2"
+    },
+    {
+      "path": "examples/contexts.json",
+      "bytes": 2850,
+      "sha256": "9f6057e65a7f2dc77bae9bac30b3517ff77a20454312af39f98a14c76f2c3094"
+    },
+    {
+      "path": "examples/documents.json",
+      "bytes": 48067,
+      "sha256": "05692415b7f4be9947f089d4460a44f303d372257d965db54f219932768228fb"
+    },
+    {
+      "path": "examples/early-analysis.json",
+      "bytes": 49070,
+      "sha256": "ca763c4a15ec12b66c6207e3ef2b3a4937d901c78ab88160ad245c63bce804c5"
+    },
+    {
+      "path": "examples/later-analysis.json",
+      "bytes": 51860,
+      "sha256": "f59c5f5650f6bab0f0ae7f152ac0a355a89b0b262a5fafa7837e9e2057dc4dc9"
+    },
+    {
+      "path": "verification.json",
+      "bytes": 3023,
+      "sha256": "f3e2b54ef97b4f28742a865a6c95a91fc7ff8606df481bd654db2dec5e59c06f"
+    },
+    {
+      "path": "templates/lab_laboratories.csv",
+      "bytes": 191,
+      "sha256": "55eaf73c3da186b6a2f4fc2c002fa881b8aef5d94d95698178882119650a97da"
+    },
+    {
+      "path": "examples/csv/lab_laboratories.csv",
+      "bytes": 413,
+      "sha256": "df799eb24708833a527906f448bb45ef96ce45ae8bf05d4eb6173a86252656c5"
+    },
+    {
+      "path": "templates/lab_orders.csv",
+      "bytes": 235,
+      "sha256": "54b7ae1728caf142e7782618755f6ce7da83426e7b09e38ee9748cb5de0817c7"
+    },
+    {
+      "path": "examples/csv/lab_orders.csv",
+      "bytes": 1069,
+      "sha256": "deb27d853db4bb5692c64aae329b5992fc15810a8695a5e86b71af883f5178c7"
+    },
+    {
+      "path": "templates/lab_order_lines.csv",
+      "bytes": 219,
+      "sha256": "7917a71d661de03787479115862e82bf17ae154197634c33a30e526752b0d9c9"
+    },
+    {
+      "path": "examples/csv/lab_order_lines.csv",
+      "bytes": 1227,
+      "sha256": "bbad4e8aa4127fa747f63f4471489040e827e8c229bf098e9d31007f0e632541"
+    },
+    {
+      "path": "templates/lab_samples.csv",
+      "bytes": 235,
+      "sha256": "8a150a53833fc2e43af6961e127084c521260c6a127f1a1768ab8b3a5a2f3c45"
+    },
+    {
+      "path": "examples/csv/lab_samples.csv",
+      "bytes": 1615,
+      "sha256": "e78d7651ba0bab603498beafd8429114d5797426a05142ae8ca977c6e5044cc8"
+    },
+    {
+      "path": "templates/lab_custody_events.csv",
+      "bytes": 264,
+      "sha256": "22dd71ad26522b86230f5860e49c24f90557d6e327092aa5b3e70087e538be35"
+    },
+    {
+      "path": "examples/csv/lab_custody_events.csv",
+      "bytes": 4490,
+      "sha256": "a915e8019d3f466fe512faa060972933c3730ab48a20a331084eb104502a70c0"
+    },
+    {
+      "path": "templates/lab_accessions.csv",
+      "bytes": 284,
+      "sha256": "8dd97dd3426314ce5d85b0f10fdc96a4ae41917e06e50385fcd767e70b5438a1"
+    },
+    {
+      "path": "examples/csv/lab_accessions.csv",
+      "bytes": 1502,
+      "sha256": "2804ac92a5176a365ecd55317f0a2d660549965996237bbccc0ddb81b2b24dc0"
+    },
+    {
+      "path": "templates/lab_reports.csv",
+      "bytes": 232,
+      "sha256": "8d1ac1b44d76759b3ebc5265c5a562eb97ab2536de262af1ed7d15ccd915e688"
+    },
+    {
+      "path": "examples/csv/lab_reports.csv",
+      "bytes": 1227,
+      "sha256": "4878c3c87a03d737f9a02728c92efa8865e02c392e6c3e8b0a84f26ef2055aea"
+    },
+    {
+      "path": "templates/lab_results.csv",
+      "bytes": 301,
+      "sha256": "f890d94009ea92d05e73800c517b7a53905c7e0530c9f51974e2cd5e2116698b"
+    },
+    {
+      "path": "examples/csv/lab_results.csv",
+      "bytes": 1758,
+      "sha256": "10a7a5cb39bf47c8d77425151804564f0e9ae721bec48f7e6ab2a0e2d19d6e30"
+    },
+    {
+      "path": "templates/lab_amendments.csv",
+      "bytes": 333,
+      "sha256": "2ec00f762d12c63622b1ef447c090f539a6760127dbbd68ecbf8c00c6a554bf6"
+    },
+    {
+      "path": "examples/csv/lab_amendments.csv",
+      "bytes": 1209,
+      "sha256": "9ede613c059e7bb86c1b8ac1ab4befdfd20a24c48cf15da0b01ae9e9af86db10"
+    },
+    {
+      "path": "templates/lab_reviews.csv",
+      "bytes": 220,
+      "sha256": "6ec4a031ef8bdeff7f2dd49cac1996d180fef8efa33b73d878647292c0cd69d7"
+    },
+    {
+      "path": "examples/csv/lab_reviews.csv",
+      "bytes": 2285,
+      "sha256": "1ef74c9b42325b81426ec7e8431261ecccbc4fdd8905747b27be4c692225b47a"
+    },
+    {
+      "path": "templates/lab_report_inputs.csv",
+      "bytes": 236,
+      "sha256": "89b9a917157b9ae777fb6fec72dbf913cfb603c1b62bef6c80167fc1db32aa71"
+    },
+    {
+      "path": "examples/csv/lab_report_inputs.csv",
+      "bytes": 1580,
+      "sha256": "c6b6f943dc5e9822aa212e7ce5859c0058d182ab909ae61b7eff646484b7d8c7"
+    },
+    {
+      "path": "templates/lab_sample_links.csv",
+      "bytes": 226,
+      "sha256": "65482aec13635017802d08abb1e43765986c1e92038d370159705993ec9c1216"
+    },
+    {
+      "path": "examples/csv/lab_sample_links.csv",
+      "bytes": 524,
+      "sha256": "7952b53e9fe8d60bcde102031ba2ae97b76519b873fdd361b0114ec5d9081418"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3701,
+      "sha256": "60f48691eec731b6c205a9ebd46740fd0f9e095a9b94fe0849b2d4e2c22bdef4"
+    }
+  ]
+}

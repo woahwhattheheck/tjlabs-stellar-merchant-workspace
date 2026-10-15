@@ -1,0 +1,287 @@
+{
+  "AUTH-SCOPE": {
+    "id": "AUTH-SCOPE",
+    "available_at": "2026-10-15T07:00:00Z",
+    "text": "Authored role and laboratory scope document. This course uses no regulatory threshold or treatment-control default."
+  },
+  "DOC-LAB1": {
+    "id": "DOC-LAB1",
+    "available_at": "2026-10-15T08:00:00Z",
+    "text": "Authored complete source for LAB1\n{\n  \"id\": \"LAB1\",\n  \"record_key\": \"LAB1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:00:00Z\",\n  \"available_at\": \"2026-10-15T08:00:00Z\",\n  \"source_document_id\": \"DOC-LAB1\",\n  \"source_ref\": \"Authored water handover course / LAB1\",\n  \"laboratory_id\": \"LAB-EXAMPLE\",\n  \"name\": \"Authored laboratory\",\n  \"valid_from\": \"2026-10-15T07:00:00Z\",\n  \"valid_to\": \"2026-10-15T18:00:00Z\",\n  \"scope_document_id\": \"AUTH-SCOPE\"\n}"
+  },
+  "DOC-ORDER-A": {
+    "id": "DOC-ORDER-A",
+    "available_at": "2026-10-15T08:05:00Z",
+    "text": "Authored complete source for ORDER-A\n{\n  \"id\": \"ORDER-A\",\n  \"record_key\": \"ORDER-A\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:05:00Z\",\n  \"available_at\": \"2026-10-15T08:05:00Z\",\n  \"source_document_id\": \"DOC-ORDER-A\",\n  \"source_ref\": \"Authored water handover course / ORDER-A\",\n  \"order_id\": \"ORDER-A\",\n  \"system_id\": \"SYS-A\",\n  \"schedule_id\": \"SCH-SYS-A\",\n  \"location_id\": \"LOC-SYS-A\",\n  \"purpose\": \"drinking-water\",\n  \"ordered_at\": \"2026-10-15T08:00:00Z\",\n  \"ordered_by\": \"PREPARER\",\n  \"valid_from\": \"2026-10-15T08:00:00Z\",\n  \"valid_to\": \"2026-10-15T18:00:00Z\"\n}"
+  },
+  "DOC-ORDER-B": {
+    "id": "DOC-ORDER-B",
+    "available_at": "2026-10-15T08:05:00Z",
+    "text": "Authored complete source for ORDER-B\n{\n  \"id\": \"ORDER-B\",\n  \"record_key\": \"ORDER-B\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:05:00Z\",\n  \"available_at\": \"2026-10-15T08:05:00Z\",\n  \"source_document_id\": \"DOC-ORDER-B\",\n  \"source_ref\": \"Authored water handover course / ORDER-B\",\n  \"order_id\": \"ORDER-B\",\n  \"system_id\": \"SYS-B\",\n  \"schedule_id\": \"SCH-SYS-B\",\n  \"location_id\": \"LOC-SYS-B\",\n  \"purpose\": \"drinking-water\",\n  \"ordered_at\": \"2026-10-15T08:00:00Z\",\n  \"ordered_by\": \"PREPARER\",\n  \"valid_from\": \"2026-10-15T08:00:00Z\",\n  \"valid_to\": \"2026-10-15T18:00:00Z\"\n}"
+  },
+  "DOC-ORDER-C": {
+    "id": "DOC-ORDER-C",
+    "available_at": "2026-10-15T08:05:00Z",
+    "text": "Authored complete source for ORDER-C\n{\n  \"id\": \"ORDER-C\",\n  \"record_key\": \"ORDER-C\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:05:00Z\",\n  \"available_at\": \"2026-10-15T08:05:00Z\",\n  \"source_document_id\": \"DOC-ORDER-C\",\n  \"source_ref\": \"Authored water handover course / ORDER-C\",\n  \"order_id\": \"ORDER-C\",\n  \"system_id\": \"SYS-C\",\n  \"schedule_id\": \"SCH-SYS-C\",\n  \"location_id\": \"LOC-SYS-C\",\n  \"purpose\": \"drinking-water\",\n  \"ordered_at\": \"2026-10-15T08:00:00Z\",\n  \"ordered_by\": \"PREPARER\",\n  \"valid_from\": \"2026-10-15T08:00:00Z\",\n  \"valid_to\": \"2026-10-15T18:00:00Z\"\n}"
+  },
+  "DOC-LINE-A-CHEM": {
+    "id": "DOC-LINE-A-CHEM",
+    "available_at": "2026-10-15T08:10:00Z",
+    "text": "Authored complete source for LINE-A-CHEM\n{\n  \"id\": \"LINE-A-CHEM\",\n  \"record_key\": \"LINE-A-CHEM\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:10:00Z\",\n  \"available_at\": \"2026-10-15T08:10:00Z\",\n  \"source_document_id\": \"DOC-LINE-A-CHEM\",\n  \"source_ref\": \"Authored water handover course / LINE-A-CHEM\",\n  \"order_line_id\": \"LINE-A-CHEM\",\n  \"order_record_id\": \"ORDER-A\",\n  \"analyte\": \"CHEMICAL-X\",\n  \"method\": \"LAB-METHOD-CHEM\",\n  \"unit\": \"mg/L\",\n  \"maximum_reporting_limit\": \"0.5\",\n  \"due_at\": \"2026-10-15T12:00:00Z\"\n}"
+  },
+  "DOC-LINE-A-MICRO": {
+    "id": "DOC-LINE-A-MICRO",
+    "available_at": "2026-10-15T08:10:00Z",
+    "text": "Authored complete source for LINE-A-MICRO\n{\n  \"id\": \"LINE-A-MICRO\",\n  \"record_key\": \"LINE-A-MICRO\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:10:00Z\",\n  \"available_at\": \"2026-10-15T08:10:00Z\",\n  \"source_document_id\": \"DOC-LINE-A-MICRO\",\n  \"source_ref\": \"Authored water handover course / LINE-A-MICRO\",\n  \"order_line_id\": \"LINE-A-MICRO\",\n  \"order_record_id\": \"ORDER-A\",\n  \"analyte\": \"MICRO-ORGANISM-X\",\n  \"method\": \"LAB-METHOD-PRESENCE\",\n  \"unit\": \"presence/absence\",\n  \"maximum_reporting_limit\": \"\",\n  \"due_at\": \"2026-10-15T12:00:00Z\"\n}"
+  },
+  "DOC-LINE-B-CHEM": {
+    "id": "DOC-LINE-B-CHEM",
+    "available_at": "2026-10-15T08:10:00Z",
+    "text": "Authored complete source for LINE-B-CHEM\n{\n  \"id\": \"LINE-B-CHEM\",\n  \"record_key\": \"LINE-B-CHEM\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:10:00Z\",\n  \"available_at\": \"2026-10-15T08:10:00Z\",\n  \"source_document_id\": \"DOC-LINE-B-CHEM\",\n  \"source_ref\": \"Authored water handover course / LINE-B-CHEM\",\n  \"order_line_id\": \"LINE-B-CHEM\",\n  \"order_record_id\": \"ORDER-B\",\n  \"analyte\": \"CHEMICAL-X\",\n  \"method\": \"LAB-METHOD-CHEM\",\n  \"unit\": \"mg/L\",\n  \"maximum_reporting_limit\": \"0.5\",\n  \"due_at\": \"2026-10-15T12:00:00Z\"\n}"
+  },
+  "DOC-LINE-C-CHEM": {
+    "id": "DOC-LINE-C-CHEM",
+    "available_at": "2026-10-15T08:10:00Z",
+    "text": "Authored complete source for LINE-C-CHEM\n{\n  \"id\": \"LINE-C-CHEM\",\n  \"record_key\": \"LINE-C-CHEM\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:10:00Z\",\n  \"available_at\": \"2026-10-15T08:10:00Z\",\n  \"source_document_id\": \"DOC-LINE-C-CHEM\",\n  \"source_ref\": \"Authored water handover course / LINE-C-CHEM\",\n  \"order_line_id\": \"LINE-C-CHEM\",\n  \"order_record_id\": \"ORDER-C\",\n  \"analyte\": \"CHEMICAL-X\",\n  \"method\": \"LAB-METHOD-CHEM\",\n  \"unit\": \"mg/L\",\n  \"maximum_reporting_limit\": \"0.5\",\n  \"due_at\": \"2026-10-15T12:00:00Z\"\n}"
+  },
+  "DOC-S-A1": {
+    "id": "DOC-S-A1",
+    "available_at": "2026-10-15T08:30:00Z",
+    "text": "Authored complete source for S-A1\n{\n  \"id\": \"S-A1\",\n  \"record_key\": \"S-A1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:30:00Z\",\n  \"available_at\": \"2026-10-15T08:30:00Z\",\n  \"source_document_id\": \"DOC-S-A1\",\n  \"source_ref\": \"Authored water handover course / S-A1\",\n  \"sample_id\": \"S-A1\",\n  \"order_record_id\": \"ORDER-A\",\n  \"system_id\": \"SYS-A\",\n  \"location_id\": \"LOC-SYS-A\",\n  \"purpose\": \"drinking-water\",\n  \"collected_at\": \"2026-10-15T08:30:00Z\",\n  \"collector_id\": \"COLLECTOR\",\n  \"container_id\": \"BOTTLE-S-A1\"\n}"
+  },
+  "DOC-S-A2": {
+    "id": "DOC-S-A2",
+    "available_at": "2026-10-15T08:32:00Z",
+    "text": "Authored complete source for S-A2\n{\n  \"id\": \"S-A2\",\n  \"record_key\": \"S-A2\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:32:00Z\",\n  \"available_at\": \"2026-10-15T08:32:00Z\",\n  \"source_document_id\": \"DOC-S-A2\",\n  \"source_ref\": \"Authored water handover course / S-A2\",\n  \"sample_id\": \"S-A2\",\n  \"order_record_id\": \"ORDER-A\",\n  \"system_id\": \"SYS-A\",\n  \"location_id\": \"LOC-SYS-A\",\n  \"purpose\": \"drinking-water\",\n  \"collected_at\": \"2026-10-15T08:32:00Z\",\n  \"collector_id\": \"COLLECTOR\",\n  \"container_id\": \"BOTTLE-S-A2\"\n}"
+  },
+  "DOC-S-A3": {
+    "id": "DOC-S-A3",
+    "available_at": "2026-10-15T08:34:00Z",
+    "text": "Authored complete source for S-A3\n{\n  \"id\": \"S-A3\",\n  \"record_key\": \"S-A3\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:34:00Z\",\n  \"available_at\": \"2026-10-15T08:34:00Z\",\n  \"source_document_id\": \"DOC-S-A3\",\n  \"source_ref\": \"Authored water handover course / S-A3\",\n  \"sample_id\": \"S-A3\",\n  \"order_record_id\": \"ORDER-A\",\n  \"system_id\": \"SYS-A\",\n  \"location_id\": \"LOC-SYS-A\",\n  \"purpose\": \"drinking-water\",\n  \"collected_at\": \"2026-10-15T08:34:00Z\",\n  \"collector_id\": \"COLLECTOR\",\n  \"container_id\": \"BOTTLE-S-A3\"\n}"
+  },
+  "DOC-S-A4": {
+    "id": "DOC-S-A4",
+    "available_at": "2026-10-15T09:20:00Z",
+    "text": "Authored complete source for S-A4\n{\n  \"id\": \"S-A4\",\n  \"record_key\": \"S-A4\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:20:00Z\",\n  \"available_at\": \"2026-10-15T09:20:00Z\",\n  \"source_document_id\": \"DOC-S-A4\",\n  \"source_ref\": \"Authored water handover course / S-A4\",\n  \"sample_id\": \"S-A4\",\n  \"order_record_id\": \"ORDER-A\",\n  \"system_id\": \"SYS-A\",\n  \"location_id\": \"LOC-SYS-A\",\n  \"purpose\": \"drinking-water\",\n  \"collected_at\": \"2026-10-15T09:20:00Z\",\n  \"collector_id\": \"COLLECTOR\",\n  \"container_id\": \"BOTTLE-S-A4\"\n}"
+  },
+  "DOC-S-B1": {
+    "id": "DOC-S-B1",
+    "available_at": "2026-10-15T08:36:00Z",
+    "text": "Authored complete source for S-B1\n{\n  \"id\": \"S-B1\",\n  \"record_key\": \"S-B1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:36:00Z\",\n  \"available_at\": \"2026-10-15T08:36:00Z\",\n  \"source_document_id\": \"DOC-S-B1\",\n  \"source_ref\": \"Authored water handover course / S-B1\",\n  \"sample_id\": \"S-B1\",\n  \"order_record_id\": \"ORDER-B\",\n  \"system_id\": \"SYS-B\",\n  \"location_id\": \"LOC-SYS-B\",\n  \"purpose\": \"drinking-water\",\n  \"collected_at\": \"2026-10-15T08:36:00Z\",\n  \"collector_id\": \"COLLECTOR\",\n  \"container_id\": \"BOTTLE-S-B1\"\n}"
+  },
+  "DOC-S-C1": {
+    "id": "DOC-S-C1",
+    "available_at": "2026-10-15T09:00:00Z",
+    "text": "Authored complete source for S-C1\n{\n  \"id\": \"S-C1\",\n  \"record_key\": \"S-C1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:00:00Z\",\n  \"available_at\": \"2026-10-15T09:00:00Z\",\n  \"source_document_id\": \"DOC-S-C1\",\n  \"source_ref\": \"Authored water handover course / S-C1\",\n  \"sample_id\": \"S-C1\",\n  \"order_record_id\": \"ORDER-C\",\n  \"system_id\": \"SYS-C\",\n  \"location_id\": \"LOC-SYS-C\",\n  \"purpose\": \"drinking-water\",\n  \"collected_at\": \"2026-10-15T09:00:00Z\",\n  \"collector_id\": \"COLLECTOR\",\n  \"container_id\": \"BOTTLE-S-C1\"\n}"
+  },
+  "DOC-C-S-A1-1": {
+    "id": "DOC-C-S-A1-1",
+    "available_at": "2026-10-15T08:30:00Z",
+    "text": "Authored complete source for C-S-A1-1\n{\n  \"id\": \"C-S-A1-1\",\n  \"record_key\": \"C-S-A1-1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:30:00Z\",\n  \"available_at\": \"2026-10-15T08:30:00Z\",\n  \"source_document_id\": \"DOC-C-S-A1-1\",\n  \"source_ref\": \"Authored water handover course / C-S-A1-1\",\n  \"custody_event_id\": \"C-S-A1-1\",\n  \"sample_record_id\": \"S-A1\",\n  \"sequence\": \"1\",\n  \"event_type\": \"collected\",\n  \"from_party_id\": \"\",\n  \"to_party_id\": \"COLLECTOR\",\n  \"event_at\": \"2026-10-15T08:30:00Z\",\n  \"actor_id\": \"COLLECTOR\",\n  \"condition\": \"sealed\",\n  \"receipt_ref\": \"COLLECTION-S-A1\"\n}"
+  },
+  "DOC-C-S-A1-2": {
+    "id": "DOC-C-S-A1-2",
+    "available_at": "2026-10-15T08:40:00Z",
+    "text": "Authored complete source for C-S-A1-2\n{\n  \"id\": \"C-S-A1-2\",\n  \"record_key\": \"C-S-A1-2\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:40:00Z\",\n  \"available_at\": \"2026-10-15T08:40:00Z\",\n  \"source_document_id\": \"DOC-C-S-A1-2\",\n  \"source_ref\": \"Authored water handover course / C-S-A1-2\",\n  \"custody_event_id\": \"C-S-A1-2\",\n  \"sample_record_id\": \"S-A1\",\n  \"sequence\": \"2\",\n  \"event_type\": \"transferred\",\n  \"from_party_id\": \"COLLECTOR\",\n  \"to_party_id\": \"COURIER\",\n  \"event_at\": \"2026-10-15T08:40:00Z\",\n  \"actor_id\": \"COLLECTOR\",\n  \"condition\": \"sealed\",\n  \"receipt_ref\": \"TRANSFER-S-A1\"\n}"
+  },
+  "DOC-C-S-A1-3": {
+    "id": "DOC-C-S-A1-3",
+    "available_at": "2026-10-15T09:00:00Z",
+    "text": "Authored complete source for C-S-A1-3\n{\n  \"id\": \"C-S-A1-3\",\n  \"record_key\": \"C-S-A1-3\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:00:00Z\",\n  \"available_at\": \"2026-10-15T09:00:00Z\",\n  \"source_document_id\": \"DOC-C-S-A1-3\",\n  \"source_ref\": \"Authored water handover course / C-S-A1-3\",\n  \"custody_event_id\": \"C-S-A1-3\",\n  \"sample_record_id\": \"S-A1\",\n  \"sequence\": \"3\",\n  \"event_type\": \"received\",\n  \"from_party_id\": \"COURIER\",\n  \"to_party_id\": \"LAB-EXAMPLE\",\n  \"event_at\": \"2026-10-15T09:00:00Z\",\n  \"actor_id\": \"RECEIVER\",\n  \"condition\": \"accepted sealed container\",\n  \"receipt_ref\": \"LAB-RECEIPT-S-A1\"\n}"
+  },
+  "DOC-ACC-S-A1": {
+    "id": "DOC-ACC-S-A1",
+    "available_at": "2026-10-15T09:00:00Z",
+    "text": "Authored complete source for ACC-S-A1\n{\n  \"id\": \"ACC-S-A1\",\n  \"record_key\": \"ACC-S-A1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:00:00Z\",\n  \"available_at\": \"2026-10-15T09:00:00Z\",\n  \"source_document_id\": \"DOC-ACC-S-A1\",\n  \"source_ref\": \"Authored water handover course / ACC-S-A1\",\n  \"accession_id\": \"ACC-S-A1\",\n  \"sample_record_id\": \"S-A1\",\n  \"laboratory_record_id\": \"LAB1\",\n  \"lab_sample_id\": \"EXT-S-A1\",\n  \"received_at\": \"2026-10-15T09:00:00Z\",\n  \"received_by\": \"RECEIVER\",\n  \"disposition\": \"accepted\",\n  \"rejection_reason\": \"\",\n  \"custody_event_record_id\": \"C-S-A1-3\"\n}"
+  },
+  "DOC-C-S-A2-1": {
+    "id": "DOC-C-S-A2-1",
+    "available_at": "2026-10-15T08:32:00Z",
+    "text": "Authored complete source for C-S-A2-1\n{\n  \"id\": \"C-S-A2-1\",\n  \"record_key\": \"C-S-A2-1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:32:00Z\",\n  \"available_at\": \"2026-10-15T08:32:00Z\",\n  \"source_document_id\": \"DOC-C-S-A2-1\",\n  \"source_ref\": \"Authored water handover course / C-S-A2-1\",\n  \"custody_event_id\": \"C-S-A2-1\",\n  \"sample_record_id\": \"S-A2\",\n  \"sequence\": \"1\",\n  \"event_type\": \"collected\",\n  \"from_party_id\": \"\",\n  \"to_party_id\": \"COLLECTOR\",\n  \"event_at\": \"2026-10-15T08:32:00Z\",\n  \"actor_id\": \"COLLECTOR\",\n  \"condition\": \"sealed\",\n  \"receipt_ref\": \"COLLECTION-S-A2\"\n}"
+  },
+  "DOC-C-S-A2-2": {
+    "id": "DOC-C-S-A2-2",
+    "available_at": "2026-10-15T08:40:00Z",
+    "text": "Authored complete source for C-S-A2-2\n{\n  \"id\": \"C-S-A2-2\",\n  \"record_key\": \"C-S-A2-2\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:40:00Z\",\n  \"available_at\": \"2026-10-15T08:40:00Z\",\n  \"source_document_id\": \"DOC-C-S-A2-2\",\n  \"source_ref\": \"Authored water handover course / C-S-A2-2\",\n  \"custody_event_id\": \"C-S-A2-2\",\n  \"sample_record_id\": \"S-A2\",\n  \"sequence\": \"2\",\n  \"event_type\": \"transferred\",\n  \"from_party_id\": \"COLLECTOR\",\n  \"to_party_id\": \"COURIER\",\n  \"event_at\": \"2026-10-15T08:40:00Z\",\n  \"actor_id\": \"COLLECTOR\",\n  \"condition\": \"sealed\",\n  \"receipt_ref\": \"TRANSFER-S-A2\"\n}"
+  },
+  "DOC-C-S-A2-3": {
+    "id": "DOC-C-S-A2-3",
+    "available_at": "2026-10-15T09:00:00Z",
+    "text": "Authored complete source for C-S-A2-3\n{\n  \"id\": \"C-S-A2-3\",\n  \"record_key\": \"C-S-A2-3\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:00:00Z\",\n  \"available_at\": \"2026-10-15T09:00:00Z\",\n  \"source_document_id\": \"DOC-C-S-A2-3\",\n  \"source_ref\": \"Authored water handover course / C-S-A2-3\",\n  \"custody_event_id\": \"C-S-A2-3\",\n  \"sample_record_id\": \"S-A2\",\n  \"sequence\": \"3\",\n  \"event_type\": \"received\",\n  \"from_party_id\": \"COURIER\",\n  \"to_party_id\": \"LAB-EXAMPLE\",\n  \"event_at\": \"2026-10-15T09:00:00Z\",\n  \"actor_id\": \"RECEIVER\",\n  \"condition\": \"accepted sealed container\",\n  \"receipt_ref\": \"LAB-RECEIPT-S-A2\"\n}"
+  },
+  "DOC-ACC-S-A2": {
+    "id": "DOC-ACC-S-A2",
+    "available_at": "2026-10-15T09:00:00Z",
+    "text": "Authored complete source for ACC-S-A2\n{\n  \"id\": \"ACC-S-A2\",\n  \"record_key\": \"ACC-S-A2\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:00:00Z\",\n  \"available_at\": \"2026-10-15T09:00:00Z\",\n  \"source_document_id\": \"DOC-ACC-S-A2\",\n  \"source_ref\": \"Authored water handover course / ACC-S-A2\",\n  \"accession_id\": \"ACC-S-A2\",\n  \"sample_record_id\": \"S-A2\",\n  \"laboratory_record_id\": \"LAB1\",\n  \"lab_sample_id\": \"EXT-S-A2\",\n  \"received_at\": \"2026-10-15T09:00:00Z\",\n  \"received_by\": \"RECEIVER\",\n  \"disposition\": \"accepted\",\n  \"rejection_reason\": \"\",\n  \"custody_event_record_id\": \"C-S-A2-3\"\n}"
+  },
+  "DOC-C-S-A3-1": {
+    "id": "DOC-C-S-A3-1",
+    "available_at": "2026-10-15T08:34:00Z",
+    "text": "Authored complete source for C-S-A3-1\n{\n  \"id\": \"C-S-A3-1\",\n  \"record_key\": \"C-S-A3-1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:34:00Z\",\n  \"available_at\": \"2026-10-15T08:34:00Z\",\n  \"source_document_id\": \"DOC-C-S-A3-1\",\n  \"source_ref\": \"Authored water handover course / C-S-A3-1\",\n  \"custody_event_id\": \"C-S-A3-1\",\n  \"sample_record_id\": \"S-A3\",\n  \"sequence\": \"1\",\n  \"event_type\": \"collected\",\n  \"from_party_id\": \"\",\n  \"to_party_id\": \"COLLECTOR\",\n  \"event_at\": \"2026-10-15T08:34:00Z\",\n  \"actor_id\": \"COLLECTOR\",\n  \"condition\": \"sealed\",\n  \"receipt_ref\": \"COLLECTION-S-A3\"\n}"
+  },
+  "DOC-C-S-A3-2": {
+    "id": "DOC-C-S-A3-2",
+    "available_at": "2026-10-15T08:40:00Z",
+    "text": "Authored complete source for C-S-A3-2\n{\n  \"id\": \"C-S-A3-2\",\n  \"record_key\": \"C-S-A3-2\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:40:00Z\",\n  \"available_at\": \"2026-10-15T08:40:00Z\",\n  \"source_document_id\": \"DOC-C-S-A3-2\",\n  \"source_ref\": \"Authored water handover course / C-S-A3-2\",\n  \"custody_event_id\": \"C-S-A3-2\",\n  \"sample_record_id\": \"S-A3\",\n  \"sequence\": \"2\",\n  \"event_type\": \"transferred\",\n  \"from_party_id\": \"COLLECTOR\",\n  \"to_party_id\": \"COURIER\",\n  \"event_at\": \"2026-10-15T08:40:00Z\",\n  \"actor_id\": \"COLLECTOR\",\n  \"condition\": \"sealed\",\n  \"receipt_ref\": \"TRANSFER-S-A3\"\n}"
+  },
+  "DOC-C-S-A3-3": {
+    "id": "DOC-C-S-A3-3",
+    "available_at": "2026-10-15T09:00:00Z",
+    "text": "Authored complete source for C-S-A3-3\n{\n  \"id\": \"C-S-A3-3\",\n  \"record_key\": \"C-S-A3-3\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:00:00Z\",\n  \"available_at\": \"2026-10-15T09:00:00Z\",\n  \"source_document_id\": \"DOC-C-S-A3-3\",\n  \"source_ref\": \"Authored water handover course / C-S-A3-3\",\n  \"custody_event_id\": \"C-S-A3-3\",\n  \"sample_record_id\": \"S-A3\",\n  \"sequence\": \"3\",\n  \"event_type\": \"rejected\",\n  \"from_party_id\": \"COURIER\",\n  \"to_party_id\": \"LAB-EXAMPLE\",\n  \"event_at\": \"2026-10-15T09:00:00Z\",\n  \"actor_id\": \"RECEIVER\",\n  \"condition\": \"container damaged\",\n  \"receipt_ref\": \"LAB-RECEIPT-S-A3\"\n}"
+  },
+  "DOC-ACC-S-A3": {
+    "id": "DOC-ACC-S-A3",
+    "available_at": "2026-10-15T09:00:00Z",
+    "text": "Authored complete source for ACC-S-A3\n{\n  \"id\": \"ACC-S-A3\",\n  \"record_key\": \"ACC-S-A3\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:00:00Z\",\n  \"available_at\": \"2026-10-15T09:00:00Z\",\n  \"source_document_id\": \"DOC-ACC-S-A3\",\n  \"source_ref\": \"Authored water handover course / ACC-S-A3\",\n  \"accession_id\": \"ACC-S-A3\",\n  \"sample_record_id\": \"S-A3\",\n  \"laboratory_record_id\": \"LAB1\",\n  \"lab_sample_id\": \"EXT-S-A3\",\n  \"received_at\": \"2026-10-15T09:00:00Z\",\n  \"received_by\": \"RECEIVER\",\n  \"disposition\": \"rejected\",\n  \"rejection_reason\": \"Container damaged on receipt\",\n  \"custody_event_record_id\": \"C-S-A3-3\"\n}"
+  },
+  "DOC-C-S-A4-1": {
+    "id": "DOC-C-S-A4-1",
+    "available_at": "2026-10-15T09:20:00Z",
+    "text": "Authored complete source for C-S-A4-1\n{\n  \"id\": \"C-S-A4-1\",\n  \"record_key\": \"C-S-A4-1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:20:00Z\",\n  \"available_at\": \"2026-10-15T09:20:00Z\",\n  \"source_document_id\": \"DOC-C-S-A4-1\",\n  \"source_ref\": \"Authored water handover course / C-S-A4-1\",\n  \"custody_event_id\": \"C-S-A4-1\",\n  \"sample_record_id\": \"S-A4\",\n  \"sequence\": \"1\",\n  \"event_type\": \"collected\",\n  \"from_party_id\": \"\",\n  \"to_party_id\": \"COLLECTOR\",\n  \"event_at\": \"2026-10-15T09:20:00Z\",\n  \"actor_id\": \"COLLECTOR\",\n  \"condition\": \"sealed\",\n  \"receipt_ref\": \"COLLECTION-S-A4\"\n}"
+  },
+  "DOC-C-S-A4-2": {
+    "id": "DOC-C-S-A4-2",
+    "available_at": "2026-10-15T09:25:00Z",
+    "text": "Authored complete source for C-S-A4-2\n{\n  \"id\": \"C-S-A4-2\",\n  \"record_key\": \"C-S-A4-2\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:25:00Z\",\n  \"available_at\": \"2026-10-15T09:25:00Z\",\n  \"source_document_id\": \"DOC-C-S-A4-2\",\n  \"source_ref\": \"Authored water handover course / C-S-A4-2\",\n  \"custody_event_id\": \"C-S-A4-2\",\n  \"sample_record_id\": \"S-A4\",\n  \"sequence\": \"2\",\n  \"event_type\": \"transferred\",\n  \"from_party_id\": \"COLLECTOR\",\n  \"to_party_id\": \"COURIER\",\n  \"event_at\": \"2026-10-15T09:25:00Z\",\n  \"actor_id\": \"COLLECTOR\",\n  \"condition\": \"sealed\",\n  \"receipt_ref\": \"TRANSFER-S-A4\"\n}"
+  },
+  "DOC-C-S-A4-3": {
+    "id": "DOC-C-S-A4-3",
+    "available_at": "2026-10-15T09:30:00Z",
+    "text": "Authored complete source for C-S-A4-3\n{\n  \"id\": \"C-S-A4-3\",\n  \"record_key\": \"C-S-A4-3\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:30:00Z\",\n  \"available_at\": \"2026-10-15T09:30:00Z\",\n  \"source_document_id\": \"DOC-C-S-A4-3\",\n  \"source_ref\": \"Authored water handover course / C-S-A4-3\",\n  \"custody_event_id\": \"C-S-A4-3\",\n  \"sample_record_id\": \"S-A4\",\n  \"sequence\": \"3\",\n  \"event_type\": \"received\",\n  \"from_party_id\": \"COURIER\",\n  \"to_party_id\": \"LAB-EXAMPLE\",\n  \"event_at\": \"2026-10-15T09:30:00Z\",\n  \"actor_id\": \"RECEIVER\",\n  \"condition\": \"accepted sealed container\",\n  \"receipt_ref\": \"LAB-RECEIPT-S-A4\"\n}"
+  },
+  "DOC-ACC-S-A4": {
+    "id": "DOC-ACC-S-A4",
+    "available_at": "2026-10-15T09:30:00Z",
+    "text": "Authored complete source for ACC-S-A4\n{\n  \"id\": \"ACC-S-A4\",\n  \"record_key\": \"ACC-S-A4\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:30:00Z\",\n  \"available_at\": \"2026-10-15T09:30:00Z\",\n  \"source_document_id\": \"DOC-ACC-S-A4\",\n  \"source_ref\": \"Authored water handover course / ACC-S-A4\",\n  \"accession_id\": \"ACC-S-A4\",\n  \"sample_record_id\": \"S-A4\",\n  \"laboratory_record_id\": \"LAB1\",\n  \"lab_sample_id\": \"EXT-S-A4\",\n  \"received_at\": \"2026-10-15T09:30:00Z\",\n  \"received_by\": \"RECEIVER\",\n  \"disposition\": \"accepted\",\n  \"rejection_reason\": \"\",\n  \"custody_event_record_id\": \"C-S-A4-3\"\n}"
+  },
+  "DOC-C-S-B1-1": {
+    "id": "DOC-C-S-B1-1",
+    "available_at": "2026-10-15T08:36:00Z",
+    "text": "Authored complete source for C-S-B1-1\n{\n  \"id\": \"C-S-B1-1\",\n  \"record_key\": \"C-S-B1-1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:36:00Z\",\n  \"available_at\": \"2026-10-15T08:36:00Z\",\n  \"source_document_id\": \"DOC-C-S-B1-1\",\n  \"source_ref\": \"Authored water handover course / C-S-B1-1\",\n  \"custody_event_id\": \"C-S-B1-1\",\n  \"sample_record_id\": \"S-B1\",\n  \"sequence\": \"1\",\n  \"event_type\": \"collected\",\n  \"from_party_id\": \"\",\n  \"to_party_id\": \"COLLECTOR\",\n  \"event_at\": \"2026-10-15T08:36:00Z\",\n  \"actor_id\": \"COLLECTOR\",\n  \"condition\": \"sealed\",\n  \"receipt_ref\": \"COLLECTION-S-B1\"\n}"
+  },
+  "DOC-C-S-B1-2": {
+    "id": "DOC-C-S-B1-2",
+    "available_at": "2026-10-15T08:45:00Z",
+    "text": "Authored complete source for C-S-B1-2\n{\n  \"id\": \"C-S-B1-2\",\n  \"record_key\": \"C-S-B1-2\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T08:45:00Z\",\n  \"available_at\": \"2026-10-15T08:45:00Z\",\n  \"source_document_id\": \"DOC-C-S-B1-2\",\n  \"source_ref\": \"Authored water handover course / C-S-B1-2\",\n  \"custody_event_id\": \"C-S-B1-2\",\n  \"sample_record_id\": \"S-B1\",\n  \"sequence\": \"2\",\n  \"event_type\": \"transferred\",\n  \"from_party_id\": \"COLLECTOR\",\n  \"to_party_id\": \"COURIER\",\n  \"event_at\": \"2026-10-15T08:45:00Z\",\n  \"actor_id\": \"COLLECTOR\",\n  \"condition\": \"sealed\",\n  \"receipt_ref\": \"TRANSFER-S-B1\"\n}"
+  },
+  "DOC-C-S-B1-3": {
+    "id": "DOC-C-S-B1-3",
+    "available_at": "2026-10-15T09:05:00Z",
+    "text": "Authored complete source for C-S-B1-3\n{\n  \"id\": \"C-S-B1-3\",\n  \"record_key\": \"C-S-B1-3\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:05:00Z\",\n  \"available_at\": \"2026-10-15T09:05:00Z\",\n  \"source_document_id\": \"DOC-C-S-B1-3\",\n  \"source_ref\": \"Authored water handover course / C-S-B1-3\",\n  \"custody_event_id\": \"C-S-B1-3\",\n  \"sample_record_id\": \"S-B1\",\n  \"sequence\": \"3\",\n  \"event_type\": \"received\",\n  \"from_party_id\": \"COURIER\",\n  \"to_party_id\": \"LAB-EXAMPLE\",\n  \"event_at\": \"2026-10-15T09:05:00Z\",\n  \"actor_id\": \"RECEIVER\",\n  \"condition\": \"accepted sealed container\",\n  \"receipt_ref\": \"LAB-RECEIPT-S-B1\"\n}"
+  },
+  "DOC-ACC-S-B1": {
+    "id": "DOC-ACC-S-B1",
+    "available_at": "2026-10-15T09:05:00Z",
+    "text": "Authored complete source for ACC-S-B1\n{\n  \"id\": \"ACC-S-B1\",\n  \"record_key\": \"ACC-S-B1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:05:00Z\",\n  \"available_at\": \"2026-10-15T09:05:00Z\",\n  \"source_document_id\": \"DOC-ACC-S-B1\",\n  \"source_ref\": \"Authored water handover course / ACC-S-B1\",\n  \"accession_id\": \"ACC-S-B1\",\n  \"sample_record_id\": \"S-B1\",\n  \"laboratory_record_id\": \"LAB1\",\n  \"lab_sample_id\": \"EXT-S-B1\",\n  \"received_at\": \"2026-10-15T09:05:00Z\",\n  \"received_by\": \"RECEIVER\",\n  \"disposition\": \"accepted\",\n  \"rejection_reason\": \"\",\n  \"custody_event_record_id\": \"C-S-B1-3\"\n}"
+  },
+  "DOC-C-S-C1-1": {
+    "id": "DOC-C-S-C1-1",
+    "available_at": "2026-10-15T09:00:00Z",
+    "text": "Authored complete source for C-S-C1-1\n{\n  \"id\": \"C-S-C1-1\",\n  \"record_key\": \"C-S-C1-1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:00:00Z\",\n  \"available_at\": \"2026-10-15T09:00:00Z\",\n  \"source_document_id\": \"DOC-C-S-C1-1\",\n  \"source_ref\": \"Authored water handover course / C-S-C1-1\",\n  \"custody_event_id\": \"C-S-C1-1\",\n  \"sample_record_id\": \"S-C1\",\n  \"sequence\": \"1\",\n  \"event_type\": \"collected\",\n  \"from_party_id\": \"\",\n  \"to_party_id\": \"COLLECTOR\",\n  \"event_at\": \"2026-10-15T09:00:00Z\",\n  \"actor_id\": \"COLLECTOR\",\n  \"condition\": \"sealed\",\n  \"receipt_ref\": \"COLLECTION-S-C1\"\n}"
+  },
+  "DOC-LINK-RESAMPLE": {
+    "id": "DOC-LINK-RESAMPLE",
+    "available_at": "2026-10-15T09:20:00Z",
+    "text": "Authored complete source for LINK-RESAMPLE\n{\n  \"id\": \"LINK-RESAMPLE\",\n  \"record_key\": \"LINK-RESAMPLE\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:20:00Z\",\n  \"available_at\": \"2026-10-15T09:20:00Z\",\n  \"source_document_id\": \"DOC-LINK-RESAMPLE\",\n  \"source_ref\": \"Authored water handover course / LINK-RESAMPLE\",\n  \"link_id\": \"LINK-RESAMPLE\",\n  \"sample_record_id\": \"S-A4\",\n  \"prior_sample_record_id\": \"S-A3\",\n  \"relationship\": \"resample\",\n  \"reason\": \"Replacement collection after damaged-container rejection\",\n  \"linked_at\": \"2026-10-15T09:20:00Z\",\n  \"linked_by\": \"COLLECTOR\"\n}"
+  },
+  "DOC-REP-A1": {
+    "id": "DOC-REP-A1",
+    "available_at": "2026-10-15T09:45:00Z",
+    "text": "Authored complete source for REP-A1\n{\n  \"id\": \"REP-A1\",\n  \"record_key\": \"REP-A1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:45:00Z\",\n  \"available_at\": \"2026-10-15T09:45:00Z\",\n  \"source_document_id\": \"DOC-REP-A1\",\n  \"source_ref\": \"Authored water handover course / REP-A1\",\n  \"report_id\": \"REP-A1\",\n  \"laboratory_record_id\": \"LAB1\",\n  \"system_id\": \"SYS-A\",\n  \"lab_report_ref\": \"EXTERNAL-REP-A1\",\n  \"issued_at\": \"2026-10-15T09:40:00Z\",\n  \"coverage_start\": \"2026-10-15T08:00:00Z\",\n  \"coverage_end\": \"2026-10-15T09:35:00Z\"\n}"
+  },
+  "DOC-REP-A4": {
+    "id": "DOC-REP-A4",
+    "available_at": "2026-10-15T10:10:00Z",
+    "text": "Authored complete source for REP-A4\n{\n  \"id\": \"REP-A4\",\n  \"record_key\": \"REP-A4\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T10:10:00Z\",\n  \"available_at\": \"2026-10-15T10:10:00Z\",\n  \"source_document_id\": \"DOC-REP-A4\",\n  \"source_ref\": \"Authored water handover course / REP-A4\",\n  \"report_id\": \"REP-A4\",\n  \"laboratory_record_id\": \"LAB1\",\n  \"system_id\": \"SYS-A\",\n  \"lab_report_ref\": \"EXTERNAL-REP-A4\",\n  \"issued_at\": \"2026-10-15T10:05:00Z\",\n  \"coverage_start\": \"2026-10-15T08:00:00Z\",\n  \"coverage_end\": \"2026-10-15T09:35:00Z\"\n}"
+  },
+  "DOC-REP-B1": {
+    "id": "DOC-REP-B1",
+    "available_at": "2026-10-15T09:50:00Z",
+    "text": "Authored complete source for REP-B1\n{\n  \"id\": \"REP-B1\",\n  \"record_key\": \"REP-B1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:50:00Z\",\n  \"available_at\": \"2026-10-15T09:50:00Z\",\n  \"source_document_id\": \"DOC-REP-B1\",\n  \"source_ref\": \"Authored water handover course / REP-B1\",\n  \"report_id\": \"REP-B1\",\n  \"laboratory_record_id\": \"LAB1\",\n  \"system_id\": \"SYS-B\",\n  \"lab_report_ref\": \"EXTERNAL-REP-B1\",\n  \"issued_at\": \"2026-10-15T09:45:00Z\",\n  \"coverage_start\": \"2026-10-15T08:00:00Z\",\n  \"coverage_end\": \"2026-10-15T09:35:00Z\"\n}"
+  },
+  "DOC-RESULT-A1": {
+    "id": "DOC-RESULT-A1",
+    "available_at": "2026-10-15T09:45:00Z",
+    "text": "Authored complete source for RESULT-A1\n{\n  \"id\": \"RESULT-A1\",\n  \"record_key\": \"RESULT-A1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:45:00Z\",\n  \"available_at\": \"2026-10-15T09:45:00Z\",\n  \"source_document_id\": \"DOC-RESULT-A1\",\n  \"source_ref\": \"Authored water handover course / RESULT-A1\",\n  \"result_id\": \"RESULT-A1\",\n  \"report_record_id\": \"REP-A1\",\n  \"accession_record_id\": \"ACC-S-A1\",\n  \"order_line_record_id\": \"LINE-A-CHEM\",\n  \"analyte\": \"CHEMICAL-X\",\n  \"method\": \"LAB-METHOD-CHEM\",\n  \"unit\": \"mg/L\",\n  \"value_text\": \"1.2\",\n  \"qualifier\": \"eq\",\n  \"reporting_limit\": \"0.4\",\n  \"detection_limit\": \"0.1\",\n  \"analysed_at\": \"2026-10-15T09:20:00Z\"\n}"
+  },
+  "DOC-RESULT-A2": {
+    "id": "DOC-RESULT-A2",
+    "available_at": "2026-10-15T09:45:00Z",
+    "text": "Authored complete source for RESULT-A2\n{\n  \"id\": \"RESULT-A2\",\n  \"record_key\": \"RESULT-A2\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:45:00Z\",\n  \"available_at\": \"2026-10-15T09:45:00Z\",\n  \"source_document_id\": \"DOC-RESULT-A2\",\n  \"source_ref\": \"Authored water handover course / RESULT-A2\",\n  \"result_id\": \"RESULT-A2\",\n  \"report_record_id\": \"REP-A1\",\n  \"accession_record_id\": \"ACC-S-A2\",\n  \"order_line_record_id\": \"LINE-A-MICRO\",\n  \"analyte\": \"MICRO-ORGANISM-X\",\n  \"method\": \"LAB-METHOD-PRESENCE\",\n  \"unit\": \"presence/absence\",\n  \"value_text\": \"Absent\",\n  \"qualifier\": \"absent\",\n  \"reporting_limit\": \"\",\n  \"detection_limit\": \"\",\n  \"analysed_at\": \"2026-10-15T09:22:00Z\"\n}"
+  },
+  "DOC-RESULT-A4": {
+    "id": "DOC-RESULT-A4",
+    "available_at": "2026-10-15T10:10:00Z",
+    "text": "Authored complete source for RESULT-A4\n{\n  \"id\": \"RESULT-A4\",\n  \"record_key\": \"RESULT-A4\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T10:10:00Z\",\n  \"available_at\": \"2026-10-15T10:10:00Z\",\n  \"source_document_id\": \"DOC-RESULT-A4\",\n  \"source_ref\": \"Authored water handover course / RESULT-A4\",\n  \"result_id\": \"RESULT-A4\",\n  \"report_record_id\": \"REP-A4\",\n  \"accession_record_id\": \"ACC-S-A4\",\n  \"order_line_record_id\": \"LINE-A-CHEM\",\n  \"analyte\": \"CHEMICAL-X\",\n  \"method\": \"LAB-METHOD-CHEM\",\n  \"unit\": \"mg/L\",\n  \"value_text\": \"0.4\",\n  \"qualifier\": \"lt\",\n  \"reporting_limit\": \"0.4\",\n  \"detection_limit\": \"0.1\",\n  \"analysed_at\": \"2026-10-15T09:45:00Z\"\n}"
+  },
+  "DOC-RESULT-B1": {
+    "id": "DOC-RESULT-B1",
+    "available_at": "2026-10-15T09:50:00Z",
+    "text": "Authored complete source for RESULT-B1\n{\n  \"id\": \"RESULT-B1\",\n  \"record_key\": \"RESULT-B1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T09:50:00Z\",\n  \"available_at\": \"2026-10-15T09:50:00Z\",\n  \"source_document_id\": \"DOC-RESULT-B1\",\n  \"source_ref\": \"Authored water handover course / RESULT-B1\",\n  \"result_id\": \"RESULT-B1\",\n  \"report_record_id\": \"REP-B1\",\n  \"accession_record_id\": \"ACC-S-B1\",\n  \"order_line_record_id\": \"LINE-B-CHEM\",\n  \"analyte\": \"CHEMICAL-X\",\n  \"method\": \"LAB-METHOD-CHEM\",\n  \"unit\": \"mg/L\",\n  \"value_text\": \"ND\",\n  \"qualifier\": \"nd\",\n  \"reporting_limit\": \"0.4\",\n  \"detection_limit\": \"0.1\",\n  \"analysed_at\": \"2026-10-15T09:25:00Z\"\n}"
+  },
+  "DOC-REP-A2": {
+    "id": "DOC-REP-A2",
+    "available_at": "2026-10-15T11:05:00Z",
+    "text": "Authored complete source for REP-A2\n{\n  \"id\": \"REP-A2\",\n  \"record_key\": \"REP-A1\",\n  \"revision\": \"2\",\n  \"supersedes_id\": \"REP-A1\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T11:05:00Z\",\n  \"available_at\": \"2026-10-15T11:05:00Z\",\n  \"source_document_id\": \"DOC-REP-A2\",\n  \"source_ref\": \"Authored water handover course / REP-A2\",\n  \"report_id\": \"REP-A2\",\n  \"laboratory_record_id\": \"LAB1\",\n  \"system_id\": \"SYS-A\",\n  \"lab_report_ref\": \"EXTERNAL-REP-A1-REV2\",\n  \"issued_at\": \"2026-10-15T11:00:00Z\",\n  \"coverage_start\": \"2026-10-15T08:00:00Z\",\n  \"coverage_end\": \"2026-10-15T09:35:00Z\"\n}"
+  },
+  "DOC-RESULT-A1-CORRECTED": {
+    "id": "DOC-RESULT-A1-CORRECTED",
+    "available_at": "2026-10-15T11:05:00Z",
+    "text": "Authored complete source for RESULT-A1-CORRECTED\n{\n  \"id\": \"RESULT-A1-CORRECTED\",\n  \"record_key\": \"RESULT-A1\",\n  \"revision\": \"2\",\n  \"supersedes_id\": \"RESULT-A1\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T11:05:00Z\",\n  \"available_at\": \"2026-10-15T11:05:00Z\",\n  \"source_document_id\": \"DOC-RESULT-A1-CORRECTED\",\n  \"source_ref\": \"Authored water handover course / RESULT-A1-CORRECTED\",\n  \"result_id\": \"RESULT-A1-CORRECTED\",\n  \"report_record_id\": \"REP-A2\",\n  \"accession_record_id\": \"ACC-S-A1\",\n  \"order_line_record_id\": \"LINE-A-CHEM\",\n  \"analyte\": \"CHEMICAL-X\",\n  \"method\": \"LAB-METHOD-CHEM\",\n  \"unit\": \"mg/L\",\n  \"value_text\": \"1.1\",\n  \"qualifier\": \"eq\",\n  \"reporting_limit\": \"0.4\",\n  \"detection_limit\": \"0.1\",\n  \"analysed_at\": \"2026-10-15T09:20:00Z\"\n}"
+  },
+  "DOC-AMEND-REPLACE": {
+    "id": "DOC-AMEND-REPLACE",
+    "available_at": "2026-10-15T11:05:00Z",
+    "text": "Authored complete source for AMEND-REPLACE\n{\n  \"id\": \"AMEND-REPLACE\",\n  \"record_key\": \"AMEND-REPLACE\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T11:05:00Z\",\n  \"available_at\": \"2026-10-15T11:05:00Z\",\n  \"source_document_id\": \"DOC-AMEND-REPLACE\",\n  \"source_ref\": \"Authored water handover course / AMEND-REPLACE\",\n  \"amendment_id\": \"AMEND-REPLACE\",\n  \"report_record_id\": \"REP-A2\",\n  \"prior_report_record_id\": \"REP-A1\",\n  \"prior_report_sha256\": \"894a8528eac33dcd0f51dd34adce3316b9064c9e8381621f2c5c82f890714c59\",\n  \"prior_result_record_id\": \"RESULT-A1\",\n  \"prior_result_sha256\": \"8329285838ea606469a727c7f3b668e56dd6d601a2a5acea081944d5e1d6df05\",\n  \"action\": \"replace\",\n  \"replacement_result_record_id\": \"RESULT-A1-CORRECTED\",\n  \"reason\": \"Laboratory corrected transcription\",\n  \"authorised_at\": \"2026-10-15T10:55:00Z\",\n  \"authorised_by\": \"REVIEWER\"\n}"
+  },
+  "DOC-AMEND-CARRY": {
+    "id": "DOC-AMEND-CARRY",
+    "available_at": "2026-10-15T11:05:00Z",
+    "text": "Authored complete source for AMEND-CARRY\n{\n  \"id\": \"AMEND-CARRY\",\n  \"record_key\": \"AMEND-CARRY\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T11:05:00Z\",\n  \"available_at\": \"2026-10-15T11:05:00Z\",\n  \"source_document_id\": \"DOC-AMEND-CARRY\",\n  \"source_ref\": \"Authored water handover course / AMEND-CARRY\",\n  \"amendment_id\": \"AMEND-CARRY\",\n  \"report_record_id\": \"REP-A2\",\n  \"prior_report_record_id\": \"REP-A1\",\n  \"prior_report_sha256\": \"894a8528eac33dcd0f51dd34adce3316b9064c9e8381621f2c5c82f890714c59\",\n  \"prior_result_record_id\": \"RESULT-A2\",\n  \"prior_result_sha256\": \"62da8cf28060d9d6808f25826abdce3148a75e41c09bb443acc909910ae989df\",\n  \"action\": \"carry_forward\",\n  \"replacement_result_record_id\": \"\",\n  \"reason\": \"Explicit unchanged result carried forward\",\n  \"authorised_at\": \"2026-10-15T10:55:00Z\",\n  \"authorised_by\": \"REVIEWER\"\n}"
+  },
+  "DOC-REVIEW-RESULT-A1": {
+    "id": "DOC-REVIEW-RESULT-A1",
+    "available_at": "2026-10-15T10:00:00Z",
+    "text": "Authored complete source for REVIEW-RESULT-A1\n{\n  \"id\": \"REVIEW-RESULT-A1\",\n  \"record_key\": \"REVIEW-RESULT-A1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T10:00:00Z\",\n  \"available_at\": \"2026-10-15T10:00:00Z\",\n  \"source_document_id\": \"DOC-REVIEW-RESULT-A1\",\n  \"source_ref\": \"Authored water handover course / REVIEW-RESULT-A1\",\n  \"review_id\": \"REVIEW-RESULT-A1\",\n  \"result_record_id\": \"RESULT-A1\",\n  \"result_sha256\": \"8329285838ea606469a727c7f3b668e56dd6d601a2a5acea081944d5e1d6df05\",\n  \"reviewed_at\": \"2026-10-15T10:00:00Z\",\n  \"reviewed_by\": \"REVIEWER\",\n  \"decision\": \"accepted\",\n  \"comment\": \"Authored reviewer accepted original method, unit, resolution and source identity\"\n}"
+  },
+  "DOC-REVIEW-RESULT-A2": {
+    "id": "DOC-REVIEW-RESULT-A2",
+    "available_at": "2026-10-15T10:00:00Z",
+    "text": "Authored complete source for REVIEW-RESULT-A2\n{\n  \"id\": \"REVIEW-RESULT-A2\",\n  \"record_key\": \"REVIEW-RESULT-A2\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T10:00:00Z\",\n  \"available_at\": \"2026-10-15T10:00:00Z\",\n  \"source_document_id\": \"DOC-REVIEW-RESULT-A2\",\n  \"source_ref\": \"Authored water handover course / REVIEW-RESULT-A2\",\n  \"review_id\": \"REVIEW-RESULT-A2\",\n  \"result_record_id\": \"RESULT-A2\",\n  \"result_sha256\": \"62da8cf28060d9d6808f25826abdce3148a75e41c09bb443acc909910ae989df\",\n  \"reviewed_at\": \"2026-10-15T10:00:00Z\",\n  \"reviewed_by\": \"REVIEWER\",\n  \"decision\": \"accepted\",\n  \"comment\": \"Authored reviewer accepted original method, unit, resolution and source identity\"\n}"
+  },
+  "DOC-REVIEW-RESULT-B1": {
+    "id": "DOC-REVIEW-RESULT-B1",
+    "available_at": "2026-10-15T10:00:00Z",
+    "text": "Authored complete source for REVIEW-RESULT-B1\n{\n  \"id\": \"REVIEW-RESULT-B1\",\n  \"record_key\": \"REVIEW-RESULT-B1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T10:00:00Z\",\n  \"available_at\": \"2026-10-15T10:00:00Z\",\n  \"source_document_id\": \"DOC-REVIEW-RESULT-B1\",\n  \"source_ref\": \"Authored water handover course / REVIEW-RESULT-B1\",\n  \"review_id\": \"REVIEW-RESULT-B1\",\n  \"result_record_id\": \"RESULT-B1\",\n  \"result_sha256\": \"8b39e37fec2a414e08721979d00f62e62e3a2cbdfc27dd46a4cc4586faa3a236\",\n  \"reviewed_at\": \"2026-10-15T10:00:00Z\",\n  \"reviewed_by\": \"REVIEWER\",\n  \"decision\": \"accepted\",\n  \"comment\": \"Authored reviewer accepted original method, unit, resolution and source identity\"\n}"
+  },
+  "DOC-REVIEW-RESULT-A4": {
+    "id": "DOC-REVIEW-RESULT-A4",
+    "available_at": "2026-10-15T10:20:00Z",
+    "text": "Authored complete source for REVIEW-RESULT-A4\n{\n  \"id\": \"REVIEW-RESULT-A4\",\n  \"record_key\": \"REVIEW-RESULT-A4\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T10:20:00Z\",\n  \"available_at\": \"2026-10-15T10:20:00Z\",\n  \"source_document_id\": \"DOC-REVIEW-RESULT-A4\",\n  \"source_ref\": \"Authored water handover course / REVIEW-RESULT-A4\",\n  \"review_id\": \"REVIEW-RESULT-A4\",\n  \"result_record_id\": \"RESULT-A4\",\n  \"result_sha256\": \"9b3792a50819cba5c8b33d39c030b13f3b34756a604c7294edc757a2e703007c\",\n  \"reviewed_at\": \"2026-10-15T10:20:00Z\",\n  \"reviewed_by\": \"REVIEWER\",\n  \"decision\": \"accepted\",\n  \"comment\": \"Authored reviewer accepted original method, unit, resolution and source identity\"\n}"
+  },
+  "DOC-REVIEW-RESULT-A1-CORRECTED": {
+    "id": "DOC-REVIEW-RESULT-A1-CORRECTED",
+    "available_at": "2026-10-15T11:15:00Z",
+    "text": "Authored complete source for REVIEW-RESULT-A1-CORRECTED\n{\n  \"id\": \"REVIEW-RESULT-A1-CORRECTED\",\n  \"record_key\": \"REVIEW-RESULT-A1-CORRECTED\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T11:15:00Z\",\n  \"available_at\": \"2026-10-15T11:15:00Z\",\n  \"source_document_id\": \"DOC-REVIEW-RESULT-A1-CORRECTED\",\n  \"source_ref\": \"Authored water handover course / REVIEW-RESULT-A1-CORRECTED\",\n  \"review_id\": \"REVIEW-RESULT-A1-CORRECTED\",\n  \"result_record_id\": \"RESULT-A1-CORRECTED\",\n  \"result_sha256\": \"362d01ea164fc736df774ea1b74883dd6cf0f903cd1e95381598829542a1f375\",\n  \"reviewed_at\": \"2026-10-15T11:15:00Z\",\n  \"reviewed_by\": \"REVIEWER\",\n  \"decision\": \"accepted\",\n  \"comment\": \"Authored reviewer accepted original method, unit, resolution and source identity\"\n}"
+  },
+  "DOC-INPUT-RESULT-A1": {
+    "id": "DOC-INPUT-RESULT-A1",
+    "available_at": "2026-10-15T10:15:00Z",
+    "text": "Authored complete source for INPUT-RESULT-A1\n{\n  \"id\": \"INPUT-RESULT-A1\",\n  \"record_key\": \"INPUT-RESULT-A1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T10:15:00Z\",\n  \"available_at\": \"2026-10-15T10:15:00Z\",\n  \"source_document_id\": \"DOC-INPUT-RESULT-A1\",\n  \"source_ref\": \"Authored water handover course / INPUT-RESULT-A1\",\n  \"input_id\": \"INPUT-RESULT-A1\",\n  \"target_report_id\": \"TARGET-SYS-A\",\n  \"result_record_id\": \"RESULT-A1\",\n  \"result_sha256\": \"8329285838ea606469a727c7f3b668e56dd6d601a2a5acea081944d5e1d6df05\",\n  \"review_record_id\": \"REVIEW-RESULT-A1\",\n  \"selected_at\": \"2026-10-15T10:15:00Z\",\n  \"selected_by\": \"PREPARER\"\n}"
+  },
+  "DOC-INPUT-RESULT-A2": {
+    "id": "DOC-INPUT-RESULT-A2",
+    "available_at": "2026-10-15T10:15:00Z",
+    "text": "Authored complete source for INPUT-RESULT-A2\n{\n  \"id\": \"INPUT-RESULT-A2\",\n  \"record_key\": \"INPUT-RESULT-A2\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T10:15:00Z\",\n  \"available_at\": \"2026-10-15T10:15:00Z\",\n  \"source_document_id\": \"DOC-INPUT-RESULT-A2\",\n  \"source_ref\": \"Authored water handover course / INPUT-RESULT-A2\",\n  \"input_id\": \"INPUT-RESULT-A2\",\n  \"target_report_id\": \"TARGET-SYS-A\",\n  \"result_record_id\": \"RESULT-A2\",\n  \"result_sha256\": \"62da8cf28060d9d6808f25826abdce3148a75e41c09bb443acc909910ae989df\",\n  \"review_record_id\": \"REVIEW-RESULT-A2\",\n  \"selected_at\": \"2026-10-15T10:15:00Z\",\n  \"selected_by\": \"PREPARER\"\n}"
+  },
+  "DOC-INPUT-RESULT-A4": {
+    "id": "DOC-INPUT-RESULT-A4",
+    "available_at": "2026-10-15T10:25:00Z",
+    "text": "Authored complete source for INPUT-RESULT-A4\n{\n  \"id\": \"INPUT-RESULT-A4\",\n  \"record_key\": \"INPUT-RESULT-A4\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T10:25:00Z\",\n  \"available_at\": \"2026-10-15T10:25:00Z\",\n  \"source_document_id\": \"DOC-INPUT-RESULT-A4\",\n  \"source_ref\": \"Authored water handover course / INPUT-RESULT-A4\",\n  \"input_id\": \"INPUT-RESULT-A4\",\n  \"target_report_id\": \"TARGET-SYS-A\",\n  \"result_record_id\": \"RESULT-A4\",\n  \"result_sha256\": \"9b3792a50819cba5c8b33d39c030b13f3b34756a604c7294edc757a2e703007c\",\n  \"review_record_id\": \"REVIEW-RESULT-A4\",\n  \"selected_at\": \"2026-10-15T10:25:00Z\",\n  \"selected_by\": \"PREPARER\"\n}"
+  },
+  "DOC-INPUT-RESULT-B1": {
+    "id": "DOC-INPUT-RESULT-B1",
+    "available_at": "2026-10-15T10:15:00Z",
+    "text": "Authored complete source for INPUT-RESULT-B1\n{\n  \"id\": \"INPUT-RESULT-B1\",\n  \"record_key\": \"INPUT-RESULT-B1\",\n  \"revision\": \"1\",\n  \"supersedes_id\": \"\",\n  \"record_status\": \"active\",\n  \"recorded_at\": \"2026-10-15T10:15:00Z\",\n  \"available_at\": \"2026-10-15T10:15:00Z\",\n  \"source_document_id\": \"DOC-INPUT-RESULT-B1\",\n  \"source_ref\": \"Authored water handover course / INPUT-RESULT-B1\",\n  \"input_id\": \"INPUT-RESULT-B1\",\n  \"target_report_id\": \"TARGET-SYS-B\",\n  \"result_record_id\": \"RESULT-B1\",\n  \"result_sha256\": \"8b39e37fec2a414e08721979d00f62e62e3a2cbdfc27dd46a4cc4586faa3a236\",\n  \"review_record_id\": \"REVIEW-RESULT-B1\",\n  \"selected_at\": \"2026-10-15T10:15:00Z\",\n  \"selected_by\": \"PREPARER\"\n}"
+  }
+}

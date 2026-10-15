@@ -1,0 +1,117 @@
+{
+  "execution": "Actual maintained full 24-path course plus four retained final source-identity and chronology countercases executed on corrected modules",
+  "checks": [
+    {
+      "name": "All36 source and returned families retain exact matched rows",
+      "passed": true
+    },
+    {
+      "name": "Nine consecutive occurrences retain rejection and field-only absence; seven have usable evidence",
+      "passed": true
+    },
+    {
+      "name": "Six samples include one rejected accession and one field-only sample, with actual resampling lineage",
+      "passed": true
+    },
+    {
+      "name": "Partial amendment preserves the earlier complete report while exposing current reconciliation",
+      "passed": true
+    },
+    {
+      "name": "Actual sending and receipt remain distinct recorded events",
+      "passed": true
+    },
+    {
+      "name": "Registered standby status is separate from explicitly observed zero use",
+      "passed": true
+    },
+    {
+      "name": "A source-backed zero reading is usable, not an absent observation",
+      "passed": true
+    },
+    {
+      "name": "Whole recurring active work retains increased review and signed432 to315 comparison",
+      "passed": true
+    },
+    {
+      "name": "Incoming board acknowledgement binds the complete actual source packet",
+      "passed": true
+    },
+    {
+      "name": "Earlier retained exports preserve delayed field sync as unobserved until actual availability",
+      "passed": true
+    },
+    {
+      "name": "Unknown inclusion remains unresolved and suppresses the complete fraction",
+      "passed": true
+    },
+    {
+      "name": "Malformed potentially eligible population source remains unresolved instead of disappearing",
+      "passed": true
+    },
+    {
+      "name": "Reviews first available after send cannot retroactively authorise the actual dispatch",
+      "passed": true
+    },
+    {
+      "name": "Receipt cannot bind a different recipient from its exact dispatch",
+      "passed": true
+    },
+    {
+      "name": "Changed exact input invalidates frozen report and its retained review basis",
+      "passed": true
+    },
+    {
+      "name": "Duplicate external dispatch identity cannot manufacture a second delivery",
+      "passed": true
+    },
+    {
+      "name": "Overlapping source-use periods are unresolved instead of double counted",
+      "passed": true
+    },
+    {
+      "name": "Actual reopened work remains overdue and does not disappear after earlier completion",
+      "passed": true
+    },
+    {
+      "name": "An empty effort export remains unobserved, not zero work",
+      "passed": true
+    },
+    {
+      "name": "Changing handover responsibilities invalidates the original acknowledgement",
+      "passed": true
+    },
+    {
+      "name": "Later schedule cancellation preserves an earlier valid task completion",
+      "passed": true
+    },
+    {
+      "name": "Observed use retains its quantity but requires valid context across the whole interval",
+      "passed": true
+    },
+    {
+      "name": "Actual report and receipt obligations complete tasks at their own event instants",
+      "passed": true
+    },
+    {
+      "name": "Ambiguous reading identities remain visible source rows rather than empty display entries",
+      "passed": true
+    },
+    {
+      "name": "Unresolved later task source cannot disappear behind an earlier completed state",
+      "passed": true
+    },
+    {
+      "name": "Invalid future dispatch timing remains an unresolved source record without crashing analysis",
+      "passed": true
+    },
+    {
+      "name": "Invalid future report cutoff remains incomplete without crashing historical population",
+      "passed": true
+    },
+    {
+      "name": "Whole source and retained original documents reopen in the complete session",
+      "passed": true
+    }
+  ]
+}
