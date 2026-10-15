@@ -36,6 +36,7 @@ export async function runOperatorCourse({files,codec,build}){
  await click("data-view","editions");for(const action of ["export-report","export-report-csv"])await click("data-action",action);checks.push("Exact baseline/candidate comparison, full reports and named review");
  await click("data-view","input");input("rawInput",'{"unfinished":');await click("data-view","sources");input("mapping.raw",'{"unfinished_mapping":');await click("data-view","review");input("review.note","Unfinished next review");
  for(const section of ["input","sources","editions","comparison","review","transfer","guide"])await click("data-view",section);
+ await click("data-view","transfer");
  for(const action of ["export-session","export-html","export-source","export-domain"])await click("data-global",action);
  await click("data-action","handover-zip");
  const complete=session(),findDownload=name=>downloads.findLast(x=>x.name===name),working=findDownload("Costing_Working.json").parts[0],editable=findDownload("Costing_Editable.html").parts[0],source=findDownload("Costing_Complete_Application_Source.json").parts[0],zip=findDownload("Costing_Complete_Handover.zip").parts[0];
