@@ -1,17 +1,15 @@
 // MIT. Complete source export with durable progress and exact final member readback.
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
 import {core,originalSessions,sessions,codec} from '../runtime.mjs';
+import {moduleSources} from '../host/export.mjs';
 import {buildFleetAvailabilityStudyDesk} from '../src/build-installed.mjs';
 import {createFleetAvailabilityStudyExportJob} from '../host/export-core.mjs';
 const require=createRequire(import.meta.url),zip=require('../src/connected_zip.cjs'),storage=require('./checkpoint-storage.cjs'),reader=require('./checkpoint-reader.cjs');
 const args={};for(let i=2;i<process.argv.length;i+=2){if(!process.argv[i].startsWith('--')||process.argv[i+1]===undefined)throw Error('Use --input-manifest PATH --input-root PATH --output PATH');args[process.argv[i].slice(2)]=process.argv[i+1];}
 for(const key of ['input-manifest','input-root','output'])if(!args[key]||!path.isAbsolute(args[key]))throw Error('Use absolute '+key);
-const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),files={},sourceManifest=JSON.parse(await fs.readFile(path.join(root,'SOURCE_MANIFEST.json'),'utf8'));
-const sourceRows=sourceManifest.members??sourceManifest.files;if(!Array.isArray(sourceRows))throw Error('Complete source manifest is missing its member list');
-for(const row of sourceRows){const text=await fs.readFile(path.join(root,row.path),'utf8');if(codec.utf8Encode(text).length!==row.bytes||codec.hashText(text)!==row.sha256)throw Error('Source changed '+row.path);files[row.path]=text;}files['SOURCE_MANIFEST.json']=await fs.readFile(path.join(root,'SOURCE_MANIFEST.json'),'utf8');
+const files=await moduleSources();
 const input=JSON.parse(await fs.readFile(args['input-manifest'],'utf8'));let compact='';
 for(const row of input.parts){const text=await fs.readFile(path.resolve(args['input-root'],row.path),'utf8');if(codec.utf8Encode(text).length!==row.bytes||codec.hashText(text)!==row.sha256)throw Error('Complete input fragment changed');compact+=text;}
 const inputSha=input.compactSha256||input.sha256;if(codec.hashText(compact)!==inputSha||codec.utf8Encode(compact).length!==(input.compactBytes||input.bytes))throw Error('Complete input identity changed');
