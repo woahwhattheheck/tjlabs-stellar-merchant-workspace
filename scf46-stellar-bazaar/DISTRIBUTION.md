@@ -124,6 +124,16 @@ uses request time or a client-supplied clock. Internal `BazaarCatalog.list()`,
 `search()` and `pricing()` retain their original nested catalog rows for Atlas,
 ranking and operator consumers.
 
+Before routing public traffic to a newly opened or restored catalog, read
+`GET /discovery/readiness`. It returns only aggregate process-local state:
+`ready`, `x402Version`, `catalogVersion`, total resources, observed resources and
+unready resources. It never returns resource URLs, payment terms, source records
+or query text. HTTP 200 means every current row can emit the required v2 wire
+shape with a retained trusted `lastUpdated` observation. HTTP 503 means at least
+one internal row is missing that provenance or cannot be projected; keep the
+public discovery route out of service and repair the original ingestion source.
+An empty catalog is wire-ready and reports zero resources.
+
 Run the focused offline compatibility probe with:
 
 ```sh

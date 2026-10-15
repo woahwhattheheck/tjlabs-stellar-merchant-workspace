@@ -53,6 +53,10 @@ assert.deepEqual(Object.keys(internalPricing).sort(), ['pagination','pricingView
 assert.equal(typeof internalPricing.resources[0].resource, 'object');
 
 const handler = createDiscoveryServer(catalog);
+const ready = await request(handler, '/discovery/readiness');
+assert.equal(ready.status, 200);
+assert.deepEqual(ready.body, { ready: true, x402Version: 2, catalogVersion: 3,
+  resources: 3, observedResources: 3, unreadyResources: 0 });
 const listed = await request(handler, '/discovery/resources?limit=10');
 assert.equal(listed.status, 200);
 assert.equal(listed.headers['cache-control'], 'no-store');
@@ -81,6 +85,18 @@ listed.body.items[0].extensions.bazaar.info.input.type = 'mutated';
 const listedAgain = catalog.listDiscovery(new URLSearchParams({ limit: '10' }));
 assert.equal(listedAgain.items.some(row => row.accepts[0].payTo === 'mutated'), false);
 assert.equal(listedAgain.items.some(row => row.type === 'mutated'), false);
+
+// Internal callers may stage a structurally valid row before they have trusted
+// source provenance. The aggregate preflight makes that incomplete public-wire
+// state explicit without leaking the row or its payment terms.
+const incomplete = new BazaarCatalog();
+incomplete.insertValidated(entry({ url: 'https://unobserved.example/weather',
+  description: 'Internal staging row' }));
+const incompleteReadiness = await request(createDiscoveryServer(incomplete), '/discovery/readiness');
+assert.equal(incompleteReadiness.status, 503);
+assert.deepEqual(incompleteReadiness.body, { ready: false, x402Version: 2, catalogVersion: 1,
+  resources: 1, observedResources: 0, unreadyResources: 1 });
+assert.equal(JSON.stringify(incompleteReadiness.body).includes('unobserved.example'), false);
 
 // The production settlement path carries trusted observedAt and only accepted
 // corrections replace it; a stale conflicting write cannot move lastUpdated.
@@ -133,4 +149,5 @@ try {
 console.log(JSON.stringify({ officialVersion: listed.body.x402Version,
   listEnvelope: 'items', searchEnvelope: 'resources', rows: listed.body.items.length,
   mcpTools: 2, internalShapePreserved: true, detached: true,
+  readiness: ready.body, incompleteReadiness: incompleteReadiness.body,
   correctionTimestamp: AT[1], staleTimestampPreserved: true, durableReopen: true }));
