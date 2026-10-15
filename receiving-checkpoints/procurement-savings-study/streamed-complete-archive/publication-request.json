@@ -1,0 +1,17 @@
+{
+  "schema": "tjlabs.procurement-stream-publication-request.v1",
+  "sourceIndex": "receiving-checkpoints/procurement-savings-study/complete-archive/checkpoint.json",
+  "sourceIndexHead": "680e054dbf3cd4634bb866175a82e40df9d3483b",
+  "sourceIndexIdentity": {
+    "bytes": 7560197,
+    "sha256": "70b1bbfc08d460b84f1e8835e04654897e52e95a358e0d854bdb7bad40ff6a25"
+  },
+  "sourceIdentity": "5b7ee06f472cee9474f8928d303fa39e9c0ad0eb146c3c24313be54cface2ea3",
+  "expectedMembers": 25391,
+  "expectedBytes": 306562228,
+  "publisherCommit": "bf905de2a691ff1cf6ddfb6174857ea8aab5c1d2",
+  "publisherSha256": "a47832ed78736a7c34da8bcddb40be886ae6cf5e3997708b6c45fb0131feaff2",
+  "readerCommit": "f4214739cabfd8aa2d909f12f427c989c4810f4a",
+  "partBytes": 487500,
+  "commitParts": 16
+}
