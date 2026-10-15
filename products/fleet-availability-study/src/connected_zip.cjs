@@ -144,8 +144,15 @@ function packZipRecords(entries,options,allowCompression) {
     const added=76+names.length*2+packed.length;
     if(!Number.isSafeInteger(total+added)||(total+=added)>maxBytes) throw RangeError('ZIP bytes exceed the selected limit');
     let crc=crcCache.get(data);if(crc===undefined){crc=crc32(data);crcCache.set(data,crc);}
-    return {name,names,data,packed,method,mode,crc};
+    return {name,names,data,packed,method,mode,crc,bytes:data.length};
   }).sort((a,b)=>a.name<b.name?-1:a.name>b.name?1:0);
+  return writePreparedRecords(records,options);
+}
+function writePreparedRecords(records,options){
+  const {maxBytes,maxEntries}=limits(options);if(records.length>maxEntries)throw RangeError('ZIP entry collection exceeds its limit');
+  const stamp=timeFields(options.timestamp??'1980-01-01T00:00:00Z');let total=22,localBytes=0,centralBytes=0;
+  records=records.slice().sort((a,b)=>a.name<b.name?-1:a.name>b.name?1:0);
+  for(const r of records){const added=76+r.names.length*2+r.packed.length;if(!Number.isSafeInteger(total+added)||(total+=added)>maxBytes)throw RangeError('ZIP bytes exceed the selected limit');}
   checkPaths(records);
   for(const r of records){r.offset=localBytes;localBytes+=30+r.names.length+r.packed.length;centralBytes+=46+r.names.length;}
   const out=new Uint8Array(total),view=new DataView(out.buffer);let at=0;
@@ -153,13 +160,13 @@ function packZipRecords(entries,options,allowCompression) {
   for(const r of records) {
     u32(at,0x04034b50);u16(at+4,20);u16(at+6,0x800);u16(at+8,r.method);
     u16(at+10,stamp.time);u16(at+12,stamp.date);u32(at+14,r.crc);
-    u32(at+18,r.packed.length);u32(at+22,r.data.length);u16(at+26,r.names.length);
+    u32(at+18,r.packed.length);u32(at+22,r.bytes);u16(at+26,r.names.length);
     out.set(r.names,at+30);out.set(r.packed,at+30+r.names.length);at+=30+r.names.length+r.packed.length;
   }
   for(const r of records) {
     u32(at,0x02014b50);u16(at+4,(3<<8)|20);u16(at+6,20);u16(at+8,0x800);
     u16(at+10,r.method);u16(at+12,stamp.time);u16(at+14,stamp.date);u32(at+16,r.crc);
-    u32(at+20,r.packed.length);u32(at+24,r.data.length);u16(at+28,r.names.length);
+    u32(at+20,r.packed.length);u32(at+24,r.bytes);u16(at+28,r.names.length);
     u32(at+38,((0o100000|r.mode)<<16)>>>0);u32(at+42,r.offset);
     out.set(r.names,at+46);at+=46+r.names.length;
   }
@@ -167,6 +174,81 @@ function packZipRecords(entries,options,allowCompression) {
   u32(at+12,centralBytes);u32(at+16,localBytes);
   return out;
 }
+/**
+ * Prepare each member immediately and retain only its compressed bytes.
+ * A checkpoint contains ordinary base64 member payloads and their CRC/lengths.
+ * Resume inflates/checks one member at a time before admitting its prepared bytes.
+ */
+function createZipBuilder(options={},checkpoint=null){
+  if(!options||typeof options!=='object'||Array.isArray(options))throw TypeError('ZIP builder options must be an object');
+  if(checkpoint){
+    if(checkpoint.schema!=='commons.prepared-zip.v1'||!checkpoint.options||!Array.isArray(checkpoint.entries)||!Array.isArray(checkpoint.payloads))throw TypeError('Unsupported prepared ZIP checkpoint');
+    for(const key of ['timestamp','compression','deflate'])if(options[key]!==undefined&&JSON.stringify(options[key])!==JSON.stringify(checkpoint.options[key]))throw TypeError('Prepared ZIP output option changed: '+key);
+    options={...checkpoint.options,...options};
+  }
+  const selectedLimits=limits(options),compression=archiveOptions(options),timestamp=options.timestamp??'1980-01-01T00:00:00Z';
+  timeFields(timestamp);
+  if(options.deflateRaw!==undefined&&typeof options.deflateRaw!=='function')throw TypeError('ZIP deflateRaw must be a function');
+  if(options.inflateRaw!==undefined&&typeof options.inflateRaw!=='function')throw TypeError('ZIP inflateRaw must be a function');
+  const stableOptions={timestamp,maxBytes:selectedLimits.maxBytes,maxEntries:selectedLimits.maxEntries,maxUncompressedBytes:compression.maxUncompressedBytes,compression:compression.selected,deflate:JSON.parse(JSON.stringify(compression.deflate))};
+  const records=[],names=new Set(),byName=new Map(),restoredPayloads=new Map(),usedPayloads=new Set(),retainedPayloads=new WeakSet();let uncompressedBytes=0,packedBytes=22,retainedPackedBytes=0;
+  const metadata=r=>({name:r.name,mode:r.mode,bytes:r.bytes,compressedBytes:r.packed.length,method:r.method,crc32:r.crc});
+  function admit(r){
+    if(records.length>=selectedLimits.maxEntries)throw RangeError('ZIP entry collection exceeds its limit');
+    if(names.has(r.name))throw TypeError('Duplicate ZIP member '+r.name);
+    if(!Number.isSafeInteger(uncompressedBytes+r.bytes)||uncompressedBytes+r.bytes>compression.maxUncompressedBytes)throw RangeError('Complete uncompressed ZIP members exceed the selected limit');
+    const added=76+r.names.length*2+r.packed.length;
+    if(!Number.isSafeInteger(packedBytes+added)||packedBytes+added>selectedLimits.maxBytes)throw RangeError('ZIP bytes exceed the selected limit');
+    names.add(r.name);records.push(r);byName.set(r.name,r);if(!retainedPayloads.has(r.packed)){retainedPayloads.add(r.packed);retainedPackedBytes+=r.packed.length;}uncompressedBytes+=r.bytes;packedBytes+=added;return metadata(r);
+  }
+  function add(entry){
+    const name=entry?.name,nameBytes=pathName(name),mode=entry.mode??0o644;
+    if(!Number.isInteger(mode)||mode<0||mode>0o777)throw TypeError('ZIP member mode must be an ordinary file permission');
+    const data=typeof entry.data==='string'?utf8(entry.data):entry.data;
+    if(!(data instanceof Uint8Array))throw TypeError('ZIP member data must be a UTF-8 string or Uint8Array');
+    if(!Number.isSafeInteger(uncompressedBytes+data.length)||uncompressedBytes+data.length>compression.maxUncompressedBytes)throw RangeError('Complete uncompressed ZIP members exceed the selected limit');
+    const selected=entry.compression??compression.selected;
+    if(!['store','deflate','auto'].includes(selected))throw TypeError('ZIP member compression must be store, deflate or auto');
+    const prepared={};
+    let packed,method=0;
+    if(selected!=='store'){
+      if(!prepared.deflated){
+        const config={...compression.deflate,huffman:compression.deflate.huffman??'auto',max_input_bytes:Math.max(1,compression.maxUncompressedBytes)};
+        const candidate=options.deflateRaw?options.deflateRaw(data,config):require('./connected_gzip.cjs').deflateRawBytes(data,config).data;
+        if(!(candidate instanceof Uint8Array))throw TypeError('ZIP compressor must return raw DEFLATE bytes');
+        prepared.deflated=new Uint8Array(candidate);
+      }
+      if(selected==='deflate'||prepared.deflated.length<data.length){packed=prepared.deflated;method=8;}
+    }
+    if(!packed){if(!prepared.stored)prepared.stored=new Uint8Array(data);packed=prepared.stored;}
+    const crc=crc32(data);
+    return admit({name,names:nameBytes,mode,packed,method,crc,bytes:data.length});
+  }
+  function copy(name,sourceName,mode){const prior=byName.get(sourceName);if(!prior)throw TypeError('Prepared ZIP source member missing');const actualMode=mode??prior.mode;if(!Number.isInteger(actualMode)||actualMode<0||actualMode>0o777)throw TypeError('ZIP member mode must be an ordinary file permission');return admit({...prior,name,names:pathName(name),mode:actualMode});}
+  function restore(entry){
+    const name=entry?.name,nameBytes=pathName(name),mode=entry.mode,bytes=entry.bytes,crc=entry.crc32,method=entry.method;
+    if(!Number.isInteger(mode)||mode<0||mode>0o777||!Number.isSafeInteger(bytes)||bytes<0||bytes>0xffffffff||!Number.isInteger(crc)||crc<0||crc>0xffffffff||![0,8].includes(method)||!Number.isSafeInteger(entry.compressedBytes)||entry.compressedBytes<0||entry.compressedBytes>selectedLimits.maxBytes)throw TypeError('Prepared ZIP member metadata changed');
+    if(!Number.isSafeInteger(uncompressedBytes+bytes)||uncompressedBytes+bytes>compression.maxUncompressedBytes)throw RangeError('Complete uncompressed ZIP members exceed the selected limit');
+    if(!Number.isSafeInteger(entry.payload_index)||entry.payload_index<0||entry.payload_index>=checkpoint.payloads.length)throw TypeError('Prepared ZIP payload reference changed');
+    const encodedPayload=checkpoint.payloads[entry.payload_index];if(typeof encodedPayload!=='string'||encodedPayload.length%4!==0||encodedPayload.length/4*3-(encodedPayload.endsWith('==')?2:encodedPayload.endsWith('=')?1:0)!==entry.compressedBytes||packedBytes+76+nameBytes.length*2+entry.compressedBytes>selectedLimits.maxBytes)throw TypeError('Prepared ZIP payload size changed or exceeds the selected limit');
+    usedPayloads.add(entry.payload_index);const restoreKey=[entry.payload_index,bytes,crc,method,entry.compressedBytes].join(':');const previous=restoredPayloads.get(restoreKey);
+    if(previous)return admit({name,names:nameBytes,mode,bytes,crc,method,packed:previous});
+    const packed=fromBase64(encodedPayload);
+    if(packed.length!==entry.compressedBytes)throw TypeError('Prepared ZIP compressed member length changed');
+    const config={expected_bytes:bytes,expected_crc32:crc,max_output_bytes:Math.max(1,bytes),max_input_bytes:Math.max(1,Math.min(selectedLimits.maxBytes,0x7fffffff))};
+    const data=method===0?packed:options.inflateRaw?options.inflateRaw(packed,config):require('./connected_gzip.cjs').inflateRawBytes(packed,config).data;
+    if(!(data instanceof Uint8Array)||data.length!==bytes||crc32(data)!==crc)throw TypeError('Prepared ZIP original bytes changed: '+name);
+    restoredPayloads.set(restoreKey,packed);return admit({name,names:nameBytes,mode,bytes,crc,method,packed});
+  }
+  if(checkpoint){if(checkpoint.entries.length>selectedLimits.maxEntries)throw RangeError('ZIP entry collection exceeds its limit');for(const entry of checkpoint.entries)restore(entry);if(usedPayloads.size!==checkpoint.payloads.length)throw TypeError('Prepared ZIP checkpoint contains unreferenced payloads');checkPaths(records);restoredPayloads.clear();}
+  function snapshot(){
+    const indices=new WeakMap(),payloads=[];const entries=records.map(r=>{let index=indices.get(r.packed);if(index===undefined){index=payloads.length;payloads.push(base64(r.packed));indices.set(r.packed,index);}return {...metadata(r),payload_index:index};});
+    return {schema:'commons.prepared-zip.v1',options:{...stableOptions,deflate:JSON.parse(JSON.stringify(stableOptions.deflate))},entries,payloads};
+  }
+  function statistics(){return{entries:records.length,uncompressedBytes,archiveBytes:packedBytes,retainedPackedBytes};}
+  return Object.freeze({add,copy,finish:()=>writePreparedRecords(records,stableOptions),snapshot,statistics,entries:()=>records.map(metadata)});
+}
+
 function readStoredZip(bytes,options={}) { return readZipRecords(bytes,options,false); }
 function readZip(bytes,options={}) { return readZipRecords(bytes,options,true); }
 function readZipRecords(bytes,options,allowCompression) {
@@ -216,4 +298,4 @@ function readZipRecords(bytes,options,allowCompression) {
   checkPaths(records);
   return records;
 }
-module.exports={utf8,utf8Text,base64,fromBase64,crc32,packStoredZip,readStoredZip,packZip,readZip};
+module.exports={utf8,utf8Text,base64,fromBase64,crc32,packStoredZip,readStoredZip,packZip,readZip,createZipBuilder};

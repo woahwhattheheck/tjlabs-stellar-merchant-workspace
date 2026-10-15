@@ -6,11 +6,14 @@ module.exports=async function completeArchiveReadback(B,files,bank,progress=()=>
  const watch=(label,fn)=>function(...args){const at=Date.now(),index=counts[label]=(counts[label]||0)+1;progress({phase:label+'-start',index,elapsedMs:at-start});const result=fn(...args),row={phase:label,index,ms:Date.now()-at,elapsedMs:Date.now()-start};stages.push(row);progress(row);return result;};
  const M={...B.M,historyStudy:watch('history',(...a)=>B.M.historyStudy(...a)),branchSession:watch('branches',(...a)=>B.M.branchSession(...a)),exports:watch('session-export',(...a)=>B.M.exports(...a))};
  const core={...B.core,exports:watch('studies',(...a)=>B.core.exports(...a))};
- const zip={...B.zip,packZip(entries,options){progress({phase:'zip-start',members:entries.length,rawBytes:entries.reduce((n,e)=>n+e.data.length,0),elapsedMs:Date.now()-start});const at=Date.now(),raw=options.deflateRaw;let rawBytes=0,last=at;
-  const result=B.zip.packZip(entries,{...options,deflateRaw(bytes,cfg){const packed=raw(bytes,cfg);counts.compression++;rawBytes+=bytes.length;if(counts.compression%100===0||Date.now()-last>5000){last=Date.now();progress({phase:'compression',unique:counts.compression,inputBytes:rawBytes,elapsedMs:Date.now()-start});}return packed;}});
-  stages.push({phase:'zip',ms:Date.now()-at,members:entries.length,bytes:result.length,uniqueCompression:counts.compression});progress(stages.at(-1));return result;
+ let lastEntry=Date.now();
+ const observeEntry=event=>{const now=Date.now();if(event.name.startsWith('managed/')||event.name.startsWith('working/')||event.name==='EXPORT_MANIFEST.json'||event.phase==='done'&&(event.entries%1000===0||now-lastEntry>10000)){lastEntry=now;progress({...event,phase:'entry-'+event.phase,elapsedMs:now-start});}};
+ const zip={...B.zip,createZipBuilder(options,checkpoint){
+  const raw=options.deflateRaw;let inputBytes=0,last=Date.now();
+  const builder=B.zip.createZipBuilder({...options,deflateRaw(bytes,cfg){const packed=raw(bytes,cfg);counts.compression++;inputBytes+=bytes.length;if(counts.compression%100===0||Date.now()-last>5000){last=Date.now();progress({phase:'compression',calls:counts.compression,inputBytes,elapsedMs:Date.now()-start});}return packed;}},checkpoint);
+  return Object.freeze({...builder,finish(){const before=builder.statistics();progress({phase:'zip-start',...before,elapsedMs:Date.now()-start});const at=Date.now(),result=builder.finish(),row={phase:'zip',ms:Date.now()-at,...before,bytes:result.length,compressionCalls:counts.compression};stages.push(row);progress(row);return result;}});
  }};
- const exportCore=Function(B.strip(files['host/export-core.mjs'])+';return buildFleetAvailabilityStudyExport;')(),bytes=exportCore(files,state,records,editions,{codec:B.C,core,originalSessions:M,sessions:B.sessions,buildDesk:B.build,zip}),built=Date.now();
+ const exportCore=Function(B.strip(files['host/export-core.mjs'])+';return buildFleetAvailabilityStudyExport;')(),bytes=exportCore(files,state,records,editions,{codec:B.C,core,originalSessions:M,sessions:B.sessions,buildDesk:B.build,zip,observeEntry}),built=Date.now();
  progress({phase:'archive_built',bytes:bytes.length,buildMs:built-start});
  const inflateRaw=(packed,cfg)=>{const gzip=new Uint8Array(packed.length+18);gzip.set([31,139,8,0,0,0,0,0,0,255]);gzip.set(packed,10);const v=new DataView(gzip.buffer);v.setUint32(gzip.length-8,cfg.expected_crc32,true);v.setUint32(gzip.length-4,cfg.expected_bytes,true);return B.C.inflateGzip(gzip);};
  let manifest=null,expected=null,count=0,rawBytes=0,sources=0,requestCount=0,editionCount=0,workingCount=0,studyCount=0;
