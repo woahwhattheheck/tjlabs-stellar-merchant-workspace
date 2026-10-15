@@ -4434,8 +4434,8 @@
     },
     {
       "path": "INSTALLED_RECEIVING.md",
-      "bytes": 1014,
-      "sha256": "512618765d7f3d9fb539860bda929fc1a223dbe09fd08c7ed0e813d7a4466f3b"
+      "bytes": 1667,
+      "sha256": "d5e0e8ae58d5cb39f5cffa3af415280da9029dd7d3ff2389b09f507cdbf8f09e"
     },
     {
       "path": "application-provider.mjs",
@@ -4529,8 +4529,8 @@
     },
     {
       "path": "host/export-core.mjs",
-      "bytes": 13952,
-      "sha256": "414be205f8f5ee62ba8f3618d04565a3b414bd406cc9d8dd2652217a8a9a53fa"
+      "bytes": 13953,
+      "sha256": "52674ae1066f925d514eacc2c4a7c343523089d4bff8b67631938d38a4614b28"
     },
     {
       "path": "host/export.mjs",
@@ -4819,18 +4819,28 @@
     },
     {
       "path": "receiving/run-resumable-export.mjs",
-      "bytes": 5793,
-      "sha256": "82c2f7d1c4a22c4c294d253ddec12be0c4261edb069b47d84c804ad57ed5e6f8"
+      "bytes": 4892,
+      "sha256": "492eb89e033f4cbfaccaefce01618827a80931ef51796af026b2298fe80f11ba"
     },
     {
       "path": "receiving/RESUMABLE_EXPORT.md",
-      "bytes": 2548,
-      "sha256": "3bfb1c9783f5791df4704dd227e4effdc3f1c78ddfc68bb1e26545a379990bdd"
+      "bytes": 4127,
+      "sha256": "d05aec1d4581384dc824cac46d00302c135e6d2affc96863745955abe5e66c18"
     },
     {
       "path": "contributions/resumable-export/SOURCE.json",
       "bytes": 420,
       "sha256": "ae544ba259554260a6ad5205b3c03f810686835b40b213c2ab8f2a9ca1c7caef"
+    },
+    {
+      "path": "receiving/prepared-stream.cjs",
+      "bytes": 17023,
+      "sha256": "8f0c8427c71ffd7584638c5f56ee52c65eba58a1a90ced010327671fe3af45b7"
+    },
+    {
+      "path": "native/finish-prepared.mjs",
+      "bytes": 3201,
+      "sha256": "afca8b17478ef73ce369ba300b2eea03ec9d251774d0e60ae34b839eaed6b86a"
     }
   ]
 }

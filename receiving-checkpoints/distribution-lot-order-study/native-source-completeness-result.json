@@ -1,0 +1,22 @@
+{
+  "schema": "commons.native-source-inventory-execution.v1",
+  "files": 970,
+  "upperMembers": 968,
+  "lowerMembers": 969,
+  "execution": "Actual production moduleSources with injected filesystem adapter, byte reads and hashes",
+  "sourceIdentity": {
+    "bytes": 14956687,
+    "sha256": "482929bf50693fe8f6480bf558386022ee5b2453e6ca3edcc16cc589b404c4c4"
+  },
+  "courseSource": "9b2453fe855ce3ad9fa8d057a1649265809ce7ee",
+  "purpose": "Complete native source inventory and streaming export entrypoint; whole retained course continues on recorded original source",
+  "archiveDefaultLimits": {
+    "maxBytes": 536870912,
+    "maxUncompressedBytes": 1073741824,
+    "maxEntries": 60000
+  },
+  "workingHTML": {
+    "bytes": 4079198,
+    "sha256": "1f8df83ff536665c2922a30b94a3e8c1226b72ba426b15bc6e698194f1c3c9ee"
+  }
+}

@@ -18,19 +18,14 @@
       "sha256": "66b341df2a1cfb459ba5e57f1b31b448b80e81750b086e573712e8b2f40e35fb"
     },
     {
-      "path": "Distribution_Lot_Order_Study_Desk.html",
-      "bytes": 3975557,
-      "sha256": "504c4a040faec70e2d9afb0f7e92adcbd1d5429262776ff90f7708b4df32a440"
-    },
-    {
       "path": "INSTALLED_OPERATION.md",
       "bytes": 3988,
       "sha256": "de7913e93ade1f871b44ebfd00acd2e995cdc9f14c3821bd30e8cc27e721176b"
     },
     {
       "path": "INSTALLED_RECEIVING.md",
-      "bytes": 1014,
-      "sha256": "512618765d7f3d9fb539860bda929fc1a223dbe09fd08c7ed0e813d7a4466f3b"
+      "bytes": 1667,
+      "sha256": "d5e0e8ae58d5cb39f5cffa3af415280da9029dd7d3ff2389b09f507cdbf8f09e"
     },
     {
       "path": "NATIVE.md",
@@ -59,8 +54,8 @@
     },
     {
       "path": "SOURCE_MANIFEST.json",
-      "bytes": 201894,
-      "sha256": "19101e1e3308cbbdd10168a17219912ed7f45f3b2d0bd509837b6b1e4b04b3ab"
+      "bytes": 203085,
+      "sha256": "5b528484d972cb70fa585cff41ec90f679d502eaf2ddddca0960fa709e4a3595"
     },
     {
       "path": "application-provider.mjs",
@@ -251,6 +246,16 @@
       "path": "contributions/prepared-archives/verification/verify-prepared-zip.cjs",
       "bytes": 907,
       "sha256": "cbb2da1e2768ddbf667986125cf309102a16a2e0bf74ce84f4c571310a0f69ae"
+    },
+    {
+      "path": "contributions/resumable-export/SOURCE.json",
+      "bytes": 420,
+      "sha256": "ae544ba259554260a6ad5205b3c03f810686835b40b213c2ab8f2a9ca1c7caef"
+    },
+    {
+      "path": "contributions/resumable-export/before-export-core.mjs",
+      "bytes": 4996,
+      "sha256": "0b2721b50afaf671f65c4c203c72a41b702607ca986f126aa01a5a5df4c6507b"
     },
     {
       "path": "core.cjs",
@@ -4309,13 +4314,13 @@
     },
     {
       "path": "host/domain.mjs",
-      "bytes": 9218,
-      "sha256": "fd0d85e210c5edddd7e5a098c1a72f6fbc68508c2ed90321a15e095cbd550cd8"
+      "bytes": 9578,
+      "sha256": "de1985c99f802646aa649643d847ba50438aeb9ca584e39822f1f3039b48fd12"
     },
     {
       "path": "host/export-core.mjs",
-      "bytes": 4996,
-      "sha256": "0b2721b50afaf671f65c4c203c72a41b702607ca986f126aa01a5a5df4c6507b"
+      "bytes": 13953,
+      "sha256": "52674ae1066f925d514eacc2c4a7c343523089d4bff8b67631938d38a4614b28"
     },
     {
       "path": "host/export.mjs",
@@ -4366,6 +4371,11 @@
       "path": "native/distribution-desk.cjs",
       "bytes": 10128,
       "sha256": "959dd43f2e58097bbc56042350718b66fb4f6263d4f29023a6ac53ae0b71a646"
+    },
+    {
+      "path": "native/finish-prepared.mjs",
+      "bytes": 3201,
+      "sha256": "afca8b17478ef73ce369ba300b2eea03ec9d251774d0e60ae34b839eaed6b86a"
     },
     {
       "path": "native/receive-installed.mjs",
@@ -4428,9 +4438,19 @@
       "sha256": "25c4cb13c71cef0e4c67c75ae06bba4c77b50be88098915d6d90a59e6ff4c2dd"
     },
     {
+      "path": "receiving/RESUMABLE_EXPORT.md",
+      "bytes": 4127,
+      "sha256": "d05aec1d4581384dc824cac46d00302c135e6d2affc96863745955abe5e66c18"
+    },
+    {
       "path": "receiving/checkpoint-reader.cjs",
       "bytes": 1040,
       "sha256": "5462f986efb7e334528003fa2f81d1687dd6ad8d41388a3ad2ccca5eaeaeff97"
+    },
+    {
+      "path": "receiving/checkpoint-storage.cjs",
+      "bytes": 3625,
+      "sha256": "bff39c118069c3417c9678e84ce522a99aa65a20661320816a31153704f821a9"
     },
     {
       "path": "receiving/complete-archive-readback.cjs",
@@ -4454,8 +4474,8 @@
     },
     {
       "path": "receiving/host-course.cjs",
-      "bytes": 15718,
-      "sha256": "638794df3403f0cc3c91ddf1c9f41b3f95045cb5fb0e5aa54db4d8fdaed0049a"
+      "bytes": 16980,
+      "sha256": "970691f9a53848afe1aa3e82df6feda563df24335f7fea12f898a5724f074cab"
     },
     {
       "path": "receiving/portable-course.cjs",
@@ -4463,9 +4483,19 @@
       "sha256": "b1626b5eca29dd9cdd8fb1187bcb3ee178e6ff16a9ac7d530ca4c1a67b2881e1"
     },
     {
+      "path": "receiving/prepared-stream.cjs",
+      "bytes": 17023,
+      "sha256": "8f0c8427c71ffd7584638c5f56ee52c65eba58a1a90ced010327671fe3af45b7"
+    },
+    {
       "path": "receiving/read-cache-course.cjs",
       "bytes": 2666,
       "sha256": "c7c8cf3788927e31bc07f56074bd26ce848501386c20c0b58a69d89145afb3d3"
+    },
+    {
+      "path": "receiving/run-resumable-export.mjs",
+      "bytes": 4892,
+      "sha256": "492eb89e033f4cbfaccaefce01618827a80931ef51796af026b2298fe80f11ba"
     },
     {
       "path": "receiving/source-bytes-course.cjs",
@@ -4514,8 +4544,8 @@
     },
     {
       "path": "src/connected_zip.cjs",
-      "bytes": 22223,
-      "sha256": "751354cbfe55450be53689de23631900f3b1661063c7974e46f99fa2413cbc1f"
+      "bytes": 22417,
+      "sha256": "78cc84089aa4aad4303888b6ca0156df258ab19ac0ca2aca1aeffd9674d1fb6a"
     },
     {
       "path": "src/core-cache.cjs",
