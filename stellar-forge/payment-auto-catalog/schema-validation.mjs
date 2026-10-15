@@ -27,6 +27,10 @@ const TYPES = {
   boolean: value => typeof value === 'boolean',
   null: value => value === null,
 };
+const QUERY_METHODS = new Set(['GET', 'HEAD', 'DELETE']);
+const BODY_METHODS = new Set(['POST', 'PUT', 'PATCH']);
+const BODY_TYPES = new Set(['json', 'form-data', 'text']);
+const MCP_TRANSPORTS = new Set(['streamable-http', 'sse']);
 
 function canonical(value) {
   if (Array.isArray(value)) return value.map(canonical);
@@ -185,6 +189,81 @@ function validateNode(value, schema, root, path = '$', refs = new Set(), depth =
   return [];
 }
 
+function bazaarContractError(info, schema) {
+  const input = info.input;
+  if (!plain(input)) return 'INFO_INPUT_REQUIRED';
+  if (input.type !== 'http' && input.type !== 'mcp') return 'INFO_INPUT_TYPE_INVALID';
+
+  const rejected = mutate => {
+    const witness = clone(info);
+    mutate(witness);
+    return validateNode(witness, schema, schema).length > 0;
+  };
+  const mustReject = (mutate, reason) => rejected(mutate) ? null : reason;
+  const removeInput = mustReject(witness => { delete witness.input; }, 'SCHEMA_INPUT_NOT_REQUIRED');
+  if (removeInput) return removeInput;
+  const removeType = mustReject(witness => { delete witness.input.type; }, 'SCHEMA_INPUT_TYPE_NOT_REQUIRED');
+  if (removeType) return removeType;
+  for (const value of [input.type === 'http' ? 'mcp' : 'http', '__invalid__']) {
+    const error = mustReject(witness => { witness.input.type = value; }, 'SCHEMA_INPUT_TYPE_NOT_CONSTRAINED');
+    if (error) return error;
+  }
+
+  if (input.type === 'http') {
+    if (typeof input.method !== 'string') return 'INFO_HTTP_METHOD_REQUIRED';
+    const family = QUERY_METHODS.has(input.method) ? QUERY_METHODS : BODY_METHODS.has(input.method) ? BODY_METHODS : null;
+    if (!family) return 'INFO_HTTP_METHOD_INVALID';
+    const removeMethod = mustReject(witness => { delete witness.input.method; }, 'SCHEMA_HTTP_METHOD_NOT_REQUIRED');
+    if (removeMethod) return removeMethod;
+    const opposite = family === QUERY_METHODS ? BODY_METHODS : QUERY_METHODS;
+    for (const value of [...opposite, '__invalid__']) {
+      const error = mustReject(witness => { witness.input.method = value; }, 'SCHEMA_HTTP_METHOD_FAMILY_NOT_CONSTRAINED');
+      if (error) return error;
+    }
+    if (family === BODY_METHODS) {
+      if (!BODY_TYPES.has(input.bodyType)) return 'INFO_HTTP_BODY_TYPE_INVALID';
+      if (!Object.hasOwn(input, 'body') || (!plain(input.body) && typeof input.body !== 'string'))
+        return 'INFO_HTTP_BODY_INVALID';
+      for (const [field, reason] of [
+        ['bodyType', 'SCHEMA_HTTP_BODY_TYPE_NOT_REQUIRED'],
+        ['body', 'SCHEMA_HTTP_BODY_NOT_REQUIRED'],
+      ]) {
+        const error = mustReject(witness => { delete witness.input[field]; }, reason);
+        if (error) return error;
+      }
+      const bodyType = mustReject(witness => { witness.input.bodyType = '__invalid__'; }, 'SCHEMA_HTTP_BODY_TYPE_NOT_CONSTRAINED');
+      if (bodyType) return bodyType;
+      for (const value of [null, []]) {
+        const error = mustReject(witness => { witness.input.body = value; }, 'SCHEMA_HTTP_BODY_NOT_CONSTRAINED');
+        if (error) return error;
+      }
+    }
+    return null;
+  }
+
+  if (typeof input.toolName !== 'string' || input.toolName.length === 0) return 'INFO_MCP_TOOL_NAME_INVALID';
+  if (!plain(input.inputSchema)) return 'INFO_MCP_INPUT_SCHEMA_INVALID';
+  for (const [field, reason] of [
+    ['toolName', 'SCHEMA_MCP_TOOL_NAME_NOT_REQUIRED'],
+    ['inputSchema', 'SCHEMA_MCP_INPUT_SCHEMA_NOT_REQUIRED'],
+  ]) {
+    const error = mustReject(witness => { delete witness.input[field]; }, reason);
+    if (error) return error;
+  }
+  const toolName = mustReject(witness => { witness.input.toolName = 7; }, 'SCHEMA_MCP_TOOL_NAME_NOT_CONSTRAINED');
+  if (toolName) return toolName;
+  for (const value of ['not-an-object', []]) {
+    const error = mustReject(witness => { witness.input.inputSchema = value; }, 'SCHEMA_MCP_INPUT_SCHEMA_NOT_CONSTRAINED');
+    if (error) return error;
+  }
+  if (input.transport !== undefined) {
+    if (!MCP_TRANSPORTS.has(input.transport)) return 'INFO_MCP_TRANSPORT_INVALID';
+    const transport = mustReject(witness => { witness.input.transport = '__invalid__'; }, 'SCHEMA_MCP_TRANSPORT_NOT_CONSTRAINED');
+    if (transport) return transport;
+  }
+  return null;
+}
+
 export function validateBazaarExtension(extension) {
   if (!plain(extension?.info) || !plain(extension?.schema)) return { ok: false, reason: 'BAZAAR_EXTENSION_INVALID' };
   let bytes;
@@ -207,7 +286,11 @@ export function validateBazaarExtension(extension) {
       if (invalid) return { ok: false, reason: invalid };
     }
     const errors = validateNode(extension.info, extension.schema, extension.schema);
-    return errors.length ? { ok: false, reason: 'INFO_SCHEMA_MISMATCH', errors } : { ok: true };
+    if (errors.length) return { ok: false, reason: 'INFO_SCHEMA_MISMATCH', errors };
+    const contract = bazaarContractError(extension.info, extension.schema);
+    return contract
+      ? { ok: false, reason: 'BAZAAR_SCHEMA_CONTRACT_MISMATCH', errors: [contract] }
+      : { ok: true };
   } catch (error) {
     // Schema errors propagate through all combinators instead of becoming an instance mismatch.
     return { ok: false, reason: error.message };

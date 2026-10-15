@@ -56,6 +56,17 @@ JSON Schema validator, route identity, trust rules and lifecycle parser then
 validate the candidate before publication. A successful transfer establishes the
 payment binding; the merchant's descriptive metadata remains seller declared.
 
+SF25 treats the seller-supplied Bazaar schema as untrusted protocol input. It
+first validates `info` against that schema, then runs independent contract
+witnesses against the same Draft 2020-12 evaluator. Those witnesses require the
+schema to reject a missing `input`, an absent or changed type discriminator, and
+HTTP methods outside the declared query/body family. A body-method schema must
+also require and constrain `bodyType` and `body`; an MCP schema must require and
+constrain `toolName` and `inputSchema`. This gate supports local `$ref` and
+composed schemas while rejecting a permissive schema that merely accepts its
+seller's current example. External references remain rejected without network
+or filesystem resolution.
+
 Review and start the complete original service:
 
 ```sh
