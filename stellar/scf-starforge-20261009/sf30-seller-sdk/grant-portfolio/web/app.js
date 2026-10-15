@@ -63,6 +63,7 @@ async function refresh(selectId = S.portfolio && S.portfolio.id, selectRevision 
     S.review = {}; S.offset = 0; S.totalsOffset = 0;
     if ($("#detail-dialog").open && !await closeDetail()) return;
   }
+  if (refreshEpoch !== S.refreshEpoch) return;
   S.state = state; S.portfolio = portfolio;
   $("#connection").textContent = state.sources.length + " source editions · Workspace revision " + state.revision;
   const selected = $("#portfolio-select");
