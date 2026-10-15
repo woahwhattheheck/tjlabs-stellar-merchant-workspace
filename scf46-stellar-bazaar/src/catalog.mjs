@@ -2,7 +2,7 @@
 import { createHash } from 'node:crypto';
 import { inspectResourceURL, inspectRouteTemplate } from '../../stellar-forge/route-identity/identity.mjs';
 import { CatalogQueryIndex } from './query-index.mjs';
-import { validateCatalogEntryIdentity, sanitizeResourceSearchMetadata } from './entry-identity.mjs';
+import { validateCatalogEntryProjection, sanitizeResourceSearchMetadata } from './entry-identity.mjs';
 import { sanitizeBazaarPricing, parseAtomicBudget, describeCatalogPricing } from './pricing.mjs';
 
 const ALLOWED = new Set(['type','payTo','network','scheme','asset','extensions']);
@@ -30,16 +30,16 @@ function filtersFrom(params) {
  * same structural rules as insertValidated and returns the exact eventual key.
  */
 export function validateCatalogEntry(entry) {
-  const id = validateCatalogEntryIdentity(entry);
+  const { id, resourceURL, routeTemplate } = validateCatalogEntryProjection(entry);
   const sanitized = structuredClone(entry);
   sanitized.resource = sanitizeResourceServiceMetadata(sanitized.resource);
+  sanitized.resource.url = resourceURL;
   // Proposed upstream optional pricing is catalog-only. Bad seller metadata
   // cannot invalidate an otherwise usable offer or leak unbounded hints.
   const pricing = sanitizeBazaarPricing(sanitized.extensions.bazaar.pricing);
   if (pricing === null) delete sanitized.extensions.bazaar.pricing;
   else sanitized.extensions.bazaar.pricing = pricing;
-  const template = inspectRouteTemplate(sanitized.extensions.bazaar.routeTemplate);
-  if (template.ok) sanitized.extensions.bazaar.routeTemplate = template.canonicalPath;
+  if (routeTemplate !== undefined) sanitized.extensions.bazaar.routeTemplate = routeTemplate;
   else delete sanitized.extensions.bazaar.routeTemplate;
   return { id, entry: sanitized };
 }
