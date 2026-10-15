@@ -1,0 +1,16 @@
+{
+  "schema": "installed-study-history-recovery/v1",
+  "surface": "Actual production core/session in V8",
+  "checks": [
+    "Legacy history uses canonical Core.empty field order and retains exact reviewed study",
+    "Reading legacy history preserves every original archive object and hash",
+    "Legacy complete branch keeps review binding",
+    "New history preserves exact noncanonical source field order",
+    "New retained branch reopens with complete source identity",
+    "Recovered review remains current during actual analysis and continued editing"
+  ],
+  "original_digest": "01278a26caa445cff745206705c13caaac14f55be3e85d7307ef5e976c1cdbd7",
+  "reordered_digest": "33d19efd1d378434ab0017a26696e3c74ce6fbe8fece7cea8ee147d81cb87227",
+  "legacy_archive_unchanged": true,
+  "elapsed_ms": 2807
+}
