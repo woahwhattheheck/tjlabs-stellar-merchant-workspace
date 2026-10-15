@@ -1,0 +1,46 @@
+{
+  "schema": "commons.packed-payload-ordinary-readback-course.v1",
+  "sourceFiles": 975,
+  "members": 980,
+  "packedReceipt": {
+    "schema": "commons.streamed-complete-export.v1",
+    "identity": "9e59fa61c99bcf469a7d1ce55479538e9e1d65295e724dc8a304b05c7ba0bfa2",
+    "bytes": 6218179,
+    "sha256": "843d854cdf1c2f5bdffbd6c05cab248770d659f9c6a6224df503d6b3ead9fcd9",
+    "members": 980,
+    "uncompressedBytes": 18495065,
+    "metadataBytes": 476242,
+    "maxInputFragmentBytes": 650003,
+    "maxOutputChunkBytes": 487503,
+    "receivingSource": null,
+    "derivation": null,
+    "memberVerification": "prepared-payload-identities",
+    "requiresOrdinaryReadback": true
+  },
+  "ordinaryReadback": {
+    "schema": "commons.ordinary-zip-range-receipt.v1",
+    "bytes": 6218179,
+    "sha256": "843d854cdf1c2f5bdffbd6c05cab248770d659f9c6a6224df503d6b3ead9fcd9",
+    "uncompressedBytes": 18495065,
+    "directoryBytes": 125162,
+    "transportBytes": 6218179,
+    "rangeRequests": 2032,
+    "maxCapturedBytes": 211723,
+    "maxInflatedChunkBytes": 65536,
+    "exportManifest": {
+      "bytes": 211723,
+      "sha256": "0b980a454eda27894c40f5bb953dafbc2c29188147233b64f5e96f7f1bb7ab26",
+      "members": 979
+    },
+    "members": 980
+  },
+  "comparison": "Every complete source and working member equals the ordinary ZIP builder and is independently reopened against its original SHA",
+  "unalignedFragmentCharacters": 650003,
+  "rejected": [
+    "changed encoded fragment",
+    "awaited output failure",
+    "incorrect raw SHA rejected by ordinary reopening",
+    "unchanged default also rejects incorrect raw SHA"
+  ],
+  "elapsedMs": 82347
+}
