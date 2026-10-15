@@ -217,6 +217,11 @@
       "sha256": "b589fd0474212f808c3eb2d29aef8aa5752cd92b5c7d81443af7a9c8083f9c6d"
     },
     {
+      "path": "receiving/host-course.cjs",
+      "bytes": 8957,
+      "sha256": "2ef01262f058c36f595fe0729b144c5b76d7196648fd2573e3a42053649333b6"
+    },
+    {
       "path": "receiving/portable-course.cjs",
       "bytes": 12662,
       "sha256": "a4117921b72843d8880f3d112b4d383a36004c3f5130b33eb2f4807fe74f0ee3"
@@ -248,8 +253,8 @@
     },
     {
       "path": "SOURCE_MANIFEST.json",
-      "bytes": 12549,
-      "sha256": "87f72986ef2d69f7d3e52cc96d9975f299baded24e5efa17069f11bd6a52a19e"
+      "bytes": 12709,
+      "sha256": "47f2e82da78886b12fe2d3a3b01bc66d3145ef07cc341198731a6944fd1dfbd4"
     },
     {
       "path": "src/archive.mjs",
@@ -408,8 +413,8 @@
     },
     {
       "path": "Warehouse_Activity_Billing_Study_Desk.html",
-      "bytes": 1284741,
-      "sha256": "14cefca0f86d0558541711dbae26dd0c2ecfaecee8455f71675e732acf564ed9"
+      "bytes": 1294276,
+      "sha256": "7812c6a4c9d752bb31d49f1be2b9a311adba66a22f9cbc39d47435eeb95f1057"
     },
     {
       "path": "zip.cjs",
