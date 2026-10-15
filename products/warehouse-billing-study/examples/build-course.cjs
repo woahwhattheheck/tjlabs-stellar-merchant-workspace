@@ -1,0 +1,64 @@
+'use strict';
+const C=require('../core.cjs'),D=require('../billing.cjs'),I=require('../activity-import.cjs'),CSV=require('../csv.cjs'),ZIP=require('../zip.cjs'),M=require('../session.cjs');
+const AT='2026-10-01T10:00:00Z',LATER='2026-10-02T10:00:00Z',CUT='2026-10-15T12:00:00Z',EARLY='2026-08-01T00:00:00Z';
+function make(publicText){
+ const data=Object.fromEntries(C.KINDS.map(k=>[k,[]])),put=(k,v)=>data[k].push(Object.fromEntries(C.FIELDS[k].map(f=>[f,v[f]??'']))),ref='authored/source';
+ put('clients',{id:'HARBOR',name:'Authored Harbor client based on public template label',currency:'USD',billable:'true',source_ref:ref});put('warehouses',{id:'W1',name:'Authored warehouse',source_ref:ref});
+ put('source_systems',{id:'WMS',name:'Public canonical CSV fixture',row_basis:'canonical_event',date_format:'yyyy-MM-dd',client_column:'client',date_column:'date',code_column:'code',quantity_column:'quantity',unit_column:'unit',child_column:'child_quantity',reference_column:'reference',partition_notes:'Complete authored single warehouse source partition',source_ref:ref});
+ put('client_aliases',{id:'CA1',source_id:'WMS',raw_client:'HARBOR',client_id:'HARBOR',source_ref:ref});put('rate_cards',{id:'RC1',client_id:'HARBOR',currency:'USD',effective_from:'2026-09-01',recorded_at:EARLY,label:'Authored public-example exercise rates',source_ref:ref});
+ for(const [code,unit,basis,rate,included,additional]of [['storage.pallet.month','pallet','daily_month','22','',''],['receive.pallet','pallet','per_unit','8','',''],['pick.order','order','per_event','3','1','pick.unit.additional'],['pick.unit.additional','each','per_unit','0.65','',''],['returns.unit','each','per_unit','2','',''],['labor.kitting.hour','hour','per_unit','53','',''],['minimum.month','month','monthly_minimum','0','','']])put('rate_lines',{id:'RL-'+code,card_id:'RC1',code,warehouse_id:'*',unit,basis,rate,included_units:included,additional_code:additional,source_ref:ref});
+ let w=C.empty('Authored September billing study with retained public CSV');w.id='study-authored-billing';w.config.data_class='authored_course';w.config.source_scope='Authored independent proposal and observed-record fixtures';w.config.returned_scope='Supplied public activity text plus authored rates and states';
+ for(const side of ['source','returned'])for(const kind of C.KINDS)w=C.importExtract(w,{kind,side,name:side+'-'+kind+'.csv',content:CSV.csv([C.FIELDS[kind],...data[kind].map(x=>C.FIELDS[kind].map(k=>x[k]))]),mapping:Object.fromEntries(C.FIELDS[kind].map(k=>[k,k])),label:'Authored '+side+' '+kind,at:EARLY});
+ w=C.addDocument(w,{name:'authored-source-inventory.txt',media_type:'text/plain',bytes:ZIP.utf('Authored complete September partition: HARBOR / W1 / WMS. Storage pallet month for HARBOR W1; no other sources or storage scopes.'),at:EARLY});
+ w.config.billing={...D.empty(),as_of:CUT,billing_month:'2026-09',client_ids:['HARBOR'],warehouse_ids:['W1'],required_source_ids:['WMS'],inventory_complete:true,inventory_document_id:w.documents.at(-1).id,inventory_location:'Complete text',storage_scope_complete:true,storage_requirements:[{client_id:'HARBOR',warehouse_id:'W1',code:'storage.pallet.month',source_ref:ref}]};
+ w=I.ingest(w,{study_id:w.id,expected_sha256:C.digest(w),source_id:'WMS',month:'2026-09',warehouse_id:'W1',name:'Tahona_Activity_Template_Retrieved.csv',content:publicText,available_at:AT,at:AT,complete_month:true,expected_import_id:''});
+ // Capture matching selected source tables for the authored independent round trip.
+ for(const kind of C.KINDS){const e=C.selected(w,kind,'returned'),o=w.originals.find(x=>x.id===e.original_id);w=C.importExtract(w,{kind,side:'source',name:'comparison-'+kind+'.csv',content:o.content,mapping:e.mapping,label:'Authored baseline '+kind,at:AT});w=C.matchIds(w,kind);}
+ return C.validate(w);
+}
+function edit(w,kind,id,patch,at=LATER){const list=C.rows(w,kind,'returned'),i=list.findIndex(x=>x.values.id===id);if(i<0)throw Error('Missing '+kind+' '+id);return C.editRow(w,{kind,side:'returned',row_index:i,value:{...list[i].values,...patch},reason:'Authored course countercase or supplied correction',at});}
+function add(w,kind,value,at=LATER){const v=Object.fromEntries(C.FIELDS[kind].map(k=>[k,value[k]??'']));return C.editRow(w,{kind,side:'returned',row_index:null,value:v,reason:'Authored course supplied record',at});}
+function result(w){return C.analyze(w).billing;}
+function run(publicText){
+ const checks=[],check=(name,value)=>{if(!value)throw Error('Course failed: '+name);checks.push({name,passed:true});},w=make(publicText),r=result(w);
+ check('Complete public 41-row import',r.complete&&r.activity.length===41);
+ check('Exact 1152 pallet-days',r.storage.reduce((n,x)=>n+Number(x.count?.decimal||0),0)===1152);
+ check('Flat monthly storage 844.80',r.charges.filter(x=>x.code==='storage.pallet.month').reduce((n,x)=>n+BigInt(x.amount_cents),0n)===84480n);
+ // Authored rates yield 1075.40 with the public activity rows.
+ check('All activity subtotal 1075.40',r.clients[0].proposed_subtotal==='1075.40');
+ let dated=add(w,'rate_cards',{id:'RC2',client_id:'HARBOR',currency:'USD',effective_from:'2026-09-16',recorded_at:'2026-09-15T12:00:00Z',supersedes_id:'RC1',label:'Authored dated rates',source_ref:'authored/rates'});
+ for(const row of C.rows(w,'rate_lines','returned'))dated=add(dated,'rate_lines',{...row.values,id:'R2-'+row.values.id,card_id:'RC2',rate:row.values.code==='storage.pallet.month'?'24':row.values.rate});
+ check('Exact dated split 883.60',result(dated).charges.filter(x=>x.code==='storage.pallet.month').reduce((n,x)=>n+BigInt(x.amount_cents),0n)===88360n);
+ let missing=I.ingest(w,{study_id:w.id,expected_sha256:C.digest(w),source_id:'WMS',month:'2026-09',warehouse_id:'W1',name:'missing-day.csv',content:publicText.split('\n').filter(x=>!x.includes('2026-09-14,storage')).join('\n'),available_at:LATER,at:LATER,complete_month:true,expected_import_id:r.imports[0].id});
+ check('Replacement keeps old original but missing day suppresses complete total',missing.documents.length>w.documents.length&&result(missing).imports.length===1&&result(missing).clients[0].proposed_subtotal===null&&result(missing).issues.some(x=>x.code==='STORAGE_DAY_MISSING'));
+ let min=edit(w,'rate_lines','RL-minimum.month',{rate:'1100'});check('Derived minimum 24.60',result(min).charges.find(x=>x.code==='minimum.month')?.amount==='24.60');
+ let repeated=edit(w,'activities',C.rows(w,'activities','returned').find(x=>x.values.reference==='#1002').values.id,{reference:'#1001'});check('Repeated order references remain distinct events',result(repeated).charges.filter(x=>x.code==='pick.order').length===6);
+ let unknown=edit(w,'activities',C.rows(w,'activities','returned').find(x=>x.values.raw_code==='returns.unit').values.id,{raw_code:'authored.special'}),ur=result(unknown),q=ur.issues.find(x=>x.code==='CODE_UNRESOLVED');
+ unknown=add(unknown,'dispositions',{id:'D1',context_sha256:ur.context_sha256,issue_id:q.id,decision:'waived',reviewer:'Authored billing owner',recorded_at:LATER,reason:'Authored agreed no-charge exception',source_ref:'authored/waiver'});
+ check('Exact context-bound waiver applies',result(unknown).issues.find(x=>x.id===q.id)?.resolved===true);
+ unknown=edit(unknown,'clients','HARBOR',{name:'Changed context'});check('Changed input expires waiver',result(unknown).issues.some(x=>x.code==='CODE_UNRESOLVED'&&!x.resolved));
+ let units=edit(w,'rate_lines','RL-receive.pallet',{unit:'hour'});check('Unit mismatch suppresses complete proposal',result(units).clients[0].proposed_subtotal===null);
+ let issued=add(w,'invoices',{id:'INV1',client_id:'HARBOR',billing_month:'2026-09',number:'AUTH-001',currency:'USD',issued_at:'2026-10-03T10:00:00Z',recorded_at:'2026-10-03T10:00:00Z',subtotal:'1075.40',tax:'0',total:'1075.40',status:'issued',source_ref:'authored/invoice'});
+ for(const ch of r.charges)issued=add(issued,'invoice_lines',{id:'IL-'+ch.charge_key,invoice_id:'INV1',charge_key:ch.charge_key,code:ch.code,description:'Authored issued line',quantity:ch.quantity.decimal.replace('−','-'),unit:ch.unit,amount:ch.amount,source_ref:'authored/invoice'});
+ issued=C.addDocument(issued,{name:'authored-issued-invoice.txt',media_type:'text/plain',bytes:ZIP.utf('AUTH-001 actual fixture invoice total USD 1075.40'),at:'2026-10-03T10:00:00Z'});issued=C.linkDocument(issued,{kind:'invoices',side:'returned',record_id:'INV1',document_id:issued.documents.at(-1).id,available_at:'2026-10-03T10:00:00Z'});
+ issued=add(issued,'accounting_events',{id:'AE1',invoice_id:'INV1',account_id:'authored-account',external_invoice_id:'Q1',status:'sent',invoice_total:'1075.40',balance:'1075.40',currency:'USD',observed_at:'2026-10-03T11:00:00Z',recorded_at:'2026-10-03T11:01:00Z',provider_ref:'authored/response',source_ref:'authored/response'});
+ check('Actual sent observation does not claim payment',result(issued).invoices[0].accounting.status==='sent');
+ let refused=false;try{I.ingest(issued,{study_id:issued.id,expected_sha256:C.digest(issued),source_id:'WMS',month:'2026-09',warehouse_id:'W1',name:'replacement.csv',content:publicText,available_at:LATER,at:LATER,complete_month:true,expected_import_id:r.imports[0].id});}catch{refused=true;}check('Issued period source replacement refused',refused);
+ let effort=issued;for(const method of ['existing_process','study_process'])for(const [i,phase]of D.empty().required_effort_phases.entries())effort=add(effort,'effort',{id:method+'-'+phase,client_id:'HARBOR',billing_month:'2026-09',method,phase,active_person_minutes:method==='existing_process'?'10':'8',observed_at:'2026-10-03T12:'+String(i).padStart(2,'0')+':00Z',recorded_at:'2026-10-03T13:00:00Z',observer:'Authored operator',source_ref:'authored/timing'});
+ check('Whole phase coverage signed -12 person-minutes',result(effort).effort[0].delta_person_minutes?.numerator==='-12');
+ let session=M.create(w);session=M.draft(session,'activity-import',{content:'unfinished\r\noriginal',source_id:'WMS'});session=M.checkpoint(session,effort,'Complete authored month, invoice and timing');const reopened=M.validate(JSON.parse(JSON.stringify(session)));
+ check('Full session preserves pending original and prior study',reopened.drafts['activity-import'].content==='unfinished\r\noriginal'&&reopened.history.length>0);
+
+ const invoiceFirst=C.rows(effort,'invoice_lines','returned')[0].values;
+ let badLine=edit(effort,'invoice_lines',invoiceFirst.id,{charge_key:'NONEXISTENT',code:'different.service'});check('Actual invoice binds charge identity and code',result(badLine).invoices[0].issues.includes('INVOICE_CHARGE_KEY_UNKNOWN')&&!result(badLine).complete);
+ let badCurrency=edit(effort,'invoices','INV1',{currency:'EUR'});check('Invoice currency independently binds comparison',result(badCurrency).invoices[0].issues.includes('INVOICE_CURRENCY_MISMATCH')&&result(badCurrency).invoices[0].proposed_subtotal===null);
+ let badChronology=edit(effort,'accounting_events','AE1',{recorded_at:'2026-10-03T10:01:00Z'});check('Accounting recording cannot precede observation',result(badChronology).invoices[0].issues.includes('ACCOUNTING_CONTEXT_UNRESOLVED'));
+ check('Invalid calendar date is an unresolved value',D.day('2026-99-99')===null);
+ let nextMonth=C.clone(effort);nextMonth.config.billing.billing_month='2026-10';
+ nextMonth=add(nextMonth,'adjustments',{id:'ADJ1',client_id:'HARBOR',warehouse_id:'W1',billing_month:'2026-10',original_invoice_id:'INV1',code:'service.correction',amount:'-12.50',currency:'USD',original_service_date:'2026-09-15',effective_date:'2026-10-05',recorded_at:'2026-10-05T10:00:00Z',approved_by:'Authored billing owner',reason:'Credit on earlier service, posted next period',source_ref:'authored/credit'});
+ check('Signed next-period adjustment retains original service date',result(nextMonth).charges.some(x=>x.basis==='signed_next_period_adjustment'&&x.amount==='-12.50'));
+
+ let partial=C.importExtract(w,{kind:'activities',side:'returned',name:'partial-availability.csv',content:'id,quantity\nOLD,1\n',mapping:Object.fromEntries(C.FIELDS.activities.map(k=>[k,['id','quantity'].includes(k)?k:''])),label:'Authored partial source availability',at:LATER});let partialRejected=false;try{I.ingest(partial,{study_id:partial.id,expected_sha256:C.digest(partial),source_id:'WMS',month:'2026-09',warehouse_id:'W1',name:'full-candidate.csv',content:publicText,available_at:'2026-10-03T10:00:00Z',at:'2026-10-03T10:00:00Z',complete_month:true,expected_import_id:r.imports[0].id});}catch(e){partialRejected=e.message.includes('unavailable fields');}check('Partial prior-row availability is retained and append requires explicit complete mapping',partialRejected&&C.rows(partial,'activities','returned')[0].values.client_id===null);
+ return{checks,first:missing,corrected:effort,flat:r,dated:result(dated),session:reopened};
+}
+module.exports={make,run,edit,add,result};

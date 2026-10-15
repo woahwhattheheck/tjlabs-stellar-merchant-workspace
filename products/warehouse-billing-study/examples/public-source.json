@@ -1,0 +1,38 @@
+{
+  "source_url": "https://tobalasoftware.com/tobala-billing/tahona-billing-activity-template.csv",
+  "retrieved_date": "2026-10-15",
+  "representation": "Extracted public CSV text, not original HTTP-byte carrier",
+  "recordedRows": 41,
+  "groups": {
+    "storage.pallet.month": {
+      "rows": 30,
+      "quantity": 1152,
+      "children": 0
+    },
+    "receive.pallet": {
+      "rows": 2,
+      "quantity": 14,
+      "children": 0
+    },
+    "pick.order": {
+      "rows": 6,
+      "quantity": 6,
+      "children": 20
+    },
+    "returns.unit": {
+      "rows": 2,
+      "quantity": 6,
+      "children": 0
+    },
+    "labor.kitting.hour": {
+      "rows": 1,
+      "quantity": 1.5,
+      "children": 0
+    }
+  },
+  "storagePalletDays": 1152,
+  "oldRatePalletDays": 570,
+  "newRatePalletDays": 582,
+  "flat22Cents": 84480,
+  "split22_24Cents": 88360
+}
