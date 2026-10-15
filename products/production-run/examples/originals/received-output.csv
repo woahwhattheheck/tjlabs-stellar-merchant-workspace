@@ -1,0 +1,6 @@
+id,runId,at,mode,counterId,total,good,reset,resetTotal,resetGood
+A-count1,RUN-A,2026-10-14T10:00:00Z,delta,,400,380,false,,
+A-count2,RUN-A,2026-10-14T12:00:00Z,delta,,500,475,false,,
+B-baseline,RUN-B,2026-10-14T08:00:00Z,counter,B-counter,100,95,false,,
+B-mid,RUN-B,2026-10-14T10:00:00Z,counter,B-counter,600,570,false,,
+B-close-reset,RUN-B,2026-10-14T12:00:00Z,counter,B-counter,0,0,false,,

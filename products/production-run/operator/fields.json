@@ -1,0 +1,16 @@
+{
+  "scope": [
+    "siteId",
+    "label",
+    "asOf",
+    "clock"
+  ],
+  "tables": [
+    "runs",
+    "standards",
+    "stops",
+    "labor",
+    "output",
+    "charges"
+  ]
+}

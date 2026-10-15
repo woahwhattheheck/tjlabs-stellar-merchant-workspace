@@ -1,0 +1,20 @@
+{
+  "schema": "stellar-forge.production-managed-course.v1",
+  "runtime": "Production JavaScript in V8",
+  "checks": [
+    "Complete original session and malformed unfinished mapping survive import, later save and exact original retry",
+    "Stale save has a retained definitive rejection while the complete newer session remains selected",
+    "Exact original intake, explicit mapping, frozen successor edition and full revision proposal use the unchanged production core",
+    "Separate operations and finance decisions bind the exact comparison; a different comparison is rejected and unfinished drafts remain",
+    "Every comparison change and complete metric basis/coverage can be received; explicit session replacement retains the entire previous editor"
+  ],
+  "originalRoot": "e1d7f0e115204e9917cda6381ada8cf56daf7f9e40ac0cc125bbd22e5b1c8b43",
+  "sequence": 7,
+  "originals": 9,
+  "editions": 3,
+  "proposals": 2,
+  "reviews": 4,
+  "status": "REVIEW_COMPLETE",
+  "comparisonChanges": 3,
+  "elapsedMs": 17833
+}

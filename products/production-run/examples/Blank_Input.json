@@ -1,0 +1,116 @@
+{
+  "schema": "tjlabs.production-run-input.v1",
+  "scope": {
+    "siteId": "",
+    "label": "",
+    "asOf": "",
+    "clock": {
+      "mode": "offset-required",
+      "fixedOffsetMinutes": null
+    }
+  },
+  "tables": {
+    "runs": {
+      "sourceId": "",
+      "format": "csv",
+      "arrayPointer": "",
+      "mapping": {
+        "id": "id",
+        "lineId": "lineId",
+        "sku": "sku",
+        "start": "start",
+        "end": "end",
+        "standardId": "standardId",
+        "unit": "unit",
+        "currency": "currency",
+        "revenuePerGood": "revenuePerGood",
+        "requiredCostCategories": "requiredCostCategories",
+        "timeComplete": "timeComplete",
+        "outputComplete": "outputComplete",
+        "laborComplete": "laborComplete",
+        "costComplete": "costComplete",
+        "goodBasis": "goodBasis"
+      }
+    },
+    "standards": {
+      "sourceId": "",
+      "format": "csv",
+      "arrayPointer": "",
+      "mapping": {
+        "id": "id",
+        "sku": "sku",
+        "unit": "unit",
+        "effectiveFrom": "effectiveFrom",
+        "effectiveTo": "effectiveTo",
+        "idealCycleSeconds": "idealCycleSeconds",
+        "standardCycleSeconds": "standardCycleSeconds",
+        "standardCrew": "standardCrew"
+      }
+    },
+    "stops": {
+      "sourceId": "",
+      "format": "csv",
+      "arrayPointer": "",
+      "mapping": {
+        "id": "id",
+        "runId": "runId",
+        "start": "start",
+        "end": "end",
+        "kind": "kind",
+        "reason": "reason"
+      }
+    },
+    "labor": {
+      "sourceId": "",
+      "format": "csv",
+      "arrayPointer": "",
+      "mapping": {
+        "id": "id",
+        "runId": "runId",
+        "workerId": "workerId",
+        "start": "start",
+        "end": "end",
+        "allocation": "allocation",
+        "hourlyRate": "hourlyRate",
+        "currency": "currency"
+      }
+    },
+    "output": {
+      "sourceId": "",
+      "format": "csv",
+      "arrayPointer": "",
+      "mapping": {
+        "id": "id",
+        "runId": "runId",
+        "at": "at",
+        "mode": "mode",
+        "counterId": "counterId",
+        "total": "total",
+        "good": "good",
+        "reset": "reset",
+        "resetTotal": "resetTotal",
+        "resetGood": "resetGood"
+      }
+    },
+    "charges": {
+      "sourceId": "",
+      "format": "csv",
+      "arrayPointer": "",
+      "mapping": {
+        "id": "id",
+        "runId": "runId",
+        "category": "category",
+        "quantity": "quantity",
+        "quantityUnit": "quantityUnit",
+        "unitCost": "unitCost",
+        "amount": "amount",
+        "currency": "currency",
+        "note": "note"
+      }
+    }
+  },
+  "requiredDisciplines": [
+    "OPERATIONS",
+    "FINANCE"
+  ]
+}
