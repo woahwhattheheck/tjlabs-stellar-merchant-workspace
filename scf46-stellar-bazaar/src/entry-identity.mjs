@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 // Shared catalog structure and search metadata. Payment admission remains with the catalog owner.
-import { inspectResourceURL, inspectRouteTemplate } from '../../stellar-forge/route-identity/identity.mjs';
+import { inspectResourceURL, resolveCatalogIdentity } from '../../stellar-forge/route-identity/identity.mjs';
 
 const plain = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const printable = (v) => typeof v === 'string' && v.length > 0 && v.length <= 32 && /^[\x20-\x7E]+$/.test(v);
 const MCP_TOOL_NAME = /^[A-Za-z0-9_.-]{1,128}$/;
 const LOOPBACK_NAMES = new Set(['localhost', 'localhost.localdomain', 'ip6-localhost', 'ip6-loopback']);
+const UNSAFE_RESOURCE_CHAR = /[\x00-\x20\x7f\\]/;
 
 /** Apply the x402 Bazaar iconUrl soft-drop rules without fetching the URL. */
 export function isValidIconUrl(value) {
@@ -43,39 +44,81 @@ export function sanitizeResourceSearchMetadata(resource) {
   return result;
 }
 
-function keyOf(entry) {
-  const info = entry.extensions?.bazaar?.info?.input;
-  if (!plain(info) || !['http','mcp'].includes(info.type)) throw new TypeError('Valid HTTP or MCP Bazaar info required');
-  // Reject raw encoded traversal before WHATWG URL normalization.
-  const checked = inspectResourceURL(entry.resource?.url);
-  if (!checked.ok) throw new TypeError(`Invalid resource URL: ${checked.reason}`);
-  const url = checked.url;
-  if (info.type === 'mcp') {
-    if (typeof info.toolName !== 'string' || !MCP_TOOL_NAME.test(info.toolName) || !plain(info.inputSchema)) throw new TypeError('Invalid MCP tool');
-    return ['mcp',url.href,info.toolName].join('|');
-  }
-  if (!['GET','HEAD','DELETE','POST','PUT','PATCH'].includes(info.method)) throw new TypeError('Invalid HTTP method');
-  // Different concrete path parameter values collapse to the same canonical entry.
-  const template = inspectRouteTemplate(entry.extensions.bazaar.routeTemplate);
-  const path = template.ok ? template.canonicalPath : url.pathname;
-  return ['http',url.origin,path,url.search,info.method].join('|');
+function discoveryURLOf(entry, info) {
+  const raw = entry.resource?.url;
+  // x402's facilitator drops the fragment before cataloging. Preserve the
+  // stricter raw-path inspection here: only the fragment suffix is removed,
+  // and unsafe characters anywhere in the seller-supplied URL still fail.
+  if (typeof raw !== 'string') throw new TypeError('Invalid resource URL: RESOURCE_URL_MISSING');
+  if (raw.length > 4096) throw new TypeError('Invalid resource URL: RESOURCE_URL_TOO_LONG');
+  if (UNSAFE_RESOURCE_CHAR.test(raw)) throw new TypeError('Invalid resource URL: RESOURCE_URL_UNSAFE_CHAR');
+  const fragmentAt = raw.indexOf('#');
+  const fragmentless = fragmentAt === -1 ? raw : raw.slice(0, fragmentAt);
+  const inspected = inspectResourceURL(fragmentless);
+  if (!inspected.ok) throw new TypeError(`Invalid resource URL: ${inspected.reason}`);
+  if (info.type !== 'http') return { resourceURL: `${inspected.url.origin}${inspected.url.pathname}` };
+  // Reuse the stricter route binder so a valid-looking template can only
+  // collapse concrete paths that it actually describes. Mismatches fall back
+  // to the concrete path instead of overwriting an unrelated catalog row.
+  const resolved = resolveCatalogIdentity({
+    resourceURL: fragmentless,
+    input: info,
+    routeTemplate: entry.extensions.bazaar.routeTemplate
+  });
+  const routeTemplate = resolved.status === 'accepted' ? resolved.canonicalRouteTemplate : undefined;
+  return {
+    resourceURL: `${inspected.url.origin}${routeTemplate ?? inspected.url.pathname}`,
+    ...(routeTemplate === undefined ? {} : { routeTemplate })
+  };
 }
 
+function identityOf(entry) {
+  const info = entry.extensions?.bazaar?.info?.input;
+  if (!plain(info) || !['http','mcp'].includes(info.type)) throw new TypeError('Valid HTTP or MCP Bazaar info required');
+  const discovery = discoveryURLOf(entry, info);
+  const { resourceURL } = discovery;
+  if (info.type === 'mcp') {
+    if (typeof info.toolName !== 'string' || !MCP_TOOL_NAME.test(info.toolName) || !plain(info.inputSchema)) throw new TypeError('Invalid MCP tool');
+    return { id: ['mcp',resourceURL,info.toolName].join('|'), resourceURL };
+  }
+  if (!['GET','HEAD','DELETE','POST','PUT','PATCH'].includes(info.method)) throw new TypeError('Invalid HTTP method');
+  // Retain the established implementation-private key layout for queryless
+  // resources; canonicalization empties the former search component.
+  const canonical = new URL(resourceURL);
+  return { id: ['http',canonical.origin,canonical.pathname,'',info.method].join('|'), ...discovery };
+}
 
-/** The exact existing envelope checks and canonical catalog key. */
-export function validateCatalogEntryIdentity(entry) {
+function validatedIdentityOf(entry) {
   if (!plain(entry?.resource) || !Array.isArray(entry.accepts) || entry.accepts.length === 0 ||
       !plain(entry.extensions?.bazaar) || !plain(entry.extensions.bazaar.info) ||
       !plain(entry.extensions.bazaar.schema)) throw new TypeError('Missing validated Bazaar envelope');
   if (entry.accepts.some(a => !plain(a) || typeof a.network !== 'string' || typeof a.scheme !== 'string' || typeof a.payTo !== 'string')) throw new TypeError('Invalid payment terms');
-  return keyOf(entry);
+  return identityOf(entry);
+}
+
+/** The exact existing envelope checks and canonical catalog key. */
+export function validateCatalogEntryIdentity(entry) {
+  return validatedIdentityOf(entry).id;
+}
+
+/** Canonical x402 Bazaar discovery URL stored under the catalog identity. */
+export function canonicalCatalogResourceURL(entry) {
+  return validatedIdentityOf(entry).resourceURL;
+}
+
+/** Validated key, canonical URL, and any path-bound canonical route template. */
+export function validateCatalogEntryProjection(entry) {
+  return validatedIdentityOf(entry);
 }
 
 /** Detached fields for search. Metadata is syntax-sanitized but never fetched;
  * pricing remains with its original consumers and does not authorize payment. */
 export function projectCatalogSearchEntry(entry) {
-  const id = validateCatalogEntryIdentity(entry), projected = structuredClone(entry);
+  const { id, resourceURL, routeTemplate } = validatedIdentityOf(entry), projected = structuredClone(entry);
   projected.resource = sanitizeResourceSearchMetadata(projected.resource);
+  projected.resource.url = resourceURL;
+  if (routeTemplate === undefined) delete projected.extensions.bazaar.routeTemplate;
+  else projected.extensions.bazaar.routeTemplate = routeTemplate;
   return { id, entry: projected };
 }
 
