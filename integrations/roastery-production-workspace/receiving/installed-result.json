@@ -27,5 +27,16 @@
     "newPeriodAndFullReopen": true,
     "zipMembers": 84
   },
-  "runtime": "Production source executed in V8 with explicit DOM, storage and download adapters"
+  "runtime": "Production source executed in V8 with explicit DOM, storage and download adapters",
+  "capacity": {
+    "schema": "stellar-forge.roastery-transition-capacity-course.v1",
+    "runtime": "Actual production session transitions and installed file/apply handlers with explicit DOM adapters",
+    "capacityBytes": 23973,
+    "acceptedSuccessorBytes": 23957,
+    "remainingBytes": 16,
+    "oversizeFileLeavesVisibleDraftAndCompleteSessionExact": true,
+    "nearCapacityFileRetainsOriginalDraft": true,
+    "oversizeSourceApplyLeavesDraftAndSelectedSessionExact": true,
+    "expandedRetainRejectsBeforeSelection": true
+  }
 }

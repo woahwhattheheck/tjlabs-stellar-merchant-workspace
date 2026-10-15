@@ -8,6 +8,8 @@ The complete original seven-table roastery desk is retained. Receive exact UTF-8
 
 Enter **Reviewer / operation actor**, preserve unfinished table/review/outcome drafts, and freeze a reviewed plan only after source drafts are applied and the original checks pass. Record weighed green/roasted output against that exact frozen batch. Corrections append an outcome linked to the earlier record. Frozen tables and all original captures remain available; actual outcomes do not silently rewrite stock. Begin the next period with new received counts.
 
+Source-file loading and production decisions prepare the complete successor with its retained preimage before selecting it. Capacity rejection leaves the original editor and visible drafts available; a draft is cleared only after the complete successor is accepted.
+
 ## Save, recover and continue
 
 **Save complete session** commits the complete editor through the sole private host writer. Browser changes retain their own full IndexedDB recovery. **Open newest saved edition** retains displaced local writing as a complete prior session. An ambiguous transport outcome keeps its exact original request pending; **Recover original request** queries/retries the same ID, base and full successor. A stale-base rejection is retained and leaves the complete local branch available for explicit selection.

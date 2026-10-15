@@ -8,8 +8,8 @@
     },
     {
       "path": "OPERATING.md",
-      "bytes": 5159,
-      "sha256": "da9d55244ca6077b5c1ccd12f61ddf11b5b2a1c51f866407ddcd21d3c35349e5"
+      "bytes": 5426,
+      "sha256": "3a08e3b7d10b238f20ba757c031815ea265ff81725b8772301e29d267311c44c"
     },
     {
       "path": "README.md",
@@ -193,8 +193,8 @@
     },
     {
       "path": "receiving/installed-result.json",
-      "bytes": 1244,
-      "sha256": "91fe5488e24ed89f55d66c823113e39501282035ee604db76ef672384906c4e9"
+      "bytes": 1776,
+      "sha256": "f6e7f8b38151fe11876d52d72262184dd26dd0e6bc302b791955db2b9e0d0cf5"
     },
     {
       "path": "runtime.mjs",
@@ -228,8 +228,8 @@
     },
     {
       "path": "src/installed-operator.js",
-      "bytes": 19170,
-      "sha256": "b3934371b8fb6646fecec7892336793664f784ee7a125484448b57cd6eb6d45c"
+      "bytes": 19278,
+      "sha256": "04c41c7d7d42bf721ea2bfe3e8f35329574d091427896bb60bc0c18a4a04d431"
     },
     {
       "path": "src/installed-template.html",
@@ -258,8 +258,8 @@
     },
     {
       "path": "src/session.mjs",
-      "bytes": 3962,
-      "sha256": "169809526fc9e757d2290a7d1d4efe5089baa60bc5796ee3a9bf7561df517fd9"
+      "bytes": 4290,
+      "sha256": "1617cf98c114e495dd7752709519b6496f380ee97f73fec46a6f05f994677c04"
     },
     {
       "path": "src/style.css",
