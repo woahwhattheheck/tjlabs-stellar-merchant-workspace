@@ -28,12 +28,12 @@ const INFO_SCHEMA = {
   },
 };
 
-function payload(inputSchema, sequence) {
+function payload(inputSchema, sequence, toolName = 'inspect_vessel') {
   const extension = {
     info: {
       input: {
         type: 'mcp',
-        toolName: 'inspect_vessel',
+        toolName,
         inputSchema,
       },
     },
@@ -76,6 +76,21 @@ assert.deepEqual(validateBazaarExtension(conforming.extension), { ok: true });
 assert.equal(catalog.ingest(conforming.candidate).decision, 'accepted');
 assert.equal(catalog.size, 1);
 
+const localReference = payload({
+  type: 'object',
+  $defs: {
+    identifier: { type: 'string', minLength: 1 },
+  },
+  properties: {
+    portId: { $ref: '#/$defs/identifier' },
+    includeHistory: true,
+  },
+  required: ['portId'],
+}, 2, 'inspect_port');
+assert.deepEqual(validateBazaarExtension(localReference.extension), { ok: true });
+assert.equal(catalog.ingest(localReference.candidate).decision, 'accepted');
+assert.equal(catalog.size, 2);
+
 const malformed = [
   ['missing root type', {}, 'INFO_MCP_INPUT_SCHEMA_TYPE_INVALID'],
   ['non-object root type', { type: 'string' }, 'INFO_MCP_INPUT_SCHEMA_TYPE_INVALID'],
@@ -83,11 +98,17 @@ const malformed = [
   ['non-schema property', { type: 'object', properties: { vesselId: 7 } }, 'INFO_MCP_INPUT_SCHEMA_PROPERTIES_INVALID'],
   ['non-string required name', { type: 'object', required: ['vesselId', 7] }, 'INFO_MCP_INPUT_SCHEMA_REQUIRED_INVALID'],
   ['duplicate required name', { type: 'object', required: ['vesselId', 'vesselId'] }, 'INFO_MCP_INPUT_SCHEMA_REQUIRED_INVALID'],
+  ['invalid nested type', { type: 'object', properties: { vesselId: { type: '__invalid__' } } }, 'INFO_MCP_INPUT_SCHEMA_INVALID:SCHEMA_TYPE_INVALID'],
+  ['invalid nested minimum', { type: 'object', properties: { draft: { type: 'number', minimum: '0' } } }, 'INFO_MCP_INPUT_SCHEMA_INVALID:SCHEMA_MINIMUM_INVALID'],
+  ['invalid nested required', { type: 'object', properties: { leg: { type: 'object', required: [7] } } }, 'INFO_MCP_INPUT_SCHEMA_INVALID:SCHEMA_REQUIRED_INVALID'],
+  ['unsupported nested keyword', { type: 'object', properties: { vesselId: { unevaluatedProperties: false } } }, 'INFO_MCP_INPUT_SCHEMA_INVALID:SCHEMA_KEYWORD_UNSUPPORTED:unevaluatedProperties'],
+  ['external nested reference', { type: 'object', properties: { vesselId: { $ref: 'https://schemas.example/vessel.json' } } }, 'INFO_MCP_INPUT_SCHEMA_INVALID:SCHEMA_EXTERNAL_REFERENCE'],
+  ['missing local reference', { type: 'object', properties: { vesselId: { $ref: '#/$defs/missing' } } }, 'INFO_MCP_INPUT_SCHEMA_INVALID:SCHEMA_LOCAL_REFERENCE_MISSING'],
 ];
 
 const observed = [];
 for (const [name, inputSchema, expected] of malformed) {
-  const invalid = payload(inputSchema, observed.length + 2);
+  const invalid = payload(inputSchema, observed.length + 3);
   const validation = validateBazaarExtension(invalid.extension);
   assert.equal(validation.ok, false, name);
   assert.equal(validation.reason, 'BAZAAR_SCHEMA_CONTRACT_MISMATCH', name);
@@ -96,12 +117,13 @@ for (const [name, inputSchema, expected] of malformed) {
   assert.equal(ingestion.decision, 'soft_drop', name);
   assert.equal(ingestion.reason, 'BAZAAR_SCHEMA_CONTRACT_MISMATCH', name);
   assert.deepEqual(ingestion.errors, [expected], name);
-  assert.equal(catalog.size, 1, name);
+  assert.equal(catalog.size, 2, name);
   observed.push(expected);
 }
 
 console.log(JSON.stringify({
   conforming: 'accepted',
+  localReference: 'accepted',
   rejected: observed,
   catalogSize: catalog.size,
 }));
