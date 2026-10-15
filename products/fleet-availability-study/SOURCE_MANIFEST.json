@@ -548,8 +548,8 @@
     },
     {
       "path": "receiving/RESUMABLE_EXPORT.md",
-      "bytes": 5289,
-      "sha256": "0b9fe362b8b2a179bba794b8de41be9378b5752c6d8dc6be46aa57ca37dc9998"
+      "bytes": 6065,
+      "sha256": "fffe4f3d89be0bc6a05c9ae70fe89347ec1e370b4be7ec8d9a3d989851c1bbde"
     },
     {
       "path": "receiving/checkpoint-reader.cjs",
@@ -558,8 +558,8 @@
     },
     {
       "path": "receiving/checkpoint-storage.cjs",
-      "bytes": 2493,
-      "sha256": "effafda4907de3ab610f90427a04067e2e3e2cefbd4af2008fad3bdde07db78f"
+      "bytes": 3507,
+      "sha256": "d692b466c73d983b543c041e4b968988d14b557a377c2f5c070ee184653a1502"
     },
     {
       "path": "receiving/complete-archive-readback.cjs",
@@ -598,8 +598,8 @@
     },
     {
       "path": "receiving/run-resumable-export.mjs",
-      "bytes": 5096,
-      "sha256": "4b3dd111d7dbd676c9b951a786942b97e2f7fdb2486cd9cfd67270396085f25c"
+      "bytes": 5359,
+      "sha256": "307f9347ea3ca069adf5ad18004d2902e1bfb993df3b9ccf7b98f02d98d009ed"
     },
     {
       "path": "receiving/source-bytes-course.cjs",
@@ -648,8 +648,8 @@
     },
     {
       "path": "src/connected_zip.cjs",
-      "bytes": 22223,
-      "sha256": "751354cbfe55450be53689de23631900f3b1661063c7974e46f99fa2413cbc1f"
+      "bytes": 22417,
+      "sha256": "78cc84089aa4aad4303888b6ca0156df258ab19ac0ca2aca1aeffd9674d1fb6a"
     },
     {
       "path": "src/core-cache.cjs",
