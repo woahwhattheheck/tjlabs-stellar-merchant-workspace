@@ -1,0 +1,24 @@
+{
+  "schema": "complete-receiving-workload-chunks/v1",
+  "product": "harvest-outcome-study",
+  "sourceHead": "f0c24b0f789191d3e0e117511f1890a73eba7c4a",
+  "encoding": "gzip+base64",
+  "bytes": 4451298,
+  "sha256": "fe8efb15ea42dc0d404efdf2f84f7a693c1edcc913fbfde1082bf065c08922ae",
+  "parts": [
+    {
+      "path": "harvest-outcome-study/part-000.txt",
+      "characters": 750000,
+      "sha256": "13f4629ced4b58d6d81891b8586936dec1ea9b4745a1e46140da8b4073727580"
+    },
+    {
+      "path": "harvest-outcome-study/part-001.txt",
+      "characters": 663532,
+      "sha256": "1a3e516a3ddb2541729843c8183f5c04f7e8d90ff0bdd6682c958d9d90d1d778"
+    }
+  ],
+  "requests": 3,
+  "editions": 4,
+  "publishedWholeMerchantChecks": 37,
+  "recoveredContinuationChecks": 6
+}
