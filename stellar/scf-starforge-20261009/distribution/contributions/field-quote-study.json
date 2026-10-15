@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "field-quote-study",
+  "description": "Complete eighteen-family field quote study with exact evidence receipts, supplied output and price/authority lineage, actual approval and delivery, full population and recurring effort with recoverable editing",
+  "components": [
+    "products/field-quote-study"
+  ],
+  "commands": {
+    "fieldquote-workspace": "products/field-quote-study/installed-cli.mjs",
+    "fieldquote-managed": "products/field-quote-study/managed.mjs"
+  },
+  "commandDescriptions": {
+    "fieldquote-workspace": "Create, receive and export complete Field Quote Study sessions",
+    "fieldquote-managed": "Open the complete field quote study through Applications"
+  },
+  "exports": {
+    "./products/fieldquote": "./source/products/field-quote-study/runtime.mjs",
+    "./products/fieldquote/client": "./source/products/field-quote-study/host/client.mjs",
+    "./products/fieldquote/server": "./source/products/field-quote-study/host/server.mjs"
+  },
+  "applicationProviders": {
+    "field-quote-study": "products/field-quote-study/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "field-quote-study": "products/field-quote-study/merchant-provider.mjs"
+  }
+}

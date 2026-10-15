@@ -1,0 +1,9 @@
+id,line_id,rule_id,override_authority_id,override_actor_id,override_at,override_reason,source_ref
+BIND-Q1,LINE-Q1,PRICE,,,,,authored/binding/Q1
+BIND-Q2A,LINE-Q2A,PRICE,,,,,authored/binding/Q2A
+BIND-Q2B,LINE-Q2B,PRICE,,,,,authored/binding/Q2B
+BIND-Q4A,LINE-Q4A,PRICE,,,,,authored/binding/Q4A
+BIND-Q4B,LINE-Q4B,PRICE,,,,,authored/binding/Q4B
+BIND-Q5,LINE-Q5,PRICE,,,,,authored/binding/Q5
+BIND-Q6,LINE-Q6,PRICE,,,,,authored/binding/Q6
+BIND-Q7,LINE-Q7,PRICE,,,,,authored/binding/Q7

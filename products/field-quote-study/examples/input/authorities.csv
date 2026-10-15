@@ -1,0 +1,2 @@
+id,company_id,user_id,action,service_kind,currency,maximum_total,effective_from,effective_until,recorded_at,source_ref
+APPROVE,CO,OFFICE,approve_quote,repair,USD,1000,2026-10-01T00:00:00Z,,2026-10-01T00:00:00Z,authored/authority
