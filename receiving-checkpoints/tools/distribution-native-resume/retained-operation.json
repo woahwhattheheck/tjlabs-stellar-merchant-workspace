@@ -1,0 +1,69 @@
+{
+  "schema": "distribution.complete-retained-native-operation.v1",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "rootSeat": "A74F",
+  "coordination": {
+    "channel": "C0BU51F1PL3",
+    "thread": "1792101264.351939"
+  },
+  "input": {
+    "edition": "distribution-original-complete-merchant-course-resume-retained",
+    "bytes": 27142492,
+    "sha256": "c83f6c8bd2c7e7f405eb86b1ce63a8dff33861a59d9c1c5692e2937eb3344105",
+    "recipientFreePickup": {
+      "account": "Business2",
+      "message": "1a141d9d8d3b1f59",
+      "draft": "r-1488369130606106767"
+    }
+  },
+  "source": {
+    "sourceVersion": "9b2453fe855ce3ad9fa8d057a1649265809ce7ee",
+    "originalPrefixSource": "710bfa6703031892daed620b1fd880aa6c124f81",
+    "inputBytes": 27142492,
+    "inputSha256": "c83f6c8bd2c7e7f405eb86b1ce63a8dff33861a59d9c1c5692e2937eb3344105",
+    "initialCheckpoint": {
+      "originCommit": "d12d388c53e71a345796eeb6a440c4fcbb5b62ff",
+      "originManifest": "receiving-checkpoints/distribution-lot-order-study/before-pinned-reads/manifest.json",
+      "phase": "before-pinned-reads",
+      "bytes": 12424234,
+      "sha256": "3328bcc851776c14f862fe1e1a6197a5a1596527403d28c677e6d3a084a3982e",
+      "checks": 45,
+      "requests": 44,
+      "editions": 45,
+      "sequence": 43,
+      "stateSha256": "1dc7a01fb25e2563216699b8df43224c925162c010257b136191ef5382135f10"
+    },
+    "courseOverlay": {
+      "path": "receiving/host-course.cjs",
+      "before": "assessment.result.distribution.status===\"population_for_review\"",
+      "after": "assessment.result.distribution.status===\"population_unresolved\"",
+      "originalBytes": 16980,
+      "originalSha256": "970691f9a53848afe1aa3e82df6feda563df24335f7fea12f898a5724f074cab",
+      "executedBytes": 16980,
+      "executedSha256": "09f10b5579cb57c6cc3789210444abeb4b72c13c816907d4a40ef2d4247c6309",
+      "reason": "Correct the stale expected population status while preserving exact Merchant/core equality and the post-cutoff missing-edition check"
+    }
+  },
+  "phase": "before-pinned-reads",
+  "requests": 44,
+  "editions": 45,
+  "checks": 45,
+  "currentProduct": {
+    "commit": "f2d889d926f5a409f50e50636d99c8dd0b2ab8cd",
+    "source": {
+      "bytes": 15091163,
+      "sha256": "836eebef6d744abfb0441861e04b4fb0bf012ffce8f2c2622d109ac74ea00062"
+    },
+    "html": {
+      "bytes": 4142561,
+      "sha256": "28c4e7ee0a23b6195f54889e6e8fb26c89c1856bba76024f821e85c6d05cdcc0"
+    },
+    "pickupMessage": "1a141d6eeb7c3af1"
+  },
+  "returnFiles": [
+    "COMPLETE_RESULT.json",
+    "LATEST.json",
+    "complete-course.<sha256>.checkpoint.json"
+  ],
+  "outputRule": "Preserve all retained original histories, source provenance and complete checkpoints; original cloud branch remains a separate single writer."
+}

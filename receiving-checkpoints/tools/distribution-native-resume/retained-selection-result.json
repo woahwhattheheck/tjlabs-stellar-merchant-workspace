@@ -1,0 +1,50 @@
+{
+  "schema": "distribution.native-retained-resume-selection.v1",
+  "completeInput": {
+    "bytes": 27142492,
+    "sha256": "c83f6c8bd2c7e7f405eb86b1ce63a8dff33861a59d9c1c5692e2937eb3344105"
+  },
+  "initialCheckpoint": {
+    "originCommit": "d12d388c53e71a345796eeb6a440c4fcbb5b62ff",
+    "originManifest": "receiving-checkpoints/distribution-lot-order-study/before-pinned-reads/manifest.json",
+    "phase": "before-pinned-reads",
+    "bytes": 12424234,
+    "sha256": "3328bcc851776c14f862fe1e1a6197a5a1596527403d28c677e6d3a084a3982e",
+    "checks": 45,
+    "requests": 44,
+    "editions": 45,
+    "sequence": 43,
+    "stateSha256": "1dc7a01fb25e2563216699b8df43224c925162c010257b136191ef5382135f10"
+  },
+  "courseOverlay": {
+    "path": "receiving/host-course.cjs",
+    "before": "assessment.result.distribution.status===\"population_for_review\"",
+    "after": "assessment.result.distribution.status===\"population_unresolved\"",
+    "originalBytes": 16980,
+    "originalSha256": "970691f9a53848afe1aa3e82df6feda563df24335f7fea12f898a5724f074cab",
+    "executedBytes": 16980,
+    "executedSha256": "09f10b5579cb57c6cc3789210444abeb4b72c13c816907d4a40ef2d4247c6309",
+    "reason": "Correct the stale expected population status while preserving exact Merchant/core equality and the post-cutoff missing-edition check"
+  },
+  "legacyOriginalPhase": "imports-24",
+  "sourcePreserved": true,
+  "allOtherSourceFilesUnchanged": true,
+  "rejected": [
+    {
+      "name": "checkpoint identity",
+      "message": "Retained initial checkpoint byte identity differs"
+    },
+    {
+      "name": "case phase",
+      "message": "Retained initial checkpoint differs: phase"
+    },
+    {
+      "name": "course original hash",
+      "message": "Course overlay identities differ"
+    },
+    {
+      "name": "different course edit",
+      "message": "Use the exact one-literal original course correction"
+    }
+  ]
+}

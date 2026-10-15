@@ -15,9 +15,8 @@ async function run(){
  }
  const input=JSON.parse(await fs.readFile(inputPath,'utf8')),bytes=zlib.gunzipSync(Buffer.from(input.content_base64,'base64')),actual=digest(bytes);
  if(actual.bytes!==input.bytes||actual.sha256!==input.sha256)throw Error('Original resume envelope bytes differ');
- const payload=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes)),source=R.binding(input,payload),course=load(payload.files['receiving/host-course.cjs']);
- let resume=R.hydrate(payload.checkpoint),latest=null;
- if(resume.phase!=='imports-24'||resume.records.length!==24||resume.editions.length!==25)throw Error('Original complete prefix differs');
+ const payload=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes)),prepared=R.prepareResume(input,payload,digest),{source,files}=prepared,course=load(files['receiving/host-course.cjs']);
+ let resume=prepared.resume,latest=null;
  const directory=await fs.open(out,'r');
  async function syncDirectory(){await directory.sync();}
  async function exact(name,body){
@@ -48,7 +47,7 @@ async function run(){
    await pointer('LATEST.json',JSON.stringify(receipt,null,2)+'\n');latest=receipt;process.stdout.write(JSON.stringify({checkpoint:receipt})+'\n');
   }
   if(!latest)await save(resume);
-  const result=await course(payload.files,{resume,startAt:resume.phase,progress:row=>process.stdout.write(JSON.stringify({progress:row})+'\n'),checkpoint:save});
+  const result=await course(files,{resume,startAt:resume.phase,progress:row=>process.stdout.write(JSON.stringify({progress:row})+'\n'),checkpoint:save});
   if(latest.phase!=='complete-course')throw Error('Course did not retain its complete final checkpoint');
   const summary={schema:'distribution.native-course-result/v2',execution:'Original complete Merchant dispatch course in Node; original model with injected filesystem/listener',...source,checks:result.checks,timings:result.timings,requests:result.records.length,editions:result.editions.length,sequence:result.state.sequence,stateSha256:result.state.sha256,latestCheckpoint:latest};
   const body=JSON.stringify(summary,null,2)+'\n',identity=digest(body),name='COMPLETE_RESULT.'+identity.sha256+'.json';await exact(name,body);await pointer('COMPLETE_RESULT.json',body);process.stdout.write(JSON.stringify({complete:name,...identity,latestCheckpoint:latest})+'\n');
