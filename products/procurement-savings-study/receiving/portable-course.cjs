@@ -16,7 +16,7 @@ class File{constructor(parts,name,options={}){const all=parts.map(x=>x instanceo
 class Decoder{decode(buffer){return B.C.utf8Decode(new Uint8Array(buffer));}}
 class Blob{constructor(parts,options){this.parts=parts;this.options=options;}}
 const URL={createObjectURL:b=>{currentBlob=b;return"blob:authored"},revokeObjectURL(){}};
-Function("window","document","indexedDB","Blob","URL","setTimeout","clearTimeout","confirm","TextDecoder","File",scripts.filter(x=>!x[1].includes("application/json")).map(x=>x[2]).join("\n;\n"))(window,document,memory,Blob,URL,timer,clear,()=>true,Decoder,File);
+Function("globalThis","window","document","indexedDB","Blob","URL","setTimeout","clearTimeout","confirm","TextDecoder","File",scripts.filter(x=>!x[1].includes("application/json")).map(x=>x[2]).join("\n;\n"))(window,window,document,memory,Blob,URL,timer,clear,()=>true,Decoder,File);
 async function settle(){for(let i=0;i<40;i++)await Promise.resolve();await window.ProcurementDesk.flush();await memory.idle();for(let i=0;i<20;i++)await Promise.resolve();}
 async function emit(k,e){for(const fn of handlers[k]||[])fn(e);await settle();}
 async function click(data){await emit("click",{target:{closest:()=>({dataset:data})}});}
