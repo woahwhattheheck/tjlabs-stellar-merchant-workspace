@@ -11,6 +11,10 @@ import { compileSchemaPattern } from './schema-pattern.mjs';
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const clone = value => structuredClone(value);
 const DRAFT = 'https://json-schema.org/draft/2020-12/schema';
+// Match the downstream catalog trust boundary. Bazaar `info` is untrusted and
+// is evaluated before the complete catalog entry reaches that boundary, so it
+// needs the same document ceiling here rather than after schema work/cloning.
+const MAX_INFO_DOCUMENT_BYTES = 65_536;
 // One budget covers all alternatives and recursive instance descent in a validation.
 const MAX_SCHEMA_EVALUATIONS = 100_000;
 const SCHEMA_KEYS = new Set([
@@ -33,6 +37,25 @@ const QUERY_METHODS = new Set(['GET', 'HEAD', 'DELETE']);
 const BODY_METHODS = new Set(['POST', 'PUT', 'PATCH']);
 const BODY_TYPES = new Set(['json', 'form-data', 'text']);
 const MCP_TRANSPORTS = new Set(['streamable-http', 'sse']);
+
+function measureJsonDocument(value) {
+  try {
+    const document = JSON.stringify(value, (_key, item) => {
+      if (item === undefined || typeof item === 'bigint' || typeof item === 'function' ||
+          typeof item === 'symbol' || (typeof item === 'number' && !Number.isFinite(item))) {
+        throw new TypeError('INFO_NOT_JSON');
+      }
+      return item;
+    });
+    if (document === undefined) return { ok: false, reason: 'INFO_NOT_JSON' };
+    return { ok: true, bytes: Buffer.byteLength(document, 'utf8') };
+  } catch {
+    // Includes cyclic values and values whose JSON conversion throws. Network
+    // JSON cannot carry these shapes; programmatic callers must fail the same
+    // way instead of crashing while cloning the accepted payload later.
+    return { ok: false, reason: 'INFO_NOT_JSON' };
+  }
+}
 
 function canonical(value) {
   if (Array.isArray(value)) return value.map(canonical);
@@ -377,6 +400,11 @@ function bazaarContractError(info, schema) {
 
 export function validateBazaarExtension(extension) {
   if (!plain(extension?.info) || !plain(extension?.schema)) return { ok: false, reason: 'BAZAAR_EXTENSION_INVALID' };
+  const infoDocument = measureJsonDocument(extension.info);
+  if (!infoDocument.ok) return infoDocument;
+  if (infoDocument.bytes > MAX_INFO_DOCUMENT_BYTES) {
+    return { ok: false, reason: 'INFO_SIZE_LIMIT' };
+  }
   let bytes;
   try { bytes = Buffer.byteLength(JSON.stringify(extension.schema), 'utf8'); }
   catch { return { ok: false, reason: 'SCHEMA_NOT_SERIALIZABLE' }; }
