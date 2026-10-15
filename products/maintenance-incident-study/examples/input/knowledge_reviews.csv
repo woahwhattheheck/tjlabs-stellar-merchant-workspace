@@ -1,0 +1,2 @@
+id,knowledge_id,edition_sha256,decision,reviewer,effective_at,recorded_at,supersedes_id,notes,source_ref
+KR1,K1,360ae7a7357df856b27e0125d8fc500efee7b4b3c19e2f0f0c101e7c6f576ec4,approved,Authored senior knowledge owner,2026-10-02T08:00:00Z,2026-10-02T08:01:00Z,,Authored source approval of exact edition,authored/source

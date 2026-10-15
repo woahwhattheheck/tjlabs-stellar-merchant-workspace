@@ -1,0 +1,9 @@
+id,incident_id,set_id,cause_id,status,confirmed_at,recorded_at,confirmed_by,supersedes_set_id,basis,source_ref
+CF1,I1,SET1,C1,confirmed,2026-10-12T10:00:00Z,2026-10-12T10:05:00Z,Authored senior technician,,Authored later source confirmation,authored/source
+CF2,I2,SET2,C1,confirmed,2026-10-12T10:00:00Z,2026-10-12T10:05:00Z,Authored senior technician,,Authored later source confirmation,authored/source
+CF3,I3,SET3,C1,confirmed,2026-10-12T10:00:00Z,2026-10-12T10:05:00Z,Authored senior technician,,Authored later source confirmation,authored/source
+CF4,I4,SET4,C1,confirmed,2026-10-12T10:00:00Z,2026-10-12T10:05:00Z,Authored senior technician,,Authored later source confirmation,authored/source
+CF5,I5,SET5,C1,confirmed,2026-10-12T10:00:00Z,2026-10-12T10:05:00Z,Authored senior technician,,Authored later source confirmation,authored/source
+CF6,I6,SET6,C1,confirmed,2026-10-12T10:00:00Z,2026-10-12T10:05:00Z,Authored senior technician,,Authored later source confirmation,authored/source
+CF8,I8,SET8,C1,confirmed,2026-10-12T10:00:00Z,2026-10-12T10:05:00Z,Authored senior technician,,Authored later source confirmation,authored/source
+CF10,I10,SET10,C1,confirmed,2026-10-12T10:00:00Z,2026-10-12T10:05:00Z,Authored senior technician,,Authored later source confirmation,authored/source

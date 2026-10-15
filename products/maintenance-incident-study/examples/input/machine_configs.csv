@@ -1,0 +1,3 @@
+id,machine_id,type_id,configuration_ref,effective_at,recorded_at,source_ref
+CFG-M1,M1,T1,Authored approved configuration 1,2026-10-01T08:00:00Z,2026-10-01T08:00:00Z,authored/source
+CFG-M2,M2,T1,Authored approved configuration 1,2026-10-01T08:00:00Z,2026-10-01T08:00:00Z,authored/source

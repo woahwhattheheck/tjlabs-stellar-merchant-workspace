@@ -1,0 +1,2 @@
+id,incident_id,from_person,to_person,activity_id,knowledge_id,effective_at,recorded_at,acknowledged_at,acknowledged_by,notes,source_ref
+H1,I1,Authored technician B,Authored technician C,A1,K1,2026-10-12T08:30:00Z,2026-10-12T08:31:00Z,2026-10-12T08:32:00Z,Authored technician C,Authored exact prior attempt and reviewed edition passed to next shift,authored/source

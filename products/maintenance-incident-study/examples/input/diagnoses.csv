@@ -1,0 +1,11 @@
+id,incident_id,config_id,stage,requested_at,produced_at,recorded_at,input_cutoff_at,model_version,knowledge_release_ref,output_status,abstention_reason,source_ref
+D1,I1,CFG-M1,initial,2026-10-12T08:04:00Z,2026-10-12T08:05:00Z,2026-10-12T08:06:00Z,2026-10-12T08:03:00Z,authored-model-1,authored-release-1,ranked,,authored/source
+D2,I2,CFG-M2,initial,2026-10-12T08:04:00Z,2026-10-12T08:05:00Z,2026-10-12T08:06:00Z,2026-10-12T08:03:00Z,authored-model-1,authored-release-1,ranked,,authored/source
+D3,I3,CFG-M1,initial,2026-10-12T08:04:00Z,2026-10-12T08:05:00Z,2026-10-12T08:06:00Z,2026-10-12T08:03:00Z,authored-model-1,authored-release-1,ranked,,authored/source
+D4,I4,CFG-M1,initial,2026-10-12T08:04:00Z,2026-10-12T08:05:00Z,2026-10-12T08:06:00Z,2026-10-12T08:03:00Z,authored-model-1,authored-release-1,ranked,,authored/source
+D5,I5,CFG-M1,initial,2026-10-12T08:04:00Z,2026-10-12T08:05:00Z,2026-10-12T08:06:00Z,2026-10-12T08:03:00Z,authored-model-1,authored-release-1,ranked,,authored/source
+D6,I6,CFG-M1,initial,2026-10-12T08:04:00Z,2026-10-12T08:05:00Z,2026-10-12T08:06:00Z,2026-10-12T08:03:00Z,authored-model-1,authored-release-1,ranked,,authored/source
+D7,I7,CFG-M1,initial,2026-10-12T08:04:00Z,2026-10-12T08:05:00Z,2026-10-12T08:06:00Z,2026-10-12T08:03:00Z,authored-model-1,authored-release-1,ranked,,authored/source
+D8,I8,CFG-M1,initial,2026-10-12T08:04:00Z,2026-10-12T08:05:00Z,2026-10-12T08:06:00Z,2026-10-12T08:03:00Z,authored-model-1,authored-release-1,abstained,Authored insufficient evidence,authored/source
+D9,I9,CFG-M1,initial,2026-10-12T08:04:00Z,2026-10-12T08:05:00Z,2026-10-12T08:06:00Z,2026-10-12T08:03:00Z,authored-model-1,authored-release-1,abstained,Authored insufficient evidence,authored/source
+D10,I10,CFG-M1,initial,2026-10-12T08:04:00Z,2026-10-12T08:05:00Z,2026-10-12T08:06:00Z,2026-10-12T08:03:00Z,authored-model-1,authored-release-1,failed,Authored service failure,authored/source

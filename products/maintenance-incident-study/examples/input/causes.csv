@@ -1,0 +1,4 @@
+id,type_id,code,label,source_ref
+C1,T1,C1,Authored cause A,authored/source
+C2,T1,C2,Authored cause B,authored/source
+C3,T1,C3,Authored cause C,authored/source
