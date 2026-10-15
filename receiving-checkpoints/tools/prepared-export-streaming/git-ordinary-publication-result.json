@@ -1,0 +1,91 @@
+{
+  "schema": "commons.git-ordinary-publication-course.v1",
+  "sourceFiles": 194,
+  "sourceAndWorkingMembers": 199,
+  "archive": {
+    "bytes": 3510615,
+    "sha256": "ea22e23a66cb9901732b5892122f48ede40dc4199c82f93c5e084d0bbedd18c0"
+  },
+  "fullVerification": {
+    "schema": "commons.streamed-complete-export.v1",
+    "identity": "69d2f012476c486d16f7d1aeeee737c604d8372b9c0fddac004b6b10c93ee783",
+    "bytes": 3510615,
+    "sha256": "ea22e23a66cb9901732b5892122f48ede40dc4199c82f93c5e084d0bbedd18c0",
+    "members": 199,
+    "uncompressedBytes": 11882558,
+    "metadataBytes": 71318,
+    "maxInputFragmentBytes": 650003,
+    "maxOutputChunkBytes": 487503,
+    "receivingSource": null,
+    "derivation": null
+  },
+  "ordinaryVerification": {
+    "schema": "commons.streamed-complete-export.v1",
+    "identity": "69d2f012476c486d16f7d1aeeee737c604d8372b9c0fddac004b6b10c93ee783",
+    "bytes": 3510615,
+    "sha256": "ea22e23a66cb9901732b5892122f48ede40dc4199c82f93c5e084d0bbedd18c0",
+    "members": 199,
+    "uncompressedBytes": 11882558,
+    "metadataBytes": 71318,
+    "maxInputFragmentBytes": 650003,
+    "maxOutputChunkBytes": 487503,
+    "receivingSource": null,
+    "derivation": null,
+    "memberVerification": "ordinary-zip-crc32-sha256-and-export-manifest",
+    "requiresOrdinaryReadback": false,
+    "emissionMemberVerification": "prepared-payload-identities",
+    "ordinaryReadback": {
+      "schema": "commons.ordinary-zip-range-receipt.v1",
+      "bytes": 3510615,
+      "sha256": "ea22e23a66cb9901732b5892122f48ede40dc4199c82f93c5e084d0bbedd18c0",
+      "uncompressedBytes": 11882558,
+      "directoryBytes": 16837,
+      "transportBytes": 3510615,
+      "rangeRequests": 442,
+      "maxCapturedBytes": 34391,
+      "maxInflatedChunkBytes": 65536,
+      "exportManifest": {
+        "bytes": 34391,
+        "sha256": "18c7a32d881ac727c682869884f67d8ad2d49012769fcbf8e68ee0b04f9a6624",
+        "members": 198
+      },
+      "members": 199,
+      "sourceStats": {
+        "fetchedParts": 9,
+        "textBytes": 4811664,
+        "decodedBytes": 3608737,
+        "cachedParts": 2,
+        "declaredParts": 8
+      }
+    }
+  },
+  "providerReads": 18,
+  "completeReplay": "same head, zero new writes",
+  "pendingFinalRecovery": "same acknowledged commit after response and reconciliation-read loss",
+  "rejected": [
+    "completed ordinary mode switch",
+    "legacy full state adopted by ordinary mode",
+    "false raw SHA after packed emission",
+    "changed actual Git blob",
+    "immutable read interruption",
+    "accepted final ref plus lost reconciliation",
+    "pending-final mode switch"
+  ],
+  "elapsedMs": 133833,
+  "input": {
+    "sourceHead": "e1cb22158270e6c52fb6f7dc80a94b7567f0e572",
+    "sourceDirectory": "products/fleet-availability-study",
+    "sourceFiles": 194,
+    "workingHTML": {
+      "bytes": 7765342,
+      "sha256": "85716c1198a297296b6ddc98cc543498b84e0630730c063ab23ba72539c8d376",
+      "elapsed": 10349
+    },
+    "publisherSourceHead": "cde376bbfbdc271c889cf55d69dce208aa00c7e1",
+    "courseSourceHead": "2cbcfbc8193ab93432e53bfec6e1729b0741030c",
+    "checkpointStorage": {
+      "bytes": 2493,
+      "sha256": "effafda4907de3ab610f90427a04067e2e3e2cefbd4af2008fad3bdde07db78f"
+    }
+  }
+}
