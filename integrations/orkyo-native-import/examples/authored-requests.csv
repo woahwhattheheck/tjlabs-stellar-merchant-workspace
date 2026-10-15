@@ -1,0 +1,4 @@
+id,name,description,status,start_ts,end_ts,resource_id,resource_name,earliest_start_ts,latest_end_ts,min_duration_value,min_duration_unit,actual_duration_value,actual_duration_unit,requirements_count
+old-1,WO-001,"Mill, inspect
+Keep exact source",new,,,mill-a,,,,2.5,hours,,,2
+old-2,WO-002,,new,,,mill-a,,,,90,minutes,,,0
