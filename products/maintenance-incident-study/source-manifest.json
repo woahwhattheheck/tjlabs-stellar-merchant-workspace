@@ -198,8 +198,8 @@
     },
     {
       "path": "Maintenance_Incident_Knowledge_Study_Desk.html",
-      "bytes": 1228440,
-      "sha256": "e2a0b0936d4a49f1db65852d657477d34ce1c3ef6b4b68567deb22f76f1c8fd2"
+      "bytes": 1240236,
+      "sha256": "bb064fb7b43ee59ece6d79e83b7799aed7177132baa9935e6e02ac09dc9bbc74"
     },
     {
       "path": "maintenance.cjs",
@@ -223,8 +223,8 @@
     },
     {
       "path": "merchant-provider.mjs",
-      "bytes": 1973,
-      "sha256": "27ad78d936bc3ea4569be76e34cff7e2b307aca711f43f35d003c11df6373a6c"
+      "bytes": 2246,
+      "sha256": "47636c58010c1479ccc3ea8697ed2c3adfe54776ece2790bb377d39c51d067e9"
     },
     {
       "path": "NATIVE.md",
@@ -302,6 +302,11 @@
       "sha256": "dc227063e9c56a5c46a623a91ddda4ca9bf8f0048f63c20a75aa33873828dd5a"
     },
     {
+      "path": "receiving/portable-course.cjs",
+      "bytes": 10918,
+      "sha256": "6d74b5930477fe207b6ff54d8c9b91022a637d067e35dc67e2a8ecc13d472c2f"
+    },
+    {
       "path": "runtime.mjs",
       "bytes": 2473,
       "sha256": "4fa1bca79ddcf4bef0413c600a908546a1ed45f50d30e9a0bd8cdcaf396066f8"
@@ -328,8 +333,8 @@
     },
     {
       "path": "SOURCE_MANIFEST.json",
-      "bytes": 14726,
-      "sha256": "06082aad828b381d3d15b56cbe2ccc6867f6f6c970cc76daf456007c785c6332"
+      "bytes": 14891,
+      "sha256": "d5eb9a66a2dd626d3919b30b3242f63c12e73f2896f5dff721417f2988fc7cc0"
     },
     {
       "path": "src/archive.mjs",

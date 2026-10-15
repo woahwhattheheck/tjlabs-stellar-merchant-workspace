@@ -243,8 +243,8 @@
     },
     {
       "path": "merchant-provider.mjs",
-      "bytes": 1973,
-      "sha256": "27ad78d936bc3ea4569be76e34cff7e2b307aca711f43f35d003c11df6373a6c"
+      "bytes": 2246,
+      "sha256": "47636c58010c1479ccc3ea8697ed2c3adfe54776ece2790bb377d39c51d067e9"
     },
     {
       "path": "native/maintenance-desk.cjs",
@@ -300,6 +300,11 @@
       "path": "rational.cjs",
       "bytes": 1350,
       "sha256": "b2b38848a914a327cfecc271cf53ca0b52a6186b1d28bd38b3dc8677ca9974a2"
+    },
+    {
+      "path": "receiving/portable-course.cjs",
+      "bytes": 10918,
+      "sha256": "6d74b5930477fe207b6ff54d8c9b91022a637d067e35dc67e2a8ecc13d472c2f"
     },
     {
       "path": "runtime.mjs",
