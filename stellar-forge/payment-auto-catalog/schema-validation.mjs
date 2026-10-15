@@ -283,7 +283,7 @@ function bazaarContractError(info, schema) {
       }
       const bodyType = mustReject(witness => { witness.input.bodyType = '__invalid__'; }, 'SCHEMA_HTTP_BODY_TYPE_NOT_CONSTRAINED');
       if (bodyType) return bodyType;
-      for (const value of ['not-an-object', null, []]) {
+      for (const value of ['not-an-object', 0, false, null, []]) {
         const error = mustReject(witness => { witness.input.body = value; }, 'SCHEMA_HTTP_BODY_NOT_CONSTRAINED');
         if (error) return error;
       }
