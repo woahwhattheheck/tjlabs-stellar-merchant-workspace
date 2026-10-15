@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "maker-production-workbench",
+  "description": "Complete eight-source production planning, observed stage progress, exact-date maker decisions and recoverable editable sessions",
+  "components": [
+    "products/maker-production-workbench"
+  ],
+  "commands": {
+    "makerproduction-workspace": "products/maker-production-workbench/installed-cli.mjs",
+    "makerproduction-managed": "products/maker-production-workbench/managed.mjs"
+  },
+  "commandDescriptions": {
+    "makerproduction-workspace": "Create, receive and export complete Maker Production sessions",
+    "makerproduction-managed": "Open the managed Maker Production operator through Applications"
+  },
+  "exports": {
+    "./products/makerproduction": "./source/products/maker-production-workbench/runtime.mjs",
+    "./products/makerproduction/client": "./source/products/maker-production-workbench/host/client.mjs",
+    "./products/makerproduction/server": "./source/products/maker-production-workbench/host/server.mjs"
+  },
+  "applicationProviders": {
+    "maker-production-workbench": "products/maker-production-workbench/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "maker-production-workbench": "products/maker-production-workbench/merchant-provider.mjs"
+  }
+}
