@@ -1,0 +1,5 @@
+resource_id,name,kind,reference
+TECH-A,Technician A,technician,Authored operating-course source
+TECH-B,Technician B,technician,Authored operating-course source
+VAN-A,Service van A,vehicle,Authored operating-course source
+VAN-B,Service van B,vehicle,Authored operating-course source

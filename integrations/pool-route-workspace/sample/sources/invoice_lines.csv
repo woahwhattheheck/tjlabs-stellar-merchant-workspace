@@ -1,0 +1,2 @@
+line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference
+IA,INV-A,JOB-A,USD,6000,Authored separately supplied customer invoice,2026-10-20T12:45:00-05:00,Authored operating-course source

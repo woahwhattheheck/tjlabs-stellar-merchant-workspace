@@ -455,3 +455,5 @@ The [Tenderly operating guide](products/tenderly/OPERATING.md) covers the `tende
 - [Grooming Cycle Workbench: explicit recurring visits, accepted policy, observed messages and full source/native recovery](integrations/grooming-cycle-workspace/README.md)
 
 - [Field Filing Workbench: original field versions, exact forms, independent filing history and complete source/native recovery](integrations/field-filing-workspace/README.md)
+
+- [Pool Route Workbench: original route/service histories, exact report delivery, explicit monthly counts and complete browser/native recovery](integrations/pool-route-workspace/README.md)

@@ -1,0 +1,6 @@
+pool_id,customer_id,property_id,source_system,source_id,recorded_at,reference
+POOL-A,CUSTOMER-A,PROPERTY-A,Authored original route ledger,SRC-A,2026-10-01T08:00:00-05:00,Authored operating-course source
+POOL-B,CUSTOMER-B,PROPERTY-B,Authored original route ledger,SRC-B,2026-10-01T08:00:00-05:00,Authored operating-course source
+POOL-C,CUSTOMER-C,PROPERTY-C,Authored original route ledger,SRC-C,2026-10-01T08:00:00-05:00,Authored operating-course source
+POOL-D,CUSTOMER-D,PROPERTY-D,Authored original route ledger,SRC-D,2026-10-01T08:00:00-05:00,Authored operating-course source
+POOL-E,CUSTOMER-E,PROPERTY-E,Authored original route ledger,SRC-E,2026-10-01T08:00:00-05:00,Authored operating-course source
