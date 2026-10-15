@@ -7,7 +7,7 @@ import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {connectGrantPortfolio,saveGrantPortfolioFile,GRANT_PORTFOLIO_MAX_JSON_BYTES} from './client.mjs';
 import {prepareAwardCsvImportSession,reviewAwardCsvSessionBatch,submitAwardCsvSessionBatch,
-  inspectAwardCsvImportSession,proposeAwardCsvImportBatches} from './awards-import-session.mjs';
+  inspectAwardCsvImportSession,proposeAwardCsvImportBatches,readAwardCsvImportContinuation} from './awards-import-session.mjs';
 import {prepareAwardCsvRowReview} from './awards-import-row-review.mjs';
 
 const need=(ok,message)=>{if(!ok)throw new Error(message);};
@@ -46,13 +46,14 @@ function argumentsOf(argv){
   const [command,...pairs]=argv;
   const allowed={
     'review-rows':['connection','portfolio','input','csv','out'],
-    propose:['connection','portfolio','input','csv','out','row-review','review-document'],
-    prepare:['connection','portfolio','input','csv','out','row-review','review-document'],
+    propose:['connection','portfolio','input','csv','out','row-review','review-document','continuation','continuation-document'],
+    prepare:['connection','portfolio','input','csv','out','row-review','review-document','continuation','continuation-document'],
+    continue:['connection','session','csv','out'],
     review:['connection','session','csv','index','out'],
     submit:['connection','session','csv','batch','out','resume-failed'],
     inspect:['connection','session','csv','out'],
   };
-  need(Object.hasOwn(allowed,command),'Choose review-rows, propose, prepare, review, submit or inspect.');
+  need(Object.hasOwn(allowed,command),'Choose review-rows, continue, propose, prepare, review, submit or inspect.');
   need(pairs.length%2===0,'Pass each named option once with its value.');
   const values={};
   for(let i=0;i<pairs.length;i+=2){
@@ -61,12 +62,14 @@ function argumentsOf(argv){
       'Use each declared command option exactly once.');
     values[key]=pairs[i+1];
   }
-  for(const key of allowed[command].filter(key=>!['resume-failed','row-review','review-document'].includes(key)))
+  for(const key of allowed[command].filter(key=>!['resume-failed','row-review','review-document','continuation','continuation-document'].includes(key)))
     need(Object.hasOwn(values,key),'Missing --'+key+'.');
   need(values['resume-failed']===undefined||values['resume-failed']==='true',
     'Use --resume-failed true only for the original retryable failed request.');
   need((values['row-review']===undefined)===(values['review-document']===undefined),
     'Select both the complete row-review file and its stable native evidence document UUID.');
+  need((values.continuation===undefined)===(values['continuation-document']===undefined),
+    'Select both the complete native continuation and its stable evidence document UUID.');
   return {command,values};
 }
 export async function main(argv=process.argv.slice(2)){
@@ -85,6 +88,10 @@ export async function main(argv=process.argv.slice(2)){
         need(!Object.hasOwn(input,'rowReview')&&!Object.hasOwn(input,'reviewDocumentId'),'Select one complete row review once.');
         input.rowReview=await readJson(values['row-review']);input.reviewDocumentId=values['review-document'];
       }
+      if(values.continuation){
+        need(!Object.hasOwn(input,'continuation')&&!Object.hasOwn(input,'continuationDocumentId'),'Select the complete continuation once.');
+        input.continuation=await readJson(values.continuation);input.continuationDocumentId=values['continuation-document'];
+      }
       need(!Object.hasOwn(input,'csv')&&!Object.hasOwn(input,'workspaceId'),
         'The original source file and actual connected workspace are supplied separately.');
       const state=await client.state(options),portfolio=await client.portfolio(values.portfolio,options);
@@ -101,7 +108,8 @@ export async function main(argv=process.argv.slice(2)){
       }else result=prepareAwardCsvImportSession(portfolio,{...input,csv,workspaceId:state.workspaceId});
     }else{
       const session=await readJson(values.session);
-      if(command==='review'){
+      if(command==='continue')result=(await readAwardCsvImportContinuation(client,session,csv,options)).continuation;
+      else if(command==='review'){
         need(/^(0|[1-9]\d*)$/.test(values.index),'Select a zero-based original batch index.');
         const reviewed=await reviewAwardCsvSessionBatch(client,session,csv,Number(values.index),options);
         result=reviewed.batch;

@@ -2,6 +2,7 @@
 import type {GrantPortfolioClient,JsonObject,OperationId,PortfolioId,PortfolioSaveInput,
   RequestOptions,RetainedRequest,Sha256} from "./client.mjs";
 import type {AwardId} from "./awards-client.mjs";
+import type {AwardCsvContinuation} from './awards-import-continuation.mjs';
 import type {AwardCsvRowReview} from "./awards-import-row-review.mjs";
 export interface AwardCsvMapping {
   reference:string;title:string;legalName:string;partnerKey:string;projectKey?:string;
@@ -18,15 +19,18 @@ export interface AwardCsvImportInput {
   rowIndexes?:number[];
   /** Sealed complete original-row accounting; v2 only. */
   rowReview?:AwardCsvRowReview;reviewDocumentId?:AwardId;
+  /** Native dispatch uses the complete v3 session, never standalone submit. */
+  continuation?:AwardCsvContinuation;continuationDocumentId?:AwardId;
 }
 export interface AwardCsvImportPlan {
-  schema:'stellar-forge.awards-csv-import-plan.v1'|'stellar-forge.awards-csv-import-plan.v2';
+  schema:'stellar-forge.awards-csv-import-plan.v1'|'stellar-forge.awards-csv-import-plan.v2'|'stellar-forge.awards-csv-import-plan.v3';
   portfolio:{id:PortfolioId;revision:number;snapshot:Sha256};
   source:{sha256:Sha256;bytes:number;filename:string;contentType:'text/csv'};
   documentId:AwardId;round:{id:AwardId;revision:number;sha256:Sha256};
   rows:number;mapping:AwardCsvMapping;actionSha256:Sha256;sourceRows?:number;rowIndexes?:number[];
   rowReview?:{sha256:Sha256;documentId:AwardId;object:{sha256:Sha256;bytes:number;filename:string;contentType:'application/json'};
     counts:{total:number;accepted:number;exception:number;non_application:number}};
+  continuation?:{sha256:Sha256;documentId:AwardId;object:{sha256:Sha256;bytes:number;filename:string;contentType:'application/json'};carriedRows:number};
   action:{operationId:OperationId;action:'portfolio.save';payload:PortfolioSaveInput};
 }
 export interface AwardApplicationExchange {

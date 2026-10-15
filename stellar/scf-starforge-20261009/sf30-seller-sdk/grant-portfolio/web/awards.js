@@ -488,6 +488,7 @@ function GrantAwardsConsole(H) {
     }
     if(model()){
       if(editable())bar.append(button("Import application CSV",()=>exchange.open({roundId:U.roundId})));
+      bar.append(button("Saved intake work",()=>exchange.open({roundId:U.roundId,libraryOnly:true})));
       bar.append(button("Export applications",()=>exchange.openExports({roundId:U.roundId})));
     }
     container.append(bar);scope(container);

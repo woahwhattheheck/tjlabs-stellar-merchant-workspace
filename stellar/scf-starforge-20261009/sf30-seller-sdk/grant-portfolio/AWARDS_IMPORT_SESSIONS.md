@@ -205,7 +205,7 @@ The directory retains the complete original CSV, selection and session, every re
 
 ## Validation and commercial scope
 
-The source adds a reusable import workflow, not a customer-specific bursary policy. Financial values remain original strings and use the maintained domain validation; round criteria, partner mappings and dates remain operator-supplied. No banking, payment provider, credit decision, institution login or Blackbullion tenant integration is present.
+The source adds a reusable import workflow, not a customer-specific bursary policy. Financial values remain original strings and use the maintained domain validation; round criteria, partner mappings and dates remain operator-supplied. No banking, payment provider, credit decision, institution login or customer tenant integration is present.
 
 The receiving course uses explicit internal applications and the original Workspace/Console/client. For a fresh selection it exercises 25,000 records and 50 source columns, reviewed bounded batches, a first-batch continuation, a real cold reopen before the final batch, unchanged complete CSV evidence, exact decimal strings, all original revisions and requests, independent full export/receive, and another cold reopen of both workspaces. Existing v1 selections retain their original two-batch course. Report its actual execution result separately from publication. The existence of this source does not establish production throughput or acceptance of a proposed commercial scope.
 
@@ -321,3 +321,46 @@ above. Accepted original indexes can be noncontiguous; they are never renumbered
 The existing 64 MiB source, 25,000-row, 32 MiB canonical session and 1 MiB action
 limits remain. All legacy v1 saved selections preserve their original bytes and
 meaning.
+
+## Complete saved intake work
+
+The browser now retains named complete intake working copies in addition to the original saved plans and sessions. Open **Saved intake work** from Awards to inspect, restore or download a local copy. **Download complete working file** contains the exact original CSV, every active and inactive correction draft, row decisions, mappings, native identities, editor position, original session and reviewed batch, and all local checkpoints.
+
+See [Saved Grant intake work](AWARDS_INTAKE_WORKING_FILES.md) for the full operator flow and storage recovery. The application also serves that guide from **Read saved-intake guide** in the intake panel.
+
+Close/Escape finishes local retention before leaving. If storage fails, download the exact current complete working file and then Close; an edit after the download requires another complete download. Portable restoration branches into a new local copy and preserves displaced live work. Same-browser library restoration uses exact revision comparison before replacement. Native portfolio selection remains explicit; a saved session is reconciled against its original requests before continuation.
+
+The saved-intake format does not change v1 plans, v1/v2 import sessions or native action bodies. Original source loading remains available while an original operation is pending, while new mapped preparation and writes retain the original current-selection/pending-operation guards. Opening or restoring working data does not submit applications.
+
+## Resolve remaining original rows after a completed mixed intake
+
+A completed intake may contain accepted applications, retained exceptions and agreed non-applications. Open its complete original session and CSV, inspect the native operations, then choose **Resolve remaining original rows**. The operator selects the latest original portfolio. Earlier accepted decisions stay accepted and read-only. Correct a remaining row explicitly, retain the reason, choose its disposition, and prepare reviewed batches. Only newly accepted original row indexes enter these new batches.
+
+The resulting v3 session contains the whole current row review plus the complete prior session and original completion bindings. Each carried result names its source row hash, application ID and historical revision/SHA, original operation and request/input SHA, and resulting portfolio revision/snapshot. Preparing a continuation reads the actual original native requests and historical portfolio results. Imported JSON alone never establishes completion. Every prior batch must first be reconciled to COMPLETED; a running or failed batch continues under its original operation before a successor is prepared.
+
+Previously accepted applications can have later legitimate editions. A submitted application that was subsequently withdrawn remains withdrawn. The successor verifies the original historical acceptance and the present application identity/round; it does not restore the old body or write that application again. The original published round, column meanings, submission status, accepted decisions and selected carried partner/project identities remain bound. A different source or reinterpretation is a separate intake.
+
+### Native API
+
+`readAwardCsvImportContinuation(client, previousSession, csv)` is read-only and returns `{continuation, portfolio}`. Use that current portfolio as the new row-review basis. Preserve every prior accepted row decision exactly, and include `previousReviewSha256: previousSession.input.rowReview.sha256` in the new review. Allocate fresh review/session/document IDs and a fresh operation prefix. Pass the complete `continuation` and a distinct `continuationDocumentId` alongside `rowReview` and `reviewDocumentId` to the existing proposer and session preparer.
+
+The proposer computes new accepted indexes after subtracting carried accepted indexes. Its batches retain original CSV indexes, never filtered ordinals. A successor with no newly accepted rows uses one evidence-only action, retaining the new reviewed disposition record without rewriting awards. The original submission, review and inspection APIs operate the v3 session. Standalone single-import submission remains for v1/v2; continuation dispatch uses the complete session engine.
+
+Each new batch stores the unchanged original CSV, the complete current review and a separate complete completion-history JSON object as native programme documents. Full workspace export/independent receive carries these objects and all native portfolio/request history. Observation distinguishes `completedRows` in this successor, `carriedRows`, `recordedRows` across generations and `newlyAcceptedRows`.
+
+### CLI continuation
+
+Use the same connection and retained original operation directory. These commands are source review/preparation until the existing explicit `submit` command is used:
+
+```sh
+node awards-import-session-cli.mjs continue --connection /absolute/source/console-url.json --session /absolute/work/original-session.json --csv /absolute/work/original.csv --out /absolute/work/completed-continuation.json
+node awards-import-session-cli.mjs review-rows --connection /absolute/source/console-url.json --portfolio ORIGINAL_PORTFOLIO_UUID --input /absolute/work/successor-row-decisions.json --csv /absolute/work/original.csv --out /absolute/work/successor-review.json
+node awards-import-session-cli.mjs propose --connection /absolute/source/console-url.json --portfolio ORIGINAL_PORTFOLIO_UUID --input /absolute/work/successor-proposal.json --csv /absolute/work/original.csv --row-review /absolute/work/successor-review.json --review-document NEW_REVIEW_DOCUMENT_UUID --continuation /absolute/work/completed-continuation.json --continuation-document NEW_HISTORY_DOCUMENT_UUID --out /absolute/work/successor-prepare-input.json
+node awards-import-session-cli.mjs prepare --connection /absolute/source/console-url.json --portfolio ORIGINAL_PORTFOLIO_UUID --input /absolute/work/successor-prepare-input.json --csv /absolute/work/original.csv --out /absolute/work/successor-session.json
+```
+
+The row-decisions input is the complete original review input with a fresh reviewId, current explicit decisions, exact previousReviewSha256, and the original mapping/identities. The proposal retains a fresh sessionId and caller-allocated proposal.operationPrefix/documentIds/maxRows. The proposer output already contains the supplied review and continuation, so the subsequent prepare command does not supply them twice. Keep all generated files. Existing review/submit/inspect commands select the new complete session and retain each original batch.
+
+### Bounds and compatibility
+
+v1 and v2 saved sessions/actions keep their original schema and bytes. v3 keeps one complete predecessor per generation; the CSV is attached separately once by content identity. Earlier reviews/outcomes are retained in order, not replaced by a latest-only summary. The complete session remains bounded at 32 MiB, and the continuation carrier at 32 MiB; a size error preserves the original files and requires explicit scope handling. No history is silently truncated. The 64 MiB/25,000-row original source and original native action limits remain in force.

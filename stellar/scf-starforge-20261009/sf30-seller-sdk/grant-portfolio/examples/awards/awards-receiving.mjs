@@ -823,6 +823,44 @@ export async function runAwardsReceiving(argv=process.argv.slice(2)) {
       Object.assign(journal.refs.ids,captured);await checkpoint();
     });
   }
+  function browserIntakeColumns(status) {return [
+        ['Application reference *','Ref'],['Application title *','Title'],['Applicant legal name *','Name'],
+        ['Partner matching key *','Partner'],['Project matching key','Project'],['Requested amount','Amount'],
+        ['Requested currency','Currency'],['Actual submission date'+(status==='submitted'?' *':''),'Date'],
+        ['Application notes','Notes'],
+        ...criteria.map(c=>[c.title+' · '+c.id+(status==='submitted'&&c.required?' *':''),
+          {eligibility:'Eligibility',quality:'Quality',delivery:'Delivery'}[c.id]]),
+      ];}
+  async function browserIntakeWorkingLibrary(portfolio,csvPath) {
+    const module=await import(pathToFileURL(join(sdk,'grant-portfolio/examples/awards/intake-working-receiving.mjs')).href);
+    const view=await browserPage('source',portfolio);
+    const callbacks=v=>({
+      page:v.page,
+      retainDownload:(trigger,label)=>retainBrowserDownload(v,trigger,
+        join(root,'exports',label+'-'+randomUUID()+'.json')),
+      captureViews:label=>browserIntakeViews(v,label),
+      close:()=>v.context.close()
+    });
+    try {
+      const result=await module.runAwardIntakeWorkingReceiving({
+        ...callbacks(view),csvPath,roundId:journal.refs.ids.round,actor:input.actor,status:'draft',
+        columns:browserIntakeColumns('draft'),
+        reopenPage:async()=>{
+          await view.page.reload();
+          await view.page.waitForFunction(()=>document.querySelector('#connection')?.textContent.includes('Workspace revision'));
+          await view.page.selectOption('#portfolio-select',portfolio.id);
+          await view.page.waitForFunction(revision=>document.querySelector('#revision-select')?.value===String(revision),portfolio.revision);
+          await view.page.locator('nav button[data-view="awards"]').click();
+          await view.page.getByRole('heading',{name:'Grant applications and awards',exact:true}).waitFor();
+        },
+        openIndependentPage:async()=>callbacks(await browserPage('source',portfolio))
+      });
+      equal(view.errors,[]);
+      for(const file of result.files)equal(await fileInfo(file.path,{synchronize:true}),
+        {path:file.path,bytes:file.bytes,sha256:file.sha256});
+      return {...result,pageErrors:view.errors,browserVersion:browser.version()};
+    } finally {await view.context.close();}
+  }
   async function prepareCsvInBrowser(portfolio,csvPath,status,planPath) {
     const view=await browserPage('source',portfolio);
     const dialog=view.page.locator('#detail-dialog');
@@ -836,16 +874,14 @@ export async function runAwardsReceiving(argv=process.argv.slice(2)) {
       await dialog.getByLabel('Imported status',{exact:true}).selectOption(status);
       await dialog.getByRole('button',{name:'Map CSV columns',exact:true}).click();
       await dialog.getByRole('heading',{name:'2. Map the application fields',exact:true}).waitFor();
-      const columns=[
-        ['Application reference *','Ref'],['Application title *','Title'],['Applicant legal name *','Name'],
-        ['Partner matching key *','Partner'],['Project matching key','Project'],['Requested amount','Amount'],
-        ['Requested currency','Currency'],['Actual submission date'+(status==='submitted'?' *':''),'Date'],
-        ['Application notes','Notes'],
-        ...criteria.map(c=>[c.title+' · '+c.id+(status==='submitted'&&c.required?' *':''),
-          {eligibility:'Eligibility',quality:'Quality',delivery:'Delivery'}[c.id]]),
-      ];
+      const columns=browserIntakeColumns(status);
       for(const [name,column] of columns)await dialog.getByLabel(name,{exact:true}).selectOption(column);
-      await dialog.getByRole('button',{name:'Match existing records',exact:true}).click();
+      await dialog.getByRole('button',{name:'Review original source rows',exact:true}).click();
+      await dialog.getByRole('heading',{name:'3. Account for every original source row',exact:true}).waitFor();
+      await dialog.getByRole('button',{name:'Inspect original row 1',exact:true}).click();
+      await dialog.getByLabel('Disposition for row 1',{exact:true}).selectOption('accepted');
+      await dialog.getByLabel('Reason / agreement for row 1',{exact:true}).fill('The original internal acceptance application is complete.');
+      await dialog.getByRole('button',{name:'Match accepted programme records',exact:true}).click();
       await dialog.getByRole('heading',{name:'3. Match existing programme records',exact:true}).waitFor();
       await dialog.getByLabel('Partner for INTERNAL',{exact:true}).selectOption(journal.refs.ids.partner);
       await dialog.getByLabel('Project for PROJECT',{exact:true}).selectOption(journal.refs.ids.project);
@@ -857,13 +893,16 @@ export async function runAwardsReceiving(argv=process.argv.slice(2)) {
         await application.selectOption(journal.refs.ids.application);
       }
       await dialog.getByRole('button',{name:'Review complete import',exact:true}).click();
-      await dialog.getByRole('heading',{name:'4. Review and save the original import',exact:true}).waitFor();
-      // This is the actual downloaded JSON, including its original key order.
-      // Do not replace it with the canonical journal encoding.
+      await dialog.getByRole('heading',{name:'4. Review the complete import session',exact:true}).waitFor();
+      await dialog.getByRole('button',{name:'Review batch 1',exact:true}).click();
+      await dialog.getByRole('heading',{name:'Reviewed batch 1',exact:true}).waitFor();
+      // Preserve the actual browser download and its reviewed original action.
+      // Historical one-action v1 files keep their existing resume path below.
       const retained=await retainBrowserDownload(view,()=>dialog.getByRole('button',{
-        name:'Download original import plan',exact:true}).click(),planPath);
-      const plan=await readJson(planPath);
-      equal(retained.filename,'Award_Import_'+plan.action.operationId+'.json');
+        name:'Download complete session and reviewed batch',exact:true}).click(),planPath);
+      const selected=await readJson(planPath);
+      assert(selected.schema==='stellar-forge.awards-browser-session.v1'&&selected.reviewedBatch);
+      equal(retained.filename,'Award_Session_'+selected.session.sessionId+'.json');
       equal(view.errors,[]);
       return retained;
     } finally {await view.context.close();}
@@ -922,6 +961,181 @@ export async function runAwardsReceiving(argv=process.argv.slice(2)) {
         planDownload:resumed,screenshots,pageErrors:view.errors,browserVersion:browser.version()};
     } finally {await view.context.close();}
   }
+  async function validateBrowserReviewedSession(client,selected,portfolio,csv,status) {
+    exactKeys(selected,['schema','session','reviewedBatch'],['schema','session','reviewedBatch']);
+    assert(selected.schema==='stellar-forge.awards-browser-session.v1');
+    const session=selected.session,batch=selected.reviewedBatch;
+    assert(session?.schema==='stellar-forge.awards-csv-import-session.v2'&&
+      session.sourceRows===1&&session.batches.length===1&&batch?.index===0,
+      'Keep the complete original reviewed one-application session.');
+    equal(session.portfolio,{id:portfolio.id,revision:portfolio.revision,snapshot:portfolio.snapshot});
+    equal(session.source,{sha256:sha(csv),bytes:csv.length,filename:'Internal_Applications_Original.csv',contentType:'text/csv'});
+    equal(session.input.mapping,{profile:{},answers:{eligibility:'Eligibility',quality:'Quality',delivery:'Delivery'},
+      reference:'Ref',title:'Title',legalName:'Name',partnerKey:'Partner',projectKey:'Project',
+      amount:'Amount',currency:'Currency',submittedDate:'Date',notes:'Notes'});
+    assert(session.input.actor===input.actor&&session.input.status===status&&
+      session.input.roundId===journal.refs.ids.round);
+    const review=session.input.rowReview;
+    equal(review.counts,{total:1,accepted:1,exception:0,non_application:0});
+    assert(review.rows[0].rowIndex===0&&review.rows[0].disposition==='accepted');
+    equal(review.rows[0].corrections,{});
+    const engine=await import(pathToFileURL(join(sdk,'grant-portfolio/awards-import-session-core.mjs')).href);
+    const rebuilt=engine.prepareAwardCsvImportSession(portfolio,{...session.input,csv,sessionId:session.sessionId,
+      workspaceId:session.workspaceId,batches:session.batches.map(({operationId,documentId,rowIndexes})=>
+        ({operationId,documentId,rowIndexes}))});
+    equal(session,rebuilt,'Retain the complete browser-generated row review, partition and original identities.');
+    const checked=await engine.reviewAwardCsvSessionBatch(client,session,csv,0,{signal:controller.signal});
+    equal(batch,checked.batch,'The saved reviewed action must still be its original complete batch.');
+    const plan=batch.plan,changes=plan.action.payload?.awards?.changes;
+    assert(changes?.length===1&&changes[0].collection==='applications'&&UUID.test(changes[0].id));
+    const change=changes[0],id=journal.refs.ids,prior=portfolio.definition.awards.records.applications.find(row=>row.id===change.id);
+    assert(change.fields.partnerId===id.partner&&change.fields.projectId===id.project&&change.fields.roundId===id.round);
+    assert(change.fields.status===status&&change.fields.reference==='INT-APP-1');
+    if(status==='draft')assert(!prior&&change.expectedRevision===0);
+    else assert(prior?.id===id.application&&prior.status==='draft'&&!prior.archived&&change.expectedRevision===prior.revision);
+    assert(plan.actionSha256===sha(Buffer.from(JSON.stringify(plan.action),'utf8')));
+    assert(plan.documentId===session.batches[0].documentId&&plan.rowReview?.documentId===session.input.reviewDocumentId);
+    return {engine,session,batch,plan,applicationId:change.id};
+  }
+  async function resumeReviewedCsvInBrowser(client,portfolio,selected,csvPath,sessionPath,key,{replay=false}={}) {
+    const {session,reviewedBatch:batch}=selected,plan=batch.plan,inputPath=join(root,'actions',key+'.input.json');
+    const priorInput=await readJson(inputPath,true);if(priorInput)equal(priorInput,plan.action);
+    const view=await browserPage('source',portfolio),dialog=view.page.locator('#detail-dialog');
+    let routeFailure=null,posts=0;
+    try {
+      const savedWork=view.page.getByRole('button',{name:'Saved intake work',exact:true});
+      if(await savedWork.count())await savedWork.click();
+      else await view.page.getByRole('button',{name:'Import application CSV',exact:true}).click();
+      await dialog.getByRole('heading',{name:'Application CSV intake',exact:true}).waitFor();
+      await dialog.getByLabel('Original application CSV',{exact:true}).setInputFiles(csvPath);
+      await dialog.getByLabel('Saved import plan',{exact:true}).setInputFiles(sessionPath);
+      await dialog.getByRole('button',{name:'Review original saved import',exact:true}).click();
+      await dialog.getByRole('heading',{name:'4. Review the complete import session',exact:true}).waitFor();
+      await dialog.getByRole('heading',{name:'Reviewed batch 1',exact:true}).waitFor();
+      const original=await fileInfo(sessionPath,{synchronize:true}),resumedPath=join(root,'exports',
+        key+(replay?'-completed-replay':'-resumed')+'.session.json');
+      const resumed=await retainBrowserDownload(view,()=>dialog.getByRole('button',{
+        name:'Download complete session and reviewed batch',exact:true}).click(),resumedPath,{
+        filename:'Award_Session_'+session.sessionId+'.json',expected:{bytes:original.bytes,sha256:original.sha256}});
+      equal(await readJson(resumedPath),selected);
+      const screenshots=await browserIntakeViews(view,key+(replay?'-completed-session':'-resumed-session'));
+      const before=await client.state();
+      await view.page.route('**/api/action',async route=>{
+        try {
+          const submitted=route.request().postDataJSON();equal(submitted,plan.action,
+            'Continue only the original reviewed row-session action.');
+          await retainCompleted('original browser reviewed CSV action',()=>save(inputPath,submitted,true));
+          posts++;if(stopRequested)await route.abort();else await route.continue();
+        } catch(error){routeFailure=error;await route.abort();}
+      });
+      let request;
+      try{request=await client.request(plan.action.operationId);}
+      catch(error){if(error.status!==404)throw error;request=null;}
+      if(request)equal(request.input,plan.action);
+      if(request?.state==='COMPLETED') {
+        // Completed session reopen is inspection. The application intentionally
+        // presents no repeat-save control and must issue no new action.
+        await dialog.getByText('This original batch is recorded. Its complete plan and source remain available.',{exact:true}).waitFor();
+        equal(await dialog.getByRole('button',{name:'Save reviewed batch',exact:true}).count(),0);
+      } else {
+        assert(!replay,'A recorded replay must retain its completed original request.');
+        const control=request?.state==='FAILED'?'Resume original failed batch':
+          request?.state==='RUNNING'?'Read running batch':'Save reviewed batch';
+        await dialog.getByRole('button',{name:control,exact:true}).click();
+        await view.page.waitForFunction(()=>{
+          const button=document.querySelector('#intake-working-save');
+          return Boolean(button&&!button.disabled);
+        },null,{timeout:0});
+        const stopped=await dialog.getByRole('alert').textContent();
+        assert(!stopped?.trim(),'The reviewed browser continuation stopped: '+stopped);
+        request=null;
+        // Read the same provider request until admission. No replacement action
+        // is generated by this receiving course if the browser has not sent it.
+        while(!request) {
+          if(routeFailure)throw routeFailure;checkStop();equal(view.errors,[]);
+          const message=await dialog.getByRole('alert').textContent();
+          assert(!message?.trim(),'The reviewed browser import stopped before admission: '+message);
+          try{request=await client.request(plan.action.operationId);}
+          catch(error){if(error.status!==404)throw error;}
+          if(!request)await sleep(100);
+        }
+      }
+      if(routeFailure)throw routeFailure;
+      assert(request&&request.id===plan.action.operationId);
+      equal(request.input,plan.action);
+      // Completion follows the browser's explicit continuation. Polling reads the
+      // same original request; this course never races it with a second resume.
+      while(request.state==='RUNNING') {
+        checkStop();await sleep(500);
+        request=await client.request(plan.action.operationId,{signal:controller.signal});
+        equal(request.input,plan.action);
+      }
+      if(request.state!=='COMPLETED') {
+        await retainCompleted('original reviewed batch failure',()=>save(
+          join(root,'actions',key+'.failure-'+sha(encoded(request))+'.json'),request,true));
+        assert(false,'The original reviewed batch did not complete: '+safeMessage(request.error?.message));
+      }
+      const completed=await completeOriginal(client,key,plan.action);
+      if(posts)await view.page.waitForFunction(revision=>
+        document.querySelector('#revision-select')?.value===String(revision),completed.result.revision);
+      equal(view.errors,[]);assert(posts<=1,'One explicit reviewed continuation sends at most its original action once.');
+      const after=await client.state();
+      if(replay) {
+        equal(posts,0,'A completed session is inspected without dispatch.');
+        equal(after.revision,before.revision);
+        equal(await currentPortfolio(client),portfolio);
+      }
+      return {requestId:completed.id,portfolio:completed.result,inputSha256:completed.inputSha256,
+        uiGenerated:true,completedReplay:replay,browserPosts:posts,workspaceBefore:before.revision,workspaceAfter:after.revision,
+        sessionId:session.sessionId,sessionSha256:session.sha256,planDownload:resumed,screenshots,
+        pageErrors:view.errors,browserVersion:browser.version()};
+    } finally {await view.context.close();}
+  }
+  async function browserReviewedApplicationIntake(client,portfolio,status,csv,csvPath,sessionPath,key,selected) {
+    const checked=await validateBrowserReviewedSession(client,selected,portfolio,csv,status),
+      {session,batch,plan,applicationId}=checked;
+    await adoptBrowserCsvIdentities(plan,applicationId,status);
+    const intent={schema:'stellar-forge.awards-browser-intake-selection.v2',status,
+      portfolio:session.portfolio,applicationId,documentId:plan.documentId,operationId:plan.action.operationId,
+      actionSha256:plan.actionSha256,source:session.source,sessionId:session.sessionId,sessionSha256:session.sha256,
+      reviewId:session.input.rowReview.reviewId,reviewSha256:session.input.rowReview.sha256,
+      reviewDocumentId:session.input.reviewDocumentId,plan:await fileInfo(sessionPath,{synchronize:true})};
+    await retainCompleted('complete reviewed browser intake selection',()=>save(join(root,'actions',key+'.selection.json'),intent,true));
+    const resumedPath=join(root,'evidence',key+'.browser-resume.json');
+    let resumed=await readJson(resumedPath,true);
+    if(!resumed) {
+      resumed=await resumeReviewedCsvInBrowser(client,await currentPortfolio(client),selected,csvPath,sessionPath,key);
+      await retainCompleted('actual original reviewed browser import return',()=>save(resumedPath,resumed,true));
+    }
+    assert(resumed.requestId===plan.action.operationId&&resumed.sessionSha256===session.sha256);
+    equal(resumed.portfolio.id,portfolio.id);
+    const original=await readJson(join(root,'actions',key+'.input.json'));
+    equal(original,plan.action);
+    const returned=await completeOriginal(client,key,original);equal(returned.result,resumed.portfolio);
+    const application=awardOf(returned.result,'applications',applicationId);
+    assert(application.status===status&&application.reference==='INT-APP-1');
+    assert(application.revision===(status==='draft'?1:awardOf(portfolio,'applications',applicationId).revision+1));
+    equal(application.requestedAmount,money);
+    assert(application.title==='Synthetic "original" application, version 1');
+    assert(application.notes==='Internal acceptance only.\nNo real application or funding request.');
+    assert(recordOf(returned.result,'documents',plan.documentId).object.sha256===sha(csv));
+    const reviewObject=recordOf(returned.result,'documents',session.input.reviewDocumentId).object;
+    equal({bytes:reviewObject.bytes,sha256:reviewObject.sha256},
+      {bytes:plan.rowReview.object.bytes,sha256:plan.rowReview.object.sha256});
+    const replayPath=join(root,'evidence',key+'.browser-completed-replay.json');
+    let replayed=await readJson(replayPath,true);
+    if(!replayed) {
+      replayed=await resumeReviewedCsvInBrowser(client,returned.result,selected,csvPath,sessionPath,key,{replay:true});
+      await retainCompleted('actual completed reviewed session reopen',()=>save(replayPath,replayed,true));
+    }
+    assert(replayed.completedReplay===true&&replayed.requestId===returned.id&&replayed.sessionSha256===session.sha256);
+    equal(replayed.portfolio,returned.result);equal(replayed.browserPosts,0);
+    return {operationId:returned.id,plan,session,reviewedBatch:batch,planFile:intent.plan,
+      csv:await fileInfo(csvPath,{synchronize:true}),portfolio:returned.result,status,applicationId,
+      documentId:plan.documentId,reviewDocumentId:session.input.reviewDocumentId,
+      browserResume:resumed,browserReplay:replayed,files:[intent.plan,resumed.planDownload,replayed.planDownload],
+      screenshots:[...resumed.screenshots,...replayed.screenshots]};
+  }
   async function browserApplicationIntake(client,portfolio,status) {
     const module=await import(pathToFileURL(join(sdk,'grant-portfolio/awards-exchange.mjs')).href);
     const key=status==='draft'?'import-browser-draft':'import-original-applications';
@@ -931,8 +1145,14 @@ export async function runAwardsReceiving(argv=process.argv.slice(2)) {
     const csvPath=join(root,'documents','Internal_Applications_Original.csv');
     await writeBytes(csvPath,csv,{immutable:true});
     const planPath=join(root,'exports',key+'.plan.json');
-    if(!await exists(planPath))await prepareCsvInBrowser(portfolio,csvPath,status,planPath);
-    const plan=await readJson(planPath),applicationId=validateBrowserCsvPlan(module,plan,portfolio,csv,status);
+    if(!await exists(planPath)) {
+      if(status==='draft')await stage('browser-intake-working-library',()=>browserIntakeWorkingLibrary(portfolio,csvPath));
+      await prepareCsvInBrowser(portfolio,csvPath,status,planPath);
+    }
+    const plan=await readJson(planPath);
+    if(plan.schema==='stellar-forge.awards-browser-session.v1')
+      return browserReviewedApplicationIntake(client,portfolio,status,csv,csvPath,planPath,key,plan);
+    const applicationId=validateBrowserCsvPlan(module,plan,portfolio,csv,status);
     await adoptBrowserCsvIdentities(plan,applicationId,status);
     const intent={schema:'stellar-forge.awards-browser-intake-selection.v1',status,
       portfolio:plan.portfolio,applicationId,documentId:plan.documentId,operationId:plan.action.operationId,

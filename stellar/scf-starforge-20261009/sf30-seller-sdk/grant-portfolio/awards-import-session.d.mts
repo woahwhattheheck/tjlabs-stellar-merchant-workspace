@@ -1,12 +1,13 @@
 /** MIT. Explicit complete-source application import sessions. */
 import type {GrantPortfolioClient,JsonObject,PortfolioId,OperationId,RequestOptions,RetainedRequest,Sha256} from './client.mjs';
+import type {AwardCsvContinuation,CarriedAwardCsvRow} from './awards-import-continuation.mjs';
 import type {AwardCsvImportInput,AwardCsvImportPlan} from './awards-exchange.mjs';
 export interface AwardImportPartition {operationId:OperationId;documentId:string;rowIndexes:number[]}
 export interface AwardImportSessionInput extends Omit<AwardCsvImportInput,'operationId'|'documentId'|'rowIndexes'> {
   sessionId:string;workspaceId:string;batches:AwardImportPartition[];
 }
 export interface AwardImportSession {
-  schema:'stellar-forge.awards-csv-import-session.v1'|'stellar-forge.awards-csv-import-session.v2';sessionId:string;workspaceId:string;sha256:Sha256;
+  schema:'stellar-forge.awards-csv-import-session.v1'|'stellar-forge.awards-csv-import-session.v2'|'stellar-forge.awards-csv-import-session.v3';sessionId:string;workspaceId:string;sha256:Sha256;
   portfolio:{id:PortfolioId;revision:number;snapshot:Sha256};source:AwardCsvImportPlan['source'];round:AwardCsvImportPlan['round'];
   input:Omit<AwardCsvImportInput,'csv'|'operationId'|'documentId'|'rowIndexes'>;sourceRows:number;
   batches:(AwardImportPartition&{index:number;rows:number;previewActionBytes:number})[];
@@ -16,9 +17,10 @@ export interface AwardImportSessionBatch {
   index:number;prior:{index:number;operationId:OperationId;requestSha256:Sha256}[];plan:AwardCsvImportPlan;sha256:Sha256;
 }
 export interface AwardImportSessionObservation {
-  schema:'stellar-forge.awards-csv-session-observation.v1'|'stellar-forge.awards-csv-session-observation.v2';sessionId:string;sessionSha256:Sha256;workspaceId:string;
+  schema:'stellar-forge.awards-csv-session-observation.v1'|'stellar-forge.awards-csv-session-observation.v2'|'stellar-forge.awards-csv-session-observation.v3';sessionId:string;sessionSha256:Sha256;workspaceId:string;
   portfolioId:PortfolioId;source:AwardCsvImportPlan['source'];sourceRows:number;completedRows:number;
   rowReview?:{sha256:Sha256;documentId:string;counts:{total:number;accepted:number;exception:number;non_application:number}};
+  carriedRows?:number;recordedRows?:number;newlyAcceptedRows?:number;carriedOutcomes?:CarriedAwardCsvRow[];
   state:'COMPLETE'|'INCOMPLETE';
   batches:{index:number;operationId:OperationId;rows:number;state:'NOT_ADMITTED'|'RUNNING'|'FAILED'|'COMPLETED';
     request:{id:OperationId;state:string;inputSha256:Sha256;sha256:Sha256;error:JsonObject|null}|null}[];
@@ -26,6 +28,8 @@ export interface AwardImportSessionObservation {
 export declare const AWARD_IMPORT_SESSION_SCHEMA:'stellar-forge.awards-csv-import-session.v1';
 export declare const AWARD_IMPORT_BATCH_SCHEMA:'stellar-forge.awards-csv-session-batch.v1';
 export declare const AWARD_REVIEWED_IMPORT_SESSION_SCHEMA:'stellar-forge.awards-csv-import-session.v2';
+export declare const AWARD_CONTINUED_IMPORT_SESSION_SCHEMA:'stellar-forge.awards-csv-import-session.v3';
+export declare function readAwardCsvImportContinuation(client:GrantPortfolioClient,previous:AwardImportSession,csv:Uint8Array,options?:RequestOptions):Promise<{continuation:AwardCsvContinuation;portfolio:JsonObject}>;
 export declare function prepareAwardCsvImportSession(portfolio:JsonObject,input:AwardImportSessionInput):AwardImportSession;
 export declare function reviewAwardCsvSessionBatch(client:GrantPortfolioClient,session:AwardImportSession,csv:Uint8Array,
   index:number,options?:RequestOptions):Promise<{batch:AwardImportSessionBatch;request:RetainedRequest|null}>;
