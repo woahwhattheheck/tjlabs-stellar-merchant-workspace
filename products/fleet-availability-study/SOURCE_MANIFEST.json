@@ -217,6 +217,16 @@
       "sha256": "cbb2da1e2768ddbf667986125cf309102a16a2e0bf74ce84f4c571310a0f69ae"
     },
     {
+      "path": "contributions/resumable-export/SOURCE.json",
+      "bytes": 303,
+      "sha256": "7fa9174dc5dda7685993a6c5126a6ce5c06fd23ef7ad7c25d5400a7301acc934"
+    },
+    {
+      "path": "contributions/resumable-export/before-export-core.mjs",
+      "bytes": 4966,
+      "sha256": "dad7ae1cb081ca07ab7a33c5b8d5945486a4f9fc7c573678bf2a97aed59ffb25"
+    },
+    {
       "path": "core.cjs",
       "bytes": 22960,
       "sha256": "effe7b48ccc5aac9bac162f6f69a706b93f76df1e6f1b080b9b6bab0d50fc055"
@@ -438,8 +448,8 @@
     },
     {
       "path": "host/export-core.mjs",
-      "bytes": 4966,
-      "sha256": "dad7ae1cb081ca07ab7a33c5b8d5945486a4f9fc7c573678bf2a97aed59ffb25"
+      "bytes": 13088,
+      "sha256": "acc816364aaa801be36fadbf93ca15778edfc857baaa267b515fe0b3286b7b55"
     },
     {
       "path": "host/export.mjs",
@@ -537,9 +547,19 @@
       "sha256": "25c4cb13c71cef0e4c67c75ae06bba4c77b50be88098915d6d90a59e6ff4c2dd"
     },
     {
+      "path": "receiving/RESUMABLE_EXPORT.md",
+      "bytes": 5289,
+      "sha256": "0b9fe362b8b2a179bba794b8de41be9378b5752c6d8dc6be46aa57ca37dc9998"
+    },
+    {
       "path": "receiving/checkpoint-reader.cjs",
       "bytes": 1040,
       "sha256": "5462f986efb7e334528003fa2f81d1687dd6ad8d41388a3ad2ccca5eaeaeff97"
+    },
+    {
+      "path": "receiving/checkpoint-storage.cjs",
+      "bytes": 2493,
+      "sha256": "effafda4907de3ab610f90427a04067e2e3e2cefbd4af2008fad3bdde07db78f"
     },
     {
       "path": "receiving/complete-archive-readback.cjs",
@@ -575,6 +595,11 @@
       "path": "receiving/read-cache-course.cjs",
       "bytes": 2656,
       "sha256": "5cafca46f86011e7082c89f49f442a3d8a18c096fa14f1372fef98f90a3c891a"
+    },
+    {
+      "path": "receiving/run-resumable-export.mjs",
+      "bytes": 5055,
+      "sha256": "5daeafcf8e1164e662733958c82294042b6556a4694a07075b1a7e68f42f802d"
     },
     {
       "path": "receiving/source-bytes-course.cjs",
