@@ -26,7 +26,7 @@ export class HaystackClient {
     check(typeof token === "string" && !/[\r\n\0]/.test(token), "Use a single-line access token.");
     check(Number.isSafeInteger(maxResponseBytes) && maxResponseBytes > 0 && maxResponseBytes <= 256 * 1024 * 1024, "Choose a response limit up to 256 MiB.");
     this.url = endpoint.origin; this.token = token; this.workspaceId = workspaceId; this.instanceId = instanceId;
-    this.fetcher = fetcher; this.maxResponseBytes = maxResponseBytes; this.identity = null;
+    this.fetcher = fetcher === globalThis.fetch ? fetcher.bind(globalThis) : fetcher; this.maxResponseBytes = maxResponseBytes; this.identity = null;
   }
   headers() {
     return { ...(this.token ? { Authorization: "Bearer " + this.token } : {}),
