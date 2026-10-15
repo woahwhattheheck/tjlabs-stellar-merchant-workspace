@@ -35,3 +35,37 @@ The production core, authored 32-command course, replay, renderer and ZIP roundt
 ## Workspace and browser session distinction
 
 The native CLI intentionally accepts replayable workspace JSON only. It rejects a full browser session instead of silently discarding unfinished forms or prior browser branches. Use Handover → Save workspace JSON for domain operations and separately retain the complete session JSON for browser editing. Native exports use hash-derived safe paths for originals and reports; index files retain original IDs and filenames.
+
+## Atomic command batches
+
+Apply a prepared command array or the `operations.json` journal from an export in one native operation:
+
+```sh
+node native/shipment-commissioning.cjs apply-batch /absolute/work/workspace.json /absolute/work/commands.json
+node native/shipment-commissioning.cjs apply-batch /absolute/work/workspace.json /absolute/export/operations.json
+```
+
+A `shipment-review-command-batch.v1` object with a `commands` array is also accepted. Commands retain their original IDs, authors, occurrence times, expected revisions and workspace hashes. Exported operation records must match their retained command hashes, predecessor hashes and revisions before intake.
+
+The existing workspace lock covers the whole operation. Commands advance an in-memory successor, then one synchronized replacement commits it. A rejected suffix leaves the original file unchanged and identifies the failing command. There is no partially applied on-disk batch.
+
+Retry the exact input after an interrupted response. Already committed commands are reused, including after a later valid continuation. Changed reuse of an operation ID is rejected, and missing commands still have to match the current predecessor. The result includes the starting and final workspace hashes, applied/reused counts and the exact input-file digest.
+
+## Native handovers with usable originals
+
+The established `export` and `zip` formats remain unchanged. For a human-usable data delivery, select the additional complete handover format:
+
+```sh
+node native/shipment-commissioning.cjs handover /absolute/work/workspace.json /absolute/Shipment_Data
+node native/shipment-commissioning.cjs handover-zip /absolute/work/workspace.json /absolute/Shipment_Data.zip
+```
+
+This includes every existing workspace, journal, report and base64 original, plus the actual original files under `originals/files`. Each original has its own complete-ID hash directory. A readable leaf filename keeps an ordinary extension while replacing path/control characters and reserved device names; `originals/raw-index.json` preserves its exact original name, ID, media type, length, digest and output path. `OPEN_DATA.txt` identifies the useful entry points.
+
+The directory form retains the existing full export plan and identical-member resume behavior. Use a separate destination from a legacy export because the member plans differ. A changed existing member is refused. Open `workspace.json` through Handover in the desk to resume domain work, and retain a separate complete browser session to preserve unfinished forms and browser branches.
+
+## Source-complete native desk generation
+
+The `desk` command reads all ordinary JavaScript runtime modules from the maintained runtime directory, including nested helper directories, instead of a frozen dependency list. This includes `cached-review.cjs`, which the current runtime requires. Source symlinks are rejected. Continue to use the matching maintained renderer, browser operator and example files from the same product source.
+
+The focused native receiving for this change exercised atomic batches, failed-suffix rollback, historical retry after continuation, changed-ID rejection, the former missing-cache dependency, full raw-original export and interrupted-member resume. Rendered browser receiving remains the ordinary separate product-opening step on an equipped host.

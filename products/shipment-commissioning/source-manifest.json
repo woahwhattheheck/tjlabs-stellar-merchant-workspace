@@ -38,8 +38,8 @@
     },
     {
       "path": "docs/NATIVE.md",
-      "bytes": 3353,
-      "sha256": "7c481cf7f949970cefa676902ec12ea31ba518205dac21e5709cadaec4e220bd"
+      "bytes": 6723,
+      "sha256": "ca9fa7c1452456fc391f028f4016918721e76be9328525a960510d91768b4b6c"
     },
     {
       "path": "docs/OPERATOR.md",
@@ -173,8 +173,8 @@
     },
     {
       "path": "native/shipment-commissioning.cjs",
-      "bytes": 7726,
-      "sha256": "39f7e946dd66c933bbf26c1f972ac8b9d278fb1eb28e13e6150d2b607eab0c23"
+      "bytes": 13485,
+      "sha256": "0ea523c0546638dc2f9580df19ea723ae4eb50ff34a8a861a8cd45adbfc59da6"
     },
     {
       "path": "package.json",
