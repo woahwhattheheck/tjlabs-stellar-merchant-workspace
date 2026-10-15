@@ -293,8 +293,8 @@
     },
     {
       "path": "Restaurant_Integration_Study_Desk.html",
-      "bytes": 2562226,
-      "sha256": "c1579b683bae488552052f427a9e46aae1b02d40fd0ac28199368aaf9b7ac0d0"
+      "bytes": 2582343,
+      "sha256": "25e5a47d9159de04007923007aba94d505e253dbeab92ae3d072c8f87ee32b0e"
     },
     {
       "path": "restaurant.cjs",
@@ -328,8 +328,8 @@
     },
     {
       "path": "SOURCE_MANIFEST.json",
-      "bytes": 16895,
-      "sha256": "b9863643651a06ad613c053d644a3a1a742b5c84a0a96b5fd9f810dd476e5e40"
+      "bytes": 17066,
+      "sha256": "e9142b4dec6f22d94453f1ff2c5c1e33d2ff0352685adb5327935576b5310295"
     },
     {
       "path": "SOURCE_PROVENANCE.md",
@@ -525,6 +525,11 @@
       "path": "verification/installed-analysis-cache.json",
       "bytes": 286,
       "sha256": "be299a5987541dbafe3672b60b7f36288764cd495055915c71c0eaed734c4e6e"
+    },
+    {
+      "path": "verification/installed-courses.json",
+      "bytes": 17874,
+      "sha256": "dcc455d0b60b99196d42a07c0d33356e097f0c15ac9080622672d49806ae2f2b"
     },
     {
       "path": "verification/model-course.json",
