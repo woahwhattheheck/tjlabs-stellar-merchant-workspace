@@ -2,16 +2,16 @@
   "schema": "commons.complete-export-checkpoint-storage.v1",
   "identity": "4dbc599a19847ca574dbaf8d651241f2e3f108b4588acd7f8ad809477bd685ce",
   "done": false,
-  "completedGroups": 664,
-  "entries": 1312,
+  "completedGroups": 693,
+  "entries": 1313,
   "metadata": {
-    "bytes": 544614,
-    "sha256": "f39cf22f79a8b80a7c937cf602be977783f1d5d40f24653817350b7e59d7f6cb",
+    "bytes": 556335,
+    "sha256": "21f2bf79f09bf8aed39f94e19921c0b0153ea9c5d1c267613058ac9db6a9f225",
     "parts": [
       {
-        "path": "objects/f39cf22f79a8b80a7c937cf602be977783f1d5d40f24653817350b7e59d7f6cb.part",
-        "bytes": 544614,
-        "sha256": "f39cf22f79a8b80a7c937cf602be977783f1d5d40f24653817350b7e59d7f6cb"
+        "path": "objects/21f2bf79f09bf8aed39f94e19921c0b0153ea9c5d1c267613058ac9db6a9f225.part",
+        "bytes": 556335,
+        "sha256": "21f2bf79f09bf8aed39f94e19921c0b0153ea9c5d1c267613058ac9db6a9f225"
       }
     ]
   },
@@ -12854,6 +12854,17 @@
           "path": "objects/5db6d900696b33d69cfe8947aeb30642136807fcf65dd7a1802f3a887fbd57a2.part",
           "bytes": 458204,
           "sha256": "5db6d900696b33d69cfe8947aeb30642136807fcf65dd7a1802f3a887fbd57a2"
+        }
+      ]
+    },
+    {
+      "bytes": 4,
+      "sha256": "d583c5a57af2f1329cda086729bb41b3464c72afa6abd8c1853ec6dc093e4918",
+      "parts": [
+        {
+          "path": "objects/d583c5a57af2f1329cda086729bb41b3464c72afa6abd8c1853ec6dc093e4918.part",
+          "bytes": 4,
+          "sha256": "d583c5a57af2f1329cda086729bb41b3464c72afa6abd8c1853ec6dc093e4918"
         }
       ]
     }
