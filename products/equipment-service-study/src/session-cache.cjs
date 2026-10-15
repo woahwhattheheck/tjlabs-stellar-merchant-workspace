@@ -1,6 +1,6 @@
 'use strict';
 // MIT. Intern complete original objects only after original validation succeeds.
-const Original=require('../session.cjs');
+const Original=require('../session.cjs'),Core=require('./core-cache.cjs');
 const bank=new Map(),MAX_BYTES=16*1024*1024,MAX_ENTRIES=4096;let used=0;
 const content=x=>JSON.stringify(x);
 function candidate(value){const text=content(value),entry=bank.get(text);if(entry){bank.delete(text);bank.set(text,entry);return entry.value;}return value;}
@@ -14,6 +14,7 @@ const hashes=new Map();let hashBytes=0;function hash(value){const text=JSON.stri
 const API={...Original,hash,validate,normalize(value){return value?.schema===Original.SCHEMA?validate(value):validate(Original.normalize(value));},create(study){return validate(Original.create(study));}};
 for(const name of ['draft','checkpoint','retainStudy','use','recordReview'])API[name]=(...args)=>validate(Original[name](validate(args[0]),...args.slice(1)));
 for(const name of ['retain','takeSession'])API[name]=(...args)=>validate(Original[name](validate(args[0]),API.normalize(args[1]),...args.slice(2)));
-for(const name of ['historyStudy','branchInfo','reviewDraft','assess','exports'])API[name]=(...args)=>Original[name](validate(args[0]),...args.slice(1));
+for(const name of ['historyStudy','branchInfo','reviewDraft','exports'])API[name]=(...args)=>Original[name](validate(args[0]),...args.slice(1));
 API.branchSession=(...args)=>validate(Original.branchSession(validate(args[0]),...args.slice(1)));
+API.assess=value=>{const s=validate(value);try{return{ok:true,result:Core.analyze(s.study)}}catch(e){return{ok:false,error:e.message};}};
 module.exports=API;
