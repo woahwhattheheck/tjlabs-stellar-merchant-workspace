@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,document_id,filename,media_type,sha256,bytes,origin,document_date,retrieved_at,content_locator
+DOCROW,DOCROW,1,,active,2026-10-01T09:00:00Z,2026-10-01T09:00:00Z,,Authored source_documents/DOCROW,DOC,authored-original-records.txt,text/plain,2be8e7315ac46281ca864bcde3e8b662c71d0eb6c8ebd515c71229fed74f6faa,56,Authored fixture,2026-10-01,2026-10-15T12:00:00Z,Complete original

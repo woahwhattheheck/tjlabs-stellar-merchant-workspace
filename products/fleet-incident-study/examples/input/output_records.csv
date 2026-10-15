@@ -1,0 +1,4 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,output_id,assignment_id,asset_id,effective_at,quantity,unit,quantity_basis,previous_output_id,accepted_by,accepted_at,quality_status,voids_output_id,coverage_start,coverage_end
+OUT1,OUT1,1,,active,2026-10-12T17:00:00Z,2026-10-12T17:00:00Z,,Authored output_records/OUT1,OUT1,JOB1,A1,2026-10-12T16:50:00Z,100,accepted_move,period,,ENG,2026-10-12T16:55:00Z,accepted,,2026-10-12T08:00:00Z,2026-10-12T17:00:00Z
+OUT2,OUT2,1,,active,2026-10-12T17:00:00Z,2026-10-12T17:00:00Z,,Authored output_records/OUT2,OUT2,JOB2,A2,2026-10-12T16:50:00Z,0,accepted_move,period,,ENG,2026-10-12T16:55:00Z,accepted,,2026-10-12T08:00:00Z,2026-10-12T17:00:00Z
+OUT3,OUT3,1,,active,2026-10-12T17:00:00Z,2026-10-12T17:00:00Z,,Authored output_records/OUT3,OUT3,JOB3,A3,2026-10-12T16:50:00Z,120,accepted_move,period,,ENG,2026-10-12T16:55:00Z,accepted,,2026-10-12T08:00:00Z,2026-10-12T17:00:00Z

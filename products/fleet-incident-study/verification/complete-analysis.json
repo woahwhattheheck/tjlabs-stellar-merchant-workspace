@@ -1,0 +1,2766 @@
+{
+  "schema": "fleet.source-comparison/v1",
+  "study_sha256": "ea9d8a8537015970571102853341ec6504005b094b4cc0207b0f3908c2eb7f62",
+  "data_class": "authored_course",
+  "scope": {
+    "source": "Fictional complete operator source",
+    "returned": "Independent supplied-return reconstruction"
+  },
+  "complete_extract_selection": true,
+  "fleet": {
+    "schema": "fleet.incident-study/v1",
+    "as_of": "2026-10-12T23:00:00Z",
+    "decision_at": "2026-10-12T23:00:00Z",
+    "data_class": "authored_course",
+    "summary": {
+      "questions": 1,
+      "complete_questions": 1,
+      "incidents": 3,
+      "known_assets": 3,
+      "retained_assignments": 3,
+      "known_assignments": 3
+    },
+    "questions": [
+      {
+        "id": "QF",
+        "question_id": "QFULL",
+        "title": "All three consecutive comparable assignments",
+        "application_id": "PALLET",
+        "comparison_id": "COHORT1",
+        "as_of": "2026-10-12T17:30:00Z",
+        "decision_at": "2026-10-12T17:00:00Z",
+        "window_start": "2026-10-12T08:00:00Z",
+        "window_end": "2026-10-12T17:00:00Z",
+        "eligible_assignments": 3,
+        "retained_members": 3,
+        "included": 3,
+        "excluded": 0,
+        "unresolved": 0,
+        "complete": true,
+        "issues": [],
+        "output_unit": "accepted_move",
+        "accepted_output": {
+          "numerator": "220",
+          "denominator": "1",
+          "decimal": "220"
+        },
+        "known_output": {
+          "numerator": "220",
+          "denominator": "1",
+          "decimal": "220"
+        },
+        "recognised_cost_totals": {
+          "USD|net|operator_expense": {
+            "numerator": "2200",
+            "denominator": "1",
+            "decimal": "2200"
+          }
+        },
+        "known_cost_totals": {
+          "USD|net|operator_expense": {
+            "numerator": "2200",
+            "denominator": "1",
+            "decimal": "2200"
+          }
+        },
+        "cost_per_useful_output": {
+          "USD|net|operator_expense": {
+            "numerator": "10",
+            "denominator": "1",
+            "decimal": "10"
+          }
+        },
+        "downtime_minutes_by_asset_or_job": {
+          "asset:A1:false": {
+            "numerator": "45",
+            "denominator": "1",
+            "decimal": "45"
+          },
+          "job:SITE-JOB-1:false": {
+            "numerator": "20",
+            "denominator": "1",
+            "decimal": "20"
+          }
+        },
+        "downtime_complete": true,
+        "members": [
+          {
+            "id": "CM1",
+            "asset_id": "A1",
+            "assignment_id": "JOB1",
+            "inclusion": "included",
+            "valid": true,
+            "issues": [],
+            "context": {
+              "load_kg": 500,
+              "route_m": 80,
+              "floor": "level dry concrete",
+              "lift_m": 2,
+              "aisle_m": 4
+            },
+            "output": {
+              "complete": true,
+              "issues": [],
+              "unit": "accepted_move",
+              "accepted_quantity": {
+                "numerator": "100",
+                "denominator": "1",
+                "decimal": "100"
+              },
+              "known_quantity": {
+                "numerator": "100",
+                "denominator": "1",
+                "decimal": "100"
+              },
+              "coverage_intervals": [
+                [
+                  1791792000000,
+                  1791824400000
+                ]
+              ],
+              "records": [
+                {
+                  "id": "OUT1",
+                  "output_id": "OUT1",
+                  "accepted": true,
+                  "amount": {
+                    "numerator": "100",
+                    "denominator": "1",
+                    "decimal": "100"
+                  },
+                  "unit": "accepted_move",
+                  "valid": true,
+                  "issues": [],
+                  "interval": [
+                    1791792000000,
+                    1791824400000
+                  ]
+                }
+              ]
+            },
+            "work": {
+              "complete": true,
+              "issues": [],
+              "minutes_by_state": {
+                "out_on_rent": {
+                  "numerator": "540",
+                  "denominator": "1",
+                  "decimal": "540"
+                },
+                "operating": {
+                  "numerator": "240",
+                  "denominator": "1",
+                  "decimal": "240"
+                }
+              },
+              "observed_minutes_by_state": {
+                "out_on_rent": {
+                  "numerator": "540",
+                  "denominator": "1",
+                  "decimal": "540"
+                },
+                "operating": {
+                  "numerator": "240",
+                  "denominator": "1",
+                  "decimal": "240"
+                }
+              },
+              "meter_deltas": {
+                "engine_hour": {
+                  "numerator": "4",
+                  "denominator": "1",
+                  "decimal": "4"
+                }
+              },
+              "records": [
+                {
+                  "id": "WORK1",
+                  "asset_id": "A1",
+                  "assignment_id": "JOB1",
+                  "scope": "out_on_rent",
+                  "open_censored": false,
+                  "start_at": "2026-10-12T08:00:00Z",
+                  "end_at": "2026-10-12T17:00:00Z",
+                  "included": true,
+                  "interval": [
+                    1791792000000,
+                    1791824400000
+                  ],
+                  "minutes": {
+                    "numerator": "540",
+                    "denominator": "1",
+                    "decimal": "540"
+                  },
+                  "meter_delta": null,
+                  "meter_unit": "",
+                  "valid": true,
+                  "issues": []
+                },
+                {
+                  "id": "OPER1",
+                  "asset_id": "A1",
+                  "assignment_id": "JOB1",
+                  "scope": "operating",
+                  "open_censored": false,
+                  "start_at": "2026-10-12T08:00:00Z",
+                  "end_at": "2026-10-12T12:00:00Z",
+                  "included": true,
+                  "interval": [
+                    1791792000000,
+                    1791806400000
+                  ],
+                  "minutes": {
+                    "numerator": "240",
+                    "denominator": "1",
+                    "decimal": "240"
+                  },
+                  "meter_delta": {
+                    "numerator": "4",
+                    "denominator": "1",
+                    "decimal": "4"
+                  },
+                  "meter_unit": "engine_hour",
+                  "valid": true,
+                  "issues": []
+                }
+              ],
+              "intervals": [
+                {
+                  "scope": "out_on_rent",
+                  "segments": [
+                    [
+                      1791792000000,
+                      1791824400000
+                    ]
+                  ]
+                },
+                {
+                  "scope": "operating",
+                  "segments": [
+                    [
+                      1791792000000,
+                      1791806400000
+                    ]
+                  ]
+                }
+              ]
+            },
+            "downtime": {
+              "complete": true,
+              "issues": [],
+              "minutes_by_state": {
+                "asset:false": {
+                  "numerator": "45",
+                  "denominator": "1",
+                  "decimal": "45"
+                },
+                "job:false": {
+                  "numerator": "20",
+                  "denominator": "1",
+                  "decimal": "20"
+                }
+              },
+              "observed_minutes_by_state": {
+                "asset:false": {
+                  "numerator": "45",
+                  "denominator": "1",
+                  "decimal": "45"
+                },
+                "job:false": {
+                  "numerator": "20",
+                  "denominator": "1",
+                  "decimal": "20"
+                }
+              },
+              "meter_deltas": {},
+              "records": [
+                {
+                  "id": "DOWN1",
+                  "asset_id": "A1",
+                  "assignment_id": "JOB1",
+                  "scope": "asset:false",
+                  "open_censored": false,
+                  "start_at": "2026-10-12T09:00:00Z",
+                  "end_at": "2026-10-12T09:30:00Z",
+                  "included": true,
+                  "interval": [
+                    1791795600000,
+                    1791797400000
+                  ],
+                  "minutes": {
+                    "numerator": "30",
+                    "denominator": "1",
+                    "decimal": "30"
+                  },
+                  "meter_delta": null,
+                  "meter_unit": "",
+                  "valid": true,
+                  "issues": []
+                },
+                {
+                  "id": "DOWN2",
+                  "asset_id": "A1",
+                  "assignment_id": "JOB1",
+                  "scope": "asset:false",
+                  "open_censored": false,
+                  "start_at": "2026-10-12T09:15:00Z",
+                  "end_at": "2026-10-12T09:45:00Z",
+                  "included": true,
+                  "interval": [
+                    1791796500000,
+                    1791798300000
+                  ],
+                  "minutes": {
+                    "numerator": "30",
+                    "denominator": "1",
+                    "decimal": "30"
+                  },
+                  "meter_delta": null,
+                  "meter_unit": "",
+                  "valid": true,
+                  "issues": []
+                },
+                {
+                  "id": "JOBDOWN",
+                  "asset_id": "A1",
+                  "assignment_id": "JOB1",
+                  "scope": "job:false",
+                  "open_censored": false,
+                  "start_at": "2026-10-12T09:00:00Z",
+                  "end_at": "2026-10-12T09:20:00Z",
+                  "included": true,
+                  "interval": [
+                    1791795600000,
+                    1791796800000
+                  ],
+                  "minutes": {
+                    "numerator": "20",
+                    "denominator": "1",
+                    "decimal": "20"
+                  },
+                  "meter_delta": null,
+                  "meter_unit": "",
+                  "valid": true,
+                  "issues": []
+                }
+              ],
+              "intervals": [
+                {
+                  "scope": "asset:false",
+                  "segments": [
+                    [
+                      1791795600000,
+                      1791798300000
+                    ]
+                  ]
+                },
+                {
+                  "scope": "job:false",
+                  "segments": [
+                    [
+                      1791795600000,
+                      1791796800000
+                    ]
+                  ]
+                }
+              ]
+            },
+            "cost": {
+              "complete": true,
+              "totals": {
+                "USD|net|operator_expense": {
+                  "numerator": "1000",
+                  "denominator": "1",
+                  "decimal": "1000"
+                }
+              },
+              "known_totals": {
+                "USD|net|operator_expense": {
+                  "numerator": "1000",
+                  "denominator": "1",
+                  "decimal": "1000"
+                }
+              },
+              "records": [
+                {
+                  "id": "COST1",
+                  "business_id": "COST1",
+                  "asset_id": "A1",
+                  "assignment_id": "JOB1",
+                  "incident_id": "I1",
+                  "currency": "USD",
+                  "tax_basis": "net",
+                  "economic_basis": "operator_expense",
+                  "status": "posted",
+                  "entry_type": "expense",
+                  "amount": {
+                    "numerator": "1000",
+                    "denominator": "1",
+                    "decimal": "1000"
+                  },
+                  "known_subtotal": {
+                    "numerator": "1000",
+                    "denominator": "1",
+                    "decimal": "1000"
+                  },
+                  "active": true,
+                  "complete": true,
+                  "issues": [],
+                  "original_ids": [
+                    "COST1"
+                  ],
+                  "external_identity": "SUPPLIER-INVOICE / LINE-1"
+                }
+              ],
+              "issues": []
+            },
+            "cash": {
+              "complete": true,
+              "totals": {
+                "USD||operator_expense": {
+                  "numerator": "1000",
+                  "denominator": "1",
+                  "decimal": "1000"
+                }
+              },
+              "known_totals": {
+                "USD||operator_expense": {
+                  "numerator": "1000",
+                  "denominator": "1",
+                  "decimal": "1000"
+                }
+              },
+              "records": [
+                {
+                  "id": "PAY1",
+                  "business_id": "PAY1",
+                  "asset_id": "A1",
+                  "assignment_id": "JOB1",
+                  "incident_id": "",
+                  "currency": "USD",
+                  "tax_basis": "",
+                  "economic_basis": "operator_expense",
+                  "status": "payment",
+                  "entry_type": "payment",
+                  "amount": {
+                    "numerator": "1000",
+                    "denominator": "1",
+                    "decimal": "1000"
+                  },
+                  "known_subtotal": {
+                    "numerator": "1000",
+                    "denominator": "1",
+                    "decimal": "1000"
+                  },
+                  "active": true,
+                  "complete": true,
+                  "issues": [],
+                  "original_ids": [
+                    "PAY1"
+                  ],
+                  "external_identity": "authored_bank / bank-001"
+                }
+              ],
+              "issues": []
+            }
+          },
+          {
+            "id": "CM2",
+            "asset_id": "A2",
+            "assignment_id": "JOB2",
+            "inclusion": "included",
+            "valid": true,
+            "issues": [],
+            "context": {
+              "load_kg": 500,
+              "route_m": 80,
+              "floor": "level dry concrete",
+              "lift_m": 2,
+              "aisle_m": 4
+            },
+            "output": {
+              "complete": true,
+              "issues": [],
+              "unit": "accepted_move",
+              "accepted_quantity": {
+                "numerator": "0",
+                "denominator": "1",
+                "decimal": "0"
+              },
+              "known_quantity": {
+                "numerator": "0",
+                "denominator": "1",
+                "decimal": "0"
+              },
+              "coverage_intervals": [
+                [
+                  1791792000000,
+                  1791824400000
+                ]
+              ],
+              "records": [
+                {
+                  "id": "OUT2",
+                  "output_id": "OUT2",
+                  "accepted": true,
+                  "amount": {
+                    "numerator": "0",
+                    "denominator": "1",
+                    "decimal": "0"
+                  },
+                  "unit": "accepted_move",
+                  "valid": true,
+                  "issues": [],
+                  "interval": [
+                    1791792000000,
+                    1791824400000
+                  ]
+                }
+              ]
+            },
+            "work": {
+              "complete": true,
+              "issues": [],
+              "minutes_by_state": {
+                "out_on_rent": {
+                  "numerator": "540",
+                  "denominator": "1",
+                  "decimal": "540"
+                },
+                "operating": {
+                  "numerator": "240",
+                  "denominator": "1",
+                  "decimal": "240"
+                }
+              },
+              "observed_minutes_by_state": {
+                "out_on_rent": {
+                  "numerator": "540",
+                  "denominator": "1",
+                  "decimal": "540"
+                },
+                "operating": {
+                  "numerator": "240",
+                  "denominator": "1",
+                  "decimal": "240"
+                }
+              },
+              "meter_deltas": {
+                "engine_hour": {
+                  "numerator": "1",
+                  "denominator": "1",
+                  "decimal": "1"
+                }
+              },
+              "records": [
+                {
+                  "id": "WORK2",
+                  "asset_id": "A2",
+                  "assignment_id": "JOB2",
+                  "scope": "out_on_rent",
+                  "open_censored": false,
+                  "start_at": "2026-10-12T08:00:00Z",
+                  "end_at": "2026-10-12T17:00:00Z",
+                  "included": true,
+                  "interval": [
+                    1791792000000,
+                    1791824400000
+                  ],
+                  "minutes": {
+                    "numerator": "540",
+                    "denominator": "1",
+                    "decimal": "540"
+                  },
+                  "meter_delta": null,
+                  "meter_unit": "",
+                  "valid": true,
+                  "issues": []
+                },
+                {
+                  "id": "OPER2",
+                  "asset_id": "A2",
+                  "assignment_id": "JOB2",
+                  "scope": "operating",
+                  "open_censored": false,
+                  "start_at": "2026-10-12T08:00:00Z",
+                  "end_at": "2026-10-12T12:00:00Z",
+                  "included": true,
+                  "interval": [
+                    1791792000000,
+                    1791806400000
+                  ],
+                  "minutes": {
+                    "numerator": "240",
+                    "denominator": "1",
+                    "decimal": "240"
+                  },
+                  "meter_delta": {
+                    "numerator": "1",
+                    "denominator": "1",
+                    "decimal": "1"
+                  },
+                  "meter_unit": "engine_hour",
+                  "valid": true,
+                  "issues": []
+                }
+              ],
+              "intervals": [
+                {
+                  "scope": "out_on_rent",
+                  "segments": [
+                    [
+                      1791792000000,
+                      1791824400000
+                    ]
+                  ]
+                },
+                {
+                  "scope": "operating",
+                  "segments": [
+                    [
+                      1791792000000,
+                      1791806400000
+                    ]
+                  ]
+                }
+              ]
+            },
+            "downtime": {
+              "complete": true,
+              "issues": [],
+              "minutes_by_state": {},
+              "observed_minutes_by_state": {},
+              "meter_deltas": {},
+              "records": [],
+              "intervals": []
+            },
+            "cost": {
+              "complete": true,
+              "totals": {
+                "USD|net|operator_expense": {
+                  "numerator": "300",
+                  "denominator": "1",
+                  "decimal": "300"
+                }
+              },
+              "known_totals": {
+                "USD|net|operator_expense": {
+                  "numerator": "300",
+                  "denominator": "1",
+                  "decimal": "300"
+                }
+              },
+              "records": [
+                {
+                  "id": "COST2",
+                  "business_id": "COST2",
+                  "asset_id": "A2",
+                  "assignment_id": "JOB2",
+                  "incident_id": "I2",
+                  "currency": "USD",
+                  "tax_basis": "net",
+                  "economic_basis": "operator_expense",
+                  "status": "posted",
+                  "entry_type": "expense",
+                  "amount": {
+                    "numerator": "300",
+                    "denominator": "1",
+                    "decimal": "300"
+                  },
+                  "known_subtotal": {
+                    "numerator": "300",
+                    "denominator": "1",
+                    "decimal": "300"
+                  },
+                  "active": true,
+                  "complete": true,
+                  "issues": [],
+                  "original_ids": [
+                    "COST2"
+                  ],
+                  "external_identity": "SUPPLIER-INVOICE / LINE-2"
+                }
+              ],
+              "issues": []
+            },
+            "cash": {
+              "complete": true,
+              "totals": {},
+              "known_totals": {},
+              "records": [],
+              "issues": []
+            }
+          },
+          {
+            "id": "CM3",
+            "asset_id": "A3",
+            "assignment_id": "JOB3",
+            "inclusion": "included",
+            "valid": true,
+            "issues": [],
+            "context": {
+              "load_kg": 500,
+              "route_m": 80,
+              "floor": "level dry concrete",
+              "lift_m": 2,
+              "aisle_m": 4
+            },
+            "output": {
+              "complete": true,
+              "issues": [],
+              "unit": "accepted_move",
+              "accepted_quantity": {
+                "numerator": "120",
+                "denominator": "1",
+                "decimal": "120"
+              },
+              "known_quantity": {
+                "numerator": "120",
+                "denominator": "1",
+                "decimal": "120"
+              },
+              "coverage_intervals": [
+                [
+                  1791792000000,
+                  1791824400000
+                ]
+              ],
+              "records": [
+                {
+                  "id": "OUT3",
+                  "output_id": "OUT3",
+                  "accepted": true,
+                  "amount": {
+                    "numerator": "120",
+                    "denominator": "1",
+                    "decimal": "120"
+                  },
+                  "unit": "accepted_move",
+                  "valid": true,
+                  "issues": [],
+                  "interval": [
+                    1791792000000,
+                    1791824400000
+                  ]
+                }
+              ]
+            },
+            "work": {
+              "complete": true,
+              "issues": [],
+              "minutes_by_state": {
+                "out_on_rent": {
+                  "numerator": "540",
+                  "denominator": "1",
+                  "decimal": "540"
+                },
+                "operating": {
+                  "numerator": "240",
+                  "denominator": "1",
+                  "decimal": "240"
+                }
+              },
+              "observed_minutes_by_state": {
+                "out_on_rent": {
+                  "numerator": "540",
+                  "denominator": "1",
+                  "decimal": "540"
+                },
+                "operating": {
+                  "numerator": "240",
+                  "denominator": "1",
+                  "decimal": "240"
+                }
+              },
+              "meter_deltas": {
+                "engine_hour": {
+                  "numerator": "4",
+                  "denominator": "1",
+                  "decimal": "4"
+                }
+              },
+              "records": [
+                {
+                  "id": "WORK3",
+                  "asset_id": "A3",
+                  "assignment_id": "JOB3",
+                  "scope": "out_on_rent",
+                  "open_censored": false,
+                  "start_at": "2026-10-12T08:00:00Z",
+                  "end_at": "2026-10-12T17:00:00Z",
+                  "included": true,
+                  "interval": [
+                    1791792000000,
+                    1791824400000
+                  ],
+                  "minutes": {
+                    "numerator": "540",
+                    "denominator": "1",
+                    "decimal": "540"
+                  },
+                  "meter_delta": null,
+                  "meter_unit": "",
+                  "valid": true,
+                  "issues": []
+                },
+                {
+                  "id": "OPER3",
+                  "asset_id": "A3",
+                  "assignment_id": "JOB3",
+                  "scope": "operating",
+                  "open_censored": false,
+                  "start_at": "2026-10-12T08:00:00Z",
+                  "end_at": "2026-10-12T12:00:00Z",
+                  "included": true,
+                  "interval": [
+                    1791792000000,
+                    1791806400000
+                  ],
+                  "minutes": {
+                    "numerator": "240",
+                    "denominator": "1",
+                    "decimal": "240"
+                  },
+                  "meter_delta": {
+                    "numerator": "4",
+                    "denominator": "1",
+                    "decimal": "4"
+                  },
+                  "meter_unit": "engine_hour",
+                  "valid": true,
+                  "issues": []
+                }
+              ],
+              "intervals": [
+                {
+                  "scope": "out_on_rent",
+                  "segments": [
+                    [
+                      1791792000000,
+                      1791824400000
+                    ]
+                  ]
+                },
+                {
+                  "scope": "operating",
+                  "segments": [
+                    [
+                      1791792000000,
+                      1791806400000
+                    ]
+                  ]
+                }
+              ]
+            },
+            "downtime": {
+              "complete": true,
+              "issues": [],
+              "minutes_by_state": {},
+              "observed_minutes_by_state": {},
+              "meter_deltas": {},
+              "records": [],
+              "intervals": []
+            },
+            "cost": {
+              "complete": true,
+              "totals": {
+                "USD|net|operator_expense": {
+                  "numerator": "900",
+                  "denominator": "1",
+                  "decimal": "900"
+                }
+              },
+              "known_totals": {
+                "USD|net|operator_expense": {
+                  "numerator": "900",
+                  "denominator": "1",
+                  "decimal": "900"
+                }
+              },
+              "records": [
+                {
+                  "id": "COST3",
+                  "business_id": "COST3",
+                  "asset_id": "A3",
+                  "assignment_id": "JOB3",
+                  "incident_id": "I3",
+                  "currency": "USD",
+                  "tax_basis": "net",
+                  "economic_basis": "operator_expense",
+                  "status": "posted",
+                  "entry_type": "expense",
+                  "amount": {
+                    "numerator": "900",
+                    "denominator": "1",
+                    "decimal": "900"
+                  },
+                  "known_subtotal": {
+                    "numerator": "900",
+                    "denominator": "1",
+                    "decimal": "900"
+                  },
+                  "active": true,
+                  "complete": true,
+                  "issues": [],
+                  "original_ids": [
+                    "COST3"
+                  ],
+                  "external_identity": "SUPPLIER-INVOICE / LINE-3"
+                }
+              ],
+              "issues": []
+            },
+            "cash": {
+              "complete": true,
+              "totals": {},
+              "known_totals": {},
+              "records": [],
+              "issues": []
+            }
+          }
+        ]
+      }
+    ],
+    "incidents": [
+      {
+        "id": "INC1",
+        "incident_id": "I1",
+        "asset_id": "A1",
+        "assignment_id": "JOB1",
+        "status": "resolved",
+        "occurred_at": "2026-10-12T09:00:00Z",
+        "pre_event_cutoff": "2026-10-12T08:30:00Z",
+        "valid": true,
+        "issues": [],
+        "pre_event_records": {
+          "telemetry": [
+            "T1"
+          ],
+          "maintenance": [
+            "M1"
+          ],
+          "configurations": [
+            "CFG1"
+          ],
+          "identity_links": [
+            "LINK1"
+          ]
+        },
+        "current_labels": [
+          {
+            "id": "LABEL1",
+            "label": "Connector fault",
+            "status": "confirmed",
+            "known_at": "2026-10-12T11:05:00Z",
+            "valid": true,
+            "issues": []
+          }
+        ]
+      },
+      {
+        "id": "INC2",
+        "incident_id": "I2",
+        "asset_id": "A2",
+        "assignment_id": "JOB2",
+        "status": "open",
+        "occurred_at": "2026-10-12T09:00:00Z",
+        "pre_event_cutoff": "2026-10-12T08:30:00Z",
+        "valid": true,
+        "issues": [],
+        "pre_event_records": {
+          "telemetry": [],
+          "maintenance": [],
+          "configurations": [
+            "CFG2"
+          ],
+          "identity_links": [
+            "LINK2"
+          ]
+        },
+        "current_labels": []
+      },
+      {
+        "id": "INC3",
+        "incident_id": "I3",
+        "asset_id": "A3",
+        "assignment_id": "JOB3",
+        "status": "resolved",
+        "occurred_at": "2026-10-12T09:00:00Z",
+        "pre_event_cutoff": "2026-10-12T08:30:00Z",
+        "valid": true,
+        "issues": [],
+        "pre_event_records": {
+          "telemetry": [],
+          "maintenance": [],
+          "configurations": [
+            "CFG3"
+          ],
+          "identity_links": [
+            "LINK3"
+          ]
+        },
+        "current_labels": []
+      }
+    ],
+    "telemetry": [
+      {
+        "id": "T1",
+        "asset_id": "A1",
+        "metric": "motor_temperature",
+        "value": "68",
+        "unit": "degC",
+        "observed_at": "2026-10-12T08:20:00Z",
+        "aggregation_method": "instant",
+        "clock_uncertainty_seconds": 0,
+        "valid": true,
+        "issues": []
+      }
+    ],
+    "assignments": [
+      {
+        "id": "ASSIGN1",
+        "assignment_id": "JOB1",
+        "asset_id": "A1",
+        "job_id": "SITE-JOB-1",
+        "application_id": "PALLET",
+        "configuration_id": "CFG1",
+        "start_at": "2026-10-12T08:00:00Z",
+        "end_at": "2026-10-12T17:00:00Z",
+        "valid": true,
+        "issues": []
+      },
+      {
+        "id": "ASSIGN2",
+        "assignment_id": "JOB2",
+        "asset_id": "A2",
+        "job_id": "SITE-JOB-2",
+        "application_id": "PALLET",
+        "configuration_id": "CFG2",
+        "start_at": "2026-10-12T08:00:00Z",
+        "end_at": "2026-10-12T17:00:00Z",
+        "valid": true,
+        "issues": []
+      },
+      {
+        "id": "ASSIGN3",
+        "assignment_id": "JOB3",
+        "asset_id": "A3",
+        "job_id": "SITE-JOB-3",
+        "application_id": "PALLET",
+        "configuration_id": "CFG3",
+        "start_at": "2026-10-12T08:00:00Z",
+        "end_at": "2026-10-12T17:00:00Z",
+        "valid": true,
+        "issues": []
+      }
+    ],
+    "reports": [
+      {
+        "id": "REPORT-PRE",
+        "report_id": "REPORT-PRE",
+        "question_id": "QPRE",
+        "as_of": "2026-10-12T08:30:00Z",
+        "generated_at": "2026-10-12T09:10:00Z",
+        "complete": true,
+        "issues": [],
+        "inputs": [
+          {
+            "id": "RI-organisations-ORG",
+            "family": "organisations",
+            "record_id": "ORG",
+            "extract_id": "extract-bd13ed83a5f83bf9a80067df1a3aa15c",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-people-ENG",
+            "family": "people",
+            "record_id": "ENG",
+            "extract_id": "extract-b0d1451b9f8253b74494b59b0d987939",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-people-FIN",
+            "family": "people",
+            "record_id": "FIN",
+            "extract_id": "extract-b0d1451b9f8253b74494b59b0d987939",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-people-OP1",
+            "family": "people",
+            "record_id": "OP1",
+            "extract_id": "extract-b0d1451b9f8253b74494b59b0d987939",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-assets-AS1",
+            "family": "assets",
+            "record_id": "AS1",
+            "extract_id": "extract-072caa438b9391427e5e074102e4d73b",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-assets-AS2",
+            "family": "assets",
+            "record_id": "AS2",
+            "extract_id": "extract-072caa438b9391427e5e074102e4d73b",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-assets-AS3",
+            "family": "assets",
+            "record_id": "AS3",
+            "extract_id": "extract-072caa438b9391427e5e074102e4d73b",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-configurations-CFG1",
+            "family": "configurations",
+            "record_id": "CFG1",
+            "extract_id": "extract-681e34c986f91bafa8e62dcf1f6b216f",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-configurations-CFG2",
+            "family": "configurations",
+            "record_id": "CFG2",
+            "extract_id": "extract-681e34c986f91bafa8e62dcf1f6b216f",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-configurations-CFG3",
+            "family": "configurations",
+            "record_id": "CFG3",
+            "extract_id": "extract-681e34c986f91bafa8e62dcf1f6b216f",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-identity_links-LINK1",
+            "family": "identity_links",
+            "record_id": "LINK1",
+            "extract_id": "extract-0b1b0ddd717a5698dcf742b82b4613b5",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-identity_links-LINK2",
+            "family": "identity_links",
+            "record_id": "LINK2",
+            "extract_id": "extract-0b1b0ddd717a5698dcf742b82b4613b5",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-identity_links-LINK3",
+            "family": "identity_links",
+            "record_id": "LINK3",
+            "extract_id": "extract-0b1b0ddd717a5698dcf742b82b4613b5",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-source_clocks-CLOCK",
+            "family": "source_clocks",
+            "record_id": "CLOCK",
+            "extract_id": "extract-22d1311ad34f8755f1acbe5610db46fa",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-application_profiles-APP",
+            "family": "application_profiles",
+            "record_id": "APP",
+            "extract_id": "extract-1c0f3c17c5178081221fcb62718ba113",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-assignments-ASSIGN1",
+            "family": "assignments",
+            "record_id": "ASSIGN1",
+            "extract_id": "extract-b704c01bc9890d31f06fba7ae9d95cf7",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-assignments-ASSIGN2",
+            "family": "assignments",
+            "record_id": "ASSIGN2",
+            "extract_id": "extract-b704c01bc9890d31f06fba7ae9d95cf7",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-assignments-ASSIGN3",
+            "family": "assignments",
+            "record_id": "ASSIGN3",
+            "extract_id": "extract-b704c01bc9890d31f06fba7ae9d95cf7",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-review_questions-QP1",
+            "family": "review_questions",
+            "record_id": "QP1",
+            "extract_id": "extract-156de19bfe4b3c0a469c972447cc0046",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": true
+          },
+          {
+            "id": "RI-telemetry-T1",
+            "family": "telemetry",
+            "record_id": "T1",
+            "extract_id": "extract-ca082acc1739702d01ad93ba71a9c553",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-maintenance-M1",
+            "family": "maintenance",
+            "record_id": "M1",
+            "extract_id": "extract-ce5546bdec37b891b18a14f2340330a9",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          },
+          {
+            "id": "RI-source_documents-DOCROW",
+            "family": "source_documents",
+            "record_id": "DOCROW",
+            "extract_id": "extract-1ab212a06b18aba0adfaba6d2a5b8e01",
+            "valid": true,
+            "issues": [],
+            "differs_from_current": false
+          }
+        ]
+      }
+    ],
+    "assessments": [],
+    "costs": {
+      "complete": true,
+      "totals": {
+        "USD|net|operator_expense": {
+          "numerator": "2200",
+          "denominator": "1",
+          "decimal": "2200"
+        }
+      },
+      "known_totals": {
+        "USD|net|operator_expense": {
+          "numerator": "2200",
+          "denominator": "1",
+          "decimal": "2200"
+        }
+      },
+      "records": [
+        {
+          "id": "COST1",
+          "business_id": "COST1",
+          "asset_id": "A1",
+          "assignment_id": "JOB1",
+          "incident_id": "I1",
+          "currency": "USD",
+          "tax_basis": "net",
+          "economic_basis": "operator_expense",
+          "status": "posted",
+          "entry_type": "expense",
+          "amount": {
+            "numerator": "1000",
+            "denominator": "1",
+            "decimal": "1000"
+          },
+          "known_subtotal": {
+            "numerator": "1000",
+            "denominator": "1",
+            "decimal": "1000"
+          },
+          "active": true,
+          "complete": true,
+          "issues": [],
+          "original_ids": [
+            "COST1"
+          ],
+          "external_identity": "SUPPLIER-INVOICE / LINE-1"
+        },
+        {
+          "id": "COST2",
+          "business_id": "COST2",
+          "asset_id": "A2",
+          "assignment_id": "JOB2",
+          "incident_id": "I2",
+          "currency": "USD",
+          "tax_basis": "net",
+          "economic_basis": "operator_expense",
+          "status": "posted",
+          "entry_type": "expense",
+          "amount": {
+            "numerator": "300",
+            "denominator": "1",
+            "decimal": "300"
+          },
+          "known_subtotal": {
+            "numerator": "300",
+            "denominator": "1",
+            "decimal": "300"
+          },
+          "active": true,
+          "complete": true,
+          "issues": [],
+          "original_ids": [
+            "COST2"
+          ],
+          "external_identity": "SUPPLIER-INVOICE / LINE-2"
+        },
+        {
+          "id": "COST3",
+          "business_id": "COST3",
+          "asset_id": "A3",
+          "assignment_id": "JOB3",
+          "incident_id": "I3",
+          "currency": "USD",
+          "tax_basis": "net",
+          "economic_basis": "operator_expense",
+          "status": "posted",
+          "entry_type": "expense",
+          "amount": {
+            "numerator": "900",
+            "denominator": "1",
+            "decimal": "900"
+          },
+          "known_subtotal": {
+            "numerator": "900",
+            "denominator": "1",
+            "decimal": "900"
+          },
+          "active": true,
+          "complete": true,
+          "issues": [],
+          "original_ids": [
+            "COST3"
+          ],
+          "external_identity": "SUPPLIER-INVOICE / LINE-3"
+        }
+      ],
+      "issues": []
+    },
+    "cash": {
+      "complete": true,
+      "totals": {
+        "USD||operator_expense": {
+          "numerator": "1000",
+          "denominator": "1",
+          "decimal": "1000"
+        }
+      },
+      "known_totals": {
+        "USD||operator_expense": {
+          "numerator": "1000",
+          "denominator": "1",
+          "decimal": "1000"
+        }
+      },
+      "records": [
+        {
+          "id": "PAY1",
+          "business_id": "PAY1",
+          "asset_id": "A1",
+          "assignment_id": "JOB1",
+          "incident_id": "",
+          "currency": "USD",
+          "tax_basis": "",
+          "economic_basis": "operator_expense",
+          "status": "payment",
+          "entry_type": "payment",
+          "amount": {
+            "numerator": "1000",
+            "denominator": "1",
+            "decimal": "1000"
+          },
+          "known_subtotal": {
+            "numerator": "1000",
+            "denominator": "1",
+            "decimal": "1000"
+          },
+          "active": true,
+          "complete": true,
+          "issues": [],
+          "original_ids": [
+            "PAY1"
+          ],
+          "external_identity": "authored_bank / bank-001"
+        }
+      ],
+      "issues": []
+    },
+    "future_economic_observations": [],
+    "effort": {
+      "pairs": [
+        {
+          "key": "QFULL / FIRST-THREE",
+          "comparable": true,
+          "baseline": {
+            "numerator": "70",
+            "denominator": "1",
+            "decimal": "70"
+          },
+          "current": {
+            "numerator": "56",
+            "denominator": "1",
+            "decimal": "56"
+          },
+          "change": {
+            "numerator": "-14",
+            "denominator": "1",
+            "decimal": "−14"
+          },
+          "issues": []
+        }
+      ],
+      "matched_groups": 1,
+      "baseline_person_minutes": {
+        "numerator": "70",
+        "denominator": "1",
+        "decimal": "70"
+      },
+      "current_person_minutes": {
+        "numerator": "56",
+        "denominator": "1",
+        "decimal": "56"
+      },
+      "signed_change_person_minutes": {
+        "numerator": "-14",
+        "denominator": "1",
+        "decimal": "−14"
+      },
+      "known_matched_baseline_person_minutes": {
+        "numerator": "70",
+        "denominator": "1",
+        "decimal": "70"
+      },
+      "known_matched_current_person_minutes": {
+        "numerator": "56",
+        "denominator": "1",
+        "decimal": "56"
+      },
+      "all_current_person_minutes": {
+        "numerator": "56",
+        "denominator": "1",
+        "decimal": "56"
+      },
+      "complete": true,
+      "records": [
+        {
+          "id": "existing_process-0",
+          "question_id": "QFULL",
+          "assignment_id": "JOB1",
+          "matched_group_id": "FIRST-THREE",
+          "phase": "collection",
+          "arm": "existing_process",
+          "person_id": "OP1",
+          "work_instance_id": "existing_process-0",
+          "recurrence": "recurring",
+          "minutes": {
+            "numerator": "10",
+            "denominator": "1",
+            "decimal": "10"
+          },
+          "interval": [
+            1791828000000,
+            1791828600000
+          ],
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "existing_process-1",
+          "question_id": "QFULL",
+          "assignment_id": "JOB1",
+          "matched_group_id": "FIRST-THREE",
+          "phase": "identity_time",
+          "arm": "existing_process",
+          "person_id": "OP1",
+          "work_instance_id": "existing_process-1",
+          "recurrence": "recurring",
+          "minutes": {
+            "numerator": "10",
+            "denominator": "1",
+            "decimal": "10"
+          },
+          "interval": [
+            1791828720000,
+            1791829320000
+          ],
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "existing_process-2",
+          "question_id": "QFULL",
+          "assignment_id": "JOB1",
+          "matched_group_id": "FIRST-THREE",
+          "phase": "mapping",
+          "arm": "existing_process",
+          "person_id": "OP1",
+          "work_instance_id": "existing_process-2",
+          "recurrence": "recurring",
+          "minutes": {
+            "numerator": "10",
+            "denominator": "1",
+            "decimal": "10"
+          },
+          "interval": [
+            1791829440000,
+            1791830040000
+          ],
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "existing_process-3",
+          "question_id": "QFULL",
+          "assignment_id": "JOB1",
+          "matched_group_id": "FIRST-THREE",
+          "phase": "engineering_review",
+          "arm": "existing_process",
+          "person_id": "OP1",
+          "work_instance_id": "existing_process-3",
+          "recurrence": "recurring",
+          "minutes": {
+            "numerator": "10",
+            "denominator": "1",
+            "decimal": "10"
+          },
+          "interval": [
+            1791830160000,
+            1791830760000
+          ],
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "existing_process-4",
+          "question_id": "QFULL",
+          "assignment_id": "JOB1",
+          "matched_group_id": "FIRST-THREE",
+          "phase": "correction",
+          "arm": "existing_process",
+          "person_id": "OP1",
+          "work_instance_id": "existing_process-4",
+          "recurrence": "recurring",
+          "minutes": {
+            "numerator": "10",
+            "denominator": "1",
+            "decimal": "10"
+          },
+          "interval": [
+            1791830880000,
+            1791831480000
+          ],
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "existing_process-5",
+          "question_id": "QFULL",
+          "assignment_id": "JOB1",
+          "matched_group_id": "FIRST-THREE",
+          "phase": "finance_reconciliation",
+          "arm": "existing_process",
+          "person_id": "OP1",
+          "work_instance_id": "existing_process-5",
+          "recurrence": "recurring",
+          "minutes": {
+            "numerator": "10",
+            "denominator": "1",
+            "decimal": "10"
+          },
+          "interval": [
+            1791831600000,
+            1791832200000
+          ],
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "existing_process-6",
+          "question_id": "QFULL",
+          "assignment_id": "JOB1",
+          "matched_group_id": "FIRST-THREE",
+          "phase": "feedback",
+          "arm": "existing_process",
+          "person_id": "OP1",
+          "work_instance_id": "existing_process-6",
+          "recurrence": "recurring",
+          "minutes": {
+            "numerator": "10",
+            "denominator": "1",
+            "decimal": "10"
+          },
+          "interval": [
+            1791832320000,
+            1791832920000
+          ],
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "study_process-0",
+          "question_id": "QFULL",
+          "assignment_id": "JOB1",
+          "matched_group_id": "FIRST-THREE",
+          "phase": "collection",
+          "arm": "study_process",
+          "person_id": "ENG",
+          "work_instance_id": "study_process-0",
+          "recurrence": "recurring",
+          "minutes": {
+            "numerator": "8",
+            "denominator": "1",
+            "decimal": "8"
+          },
+          "interval": [
+            1791835200000,
+            1791835680000
+          ],
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "study_process-1",
+          "question_id": "QFULL",
+          "assignment_id": "JOB1",
+          "matched_group_id": "FIRST-THREE",
+          "phase": "identity_time",
+          "arm": "study_process",
+          "person_id": "ENG",
+          "work_instance_id": "study_process-1",
+          "recurrence": "recurring",
+          "minutes": {
+            "numerator": "8",
+            "denominator": "1",
+            "decimal": "8"
+          },
+          "interval": [
+            1791835920000,
+            1791836400000
+          ],
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "study_process-2",
+          "question_id": "QFULL",
+          "assignment_id": "JOB1",
+          "matched_group_id": "FIRST-THREE",
+          "phase": "mapping",
+          "arm": "study_process",
+          "person_id": "ENG",
+          "work_instance_id": "study_process-2",
+          "recurrence": "recurring",
+          "minutes": {
+            "numerator": "8",
+            "denominator": "1",
+            "decimal": "8"
+          },
+          "interval": [
+            1791836640000,
+            1791837120000
+          ],
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "study_process-3",
+          "question_id": "QFULL",
+          "assignment_id": "JOB1",
+          "matched_group_id": "FIRST-THREE",
+          "phase": "engineering_review",
+          "arm": "study_process",
+          "person_id": "ENG",
+          "work_instance_id": "study_process-3",
+          "recurrence": "recurring",
+          "minutes": {
+            "numerator": "8",
+            "denominator": "1",
+            "decimal": "8"
+          },
+          "interval": [
+            1791837360000,
+            1791837840000
+          ],
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "study_process-4",
+          "question_id": "QFULL",
+          "assignment_id": "JOB1",
+          "matched_group_id": "FIRST-THREE",
+          "phase": "correction",
+          "arm": "study_process",
+          "person_id": "ENG",
+          "work_instance_id": "study_process-4",
+          "recurrence": "recurring",
+          "minutes": {
+            "numerator": "8",
+            "denominator": "1",
+            "decimal": "8"
+          },
+          "interval": [
+            1791838080000,
+            1791838560000
+          ],
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "study_process-5",
+          "question_id": "QFULL",
+          "assignment_id": "JOB1",
+          "matched_group_id": "FIRST-THREE",
+          "phase": "finance_reconciliation",
+          "arm": "study_process",
+          "person_id": "ENG",
+          "work_instance_id": "study_process-5",
+          "recurrence": "recurring",
+          "minutes": {
+            "numerator": "8",
+            "denominator": "1",
+            "decimal": "8"
+          },
+          "interval": [
+            1791838800000,
+            1791839280000
+          ],
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "study_process-6",
+          "question_id": "QFULL",
+          "assignment_id": "JOB1",
+          "matched_group_id": "FIRST-THREE",
+          "phase": "feedback",
+          "arm": "study_process",
+          "person_id": "ENG",
+          "work_instance_id": "study_process-6",
+          "recurrence": "recurring",
+          "minutes": {
+            "numerator": "8",
+            "denominator": "1",
+            "decimal": "8"
+          },
+          "interval": [
+            1791839520000,
+            1791840000000
+          ],
+          "valid": true,
+          "issues": []
+        }
+      ],
+      "issues": [],
+      "meaning": "Actual active person-minutes; setup and unmatched work retained. Missing phases suppress paired comparison; signed changes remain signed."
+    },
+    "issues": [],
+    "limits": "Source-based observation and human review. Calendar rental time, engine meters, productive work, useful output, downtime, recognised cost and cash are separate. Comparative arithmetic does not establish causality or a proprietary risk score."
+  },
+  "counts": {
+    "organisations": {
+      "source": 1,
+      "returned": 1
+    },
+    "people": {
+      "source": 3,
+      "returned": 3
+    },
+    "assets": {
+      "source": 3,
+      "returned": 3
+    },
+    "configurations": {
+      "source": 3,
+      "returned": 3
+    },
+    "identity_links": {
+      "source": 3,
+      "returned": 3
+    },
+    "source_clocks": {
+      "source": 1,
+      "returned": 1
+    },
+    "application_profiles": {
+      "source": 1,
+      "returned": 1
+    },
+    "assignments": {
+      "source": 3,
+      "returned": 3
+    },
+    "work_intervals": {
+      "source": 6,
+      "returned": 6
+    },
+    "output_records": {
+      "source": 3,
+      "returned": 3
+    },
+    "telemetry": {
+      "source": 1,
+      "returned": 1
+    },
+    "maintenance": {
+      "source": 2,
+      "returned": 2
+    },
+    "incidents": {
+      "source": 3,
+      "returned": 3
+    },
+    "downtime_intervals": {
+      "source": 3,
+      "returned": 3
+    },
+    "cost_entries": {
+      "source": 3,
+      "returned": 3
+    },
+    "accounting_events": {
+      "source": 1,
+      "returned": 1
+    },
+    "review_questions": {
+      "source": 3,
+      "returned": 3
+    },
+    "assessments": {
+      "source": 0,
+      "returned": 0
+    },
+    "comparison_members": {
+      "source": 3,
+      "returned": 3
+    },
+    "outcome_labels": {
+      "source": 1,
+      "returned": 1
+    },
+    "reports": {
+      "source": 1,
+      "returned": 1
+    },
+    "report_inputs": {
+      "source": 22,
+      "returned": 22
+    },
+    "effort": {
+      "source": 14,
+      "returned": 14
+    },
+    "source_documents": {
+      "source": 1,
+      "returned": 1
+    }
+  },
+  "document_comparisons": [
+    {
+      "kind": "organisations",
+      "source_id": "ORG",
+      "returned_id": "ORG",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "people",
+      "source_id": "ENG",
+      "returned_id": "ENG",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "people",
+      "source_id": "FIN",
+      "returned_id": "FIN",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "people",
+      "source_id": "OP1",
+      "returned_id": "OP1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "assets",
+      "source_id": "AS1",
+      "returned_id": "AS1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "assets",
+      "source_id": "AS2",
+      "returned_id": "AS2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "assets",
+      "source_id": "AS3",
+      "returned_id": "AS3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "configurations",
+      "source_id": "CFG1",
+      "returned_id": "CFG1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "configurations",
+      "source_id": "CFG2",
+      "returned_id": "CFG2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "configurations",
+      "source_id": "CFG3",
+      "returned_id": "CFG3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "identity_links",
+      "source_id": "LINK1",
+      "returned_id": "LINK1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "identity_links",
+      "source_id": "LINK2",
+      "returned_id": "LINK2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "identity_links",
+      "source_id": "LINK3",
+      "returned_id": "LINK3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "source_clocks",
+      "source_id": "CLOCK",
+      "returned_id": "CLOCK",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "application_profiles",
+      "source_id": "APP",
+      "returned_id": "APP",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "assignments",
+      "source_id": "ASSIGN1",
+      "returned_id": "ASSIGN1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "assignments",
+      "source_id": "ASSIGN2",
+      "returned_id": "ASSIGN2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "assignments",
+      "source_id": "ASSIGN3",
+      "returned_id": "ASSIGN3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "work_intervals",
+      "source_id": "WORK1",
+      "returned_id": "WORK1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "work_intervals",
+      "source_id": "OPER1",
+      "returned_id": "OPER1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "work_intervals",
+      "source_id": "WORK2",
+      "returned_id": "WORK2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "work_intervals",
+      "source_id": "OPER2",
+      "returned_id": "OPER2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "work_intervals",
+      "source_id": "WORK3",
+      "returned_id": "WORK3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "work_intervals",
+      "source_id": "OPER3",
+      "returned_id": "OPER3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "output_records",
+      "source_id": "OUT1",
+      "returned_id": "OUT1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "output_records",
+      "source_id": "OUT2",
+      "returned_id": "OUT2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "output_records",
+      "source_id": "OUT3",
+      "returned_id": "OUT3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "telemetry",
+      "source_id": "T1",
+      "returned_id": "T1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "maintenance",
+      "source_id": "M1",
+      "returned_id": "M1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "maintenance",
+      "source_id": "M2",
+      "returned_id": "M2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "incidents",
+      "source_id": "INC1",
+      "returned_id": "INC1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "incidents",
+      "source_id": "INC2",
+      "returned_id": "INC2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "incidents",
+      "source_id": "INC3",
+      "returned_id": "INC3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "downtime_intervals",
+      "source_id": "DOWN1",
+      "returned_id": "DOWN1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "downtime_intervals",
+      "source_id": "DOWN2",
+      "returned_id": "DOWN2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "downtime_intervals",
+      "source_id": "JOBDOWN",
+      "returned_id": "JOBDOWN",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "cost_entries",
+      "source_id": "COST1",
+      "returned_id": "COST1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "cost_entries",
+      "source_id": "COST2",
+      "returned_id": "COST2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "cost_entries",
+      "source_id": "COST3",
+      "returned_id": "COST3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "accounting_events",
+      "source_id": "PAY1",
+      "returned_id": "PAY1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "review_questions",
+      "source_id": "QP1",
+      "returned_id": "QP1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "review_questions",
+      "source_id": "QP2",
+      "returned_id": "QP2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "review_questions",
+      "source_id": "QF",
+      "returned_id": "QF",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "comparison_members",
+      "source_id": "CM1",
+      "returned_id": "CM1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "comparison_members",
+      "source_id": "CM2",
+      "returned_id": "CM2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "comparison_members",
+      "source_id": "CM3",
+      "returned_id": "CM3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "outcome_labels",
+      "source_id": "LABEL1",
+      "returned_id": "LABEL1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "reports",
+      "source_id": "REPORT-PRE",
+      "returned_id": "REPORT-PRE",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-organisations-ORG",
+      "returned_id": "RI-organisations-ORG",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-people-ENG",
+      "returned_id": "RI-people-ENG",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-people-FIN",
+      "returned_id": "RI-people-FIN",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-people-OP1",
+      "returned_id": "RI-people-OP1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-assets-AS1",
+      "returned_id": "RI-assets-AS1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-assets-AS2",
+      "returned_id": "RI-assets-AS2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-assets-AS3",
+      "returned_id": "RI-assets-AS3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-configurations-CFG1",
+      "returned_id": "RI-configurations-CFG1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-configurations-CFG2",
+      "returned_id": "RI-configurations-CFG2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-configurations-CFG3",
+      "returned_id": "RI-configurations-CFG3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-identity_links-LINK1",
+      "returned_id": "RI-identity_links-LINK1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-identity_links-LINK2",
+      "returned_id": "RI-identity_links-LINK2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-identity_links-LINK3",
+      "returned_id": "RI-identity_links-LINK3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-source_clocks-CLOCK",
+      "returned_id": "RI-source_clocks-CLOCK",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-application_profiles-APP",
+      "returned_id": "RI-application_profiles-APP",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-assignments-ASSIGN1",
+      "returned_id": "RI-assignments-ASSIGN1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-assignments-ASSIGN2",
+      "returned_id": "RI-assignments-ASSIGN2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-assignments-ASSIGN3",
+      "returned_id": "RI-assignments-ASSIGN3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-review_questions-QP1",
+      "returned_id": "RI-review_questions-QP1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-telemetry-T1",
+      "returned_id": "RI-telemetry-T1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-maintenance-M1",
+      "returned_id": "RI-maintenance-M1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI-source_documents-DOCROW",
+      "returned_id": "RI-source_documents-DOCROW",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "existing_process-0",
+      "returned_id": "existing_process-0",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "existing_process-1",
+      "returned_id": "existing_process-1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "existing_process-2",
+      "returned_id": "existing_process-2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "existing_process-3",
+      "returned_id": "existing_process-3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "existing_process-4",
+      "returned_id": "existing_process-4",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "existing_process-5",
+      "returned_id": "existing_process-5",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "existing_process-6",
+      "returned_id": "existing_process-6",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "study_process-0",
+      "returned_id": "study_process-0",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "study_process-1",
+      "returned_id": "study_process-1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "study_process-2",
+      "returned_id": "study_process-2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "study_process-3",
+      "returned_id": "study_process-3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "study_process-4",
+      "returned_id": "study_process-4",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "study_process-5",
+      "returned_id": "study_process-5",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "study_process-6",
+      "returned_id": "study_process-6",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "source_documents",
+      "source_id": "DOCROW",
+      "returned_id": "DOCROW",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    }
+  ],
+  "findings": [],
+  "comparison_state": "selected_fields_match",
+  "reviews": [],
+  "role_reviews": [
+    {
+      "role": "operations",
+      "latest": null
+    },
+    {
+      "role": "engineering",
+      "latest": null
+    },
+    {
+      "role": "finance",
+      "latest": null
+    }
+  ],
+  "decision": "unreviewed",
+  "limits": "Independent supplied-record fleet study. Asset identity, configuration, actual work, useful output, downtime, costs, cash and historical human review remain distinct."
+}

@@ -1,0 +1,4 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,downtime_id,asset_id,assignment_id,incident_id,started_at,ended_at,scope,reason,planned,replacement_assignment_id,coverage_complete
+DOWN1,DOWN1,1,,active,2026-10-12T10:00:00Z,2026-10-12T10:00:00Z,,Authored downtime_intervals/DOWN1,DOWN1,A1,JOB1,I1,2026-10-12T09:00:00Z,2026-10-12T09:30:00Z,asset,Authored breakdown,false,,true
+DOWN2,DOWN2,1,,active,2026-10-12T10:00:00Z,2026-10-12T10:00:00Z,,Authored downtime_intervals/DOWN2,DOWN2,A1,JOB1,I1,2026-10-12T09:15:00Z,2026-10-12T09:45:00Z,asset,Authored breakdown,false,,true
+JOBDOWN,JOBDOWN,1,,active,2026-10-12T10:00:00Z,2026-10-12T10:00:00Z,,Authored downtime_intervals/JOBDOWN,JOBDOWN,A1,JOB1,I1,2026-10-12T09:00:00Z,2026-10-12T09:20:00Z,job,Authored breakdown,false,JOB3,true

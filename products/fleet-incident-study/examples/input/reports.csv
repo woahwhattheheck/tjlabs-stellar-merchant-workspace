@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,report_id,question_id,comparison_id,as_of,generated_at,prepared_by,population_boundary,population_complete,note
+REPORT-PRE,REPORT-PRE,1,,active,2026-10-12T09:10:00Z,2026-10-12T09:10:00Z,,Authored reports/REPORT-PRE,REPORT-PRE,QPRE,PRE,2026-10-12T08:30:00Z,2026-10-12T09:10:00Z,ENG,Original pre-event evidence only,true,No causal attribution; separate later outcome
