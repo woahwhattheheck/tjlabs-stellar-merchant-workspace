@@ -1,0 +1,20 @@
+{
+  "schema": "commons.direct-git-assembly-focused-check.v1",
+  "shortWrites": {
+    "bytes": 7,
+    "positions": [
+      11,
+      13,
+      15,
+      17
+    ],
+    "zeroWriteRejected": true
+  },
+  "actualManifest": {
+    "bytes": 106977990,
+    "sha256": "c49ef09a2d6074e0958565a5c9a3d838fed12fa5f455a01765c6b7e0df3cd9e2",
+    "parts": 220,
+    "members": 10835
+  },
+  "packedOnlyOutputRejected": true
+}
