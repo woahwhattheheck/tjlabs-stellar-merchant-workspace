@@ -1,0 +1,31 @@
+{
+  "schema": "commons.prepared-checkpoint-cache-course/v1",
+  "sourceFiles": 962,
+  "members": 963,
+  "zipBytes": 3066729,
+  "zipSha256": "05ef51e4df09dbac8574e806fe796ab71264ee9cb5edba0e2747de89b69075a1",
+  "fullSnapshotExact": true,
+  "fullZipExact": true,
+  "allSourceMembersExact": true,
+  "restoredSnapshotAndZipExact": true,
+  "failedPublicationRetryContainsAllObjects": true,
+  "oldFirstSnapshotMs": 208,
+  "cachedFirstSnapshotMs": 193,
+  "oldRepeatedSnapshotMs": 169,
+  "cachedRepeatedSnapshotMs": 0,
+  "firstStoragePreparationMs": 5021,
+  "repeatedStoragePreparationMs": 332,
+  "firstStorageStatistics": {
+    "livePayloads": 958,
+    "computedPayloads": 958,
+    "payloadHits": 4,
+    "hashedCharacters": 8173928
+  },
+  "repeatedStorageStatistics": {
+    "livePayloads": 958,
+    "computedPayloads": 958,
+    "payloadHits": 966,
+    "hashedCharacters": 8892136
+  },
+  "elapsedMs": 51701
+}
