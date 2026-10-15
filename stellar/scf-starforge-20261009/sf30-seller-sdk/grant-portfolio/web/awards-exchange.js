@@ -553,12 +553,13 @@ function GrantAwardsExchange(H){
               enabled=node("input"),text=node("textarea");
             enabled.type="checkbox";enabled.checked=Object.hasOwn(decision.corrections,header);enabled.disabled=carried;
             enabled.setAttribute("aria-label","Correct "+header+" in row "+(index+1));
-            text.value=Object.hasOwn(decision.correctionDrafts??{},header)?decision.correctionDrafts[header]:enabled.checked?decision.corrections[header]:original[header];text.disabled=carried||!enabled.checked;
+            let literal=Object.hasOwn(decision.correctionDrafts??{},header)?decision.correctionDrafts[header]:enabled.checked?decision.corrections[header]:original[header];
+            text.value=literal;text.disabled=carried||!enabled.checked;
             text.setAttribute("aria-label","Working "+header+" in row "+(index+1));
-            enabled.addEventListener("change",()=>{text.disabled=!enabled.checked;setKey(decision.correctionDrafts??=(Object.create(null)),header,text.value);
-              if(enabled.checked)setKey(decision.corrections,header,text.value);else delete decision.corrections[header];invalidate();});
-            text.addEventListener("input",()=>{setKey(decision.correctionDrafts??=(Object.create(null)),header,text.value);
-              if(enabled.checked)setKey(decision.corrections,header,text.value);invalidate();});
+            enabled.addEventListener("change",()=>{text.disabled=!enabled.checked;setKey(decision.correctionDrafts??=(Object.create(null)),header,literal);
+              if(enabled.checked)setKey(decision.corrections,header,literal);else delete decision.corrections[header];invalidate();});
+            text.addEventListener("input",()=>{literal=text.value;setKey(decision.correctionDrafts??=(Object.create(null)),header,literal);
+              if(enabled.checked)setKey(decision.corrections,header,literal);invalidate();});
             labelText.prepend(enabled);section.append(node("h5",header),node("span","Original literal value","small"),originalText,labelText,text);fields.append(section);
           }
           const prev=button("Previous columns",()=>{offset-=20;paintColumns();}),next=button("Next columns",()=>{offset+=20;paintColumns();});
