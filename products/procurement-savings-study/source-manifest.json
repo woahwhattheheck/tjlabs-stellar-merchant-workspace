@@ -2983,8 +2983,8 @@
     },
     {
       "path": "SOURCE_MANIFEST.json",
-      "bytes": 133825,
-      "sha256": "78a801d4f1945d4ee0266c5784384e5339e8398ca3ecf38633175334de922c60"
+      "bytes": 133983,
+      "sha256": "aa82bf2f4655cf880753ac04e38420540ca0e971ebb0240a779283ee68539508"
     },
     {
       "path": "source-view.cjs",
@@ -3000,6 +3000,11 @@
       "path": "src/build-installed.mjs",
       "bytes": 9207,
       "sha256": "437daba8fac44034a8e88eff839eea4a7d885af9e7cca9409218094ec9593e42"
+    },
+    {
+      "path": "src/connected_gzip.cjs",
+      "bytes": 47127,
+      "sha256": "1fc9f3b218c60d029c96bf9f1c1e4de5fcb86918ed5a0570586dc81488440119"
     },
     {
       "path": "src/connected_zip.cjs",

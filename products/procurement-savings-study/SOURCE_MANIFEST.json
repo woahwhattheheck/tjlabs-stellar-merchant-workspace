@@ -3000,6 +3000,11 @@
       "sha256": "437daba8fac44034a8e88eff839eea4a7d885af9e7cca9409218094ec9593e42"
     },
     {
+      "path": "src/connected_gzip.cjs",
+      "bytes": 47127,
+      "sha256": "1fc9f3b218c60d029c96bf9f1c1e4de5fcb86918ed5a0570586dc81488440119"
+    },
+    {
       "path": "src/connected_zip.cjs",
       "bytes": 22417,
       "sha256": "78cc84089aa4aad4303888b6ca0156df258ab19ac0ca2aca1aeffd9674d1fb6a"
