@@ -1,0 +1,67 @@
+{
+  "schema": "tjlabs.delivery-slot-desk.v1",
+  "workspace": {
+    "schema": "tjlabs.delivery-slot-study.v1",
+    "id": "delivery-study",
+    "label": "Delivery Slot Workbench",
+    "editions": [],
+    "reviews": []
+  },
+  "session": {
+    "editionId": null,
+    "table": "slots",
+    "slotId": null,
+    "sourceDraft": {
+      "id": "edition-1792043844905",
+      "label": "Source edition",
+      "receivedAt": "2026-10-15T05:57:24.905Z",
+      "notes": "",
+      "sources": {
+        "slots": {
+          "name": "slots.csv",
+          "text": "slot_id,name,cutoff_at,cutoff_boundary,fulfilment_at,reference\r\n",
+          "receiptSha256": null
+        },
+        "products": {
+          "name": "products.csv",
+          "text": "product_id,name,base_unit,quantity_kind\r\n",
+          "receiptSha256": null
+        },
+        "unit_packs": {
+          "name": "unit_packs.csv",
+          "text": "product_id,unit,base_quantity,quantity_step\r\n",
+          "receiptSha256": null
+        },
+        "buyers": {
+          "name": "buyers.csv",
+          "text": "buyer_id,name\r\n",
+          "receiptSha256": null
+        },
+        "slot_products": {
+          "name": "slot_products.csv",
+          "text": "slot_id,product_id,cutoff_at,cutoff_boundary,capacity_quantity,capacity_unit,reference\r\n",
+          "receiptSha256": null
+        },
+        "order_revisions": {
+          "name": "order_revisions.csv",
+          "text": "revision_id,slot_id,order_id,line_id,revision,buyer_id,product_id,status,quantity,unit,submitted_at,reference\r\n",
+          "receiptSha256": null
+        },
+        "production": {
+          "name": "production.csv",
+          "text": "observation_id,slot_id,product_id,quantity,unit,observed_at,coverage,reference\r\n",
+          "receiptSha256": null
+        },
+        "picking": {
+          "name": "picking.csv",
+          "text": "observation_id,slot_id,order_id,line_id,quantity,unit,observed_at,state,reference\r\n",
+          "receiptSha256": null
+        }
+      }
+    },
+    "reviewDrafts": {},
+    "selectedSubject": null,
+    "receipts": [],
+    "notes": ""
+  }
+}

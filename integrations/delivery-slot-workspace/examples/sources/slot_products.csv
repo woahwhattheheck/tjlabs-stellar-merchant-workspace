@@ -1,0 +1,3 @@
+slot_id,product_id,cutoff_at,cutoff_boundary,capacity_quantity,capacity_unit,reference
+S24,WHITE,,,15,loaf,Authored declared capacity
+S24,CROISSANT,,,20,piece,Authored declared capacity

@@ -1,0 +1,441 @@
+{
+  "schema": "tjlabs.delivery-slot-desk.v1",
+  "workspace": {
+    "schema": "tjlabs.delivery-slot-study.v1",
+    "id": "authored-bakery",
+    "label": "Authored bakery cutoff comparison",
+    "editions": [
+      {
+        "id": "E1",
+        "label": "Original cutoff and counted production",
+        "receivedAt": "2026-10-24T09:00:00Z",
+        "notes": "Entire dataset authored for operating demonstration; not a bakery account export.",
+        "sources": {
+          "slots": {
+            "name": "slots.csv",
+            "text": "slot_id,name,cutoff_at,cutoff_boundary,fulfilment_at,reference\r\nS24,Saturday trade,2026-10-22T08:00:00+01:00,before,2026-10-24T08:00:00+01:00,Authored cutoff example\r\n",
+            "bytes": 167,
+            "sha256": "7171d1ec7763841b7978ce185c34568a2c2d3430847527307a6479fa96beb0f3"
+          },
+          "products": {
+            "name": "products.csv",
+            "text": "product_id,name,base_unit,quantity_kind\r\nWHITE,White loaf,loaf,whole\r\nCROISSANT,Croissant,piece,whole\r\n",
+            "bytes": 103,
+            "sha256": "dba9567486631144b615d0de6bb686ca41257f6aa5984e861dc72cdfec8cbb9d"
+          },
+          "unit_packs": {
+            "name": "unit_packs.csv",
+            "text": "product_id,unit,base_quantity,quantity_step\r\nWHITE,loaf,1,1\r\nCROISSANT,piece,1,1\r\nCROISSANT,dozen,12,1\r\n",
+            "bytes": 104,
+            "sha256": "a3ad83789efd90d7e2015bbf59cb737b5e5cc7233029ba08f45f4f0de28a693c"
+          },
+          "buyers": {
+            "name": "buyers.csv",
+            "text": "buyer_id,name\r\nA,Buyer A\r\nB,Buyer B\r\nC,Buyer C\r\n",
+            "bytes": 48,
+            "sha256": "e9d406286b7290ad1def5821c70e7a3e99802239233cfed0fe8e3f7dbb38fec8"
+          },
+          "slot_products": {
+            "name": "slot_products.csv",
+            "text": "slot_id,product_id,cutoff_at,cutoff_boundary,capacity_quantity,capacity_unit,reference\r\nS24,WHITE,,,15,loaf,Authored declared capacity\r\nS24,CROISSANT,,,20,piece,Authored declared capacity\r\n",
+            "bytes": 189,
+            "sha256": "dfcfac0c2a6d170f06f9544c00ba1d54dcf054db10d83eeb3fcbe31cb8672e62"
+          },
+          "order_revisions": {
+            "name": "order_revisions.csv",
+            "text": "revision_id,slot_id,order_id,line_id,revision,buyer_id,product_id,status,quantity,unit,submitted_at,reference\r\nA1,S24,ORDER-A,L1,1,A,WHITE,confirmed,10,loaf,2026-10-22T07:00:00+01:00,Authored first request\r\nA2,S24,ORDER-A,L1,2,A,WHITE,confirmed,12,loaf,2026-10-22T07:30:00+01:00,Authored replacement\r\nA3,S24,ORDER-A,L1,3,A,WHITE,confirmed,20,loaf,2026-10-22T08:05:00+01:00,Authored late replacement\r\nB1,S24,ORDER-B,L1,1,B,CROISSANT,confirmed,2,dozen,2026-10-22T07:15:00+01:00,Authored pack quantity\r\nC1,S24,ORDER-C,L1,1,C,WHITE,confirmed,6,loaf,2026-10-22T07:00:00+01:00,Authored request\r\nC2,S24,ORDER-C,L1,2,C,WHITE,cancelled,0,loaf,2026-10-22T07:45:00+01:00,Authored cancellation\r\n",
+            "bytes": 683,
+            "sha256": "e6d715535c26e2b6036bdf632f06b14046367ceba4147cbd20eeccb40d75f32d"
+          },
+          "production": {
+            "name": "production.csv",
+            "text": "observation_id,slot_id,product_id,quantity,unit,observed_at,coverage,reference\r\nPROD-W,S24,WHITE,12,loaf,2026-10-24T05:30:00+01:00,complete,Authored independent count\r\nPROD-C,S24,CROISSANT,22,piece,2026-10-24T05:30:00+01:00,complete,Authored independent count\r\n",
+            "bytes": 261,
+            "sha256": "d6dd808825993a4eb17060defd4210986ddacf7b81e7d2587ce5d6ab11b93ea0"
+          },
+          "picking": {
+            "name": "picking.csv",
+            "text": "observation_id,slot_id,order_id,line_id,quantity,unit,observed_at,state,reference\r\nPICK-A,S24,ORDER-A,L1,12,loaf,2026-10-24T06:00:00+01:00,picked,Authored independent pick\r\nPICK-B,S24,ORDER-B,L1,22,piece,2026-10-24T06:00:00+01:00,picked,Authored independent pick\r\n",
+            "bytes": 264,
+            "sha256": "ca4c76666aaaff0b32a5b6adb3ba6d02d872e84a04615a0ba789aeab461b94c2"
+          }
+        },
+        "sourceHash": "6041fff8d7855b42c7cf4e0dad8aa6722b304b6094961804e0b260c2276f0cac"
+      },
+      {
+        "id": "native-complete",
+        "label": "Authored original-file intake",
+        "receivedAt": "2026-10-15T05:30:00Z",
+        "notes": "Authored source files. Existing draft fields must survive this independent intake.",
+        "sources": {
+          "slots": {
+            "name": "slots.csv",
+            "text": "slot_id,name,cutoff_at,cutoff_boundary,fulfilment_at,reference\r\nS24,Saturday trade,2026-10-22T08:00:00+01:00,before,2026-10-24T08:00:00+01:00,Authored cutoff example\r\n",
+            "bytes": 167,
+            "sha256": "7171d1ec7763841b7978ce185c34568a2c2d3430847527307a6479fa96beb0f3"
+          },
+          "products": {
+            "name": "products.csv",
+            "text": "product_id,name,base_unit,quantity_kind\r\nWHITE,White loaf,loaf,whole\r\nCROISSANT,Croissant,piece,whole\r\n",
+            "bytes": 103,
+            "sha256": "dba9567486631144b615d0de6bb686ca41257f6aa5984e861dc72cdfec8cbb9d"
+          },
+          "unit_packs": {
+            "name": "unit_packs.csv",
+            "text": "product_id,unit,base_quantity,quantity_step\r\nWHITE,loaf,1,1\r\nCROISSANT,piece,1,1\r\nCROISSANT,dozen,12,1\r\n",
+            "bytes": 104,
+            "sha256": "a3ad83789efd90d7e2015bbf59cb737b5e5cc7233029ba08f45f4f0de28a693c"
+          },
+          "buyers": {
+            "name": "buyers.csv",
+            "text": "buyer_id,name\r\nA,Buyer A\r\nB,Buyer B\r\nC,Buyer C\r\n",
+            "bytes": 48,
+            "sha256": "e9d406286b7290ad1def5821c70e7a3e99802239233cfed0fe8e3f7dbb38fec8"
+          },
+          "slot_products": {
+            "name": "slot_products.csv",
+            "text": "slot_id,product_id,cutoff_at,cutoff_boundary,capacity_quantity,capacity_unit,reference\r\nS24,WHITE,,,15,loaf,Authored declared capacity\r\nS24,CROISSANT,,,20,piece,Authored declared capacity\r\n",
+            "bytes": 189,
+            "sha256": "dfcfac0c2a6d170f06f9544c00ba1d54dcf054db10d83eeb3fcbe31cb8672e62"
+          },
+          "order_revisions": {
+            "name": "order_revisions.csv",
+            "text": "﻿revision_id,slot_id,order_id,line_id,revision,buyer_id,product_id,status,quantity,unit,submitted_at,reference\r\nA1,S24,ORDER-A,L1,1,A,WHITE,confirmed,10,loaf,2026-10-22T07:00:00+01:00,Authored first request\r\nA2,S24,ORDER-A,L1,2,A,WHITE,confirmed,12,loaf,2026-10-22T07:30:00+01:00,Authored replacement\r\nA3,S24,ORDER-A,L1,3,A,WHITE,confirmed,20,loaf,2026-10-22T08:05:00+01:00,Authored late replacement\r\nB1,S24,ORDER-B,L1,1,B,CROISSANT,confirmed,2,dozen,2026-10-22T07:15:00+01:00,Authored pack quantity\r\nC1,S24,ORDER-C,L1,1,C,WHITE,confirmed,6,loaf,2026-10-22T07:00:00+01:00,Authored request\r\nC2,S24,ORDER-C,L1,2,C,WHITE,cancelled,0,loaf,2026-10-22T07:45:00+01:00,Authored cancellation\r\n",
+            "bytes": 686,
+            "sha256": "8cc46171bfae8f56e8b43c92076126307bba59a9aeac870f0704aa63378068a1"
+          },
+          "production": {
+            "name": "production.csv",
+            "text": "observation_id,slot_id,product_id,quantity,unit,observed_at,coverage,reference\r\nPROD-W,S24,WHITE,12,loaf,2026-10-24T05:30:00+01:00,complete,Authored independent count\r\nPROD-C,S24,CROISSANT,22,piece,2026-10-24T05:30:00+01:00,complete,Authored independent count\r\n",
+            "bytes": 261,
+            "sha256": "d6dd808825993a4eb17060defd4210986ddacf7b81e7d2587ce5d6ab11b93ea0"
+          },
+          "picking": {
+            "name": "picking.csv",
+            "text": "observation_id,slot_id,order_id,line_id,quantity,unit,observed_at,state,reference\r\nPICK-A,S24,ORDER-A,L1,12,loaf,2026-10-24T06:00:00+01:00,picked,Authored independent pick\r\nPICK-B,S24,ORDER-B,L1,22,piece,2026-10-24T06:00:00+01:00,picked,Authored independent pick\r\n",
+            "bytes": 264,
+            "sha256": "ca4c76666aaaff0b32a5b6adb3ba6d02d872e84a04615a0ba789aeab461b94c2"
+          }
+        },
+        "sourceHash": "6b5745d9d2e3deaec30a5ef146131557cfb4e80ff9495431f4d14f6194babe2e"
+      }
+    ],
+    "reviews": []
+  },
+  "session": {
+    "editionId": "E1",
+    "table": "slots",
+    "slotId": null,
+    "sourceDraft": {
+      "id": "E2",
+      "label": "Prepared next source edition",
+      "receivedAt": "2026-10-25T08:00:00Z",
+      "notes": "Uncommitted source changes remain separate from accepted editions.",
+      "sources": {
+        "slots": {
+          "name": "slots.csv",
+          "text": "slot_id,name,cutoff_at,cutoff_boundary,fulfilment_at,reference\r\nS24,Saturday trade,2026-10-22T08:00:00+01:00,before,2026-10-24T08:00:00+01:00,Authored cutoff example\r\n",
+          "receiptSha256": null
+        },
+        "products": {
+          "name": "products.csv",
+          "text": "product_id,name,base_unit,quantity_kind\r\nWHITE,White loaf,loaf,whole\r\nCROISSANT,Croissant,piece,whole\r\n",
+          "receiptSha256": null
+        },
+        "unit_packs": {
+          "name": "unit_packs.csv",
+          "text": "product_id,unit,base_quantity,quantity_step\r\nWHITE,loaf,1,1\r\nCROISSANT,piece,1,1\r\nCROISSANT,dozen,12,1\r\n",
+          "receiptSha256": null
+        },
+        "buyers": {
+          "name": "buyers.csv",
+          "text": "buyer_id,name\r\nA,Buyer A\r\nB,Buyer B\r\nC,Buyer C\r\n",
+          "receiptSha256": null
+        },
+        "slot_products": {
+          "name": "slot_products.csv",
+          "text": "slot_id,product_id,cutoff_at,cutoff_boundary,capacity_quantity,capacity_unit,reference\r\nS24,WHITE,,,15,loaf,Authored declared capacity\r\nS24,CROISSANT,,,20,piece,Authored declared capacity\r\n",
+          "receiptSha256": null
+        },
+        "order_revisions": {
+          "name": "order_revisions.csv",
+          "text": "revision_id,slot_id,order_id,line_id,revision,buyer_id,product_id,status,quantity,unit,submitted_at,reference\r\nA1,S24,ORDER-A,L1,1,A,WHITE,confirmed,10,loaf,2026-10-22T07:00:00+01:00,Authored first request\r\nA2,S24,ORDER-A,L1,2,A,WHITE,confirmed,12,loaf,2026-10-22T07:30:00+01:00,Authored replacement\r\nA3,S24,ORDER-A,L1,3,A,WHITE,confirmed,20,loaf,2026-10-22T08:05:00+01:00,Authored late replacement\r\nB1,S24,ORDER-B,L1,1,B,CROISSANT,confirmed,2,dozen,2026-10-22T07:15:00+01:00,Authored pack quantity\r\nC1,S24,ORDER-C,L1,1,C,WHITE,confirmed,6,loaf,2026-10-22T07:00:00+01:00,Authored request\r\nC2,S24,ORDER-C,L1,2,C,WHITE,cancelled,0,loaf,2026-10-22T07:45:00+01:00,Authored cancellation\r\n",
+          "receiptSha256": null
+        },
+        "production": {
+          "name": "production.csv",
+          "text": "observation_id,slot_id,product_id,quantity,unit,observed_at,coverage,reference\r\nPROD-W,S24,WHITE,12,loaf,2026-10-24T05:30:00+01:00,complete,Authored independent count\r\nPROD-C,S24,CROISSANT,22,piece,2026-10-24T05:30:00+01:00,complete,Authored independent count\r\n",
+          "receiptSha256": null
+        },
+        "picking": {
+          "name": "picking.csv",
+          "text": "observation_id,slot_id,order_id,line_id,quantity,unit,observed_at,state,reference\r\nPICK-A,S24,ORDER-A,L1,12,loaf,2026-10-24T06:00:00+01:00,picked,Authored independent pick\r\nPICK-B,S24,ORDER-B,L1,22,piece,2026-10-24T06:00:00+01:00,picked,Authored independent pick\r\n",
+          "receiptSha256": null
+        }
+      }
+    },
+    "reviewDrafts": {
+      "[\"E1\",\"line\",\"[\\\"S24\\\",\\\"ORDER-A\\\",\\\"L1\\\"]\"]": {
+        "editionId": "E1",
+        "subjectType": "line",
+        "subjectId": "[\"S24\",\"ORDER-A\",\"L1\"]",
+        "selectedRevisionId": "",
+        "disposition": "investigate",
+        "reviewer": "",
+        "reason": "Unfinished receiving note",
+        "evidence": "",
+        "previousReviewId": null
+      }
+    },
+    "selectedSubject": null,
+    "receipts": [],
+    "notes": "Unfinished handoff — retain literal notes\r\nSecond line."
+  },
+  "nativeContinuation": {
+    "schema": "tjlabs.delivery-slot-native-continuation.v1",
+    "command": {
+      "action": "receive",
+      "input": {
+        "id": "malformed-intake",
+        "label": "Authored original-file intake",
+        "receivedAt": "2026-10-15T05:30:00Z",
+        "notes": "Authored source files. Existing draft fields must survive this independent intake."
+      },
+      "sourceFiles": {
+        "slots": {
+          "path": "slots.csv",
+          "name": "slots.csv"
+        },
+        "products": {
+          "path": "products.csv",
+          "name": "products.csv"
+        },
+        "unit_packs": {
+          "path": "unit_packs.csv",
+          "name": "unit_packs.csv"
+        },
+        "buyers": {
+          "path": "buyers.csv",
+          "name": "buyers.csv"
+        },
+        "slot_products": {
+          "path": "slot_products.csv",
+          "name": "slot_products.csv"
+        },
+        "order_revisions": {
+          "path": "malformed.bin",
+          "name": "order_revisions.csv"
+        },
+        "production": {
+          "path": "production.csv",
+          "name": "production.csv"
+        },
+        "picking": {
+          "path": "picking.csv",
+          "name": "picking.csv"
+        }
+      }
+    },
+    "commandBytes": {
+      "bytes": 979,
+      "sha256": "a6d3db3a9d9b3d56aa58db21efc2863b9a41cba4ebe7534b28584b9248e919f7",
+      "dataBase64": "ewogICJhY3Rpb24iOiAicmVjZWl2ZSIsCiAgImlucHV0IjogewogICAgImlkIjogIm1hbGZvcm1lZC1pbnRha2UiLAogICAgImxhYmVsIjogIkF1dGhvcmVkIG9yaWdpbmFsLWZpbGUgaW50YWtlIiwKICAgICJyZWNlaXZlZEF0IjogIjIwMjYtMTAtMTVUMDU6MzA6MDBaIiwKICAgICJub3RlcyI6ICJBdXRob3JlZCBzb3VyY2UgZmlsZXMuIEV4aXN0aW5nIGRyYWZ0IGZpZWxkcyBtdXN0IHN1cnZpdmUgdGhpcyBpbmRlcGVuZGVudCBpbnRha2UuIgogIH0sCiAgInNvdXJjZUZpbGVzIjogewogICAgInNsb3RzIjogewogICAgICAicGF0aCI6ICJzbG90cy5jc3YiLAogICAgICAibmFtZSI6ICJzbG90cy5jc3YiCiAgICB9LAogICAgInByb2R1Y3RzIjogewogICAgICAicGF0aCI6ICJwcm9kdWN0cy5jc3YiLAogICAgICAibmFtZSI6ICJwcm9kdWN0cy5jc3YiCiAgICB9LAogICAgInVuaXRfcGFja3MiOiB7CiAgICAgICJwYXRoIjogInVuaXRfcGFja3MuY3N2IiwKICAgICAgIm5hbWUiOiAidW5pdF9wYWNrcy5jc3YiCiAgICB9LAogICAgImJ1eWVycyI6IHsKICAgICAgInBhdGgiOiAiYnV5ZXJzLmNzdiIsCiAgICAgICJuYW1lIjogImJ1eWVycy5jc3YiCiAgICB9LAogICAgInNsb3RfcHJvZHVjdHMiOiB7CiAgICAgICJwYXRoIjogInNsb3RfcHJvZHVjdHMuY3N2IiwKICAgICAgIm5hbWUiOiAic2xvdF9wcm9kdWN0cy5jc3YiCiAgICB9LAogICAgIm9yZGVyX3JldmlzaW9ucyI6IHsKICAgICAgInBhdGgiOiAibWFsZm9ybWVkLmJpbiIsCiAgICAgICJuYW1lIjogIm9yZGVyX3JldmlzaW9ucy5jc3YiCiAgICB9LAogICAgInByb2R1Y3Rpb24iOiB7CiAgICAgICJwYXRoIjogInByb2R1Y3Rpb24uY3N2IiwKICAgICAgIm5hbWUiOiAicHJvZHVjdGlvbi5jc3YiCiAgICB9LAogICAgInBpY2tpbmciOiB7CiAgICAgICJwYXRoIjogInBpY2tpbmcuY3N2IiwKICAgICAgIm5hbWUiOiAicGlja2luZy5jc3YiCiAgICB9CiAgfQp9Cg=="
+    },
+    "attempt": {
+      "schema": "tjlabs.delivery-slot-native-attempt.v1",
+      "state": "rejected",
+      "action": "receive",
+      "error": "order_revisions: archive_codec: invalid UTF-8 lead byte"
+    },
+    "receipts": [
+      {
+        "table": "slots",
+        "name": "slots.csv",
+        "bytes": 167,
+        "sha256": "7171d1ec7763841b7978ce185c34568a2c2d3430847527307a6479fa96beb0f3",
+        "dataBase64": "c2xvdF9pZCxuYW1lLGN1dG9mZl9hdCxjdXRvZmZfYm91bmRhcnksZnVsZmlsbWVudF9hdCxyZWZlcmVuY2UNClMyNCxTYXR1cmRheSB0cmFkZSwyMDI2LTEwLTIyVDA4OjAwOjAwKzAxOjAwLGJlZm9yZSwyMDI2LTEwLTI0VDA4OjAwOjAwKzAxOjAwLEF1dGhvcmVkIGN1dG9mZiBleGFtcGxlDQo=",
+        "error": null
+      },
+      {
+        "table": "products",
+        "name": "products.csv",
+        "bytes": 103,
+        "sha256": "dba9567486631144b615d0de6bb686ca41257f6aa5984e861dc72cdfec8cbb9d",
+        "dataBase64": "cHJvZHVjdF9pZCxuYW1lLGJhc2VfdW5pdCxxdWFudGl0eV9raW5kDQpXSElURSxXaGl0ZSBsb2FmLGxvYWYsd2hvbGUNCkNST0lTU0FOVCxDcm9pc3NhbnQscGllY2Usd2hvbGUNCg==",
+        "error": null
+      },
+      {
+        "table": "unit_packs",
+        "name": "unit_packs.csv",
+        "bytes": 104,
+        "sha256": "a3ad83789efd90d7e2015bbf59cb737b5e5cc7233029ba08f45f4f0de28a693c",
+        "dataBase64": "cHJvZHVjdF9pZCx1bml0LGJhc2VfcXVhbnRpdHkscXVhbnRpdHlfc3RlcA0KV0hJVEUsbG9hZiwxLDENCkNST0lTU0FOVCxwaWVjZSwxLDENCkNST0lTU0FOVCxkb3plbiwxMiwxDQo=",
+        "error": null
+      },
+      {
+        "table": "buyers",
+        "name": "buyers.csv",
+        "bytes": 48,
+        "sha256": "e9d406286b7290ad1def5821c70e7a3e99802239233cfed0fe8e3f7dbb38fec8",
+        "dataBase64": "YnV5ZXJfaWQsbmFtZQ0KQSxCdXllciBBDQpCLEJ1eWVyIEINCkMsQnV5ZXIgQw0K",
+        "error": null
+      },
+      {
+        "table": "slot_products",
+        "name": "slot_products.csv",
+        "bytes": 189,
+        "sha256": "dfcfac0c2a6d170f06f9544c00ba1d54dcf054db10d83eeb3fcbe31cb8672e62",
+        "dataBase64": "c2xvdF9pZCxwcm9kdWN0X2lkLGN1dG9mZl9hdCxjdXRvZmZfYm91bmRhcnksY2FwYWNpdHlfcXVhbnRpdHksY2FwYWNpdHlfdW5pdCxyZWZlcmVuY2UNClMyNCxXSElURSwsLDE1LGxvYWYsQXV0aG9yZWQgZGVjbGFyZWQgY2FwYWNpdHkNClMyNCxDUk9JU1NBTlQsLCwyMCxwaWVjZSxBdXRob3JlZCBkZWNsYXJlZCBjYXBhY2l0eQ0K",
+        "error": null
+      },
+      {
+        "table": "order_revisions",
+        "name": "order_revisions.csv",
+        "bytes": 2,
+        "sha256": "e4688624e5f1ad0629505e6768e3bb36244f2f3e33e751215afa820334a76ed3",
+        "dataBase64": "/wo=",
+        "error": "archive_codec: invalid UTF-8 lead byte"
+      },
+      {
+        "table": "production",
+        "name": "production.csv",
+        "bytes": 261,
+        "sha256": "d6dd808825993a4eb17060defd4210986ddacf7b81e7d2587ce5d6ab11b93ea0",
+        "dataBase64": "b2JzZXJ2YXRpb25faWQsc2xvdF9pZCxwcm9kdWN0X2lkLHF1YW50aXR5LHVuaXQsb2JzZXJ2ZWRfYXQsY292ZXJhZ2UscmVmZXJlbmNlDQpQUk9ELVcsUzI0LFdISVRFLDEyLGxvYWYsMjAyNi0xMC0yNFQwNTozMDowMCswMTowMCxjb21wbGV0ZSxBdXRob3JlZCBpbmRlcGVuZGVudCBjb3VudA0KUFJPRC1DLFMyNCxDUk9JU1NBTlQsMjIscGllY2UsMjAyNi0xMC0yNFQwNTozMDowMCswMTowMCxjb21wbGV0ZSxBdXRob3JlZCBpbmRlcGVuZGVudCBjb3VudA0K",
+        "error": null
+      },
+      {
+        "table": "picking",
+        "name": "picking.csv",
+        "bytes": 264,
+        "sha256": "ca4c76666aaaff0b32a5b6adb3ba6d02d872e84a04615a0ba789aeab461b94c2",
+        "dataBase64": "b2JzZXJ2YXRpb25faWQsc2xvdF9pZCxvcmRlcl9pZCxsaW5lX2lkLHF1YW50aXR5LHVuaXQsb2JzZXJ2ZWRfYXQsc3RhdGUscmVmZXJlbmNlDQpQSUNLLUEsUzI0LE9SREVSLUEsTDEsMTIsbG9hZiwyMDI2LTEwLTI0VDA2OjAwOjAwKzAxOjAwLHBpY2tlZCxBdXRob3JlZCBpbmRlcGVuZGVudCBwaWNrDQpQSUNLLUIsUzI0LE9SREVSLUIsTDEsMjIscGllY2UsMjAyNi0xMC0yNFQwNjowMDowMCswMTowMCxwaWNrZWQsQXV0aG9yZWQgaW5kZXBlbmRlbnQgcGljaw0K",
+        "error": null
+      }
+    ],
+    "previous": {
+      "schema": "tjlabs.delivery-slot-native-continuation.v1",
+      "command": {
+        "action": "receive",
+        "input": {
+          "id": "native-complete",
+          "label": "Authored original-file intake",
+          "receivedAt": "2026-10-15T05:30:00Z",
+          "notes": "Authored source files. Existing draft fields must survive this independent intake."
+        },
+        "sourceFiles": {
+          "slots": {
+            "path": "slots.csv",
+            "name": "slots.csv"
+          },
+          "products": {
+            "path": "products.csv",
+            "name": "products.csv"
+          },
+          "unit_packs": {
+            "path": "unit_packs.csv",
+            "name": "unit_packs.csv"
+          },
+          "buyers": {
+            "path": "buyers.csv",
+            "name": "buyers.csv"
+          },
+          "slot_products": {
+            "path": "slot_products.csv",
+            "name": "slot_products.csv"
+          },
+          "order_revisions": {
+            "path": "order_revisions.csv",
+            "name": "order_revisions.csv"
+          },
+          "production": {
+            "path": "production.csv",
+            "name": "production.csv"
+          },
+          "picking": {
+            "path": "picking.csv",
+            "name": "picking.csv"
+          }
+        }
+      },
+      "commandBytes": {
+        "bytes": 984,
+        "sha256": "20d56ba801b972f81b3ab7ccaec5eaf3308bf15e91c3c8334cc46fc1ad08498c",
+        "dataBase64": "ewogICJhY3Rpb24iOiAicmVjZWl2ZSIsCiAgImlucHV0IjogewogICAgImlkIjogIm5hdGl2ZS1jb21wbGV0ZSIsCiAgICAibGFiZWwiOiAiQXV0aG9yZWQgb3JpZ2luYWwtZmlsZSBpbnRha2UiLAogICAgInJlY2VpdmVkQXQiOiAiMjAyNi0xMC0xNVQwNTozMDowMFoiLAogICAgIm5vdGVzIjogIkF1dGhvcmVkIHNvdXJjZSBmaWxlcy4gRXhpc3RpbmcgZHJhZnQgZmllbGRzIG11c3Qgc3Vydml2ZSB0aGlzIGluZGVwZW5kZW50IGludGFrZS4iCiAgfSwKICAic291cmNlRmlsZXMiOiB7CiAgICAic2xvdHMiOiB7CiAgICAgICJwYXRoIjogInNsb3RzLmNzdiIsCiAgICAgICJuYW1lIjogInNsb3RzLmNzdiIKICAgIH0sCiAgICAicHJvZHVjdHMiOiB7CiAgICAgICJwYXRoIjogInByb2R1Y3RzLmNzdiIsCiAgICAgICJuYW1lIjogInByb2R1Y3RzLmNzdiIKICAgIH0sCiAgICAidW5pdF9wYWNrcyI6IHsKICAgICAgInBhdGgiOiAidW5pdF9wYWNrcy5jc3YiLAogICAgICAibmFtZSI6ICJ1bml0X3BhY2tzLmNzdiIKICAgIH0sCiAgICAiYnV5ZXJzIjogewogICAgICAicGF0aCI6ICJidXllcnMuY3N2IiwKICAgICAgIm5hbWUiOiAiYnV5ZXJzLmNzdiIKICAgIH0sCiAgICAic2xvdF9wcm9kdWN0cyI6IHsKICAgICAgInBhdGgiOiAic2xvdF9wcm9kdWN0cy5jc3YiLAogICAgICAibmFtZSI6ICJzbG90X3Byb2R1Y3RzLmNzdiIKICAgIH0sCiAgICAib3JkZXJfcmV2aXNpb25zIjogewogICAgICAicGF0aCI6ICJvcmRlcl9yZXZpc2lvbnMuY3N2IiwKICAgICAgIm5hbWUiOiAib3JkZXJfcmV2aXNpb25zLmNzdiIKICAgIH0sCiAgICAicHJvZHVjdGlvbiI6IHsKICAgICAgInBhdGgiOiAicHJvZHVjdGlvbi5jc3YiLAogICAgICAibmFtZSI6ICJwcm9kdWN0aW9uLmNzdiIKICAgIH0sCiAgICAicGlja2luZyI6IHsKICAgICAgInBhdGgiOiAicGlja2luZy5jc3YiLAogICAgICAibmFtZSI6ICJwaWNraW5nLmNzdiIKICAgIH0KICB9Cn0K"
+      },
+      "attempt": {
+        "schema": "tjlabs.delivery-slot-native-attempt.v1",
+        "state": "completed",
+        "action": "receive",
+        "error": null
+      },
+      "receipts": [
+        {
+          "table": "slots",
+          "name": "slots.csv",
+          "bytes": 167,
+          "sha256": "7171d1ec7763841b7978ce185c34568a2c2d3430847527307a6479fa96beb0f3",
+          "dataBase64": "c2xvdF9pZCxuYW1lLGN1dG9mZl9hdCxjdXRvZmZfYm91bmRhcnksZnVsZmlsbWVudF9hdCxyZWZlcmVuY2UNClMyNCxTYXR1cmRheSB0cmFkZSwyMDI2LTEwLTIyVDA4OjAwOjAwKzAxOjAwLGJlZm9yZSwyMDI2LTEwLTI0VDA4OjAwOjAwKzAxOjAwLEF1dGhvcmVkIGN1dG9mZiBleGFtcGxlDQo=",
+          "error": null
+        },
+        {
+          "table": "products",
+          "name": "products.csv",
+          "bytes": 103,
+          "sha256": "dba9567486631144b615d0de6bb686ca41257f6aa5984e861dc72cdfec8cbb9d",
+          "dataBase64": "cHJvZHVjdF9pZCxuYW1lLGJhc2VfdW5pdCxxdWFudGl0eV9raW5kDQpXSElURSxXaGl0ZSBsb2FmLGxvYWYsd2hvbGUNCkNST0lTU0FOVCxDcm9pc3NhbnQscGllY2Usd2hvbGUNCg==",
+          "error": null
+        },
+        {
+          "table": "unit_packs",
+          "name": "unit_packs.csv",
+          "bytes": 104,
+          "sha256": "a3ad83789efd90d7e2015bbf59cb737b5e5cc7233029ba08f45f4f0de28a693c",
+          "dataBase64": "cHJvZHVjdF9pZCx1bml0LGJhc2VfcXVhbnRpdHkscXVhbnRpdHlfc3RlcA0KV0hJVEUsbG9hZiwxLDENCkNST0lTU0FOVCxwaWVjZSwxLDENCkNST0lTU0FOVCxkb3plbiwxMiwxDQo=",
+          "error": null
+        },
+        {
+          "table": "buyers",
+          "name": "buyers.csv",
+          "bytes": 48,
+          "sha256": "e9d406286b7290ad1def5821c70e7a3e99802239233cfed0fe8e3f7dbb38fec8",
+          "dataBase64": "YnV5ZXJfaWQsbmFtZQ0KQSxCdXllciBBDQpCLEJ1eWVyIEINCkMsQnV5ZXIgQw0K",
+          "error": null
+        },
+        {
+          "table": "slot_products",
+          "name": "slot_products.csv",
+          "bytes": 189,
+          "sha256": "dfcfac0c2a6d170f06f9544c00ba1d54dcf054db10d83eeb3fcbe31cb8672e62",
+          "dataBase64": "c2xvdF9pZCxwcm9kdWN0X2lkLGN1dG9mZl9hdCxjdXRvZmZfYm91bmRhcnksY2FwYWNpdHlfcXVhbnRpdHksY2FwYWNpdHlfdW5pdCxyZWZlcmVuY2UNClMyNCxXSElURSwsLDE1LGxvYWYsQXV0aG9yZWQgZGVjbGFyZWQgY2FwYWNpdHkNClMyNCxDUk9JU1NBTlQsLCwyMCxwaWVjZSxBdXRob3JlZCBkZWNsYXJlZCBjYXBhY2l0eQ0K",
+          "error": null
+        },
+        {
+          "table": "order_revisions",
+          "name": "order_revisions.csv",
+          "bytes": 686,
+          "sha256": "8cc46171bfae8f56e8b43c92076126307bba59a9aeac870f0704aa63378068a1",
+          "dataBase64": "77u/cmV2aXNpb25faWQsc2xvdF9pZCxvcmRlcl9pZCxsaW5lX2lkLHJldmlzaW9uLGJ1eWVyX2lkLHByb2R1Y3RfaWQsc3RhdHVzLHF1YW50aXR5LHVuaXQsc3VibWl0dGVkX2F0LHJlZmVyZW5jZQ0KQTEsUzI0LE9SREVSLUEsTDEsMSxBLFdISVRFLGNvbmZpcm1lZCwxMCxsb2FmLDIwMjYtMTAtMjJUMDc6MDA6MDArMDE6MDAsQXV0aG9yZWQgZmlyc3QgcmVxdWVzdA0KQTIsUzI0LE9SREVSLUEsTDEsMixBLFdISVRFLGNvbmZpcm1lZCwxMixsb2FmLDIwMjYtMTAtMjJUMDc6MzA6MDArMDE6MDAsQXV0aG9yZWQgcmVwbGFjZW1lbnQNCkEzLFMyNCxPUkRFUi1BLEwxLDMsQSxXSElURSxjb25maXJtZWQsMjAsbG9hZiwyMDI2LTEwLTIyVDA4OjA1OjAwKzAxOjAwLEF1dGhvcmVkIGxhdGUgcmVwbGFjZW1lbnQNCkIxLFMyNCxPUkRFUi1CLEwxLDEsQixDUk9JU1NBTlQsY29uZmlybWVkLDIsZG96ZW4sMjAyNi0xMC0yMlQwNzoxNTowMCswMTowMCxBdXRob3JlZCBwYWNrIHF1YW50aXR5DQpDMSxTMjQsT1JERVItQyxMMSwxLEMsV0hJVEUsY29uZmlybWVkLDYsbG9hZiwyMDI2LTEwLTIyVDA3OjAwOjAwKzAxOjAwLEF1dGhvcmVkIHJlcXVlc3QNCkMyLFMyNCxPUkRFUi1DLEwxLDIsQyxXSElURSxjYW5jZWxsZWQsMCxsb2FmLDIwMjYtMTAtMjJUMDc6NDU6MDArMDE6MDAsQXV0aG9yZWQgY2FuY2VsbGF0aW9uDQo=",
+          "error": null
+        },
+        {
+          "table": "production",
+          "name": "production.csv",
+          "bytes": 261,
+          "sha256": "d6dd808825993a4eb17060defd4210986ddacf7b81e7d2587ce5d6ab11b93ea0",
+          "dataBase64": "b2JzZXJ2YXRpb25faWQsc2xvdF9pZCxwcm9kdWN0X2lkLHF1YW50aXR5LHVuaXQsb2JzZXJ2ZWRfYXQsY292ZXJhZ2UscmVmZXJlbmNlDQpQUk9ELVcsUzI0LFdISVRFLDEyLGxvYWYsMjAyNi0xMC0yNFQwNTozMDowMCswMTowMCxjb21wbGV0ZSxBdXRob3JlZCBpbmRlcGVuZGVudCBjb3VudA0KUFJPRC1DLFMyNCxDUk9JU1NBTlQsMjIscGllY2UsMjAyNi0xMC0yNFQwNTozMDowMCswMTowMCxjb21wbGV0ZSxBdXRob3JlZCBpbmRlcGVuZGVudCBjb3VudA0K",
+          "error": null
+        },
+        {
+          "table": "picking",
+          "name": "picking.csv",
+          "bytes": 264,
+          "sha256": "ca4c76666aaaff0b32a5b6adb3ba6d02d872e84a04615a0ba789aeab461b94c2",
+          "dataBase64": "b2JzZXJ2YXRpb25faWQsc2xvdF9pZCxvcmRlcl9pZCxsaW5lX2lkLHF1YW50aXR5LHVuaXQsb2JzZXJ2ZWRfYXQsc3RhdGUscmVmZXJlbmNlDQpQSUNLLUEsUzI0LE9SREVSLUEsTDEsMTIsbG9hZiwyMDI2LTEwLTI0VDA2OjAwOjAwKzAxOjAwLHBpY2tlZCxBdXRob3JlZCBpbmRlcGVuZGVudCBwaWNrDQpQSUNLLUIsUzI0LE9SREVSLUIsTDEsMjIscGllY2UsMjAyNi0xMC0yNFQwNjowMDowMCswMTowMCxwaWNrZWQsQXV0aG9yZWQgaW5kZXBlbmRlbnQgcGljaw0K",
+          "error": null
+        }
+      ],
+      "previous": null
+    }
+  }
+}

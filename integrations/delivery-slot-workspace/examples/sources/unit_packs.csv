@@ -1,0 +1,4 @@
+product_id,unit,base_quantity,quantity_step
+WHITE,loaf,1,1
+CROISSANT,piece,1,1
+CROISSANT,dozen,12,1

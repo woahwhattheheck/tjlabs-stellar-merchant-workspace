@@ -1,0 +1,121 @@
+{
+  "schema": "tjlabs.delivery-slot-study-contract.v1",
+  "factory": "createDeliverySlotCore({codec})",
+  "workspaceSchema": "tjlabs.delivery-slot-study.v1",
+  "api": [
+    "create({id,label})",
+    "reopen(workspace)",
+    "receive(workspace,{id,label,receivedAt,notes,sources})",
+    "analyse(workspace,editionId)",
+    "review(workspace,{id,editionId,subjectType,subjectId,disposition,selectedRevisionId,reviewer,reason,evidence,previousReviewId})",
+    "report(workspace,editionId)",
+    "csv(workspace,editionId,kind)"
+  ],
+  "columns": {
+    "slots": [
+      "slot_id",
+      "name",
+      "cutoff_at",
+      "cutoff_boundary",
+      "fulfilment_at",
+      "reference"
+    ],
+    "products": [
+      "product_id",
+      "name",
+      "base_unit",
+      "quantity_kind"
+    ],
+    "unit_packs": [
+      "product_id",
+      "unit",
+      "base_quantity",
+      "quantity_step"
+    ],
+    "buyers": [
+      "buyer_id",
+      "name"
+    ],
+    "slot_products": [
+      "slot_id",
+      "product_id",
+      "cutoff_at",
+      "cutoff_boundary",
+      "capacity_quantity",
+      "capacity_unit",
+      "reference"
+    ],
+    "order_revisions": [
+      "revision_id",
+      "slot_id",
+      "order_id",
+      "line_id",
+      "revision",
+      "buyer_id",
+      "product_id",
+      "status",
+      "quantity",
+      "unit",
+      "submitted_at",
+      "reference"
+    ],
+    "production": [
+      "observation_id",
+      "slot_id",
+      "product_id",
+      "quantity",
+      "unit",
+      "observed_at",
+      "coverage",
+      "reference"
+    ],
+    "picking": [
+      "observation_id",
+      "slot_id",
+      "order_id",
+      "line_id",
+      "quantity",
+      "unit",
+      "observed_at",
+      "state",
+      "reference"
+    ]
+  },
+  "decisions": {
+    "subjectTypes": [
+      "line",
+      "product",
+      "pick"
+    ],
+    "dispositions": [
+      "investigate",
+      "accept_expected",
+      "retain_cutoff",
+      "accept_late"
+    ],
+    "lateAcceptance": "Only a line decision may select one exact retained post-cutoff revision. The cutoff baseline remains separately reported. The latest source-bound correction controls the reviewed basis; a new source edition does not inherit that decision."
+  },
+  "semantics": [
+    "All eight CSV texts retained once per immutable source edition with exact filename/byte/hash and physical row locations. UTF-8 original byte receipts belong in the complete desk/native wrapper.",
+    "Cutoff uses an exact offset timestamp; boundary before or at_or_before is explicitly declared. Blank product-specific cutoff/boundary inherits the slot values. No recurring business-calendar inference.",
+    "Stable line identity is slot_id/order_id/line_id. Buyer and product identity are invariant within its revision history; change the product using a cancelled old line and a distinct new line. Revision numbers increase per line. Conflicting or timestamp-inverted revision history requires source correction.",
+    "A revision replaces the entire line; confirmed contributes quantity, cancelled contributes zero. A late row stays visible without silently replacing the last eligible baseline. Explicit late acceptance gives a separate reviewed requirement.",
+    "Product-specific unit factors and quantity steps are exact decimals (maximum nine decimal places and bounded coefficient). Quantity_kind whole requires integer base quantities; decimal permits exact scaled quantities. Different products and base units never aggregate.",
+    "Missing capacity is unknown, explicit zero is zero. Both capacity quantity and unit are blank together or supplied together. Each slot/product has one current production count snapshot; partial/complete coverage is explicit. Missing production stays unknown. Production corrections use a new source edition, not additive competing counts.",
+    "Each accepted order line has at most one current pick snapshot, with picked/dispatched state explicit. Picks for a cancelled or late-only line remain visible against zero baseline; picks are not fabricated production or dispatch events.",
+    "Reviews document exceptions. accept_expected/investigate do not change quantities; accept_late only chooses an explicit row while preserving the original cutoff result. Corrected editions preserve all older sources/reviews.",
+    "All outputs are declared comparison formats; no undocumented vendor import/API, payment, inventory write or physical production action.",
+    "Pick coverage requires snapshots only for positive reviewed-demand lines; zero-demand observed picks remain counted and compared. Derived comparison CSV neutralizes formula-like text while original CSVs remain exact."
+  ],
+  "reviewSemantics": "Every review appends a correction on the same edition/subject with previousReviewId. Only explicit accept_late/retain_cutoff selections alter the reviewed basis; investigate/accept_expected notes preserve the latest explicit selection. Both the original cutoff result and selected source revision remain visible. No review changes source quantities or creates production/dispatch.",
+  "output": {
+    "lines": "{key,slotId,orderId,lineId,buyerId,productId,baseUnit,cutoffAt,cutoffBoundary,baselineRevisionId,baselineState,baselineQuantity,selectedRevisionId,selectedState,selectedQuantity,selectionBasis,lateRevisionIds,pickQuantity,pickState,pickDifference,review,selectionDecision}, pickReview, pickObservationId",
+    "revisions": "{revisionId,lineKey,revision,submittedAt,status,quantity,unit,baseQuantity,eligibility,selectedAtCutoff,selectedForReview,sourceLine,sourceEndLine}",
+    "products": "{key,slotId,productId,name,baseUnit,baselineDemand,reviewedDemand,capacityQuantity,capacityExcess,producedQuantity,productionCoverage,productionDifference,pickedQuantity,dispatchedQuantity,pickDifference,review}, requiredPickLines, observedRequiredPickLines, totalLines, observedPickLines, pickCoverage",
+    "attention": "{id,code,subjectType,subjectId,reference,detail,review}",
+    "summary": "counts plus separately declared product rows; no cross-product quantity total"
+  },
+  "nativeWrapper": "tjlabs.delivery-slot-desk.v1 {workspace,session,nativeContinuation?}",
+  "sourceShape": "{table:{name,text}}; retained edition {id,label,receivedAt,notes,sources:{table:{name,text,bytes,sha256}},sourceHash}",
+  "semanticLimits": "Input quantities/factors use up to18 integer digits and9decimal places, no exponent notation. Exact conversion uses BigInt scaled to18 places; output is a canonical decimal string. Native/browser original sources remain exact."
+}
