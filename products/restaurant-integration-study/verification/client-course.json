@@ -1,0 +1,33 @@
+{
+  "execution": "Actual portable request engine with injected HTTP and durable-I/O services",
+  "checks": [
+    {
+      "name": "Invalid selector timestamp is refused before dispatch",
+      "passed": true
+    },
+    {
+      "name": "Wrong returned restaurant retains bytes and suppresses verdict",
+      "passed": true
+    },
+    {
+      "name": "Documented429 retry preserves all three attempts and headers",
+      "passed": true
+    },
+    {
+      "name": "Monthly quota does not auto-retry",
+      "passed": true
+    },
+    {
+      "name": "Uncertain dispatched operation remains once-only on reopen",
+      "passed": true
+    },
+    {
+      "name": "Metadata304 stays a revalidation without invented payload",
+      "passed": true
+    },
+    {
+      "name": "Unknown published prices remain null",
+      "passed": true
+    }
+  ]
+}
