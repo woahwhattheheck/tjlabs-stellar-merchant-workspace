@@ -173,8 +173,8 @@
     },
     {
       "path": "Fleet_Incident_Study_Desk.html",
-      "bytes": 1568102,
-      "sha256": "b85c84126c80a5c72c73a79f442e926d3d5d4c70e1cf01bacf2c3e34487d8020"
+      "bytes": 1568113,
+      "sha256": "ce0ecec85c1a541ca38e21b40b94483c58d70944aaca04b7c2569fa914142150"
     },
     {
       "path": "fleet-money.cjs",
@@ -338,8 +338,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 2632,
-      "sha256": "2cb17454f80ec19322ba91a8473abd771b0ee136af6f68cb5ba03a9c468bfb0c"
+      "bytes": 2643,
+      "sha256": "04b1a1109bc42d86d6bfc3b2ed0d9182c18667acf65904a45469b9b73a5efbde"
     },
     {
       "path": "RECEIVING.md",
@@ -399,7 +399,7 @@
     {
       "path": "SOURCE_MANIFEST.json",
       "bytes": 18501,
-      "sha256": "e24fee22e452961553a87e53aaf1f10f2ce5f43af4921b8bf9aa91b21857e4fc"
+      "sha256": "04ccc00e88e81c1da1d1e62b94c4185fbf071c4052eeaf41acea8cb75b682ba9"
     },
     {
       "path": "src/archive.mjs",

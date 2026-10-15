@@ -1,6 +1,6 @@
 # Fleet Incident and Useful Work Study Desk
 
-Open **Fleet_Incident_Study_Desk.html** in a current desktop browser. The complete application is embedded in that file, starts with an empty study and works without an external service. Use **Load authored course** to explore the supplied fictional example. Save a complete session before moving between computers or browsers.
+Open **Fleet_Incident_Study_Desk.html** in a current desktop browser. The complete application is embedded in that file, starts with an empty study and works without an external service. Use **Open complete authored workflow** to explore the supplied fictional example. Save a complete session before moving between computers or browsers.
 
 The desk supports a whole supplied-record workflow: retain originals; map original and returned CSV fields; resolve record identities; describe the actual fleet application and complete eligible assignments; distinguish rental time, engine meters, operating intervals and useful output; reconstruct incident knowledge at a past cutoff; reconcile actual costs and cash; record human review; and export the complete study.
 
