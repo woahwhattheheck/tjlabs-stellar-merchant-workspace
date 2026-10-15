@@ -1,0 +1,84 @@
+{
+  "checks": [
+    {
+      "name": "Complete eight-visit denominator retains failed, abstained and unfinished work",
+      "passed": true
+    },
+    {
+      "name": "Publication, actual delivery and accepted customer event stay separate",
+      "passed": true
+    },
+    {
+      "name": "Three actual deliveries occur before first departure",
+      "passed": true
+    },
+    {
+      "name": "Four first deliveries bind their exact approved payload",
+      "passed": true
+    },
+    {
+      "name": "Two of eight are traceable and authorised before departure",
+      "passed": true
+    },
+    {
+      "name": "Offline original is locally available before server receipt",
+      "passed": true
+    },
+    {
+      "name": "Later supplied output preserves the earlier unavailable-input edition",
+      "passed": true
+    },
+    {
+      "name": "Approval for older quote edition does not cover changed delivery",
+      "passed": true
+    },
+    {
+      "name": "Exact quote arithmetic retains supplied tax and decimal prices",
+      "passed": true
+    },
+    {
+      "name": "Four paired visits: 160 to 140, all observed current 170 person-minutes",
+      "passed": true
+    },
+    {
+      "name": "Actual authority amount ceiling is evaluated at approval",
+      "passed": true
+    },
+    {
+      "name": "Changed payload cannot reuse an earlier approval",
+      "passed": true
+    },
+    {
+      "name": "Later known price rule does not backfill a 10:10 output",
+      "passed": true
+    },
+    {
+      "name": "Renaming the same actual person-time does not manufacture disjoint work",
+      "passed": true
+    },
+    {
+      "name": "Unresolved inventory suppresses full population fractions",
+      "passed": true
+    },
+    {
+      "name": "Earlier observed delivery before edition production remains first and cannot qualify",
+      "passed": true
+    },
+    {
+      "name": "Missing company identity keeps scoped population unresolved",
+      "passed": true
+    },
+    {
+      "name": "Unknown delivery actor preserves approval but prevents event authorisation",
+      "passed": true
+    },
+    {
+      "name": "Complete session keeps unfinished scope and prior source",
+      "passed": true
+    },
+    {
+      "name": "Declared decimal tie rounding is exact",
+      "passed": true
+    }
+  ]
+}

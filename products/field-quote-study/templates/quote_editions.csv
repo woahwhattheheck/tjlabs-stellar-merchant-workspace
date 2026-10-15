@@ -1,0 +1,1 @@
+id,visit_id,quote_id,version,supersedes_id,output_status,stage,recipient_ref,produced_at,input_cutoff_at,recorded_at,payload_sha256,currency,net,tax,total,model_version,rule_release_ref,reason,source_ref

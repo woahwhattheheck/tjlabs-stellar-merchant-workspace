@@ -1,0 +1,9 @@
+id,edition_id,policy_ref,result,decided_at,recorded_at,actor_id,reason,source_ref
+DECISION-Q1,Q1,AUTHORED-POLICY-1,review_required,2026-10-08T10:10:00Z,2026-10-08T10:10:00Z,TECH,Company requires office review,authored/decision/Q1
+DECISION-Q2A,Q2A,AUTHORED-POLICY-1,review_required,2026-10-08T10:20:00Z,2026-10-08T10:20:00Z,TECH,Company requires office review,authored/decision/Q2A
+DECISION-Q2B,Q2B,AUTHORED-POLICY-1,review_required,2026-10-08T10:40:00Z,2026-10-08T10:40:00Z,TECH,Company requires office review,authored/decision/Q2B
+DECISION-Q4A,Q4A,AUTHORED-POLICY-1,review_required,2026-10-08T10:10:00Z,2026-10-08T10:10:00Z,TECH,Company requires office review,authored/decision/Q4A
+DECISION-Q4B,Q4B,AUTHORED-POLICY-1,review_required,2026-10-08T10:15:00Z,2026-10-08T10:15:00Z,TECH,Company requires office review,authored/decision/Q4B
+DECISION-Q5,Q5,AUTHORED-POLICY-1,review_required,2026-10-08T10:10:00Z,2026-10-08T10:10:00Z,TECH,Company requires office review,authored/decision/Q5
+DECISION-Q6,Q6,AUTHORED-POLICY-1,review_required,2026-10-08T10:10:00Z,2026-10-08T10:10:00Z,TECH,Company requires office review,authored/decision/Q6
+DECISION-Q7,Q7,AUTHORED-POLICY-1,review_required,2026-10-08T10:10:00Z,2026-10-08T10:10:00Z,TECH,Company requires office review,authored/decision/Q7

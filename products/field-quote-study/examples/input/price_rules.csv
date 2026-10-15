@@ -1,0 +1,2 @@
+id,company_id,release_ref,item_code,unit,currency,unit_price,effective_from,effective_until,recorded_at,source_ref
+PRICE,CO,PRICE-1,WORK,unit,USD,45.125,2026-10-01T00:00:00Z,,2026-10-01T00:00:00Z,authored/rate
