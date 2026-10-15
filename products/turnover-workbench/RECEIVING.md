@@ -1,0 +1,11 @@
+# Actual browser and native receiving
+
+Read the repository-root AGENTS.md before receiving this product. Its standing instruction requires observing and using the exact outgoing product at normal and relevant narrow widths, looking at captured screenshots, opening usable exports and fixing concrete defects. Continue with this existing operation and keep hosted GitHub Actions disabled.
+
+1. From products/turnover-workbench, run `node native/build.mjs new-apps` and `node native/receive.mjs new-receiving-output`. Both create fresh output directories. Inspect the actual native result and output report.
+2. Serve this product on a stable localhost origin, then open the worked and blank apps at desktop and 390-pixel widths. Inspect tables, controls and clear empty/current states; view the actual screenshots taken.
+3. In the worked v07-v08 edition, inspect cue-C's partial range and omitted ten-frame head. Read its existing review/receiving history. Inspect cue-D1 and cue-D2's distinct repeated-use choices and cue-A's stale receiving note after correction.
+4. Record a further explicit review correction and actual receiving return against that current review. Start an unfinished form on another cue, export the full wrapper, reopen it in the blank app, and inspect the exact unfinished fields and retained history.
+5. Download the comparison CSV, original files and full HTML report. Open their usable contents. Confirm the authored old CSV's UTF-8 BOM and CRLF are retained when imported as a file and downloaded again. Malformed UTF-8 must reject source-file import.
+6. Open the same saved head in two tabs, edit both, and save. The second stale save keeps its complete independent proposal; inspect that proposal. Confirm that file/copy adoption retains dirty work and that a failed retention leaves the current body available for full export. The exact exported-copy fallback requires confirmation and is invalidated by a further edit.
+7. Return actual environment, source commit, meaningful findings, full exported wrapper/native outputs and viewed screenshot references into the original receiving case. Fix concrete findings against this same source. Client media permissions, original application execution and real project receiving remain recorded from their actual source rather than the authored example.

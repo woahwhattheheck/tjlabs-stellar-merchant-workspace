@@ -1,0 +1,9 @@
+﻿event_id,clip_id,track,record_in,record_out,source_in,source_out,use_id,label
+A,camera-A,V1,0,100,0,100,use-A,A
+B,camera-B,V1,100,200,0,100,,B
+C,camera-C,V1,200,300,200,300,,C
+D1,camera-D,V1,300,400,0,100,,D1
+D2,camera-D,V1,400,500,0,100,,D2
+E,camera-E,V1,500,550,0,50,,E
+F,camera-F,V1,550,600,0,50,use-F,F
+G,camera-G,V1,600,650,0,50,use-G,G

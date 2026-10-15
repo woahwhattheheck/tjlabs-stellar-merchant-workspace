@@ -1,0 +1,9 @@
+cue_id,department,label,old_event_id,source_in,source_out
+cue-A,FX,Authored cue-A,A,20,40
+cue-B,Dialogue,Authored cue-B,B,10,30
+cue-C,Ambience,Authored cue-C,C,210,250
+cue-D1,Music,Authored cue-D1,D1,10,20
+cue-D2,FX,Authored cue-D2,D2,10,20
+cue-E,M&E,Authored cue-E,E,0,25
+cue-F,Dialogue,Authored cue-F,F,5,20
+cue-G,FX,Authored cue-G,G,10,30

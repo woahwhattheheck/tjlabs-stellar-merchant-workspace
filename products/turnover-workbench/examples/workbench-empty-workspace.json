@@ -1,0 +1,8 @@
+{
+  "schema": "tjlabs.turnover-workspace.v1",
+  "id": "turnover-project",
+  "label": "New turnover project",
+  "revision": 0,
+  "head": "ffee22f9d88349a418bcaba5fd29660dd09f8fc7e627440f844e06f062f91773",
+  "commands": []
+}
