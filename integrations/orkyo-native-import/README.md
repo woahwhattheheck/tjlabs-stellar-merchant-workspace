@@ -1,6 +1,19 @@
-# Orkyo native import preparation
+# Orkyo native import and reconciliation desk
 
 Prepare original resource/request tables and the official capacity-planning workbook format against Orkyo's actual import code.
+
+## Operate the complete desk
+
+Open `Orkyo_Import_Readiness.html` for original CSV/JSON/XLSX intake, exact native payload review, frozen batches, partial outcome reconciliation, remaining-only files and complete saved copies. The supplied authored shop includes the full 18-command receiving journey.
+
+Read [the operator guide](OPERATOR_GUIDE.md). To rebuild from maintained source and run the same core course:
+
+```sh
+node desk/build-cli.mjs /absolute/path/to/New_Orkyo_Desk.html
+node desk/cli.mjs course /absolute/path/to/new-receiving-directory
+```
+
+Saved copies retain unfinished forms and their exact source, row and batch selection. Independent copies preserve concurrent work. When browser storage is unavailable, the operator can export and confirm the exact current copy before replacing it; later edits require a fresh export.
 
 ## Use the right import route
 

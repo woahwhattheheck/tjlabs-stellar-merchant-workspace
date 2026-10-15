@@ -1,0 +1,408 @@
+{
+  "schema": "tjlabs.orkyo-readiness.v1",
+  "operationId": "ORKYO-PRODUCTION-IMPORT-WORKSHARE-20261015",
+  "id": "authored-shop",
+  "title": "Authored machining shop — complete receiving course",
+  "createdAt": "2026-10-15T01:00:00Z",
+  "sourceCommit": "9b773566ecbfb0947f51f6e20ea925c03ddb2a22",
+  "events": [
+    {
+      "id": "authored-1",
+      "seq": 1,
+      "previous": "3da3a254ee86d0eb4446236f1d05ba64e9ba00184fe38168cb0ea82d166cc5ac",
+      "type": "intake",
+      "at": "2026-10-15T01:00:01.000Z",
+      "payload": {
+        "sourceId": "requests",
+        "kind": "requests",
+        "format": "csv",
+        "context": {
+          "tenant": "Authored receiving tenant"
+        },
+        "artifact": {
+          "filename": "authored-requests.csv",
+          "text": "id,name,description,status,start_ts,end_ts,resource_id,resource_name,earliest_start_ts,latest_end_ts,min_duration_value,min_duration_unit,actual_duration_value,actual_duration_unit,requirements_count\nold-1,WO-001,\"Mill, inspect\nKeep exact source\",new,,,mill-a,,,,2.5,hours,,,2\nold-2,WO-002,,new,,,mill-a,,,,90,minutes,,,0\n"
+        }
+      },
+      "sha256": "7d41e8007c30f282851ccd3bc0eee1f2c70336703a218a565942bc14fa40849a"
+    },
+    {
+      "id": "authored-3",
+      "seq": 2,
+      "previous": "7d41e8007c30f282851ccd3bc0eee1f2c70336703a218a565942bc14fa40849a",
+      "type": "review",
+      "at": "2026-10-15T01:00:03.000Z",
+      "payload": {
+        "sourceId": "requests",
+        "rowId": "row:1",
+        "review": {
+          "action": "new",
+          "reviewer": "Authored receiving operator",
+          "reason": "Authored target inspection confirms requirements are outside this request-only trial; originals with count two remain retained. Use 150 minutes to preserve 2.5 hours.",
+          "values": {
+            "id": "old-1",
+            "name": "WO-001",
+            "description": "Mill, inspect\nKeep exact source",
+            "status": "new",
+            "start_ts": "",
+            "end_ts": "",
+            "resource_id": "mill-a",
+            "resource_name": "",
+            "earliest_start_ts": "",
+            "latest_end_ts": "",
+            "min_duration_value": "150",
+            "min_duration_unit": "minutes",
+            "actual_duration_value": "",
+            "actual_duration_unit": "",
+            "requirements_count": "0"
+          },
+          "acknowledged": [
+            "id-ignored",
+            "structural-scope"
+          ]
+        }
+      },
+      "sha256": "6bb84d794fe174e730eabf60ddc824c6de2c3d470e231fbb021f63c18f99ff5d"
+    },
+    {
+      "id": "authored-4",
+      "seq": 3,
+      "previous": "6bb84d794fe174e730eabf60ddc824c6de2c3d470e231fbb021f63c18f99ff5d",
+      "type": "review",
+      "at": "2026-10-15T01:00:04.000Z",
+      "payload": {
+        "sourceId": "requests",
+        "rowId": "row:2",
+        "review": {
+          "action": "new",
+          "reviewer": "Authored receiving operator",
+          "reason": "Authored exact resource mill-a and root-request scope reviewed.",
+          "values": {
+            "id": "old-2",
+            "name": "WO-002",
+            "description": "",
+            "status": "new",
+            "start_ts": "",
+            "end_ts": "",
+            "resource_id": "mill-a",
+            "resource_name": "",
+            "earliest_start_ts": "",
+            "latest_end_ts": "",
+            "min_duration_value": "90",
+            "min_duration_unit": "minutes",
+            "actual_duration_value": "",
+            "actual_duration_unit": "",
+            "requirements_count": "0"
+          },
+          "acknowledged": [
+            "id-ignored",
+            "structural-scope"
+          ]
+        }
+      },
+      "sha256": "c921451a5d8e6848df636c53c9d24bd97ce61447fda88ab70dadf00ea634907f"
+    },
+    {
+      "id": "authored-5",
+      "seq": 4,
+      "previous": "c921451a5d8e6848df636c53c9d24bd97ce61447fda88ab70dadf00ea634907f",
+      "type": "prepare",
+      "at": "2026-10-15T01:00:05.000Z",
+      "payload": {
+        "sourceId": "requests",
+        "batchId": "requests-1",
+        "rowIds": [
+          "row:1",
+          "row:2"
+        ]
+      },
+      "sha256": "ab5036ee9a88ff0bfc2989e723ff9f334158380494a7bd0eb116f785daed0dc8"
+    },
+    {
+      "id": "authored-6",
+      "seq": 5,
+      "previous": "ab5036ee9a88ff0bfc2989e723ff9f334158380494a7bd0eb116f785daed0dc8",
+      "type": "attempt",
+      "at": "2026-10-15T01:00:06.000Z",
+      "payload": {
+        "batchId": "requests-1",
+        "confirmTenant": "Authored receiving tenant",
+        "operator": "Authored operator",
+        "route": "Requests CSV import",
+        "details": "Authored partial-write scenario; these are not production service responses."
+      },
+      "sha256": "b0fba0cd6fef6579937fb36e40b6ab0964ac5d576756014720124390b660a547"
+    },
+    {
+      "id": "authored-7",
+      "seq": 6,
+      "previous": "b0fba0cd6fef6579937fb36e40b6ab0964ac5d576756014720124390b660a547",
+      "type": "resolve",
+      "at": "2026-10-15T01:00:07.000Z",
+      "payload": {
+        "batchId": "requests-1",
+        "rowId": "row:1",
+        "status": "created",
+        "targetId": "authored-request-701",
+        "reviewer": "Authored operator",
+        "reason": "First create returned an ID in the authored receiving scenario.",
+        "evidence": {
+          "text": "{\"id\":\"authored-request-701\",\"name\":\"WO-001\"}",
+          "kind": "authored-response"
+        }
+      },
+      "sha256": "6cc22efb0502beae2618a6750cde248e3c1069c73fc4a5204023d51a4fd94e85"
+    },
+    {
+      "id": "authored-9",
+      "seq": 7,
+      "previous": "6cc22efb0502beae2618a6750cde248e3c1069c73fc4a5204023d51a4fd94e85",
+      "type": "resolve",
+      "at": "2026-10-15T01:00:09.000Z",
+      "payload": {
+        "batchId": "requests-1",
+        "rowId": "row:2",
+        "status": "not-attempted",
+        "reviewer": "Authored operator",
+        "reason": "Authored importer stopped before second row; complete response and target lookup are retained.",
+        "evidence": {
+          "text": "{\"created\":1,\"stoppedBeforeRow\":2,\"targetLookup\":[]}",
+          "kind": "authored-response"
+        }
+      },
+      "sha256": "507f75217230ddd1a24961a81d8cfe97ab1a188d0f1dfaaee2eeb15c8ca17b54"
+    },
+    {
+      "id": "authored-10",
+      "seq": 8,
+      "previous": "507f75217230ddd1a24961a81d8cfe97ab1a188d0f1dfaaee2eeb15c8ca17b54",
+      "type": "prepare",
+      "at": "2026-10-15T01:00:10.000Z",
+      "payload": {
+        "sourceId": "requests",
+        "batchId": "requests-remaining",
+        "rowIds": [
+          "row:2"
+        ]
+      },
+      "sha256": "19038ffaa3897a4f36a507ee7eb904fe8f4ca9fc11e4eb7d274a5d6b7246a0dd"
+    },
+    {
+      "id": "authored-12",
+      "seq": 9,
+      "previous": "19038ffaa3897a4f36a507ee7eb904fe8f4ca9fc11e4eb7d274a5d6b7246a0dd",
+      "type": "intake",
+      "at": "2026-10-15T01:00:12.000Z",
+      "payload": {
+        "sourceId": "workbook",
+        "kind": "workbook",
+        "format": "sheets-json",
+        "context": {
+          "tenant": "Authored receiving tenant",
+          "siteId": "authored-site",
+          "typeKey": "machine",
+          "existingComplete": true,
+          "existingResources": [
+            {
+              "code": "CNC-01",
+              "id": "authored-cnc"
+            },
+            {
+              "code": "INSPECT",
+              "id": "authored-inspect"
+            }
+          ],
+          "lookupEvidence": {
+            "text": "{\"site\":\"authored-site\",\"hasNextPage\":false,\"resources\":[{\"code\":\"CNC-01\",\"id\":\"authored-cnc\"},{\"code\":\"INSPECT\",\"id\":\"authored-inspect\"}]}",
+            "kind": "authored-lookup"
+          }
+        },
+        "artifact": {
+          "filename": "authored-workbook-sheets.json",
+          "text": "[{\"name\":\"Workstations\",\"rows\":[[\"Orkyo production import\"],[\"Codes match exactly, including letter case.\"],[\"Capacity hours/day is retained; native import does not map it.\"],[],[\"Code\",\"Workstation\",\"What stands there\",\"Capacity (h/day)\",\"Notes\"],[\"CNC-01\",\"Machining centre\",\"Fixture A\",8,\"Authored example\"],[\"INSPECT\",\"Inspection\",\"\",6,\"\"]]},{\"name\":\"Jobs\",\"rows\":[[\"Orkyo production import\"],[\"End is inclusive; native request ends next midnight UTC.\"],[\"Duration counts Monday–Friday, with one-hour fallback.\"],[],[\"Job\",\"Description\",\"Workstation code\",\"Start\",\"End\",\"Hours/day\"],[\"EX-100 Rough\",\"Authored demonstration\",\"CNC-01\",\"2026-10-16\",\"2026-10-19\",2.5],[\"EX-100 Inspect\",\"\",\"INSPECT\",\"2026-10-19\",\"2026-10-19\",1.25]]}]"
+        }
+      },
+      "sha256": "e70413ce0d287cab1dceb9562ffc1578d3284d099495eec692cbce680f08abfb"
+    },
+    {
+      "id": "authored-13",
+      "seq": 10,
+      "previous": "e70413ce0d287cab1dceb9562ffc1578d3284d099495eec692cbce680f08abfb",
+      "type": "review",
+      "at": "2026-10-15T01:00:13.000Z",
+      "payload": {
+        "sourceId": "workbook",
+        "rowId": "Jobs:6",
+        "review": {
+          "action": "new",
+          "reviewer": "Authored receiving operator",
+          "reason": "Authored site/code/actual geometry lookup and Monday-Friday window reviewed; station capacities remain separate.",
+          "values": [
+            "EX-100 Rough",
+            "Authored demonstration",
+            "CNC-01",
+            "2026-10-16",
+            "2026-10-19",
+            2.5
+          ],
+          "acknowledged": [
+            "site-calendar-not-applied",
+            "reused-stations-not-updated"
+          ]
+        }
+      },
+      "sha256": "0b2ec70eef8b4e1762e34f387f5bf96850fa9a3436cc707ec0124e1608170b71"
+    },
+    {
+      "id": "authored-14",
+      "seq": 11,
+      "previous": "0b2ec70eef8b4e1762e34f387f5bf96850fa9a3436cc707ec0124e1608170b71",
+      "type": "review",
+      "at": "2026-10-15T01:00:14.000Z",
+      "payload": {
+        "sourceId": "workbook",
+        "rowId": "Jobs:7",
+        "review": {
+          "action": "new",
+          "reviewer": "Authored receiving operator",
+          "reason": "Authored site/code/actual geometry lookup and Monday-Friday window reviewed; station capacities remain separate.",
+          "values": [
+            "EX-100 Inspect",
+            "",
+            "INSPECT",
+            "2026-10-19",
+            "2026-10-19",
+            1.25
+          ],
+          "acknowledged": [
+            "site-calendar-not-applied",
+            "reused-stations-not-updated"
+          ]
+        }
+      },
+      "sha256": "4a3156eddd7fbf832c66ebc9c0fd154dcb377142ceca28f64538c788614c1cf6"
+    },
+    {
+      "id": "authored-15",
+      "seq": 12,
+      "previous": "4a3156eddd7fbf832c66ebc9c0fd154dcb377142ceca28f64538c788614c1cf6",
+      "type": "prepare",
+      "at": "2026-10-15T01:00:15.000Z",
+      "payload": {
+        "sourceId": "workbook",
+        "batchId": "jobs-1",
+        "rowIds": [
+          "Jobs:6",
+          "Jobs:7"
+        ]
+      },
+      "sha256": "060c9c84f80ccd2bfd26af4aedfe81faa8a9f77b43dc811ce4cd884ce5538a7a"
+    },
+    {
+      "id": "authored-16",
+      "seq": 13,
+      "previous": "060c9c84f80ccd2bfd26af4aedfe81faa8a9f77b43dc811ce4cd884ce5538a7a",
+      "type": "attempt",
+      "at": "2026-10-15T01:00:16.000Z",
+      "payload": {
+        "batchId": "jobs-1",
+        "confirmTenant": "Authored receiving tenant",
+        "operator": "Authored operator",
+        "route": "Production workbook import"
+      },
+      "sha256": "842ed3978c5e49208cdc1c72d13d976d17311cd8cf338bdd83d553c3ae32ebb8"
+    },
+    {
+      "id": "authored-17",
+      "seq": 14,
+      "previous": "842ed3978c5e49208cdc1c72d13d976d17311cd8cf338bdd83d553c3ae32ebb8",
+      "type": "resolve",
+      "at": "2026-10-15T01:00:17.000Z",
+      "payload": {
+        "batchId": "jobs-1",
+        "rowId": "Jobs:6",
+        "status": "created",
+        "targetId": "authored-job-801",
+        "reviewer": "Authored operator",
+        "reason": "Authored first job was created.",
+        "evidence": {
+          "text": "{\"id\":\"authored-job-801\"}",
+          "kind": "authored-response"
+        }
+      },
+      "sha256": "2135d4432431f6af0d5d4ed6b5ecbf7ada679e22084969ab8db8ba8f6d8ab5ff"
+    },
+    {
+      "id": "authored-18",
+      "seq": 15,
+      "previous": "2135d4432431f6af0d5d4ed6b5ecbf7ada679e22084969ab8db8ba8f6d8ab5ff",
+      "type": "resolve",
+      "at": "2026-10-15T01:00:18.000Z",
+      "payload": {
+        "batchId": "jobs-1",
+        "rowId": "Jobs:7",
+        "status": "rejected",
+        "reviewer": "Authored operator",
+        "reason": "Authored receiver rejected second job before creation.",
+        "evidence": {
+          "text": "{\"status\":400,\"created\":false,\"row\":7}",
+          "kind": "authored-response"
+        }
+      },
+      "sha256": "a6fbf441b3eee17eb16e9f2d2dc5914c7f74a999c242068ad9723c9135af5732"
+    },
+    {
+      "id": "authored-19",
+      "seq": 16,
+      "previous": "a6fbf441b3eee17eb16e9f2d2dc5914c7f74a999c242068ad9723c9135af5732",
+      "type": "prepare",
+      "at": "2026-10-15T01:00:19.000Z",
+      "payload": {
+        "sourceId": "workbook",
+        "batchId": "jobs-remaining",
+        "rowIds": [
+          "Jobs:7"
+        ]
+      },
+      "sha256": "18b0a9ccf77e1e61e22090067d1ebccb19f976fbf5a99eccf5facc436bf132f2"
+    },
+    {
+      "id": "authored-20",
+      "seq": 17,
+      "previous": "18b0a9ccf77e1e61e22090067d1ebccb19f976fbf5a99eccf5facc436bf132f2",
+      "type": "intake",
+      "at": "2026-10-15T01:00:20.000Z",
+      "payload": {
+        "sourceId": "malformed",
+        "kind": "requests",
+        "format": "csv",
+        "context": {
+          "tenant": "Authored receiving tenant"
+        },
+        "artifact": {
+          "filename": "damaged.csv",
+          "text": "name,description\n\"unfinished"
+        }
+      },
+      "sha256": "2cfc8dda7072f91bba8f1c175754aa47f6080d1ad1f88a76935814087af268a4"
+    },
+    {
+      "id": "authored-21",
+      "seq": 18,
+      "previous": "2cfc8dda7072f91bba8f1c175754aa47f6080d1ad1f88a76935814087af268a4",
+      "type": "correct-source",
+      "at": "2026-10-15T01:00:21.000Z",
+      "payload": {
+        "sourceId": "malformed",
+        "reason": "Authored source owner repaired the closing quote.",
+        "artifact": {
+          "filename": "repaired.csv",
+          "text": "name,description\nRepaired,\"complete\""
+        }
+      },
+      "sha256": "b51a2045476a04b977a67b929c83b9fc3ef894106f7051fff35864f6d0e23ce3"
+    }
+  ],
+  "revision": 18,
+  "head": "b51a2045476a04b977a67b929c83b9fc3ef894106f7051fff35864f6d0e23ce3"
+}

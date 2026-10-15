@@ -1,0 +1,3735 @@
+<!doctype html><meta charset="utf-8"><title>Authored machining shop — complete receiving course</title><style>body{font:15px system-ui;max-width:1180px;margin:32px auto;padding:20px;color:#222}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}pre{white-space:pre-wrap;overflow-wrap:anywhere}details{margin:12px 0}</style><h1>Authored machining shop — complete receiving course</h1><p>Orkyo import readiness and actual-outcome reconciliation. Revision 18 · b51a2045476a04b977a67b929c83b9fc3ef894106f7051fff35864f6d0e23ce3</p><p>Each prepared file creates records through the selected native Orkyo route. Resolve every uncertain result before preparing a remaining batch.</p><section><h2>requests — requests</h2><p>Tenant Authored receiving tenant; 1 retained source editions.</p><table><thead><tr><th>Row</th><th>Name</th><th>Review</th><th>Import state</th><th>Attention</th></tr></thead><tbody><tr><td>row:1</td><td>WO-001</td><td>new</td><td>authored-request-701</td><td>Import ignores id and creates a new request Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions</td></tr><tr><td>row:2</td><td>WO-002</td><td>new</td><td>Prepared / unresolved</td><td>Import ignores id and creates a new request Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions</td></tr></tbody></table><details><summary>Full sources, corrections, payloads and review reasons</summary><pre>{
+  &quot;id&quot;: &quot;requests&quot;,
+  &quot;kind&quot;: &quot;requests&quot;,
+  &quot;format&quot;: &quot;csv&quot;,
+  &quot;context&quot;: {
+    &quot;tenant&quot;: &quot;Authored receiving tenant&quot;
+  },
+  &quot;editions&quot;: [
+    {
+      &quot;eventId&quot;: &quot;authored-1&quot;,
+      &quot;at&quot;: &quot;2026-10-15T01:00:01.000Z&quot;,
+      &quot;artifact&quot;: {
+        &quot;filename&quot;: &quot;authored-requests.csv&quot;,
+        &quot;text&quot;: &quot;id,name,description,status,start_ts,end_ts,resource_id,resource_name,earliest_start_ts,latest_end_ts,min_duration_value,min_duration_unit,actual_duration_value,actual_duration_unit,requirements_count\nold-1,WO-001,\&quot;Mill, inspect\nKeep exact source\&quot;,new,,,mill-a,,,,2.5,hours,,,2\nold-2,WO-002,,new,,,mill-a,,,,90,minutes,,,0\n&quot;,
+        &quot;bytes&quot;: 322,
+        &quot;sha256&quot;: &quot;cc4803d3889ce931a27838e5e869d2a7d726b8ac8186a26f1efa11db6d3b217b&quot;
+      },
+      &quot;reason&quot;: &quot;Original intake&quot;
+    }
+  ],
+  &quot;reviews&quot;: [
+    {
+      &quot;rowId&quot;: &quot;row:1&quot;,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored target inspection confirms requirements are outside this request-only trial; originals with count two remain retained. Use 150 minutes to preserve 2.5 hours.&quot;,
+        &quot;values&quot;: {
+          &quot;id&quot;: &quot;old-1&quot;,
+          &quot;name&quot;: &quot;WO-001&quot;,
+          &quot;description&quot;: &quot;Mill, inspect\nKeep exact source&quot;,
+          &quot;status&quot;: &quot;new&quot;,
+          &quot;start_ts&quot;: &quot;&quot;,
+          &quot;end_ts&quot;: &quot;&quot;,
+          &quot;resource_id&quot;: &quot;mill-a&quot;,
+          &quot;resource_name&quot;: &quot;&quot;,
+          &quot;earliest_start_ts&quot;: &quot;&quot;,
+          &quot;latest_end_ts&quot;: &quot;&quot;,
+          &quot;min_duration_value&quot;: &quot;150&quot;,
+          &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+          &quot;actual_duration_value&quot;: &quot;&quot;,
+          &quot;actual_duration_unit&quot;: &quot;&quot;,
+          &quot;requirements_count&quot;: &quot;0&quot;
+        },
+        &quot;acknowledged&quot;: [
+          &quot;id-ignored&quot;,
+          &quot;structural-scope&quot;
+        ]
+      },
+      &quot;eventId&quot;: &quot;authored-3&quot;,
+      &quot;at&quot;: &quot;2026-10-15T01:00:03.000Z&quot;
+    },
+    {
+      &quot;rowId&quot;: &quot;row:2&quot;,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored exact resource mill-a and root-request scope reviewed.&quot;,
+        &quot;values&quot;: {
+          &quot;id&quot;: &quot;old-2&quot;,
+          &quot;name&quot;: &quot;WO-002&quot;,
+          &quot;description&quot;: &quot;&quot;,
+          &quot;status&quot;: &quot;new&quot;,
+          &quot;start_ts&quot;: &quot;&quot;,
+          &quot;end_ts&quot;: &quot;&quot;,
+          &quot;resource_id&quot;: &quot;mill-a&quot;,
+          &quot;resource_name&quot;: &quot;&quot;,
+          &quot;earliest_start_ts&quot;: &quot;&quot;,
+          &quot;latest_end_ts&quot;: &quot;&quot;,
+          &quot;min_duration_value&quot;: &quot;90&quot;,
+          &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+          &quot;actual_duration_value&quot;: &quot;&quot;,
+          &quot;actual_duration_unit&quot;: &quot;&quot;,
+          &quot;requirements_count&quot;: &quot;0&quot;
+        },
+        &quot;acknowledged&quot;: [
+          &quot;id-ignored&quot;,
+          &quot;structural-scope&quot;
+        ]
+      },
+      &quot;eventId&quot;: &quot;authored-4&quot;,
+      &quot;at&quot;: &quot;2026-10-15T01:00:04.000Z&quot;
+    }
+  ],
+  &quot;inspection&quot;: {
+    &quot;ok&quot;: true,
+    &quot;plan&quot;: {
+      &quot;schema&quot;: &quot;orkyo-import-adapter.v1&quot;,
+      &quot;sourceCommit&quot;: &quot;9b773566ecbfb0947f51f6e20ea925c03ddb2a22&quot;,
+      &quot;source&quot;: {
+        &quot;id&quot;: &quot;requests&quot;,
+        &quot;kind&quot;: &quot;requests&quot;,
+        &quot;format&quot;: &quot;csv&quot;,
+        &quot;text&quot;: &quot;id,name,description,status,start_ts,end_ts,resource_id,resource_name,earliest_start_ts,latest_end_ts,min_duration_value,min_duration_unit,actual_duration_value,actual_duration_unit,requirements_count\nold-1,WO-001,\&quot;Mill, inspect\nKeep exact source\&quot;,new,,,mill-a,,,,2.5,hours,,,2\nold-2,WO-002,,new,,,mill-a,,,,90,minutes,,,0\n&quot;
+      },
+      &quot;typeKey&quot;: &quot;&quot;,
+      &quot;customFieldTypes&quot;: {},
+      &quot;headers&quot;: [
+        &quot;id&quot;,
+        &quot;name&quot;,
+        &quot;description&quot;,
+        &quot;status&quot;,
+        &quot;start_ts&quot;,
+        &quot;end_ts&quot;,
+        &quot;resource_id&quot;,
+        &quot;resource_name&quot;,
+        &quot;earliest_start_ts&quot;,
+        &quot;latest_end_ts&quot;,
+        &quot;min_duration_value&quot;,
+        &quot;min_duration_unit&quot;,
+        &quot;actual_duration_value&quot;,
+        &quot;actual_duration_unit&quot;,
+        &quot;requirements_count&quot;
+      ],
+      &quot;rows&quot;: [
+        {
+          &quot;occurrenceId&quot;: &quot;requests:row:1&quot;,
+          &quot;index&quot;: 1,
+          &quot;line&quot;: 2,
+          &quot;original&quot;: {
+            &quot;id&quot;: &quot;old-1&quot;,
+            &quot;name&quot;: &quot;WO-001&quot;,
+            &quot;description&quot;: &quot;Mill, inspect\nKeep exact source&quot;,
+            &quot;status&quot;: &quot;new&quot;,
+            &quot;start_ts&quot;: &quot;&quot;,
+            &quot;end_ts&quot;: &quot;&quot;,
+            &quot;resource_id&quot;: &quot;mill-a&quot;,
+            &quot;resource_name&quot;: &quot;&quot;,
+            &quot;earliest_start_ts&quot;: &quot;&quot;,
+            &quot;latest_end_ts&quot;: &quot;&quot;,
+            &quot;min_duration_value&quot;: &quot;2.5&quot;,
+            &quot;min_duration_unit&quot;: &quot;hours&quot;,
+            &quot;actual_duration_value&quot;: &quot;&quot;,
+            &quot;actual_duration_unit&quot;: &quot;&quot;,
+            &quot;requirements_count&quot;: &quot;2&quot;
+          },
+          &quot;values&quot;: {
+            &quot;id&quot;: &quot;old-1&quot;,
+            &quot;name&quot;: &quot;WO-001&quot;,
+            &quot;description&quot;: &quot;Mill, inspect\nKeep exact source&quot;,
+            &quot;status&quot;: &quot;new&quot;,
+            &quot;start_ts&quot;: &quot;&quot;,
+            &quot;end_ts&quot;: &quot;&quot;,
+            &quot;resource_id&quot;: &quot;mill-a&quot;,
+            &quot;resource_name&quot;: &quot;&quot;,
+            &quot;earliest_start_ts&quot;: &quot;&quot;,
+            &quot;latest_end_ts&quot;: &quot;&quot;,
+            &quot;min_duration_value&quot;: &quot;2.5&quot;,
+            &quot;min_duration_unit&quot;: &quot;hours&quot;,
+            &quot;actual_duration_value&quot;: &quot;&quot;,
+            &quot;actual_duration_unit&quot;: &quot;&quot;,
+            &quot;requirements_count&quot;: &quot;2&quot;
+          },
+          &quot;nativePayload&quot;: {
+            &quot;name&quot;: &quot;WO-001&quot;,
+            &quot;description&quot;: &quot;Mill, inspect\nKeep exact source&quot;,
+            &quot;status&quot;: &quot;new&quot;,
+            &quot;minimalDurationValue&quot;: 2,
+            &quot;minimalDurationUnit&quot;: &quot;hours&quot;,
+            &quot;resourceIds&quot;: [
+              &quot;mill-a&quot;
+            ]
+          },
+          &quot;issues&quot;: [
+            {
+              &quot;code&quot;: &quot;id-ignored&quot;,
+              &quot;message&quot;: &quot;Import ignores id and creates a new request&quot;,
+              &quot;blocking&quot;: false
+            },
+            {
+              &quot;code&quot;: &quot;duration-coercion&quot;,
+              &quot;message&quot;: &quot;Native import truncates or defaults minimal duration; use a positive whole number in the declared unit&quot;,
+              &quot;blocking&quot;: true
+            },
+            {
+              &quot;code&quot;: &quot;requirements-not-imported&quot;,
+              &quot;message&quot;: &quot;The exported requirements count carries no requirement definitions; restore through the actual authorized workflow&quot;,
+              &quot;blocking&quot;: true
+            },
+            {
+              &quot;code&quot;: &quot;structural-scope&quot;,
+              &quot;message&quot;: &quot;Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions&quot;,
+              &quot;blocking&quot;: false
+            }
+          ],
+          &quot;nativeDisposition&quot;: &quot;create&quot;
+        },
+        {
+          &quot;occurrenceId&quot;: &quot;requests:row:2&quot;,
+          &quot;index&quot;: 2,
+          &quot;line&quot;: 4,
+          &quot;original&quot;: {
+            &quot;id&quot;: &quot;old-2&quot;,
+            &quot;name&quot;: &quot;WO-002&quot;,
+            &quot;description&quot;: &quot;&quot;,
+            &quot;status&quot;: &quot;new&quot;,
+            &quot;start_ts&quot;: &quot;&quot;,
+            &quot;end_ts&quot;: &quot;&quot;,
+            &quot;resource_id&quot;: &quot;mill-a&quot;,
+            &quot;resource_name&quot;: &quot;&quot;,
+            &quot;earliest_start_ts&quot;: &quot;&quot;,
+            &quot;latest_end_ts&quot;: &quot;&quot;,
+            &quot;min_duration_value&quot;: &quot;90&quot;,
+            &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+            &quot;actual_duration_value&quot;: &quot;&quot;,
+            &quot;actual_duration_unit&quot;: &quot;&quot;,
+            &quot;requirements_count&quot;: &quot;0&quot;
+          },
+          &quot;values&quot;: {
+            &quot;id&quot;: &quot;old-2&quot;,
+            &quot;name&quot;: &quot;WO-002&quot;,
+            &quot;description&quot;: &quot;&quot;,
+            &quot;status&quot;: &quot;new&quot;,
+            &quot;start_ts&quot;: &quot;&quot;,
+            &quot;end_ts&quot;: &quot;&quot;,
+            &quot;resource_id&quot;: &quot;mill-a&quot;,
+            &quot;resource_name&quot;: &quot;&quot;,
+            &quot;earliest_start_ts&quot;: &quot;&quot;,
+            &quot;latest_end_ts&quot;: &quot;&quot;,
+            &quot;min_duration_value&quot;: &quot;90&quot;,
+            &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+            &quot;actual_duration_value&quot;: &quot;&quot;,
+            &quot;actual_duration_unit&quot;: &quot;&quot;,
+            &quot;requirements_count&quot;: &quot;0&quot;
+          },
+          &quot;nativePayload&quot;: {
+            &quot;name&quot;: &quot;WO-002&quot;,
+            &quot;status&quot;: &quot;new&quot;,
+            &quot;minimalDurationValue&quot;: 90,
+            &quot;minimalDurationUnit&quot;: &quot;minutes&quot;,
+            &quot;resourceIds&quot;: [
+              &quot;mill-a&quot;
+            ]
+          },
+          &quot;issues&quot;: [
+            {
+              &quot;code&quot;: &quot;id-ignored&quot;,
+              &quot;message&quot;: &quot;Import ignores id and creates a new request&quot;,
+              &quot;blocking&quot;: false
+            },
+            {
+              &quot;code&quot;: &quot;structural-scope&quot;,
+              &quot;message&quot;: &quot;Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions&quot;,
+              &quot;blocking&quot;: false
+            }
+          ],
+          &quot;nativeDisposition&quot;: &quot;create&quot;
+        }
+      ],
+      &quot;summary&quot;: {
+        &quot;records&quot;: 2,
+        &quot;creates&quot;: 2,
+        &quot;skipped&quot;: 0,
+        &quot;needsReview&quot;: 1
+      },
+      &quot;notes&quot;: [
+        &quot;This is a local import preview. The target service validates and creates records when its authorized operator imports.&quot;,
+        &quot;Complete originals, row occurrences and unmapped fields remain in this result.&quot;
+      ]
+    },
+    &quot;rows&quot;: [
+      {
+        &quot;occurrenceId&quot;: &quot;requests:row:1&quot;,
+        &quot;index&quot;: 1,
+        &quot;line&quot;: 2,
+        &quot;original&quot;: {
+          &quot;id&quot;: &quot;old-1&quot;,
+          &quot;name&quot;: &quot;WO-001&quot;,
+          &quot;description&quot;: &quot;Mill, inspect\nKeep exact source&quot;,
+          &quot;status&quot;: &quot;new&quot;,
+          &quot;start_ts&quot;: &quot;&quot;,
+          &quot;end_ts&quot;: &quot;&quot;,
+          &quot;resource_id&quot;: &quot;mill-a&quot;,
+          &quot;resource_name&quot;: &quot;&quot;,
+          &quot;earliest_start_ts&quot;: &quot;&quot;,
+          &quot;latest_end_ts&quot;: &quot;&quot;,
+          &quot;min_duration_value&quot;: &quot;2.5&quot;,
+          &quot;min_duration_unit&quot;: &quot;hours&quot;,
+          &quot;actual_duration_value&quot;: &quot;&quot;,
+          &quot;actual_duration_unit&quot;: &quot;&quot;,
+          &quot;requirements_count&quot;: &quot;2&quot;
+        },
+        &quot;values&quot;: {
+          &quot;id&quot;: &quot;old-1&quot;,
+          &quot;name&quot;: &quot;WO-001&quot;,
+          &quot;description&quot;: &quot;Mill, inspect\nKeep exact source&quot;,
+          &quot;status&quot;: &quot;new&quot;,
+          &quot;start_ts&quot;: &quot;&quot;,
+          &quot;end_ts&quot;: &quot;&quot;,
+          &quot;resource_id&quot;: &quot;mill-a&quot;,
+          &quot;resource_name&quot;: &quot;&quot;,
+          &quot;earliest_start_ts&quot;: &quot;&quot;,
+          &quot;latest_end_ts&quot;: &quot;&quot;,
+          &quot;min_duration_value&quot;: &quot;2.5&quot;,
+          &quot;min_duration_unit&quot;: &quot;hours&quot;,
+          &quot;actual_duration_value&quot;: &quot;&quot;,
+          &quot;actual_duration_unit&quot;: &quot;&quot;,
+          &quot;requirements_count&quot;: &quot;2&quot;
+        },
+        &quot;nativePayload&quot;: {
+          &quot;name&quot;: &quot;WO-001&quot;,
+          &quot;description&quot;: &quot;Mill, inspect\nKeep exact source&quot;,
+          &quot;status&quot;: &quot;new&quot;,
+          &quot;minimalDurationValue&quot;: 2,
+          &quot;minimalDurationUnit&quot;: &quot;hours&quot;,
+          &quot;resourceIds&quot;: [
+            &quot;mill-a&quot;
+          ]
+        },
+        &quot;issues&quot;: [
+          {
+            &quot;code&quot;: &quot;id-ignored&quot;,
+            &quot;message&quot;: &quot;Import ignores id and creates a new request&quot;,
+            &quot;blocking&quot;: false
+          },
+          {
+            &quot;code&quot;: &quot;duration-coercion&quot;,
+            &quot;message&quot;: &quot;Native import truncates or defaults minimal duration; use a positive whole number in the declared unit&quot;,
+            &quot;blocking&quot;: true
+          },
+          {
+            &quot;code&quot;: &quot;requirements-not-imported&quot;,
+            &quot;message&quot;: &quot;The exported requirements count carries no requirement definitions; restore through the actual authorized workflow&quot;,
+            &quot;blocking&quot;: true
+          },
+          {
+            &quot;code&quot;: &quot;structural-scope&quot;,
+            &quot;message&quot;: &quot;Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions&quot;,
+            &quot;blocking&quot;: false
+          }
+        ],
+        &quot;nativeDisposition&quot;: &quot;create&quot;,
+        &quot;id&quot;: &quot;row:1&quot;
+      },
+      {
+        &quot;occurrenceId&quot;: &quot;requests:row:2&quot;,
+        &quot;index&quot;: 2,
+        &quot;line&quot;: 4,
+        &quot;original&quot;: {
+          &quot;id&quot;: &quot;old-2&quot;,
+          &quot;name&quot;: &quot;WO-002&quot;,
+          &quot;description&quot;: &quot;&quot;,
+          &quot;status&quot;: &quot;new&quot;,
+          &quot;start_ts&quot;: &quot;&quot;,
+          &quot;end_ts&quot;: &quot;&quot;,
+          &quot;resource_id&quot;: &quot;mill-a&quot;,
+          &quot;resource_name&quot;: &quot;&quot;,
+          &quot;earliest_start_ts&quot;: &quot;&quot;,
+          &quot;latest_end_ts&quot;: &quot;&quot;,
+          &quot;min_duration_value&quot;: &quot;90&quot;,
+          &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+          &quot;actual_duration_value&quot;: &quot;&quot;,
+          &quot;actual_duration_unit&quot;: &quot;&quot;,
+          &quot;requirements_count&quot;: &quot;0&quot;
+        },
+        &quot;values&quot;: {
+          &quot;id&quot;: &quot;old-2&quot;,
+          &quot;name&quot;: &quot;WO-002&quot;,
+          &quot;description&quot;: &quot;&quot;,
+          &quot;status&quot;: &quot;new&quot;,
+          &quot;start_ts&quot;: &quot;&quot;,
+          &quot;end_ts&quot;: &quot;&quot;,
+          &quot;resource_id&quot;: &quot;mill-a&quot;,
+          &quot;resource_name&quot;: &quot;&quot;,
+          &quot;earliest_start_ts&quot;: &quot;&quot;,
+          &quot;latest_end_ts&quot;: &quot;&quot;,
+          &quot;min_duration_value&quot;: &quot;90&quot;,
+          &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+          &quot;actual_duration_value&quot;: &quot;&quot;,
+          &quot;actual_duration_unit&quot;: &quot;&quot;,
+          &quot;requirements_count&quot;: &quot;0&quot;
+        },
+        &quot;nativePayload&quot;: {
+          &quot;name&quot;: &quot;WO-002&quot;,
+          &quot;status&quot;: &quot;new&quot;,
+          &quot;minimalDurationValue&quot;: 90,
+          &quot;minimalDurationUnit&quot;: &quot;minutes&quot;,
+          &quot;resourceIds&quot;: [
+            &quot;mill-a&quot;
+          ]
+        },
+        &quot;issues&quot;: [
+          {
+            &quot;code&quot;: &quot;id-ignored&quot;,
+            &quot;message&quot;: &quot;Import ignores id and creates a new request&quot;,
+            &quot;blocking&quot;: false
+          },
+          {
+            &quot;code&quot;: &quot;structural-scope&quot;,
+            &quot;message&quot;: &quot;Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions&quot;,
+            &quot;blocking&quot;: false
+          }
+        ],
+        &quot;nativeDisposition&quot;: &quot;create&quot;,
+        &quot;id&quot;: &quot;row:2&quot;
+      }
+    ],
+    &quot;summary&quot;: {
+      &quot;records&quot;: 2,
+      &quot;creates&quot;: 2,
+      &quot;skipped&quot;: 0,
+      &quot;needsReview&quot;: 1
+    }
+  },
+  &quot;rows&quot;: [
+    {
+      &quot;occurrenceId&quot;: &quot;requests:row:1&quot;,
+      &quot;index&quot;: 1,
+      &quot;line&quot;: 2,
+      &quot;original&quot;: {
+        &quot;id&quot;: &quot;old-1&quot;,
+        &quot;name&quot;: &quot;WO-001&quot;,
+        &quot;description&quot;: &quot;Mill, inspect\nKeep exact source&quot;,
+        &quot;status&quot;: &quot;new&quot;,
+        &quot;start_ts&quot;: &quot;&quot;,
+        &quot;end_ts&quot;: &quot;&quot;,
+        &quot;resource_id&quot;: &quot;mill-a&quot;,
+        &quot;resource_name&quot;: &quot;&quot;,
+        &quot;earliest_start_ts&quot;: &quot;&quot;,
+        &quot;latest_end_ts&quot;: &quot;&quot;,
+        &quot;min_duration_value&quot;: &quot;2.5&quot;,
+        &quot;min_duration_unit&quot;: &quot;hours&quot;,
+        &quot;actual_duration_value&quot;: &quot;&quot;,
+        &quot;actual_duration_unit&quot;: &quot;&quot;,
+        &quot;requirements_count&quot;: &quot;2&quot;
+      },
+      &quot;values&quot;: {
+        &quot;id&quot;: &quot;old-1&quot;,
+        &quot;name&quot;: &quot;WO-001&quot;,
+        &quot;description&quot;: &quot;Mill, inspect\nKeep exact source&quot;,
+        &quot;status&quot;: &quot;new&quot;,
+        &quot;start_ts&quot;: &quot;&quot;,
+        &quot;end_ts&quot;: &quot;&quot;,
+        &quot;resource_id&quot;: &quot;mill-a&quot;,
+        &quot;resource_name&quot;: &quot;&quot;,
+        &quot;earliest_start_ts&quot;: &quot;&quot;,
+        &quot;latest_end_ts&quot;: &quot;&quot;,
+        &quot;min_duration_value&quot;: &quot;150&quot;,
+        &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+        &quot;actual_duration_value&quot;: &quot;&quot;,
+        &quot;actual_duration_unit&quot;: &quot;&quot;,
+        &quot;requirements_count&quot;: &quot;0&quot;
+      },
+      &quot;nativePayload&quot;: {
+        &quot;name&quot;: &quot;WO-001&quot;,
+        &quot;description&quot;: &quot;Mill, inspect\nKeep exact source&quot;,
+        &quot;status&quot;: &quot;new&quot;,
+        &quot;minimalDurationValue&quot;: 150,
+        &quot;minimalDurationUnit&quot;: &quot;minutes&quot;,
+        &quot;resourceIds&quot;: [
+          &quot;mill-a&quot;
+        ]
+      },
+      &quot;issues&quot;: [
+        {
+          &quot;code&quot;: &quot;id-ignored&quot;,
+          &quot;message&quot;: &quot;Import ignores id and creates a new request&quot;,
+          &quot;blocking&quot;: false
+        },
+        {
+          &quot;code&quot;: &quot;structural-scope&quot;,
+          &quot;message&quot;: &quot;Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions&quot;,
+          &quot;blocking&quot;: false
+        }
+      ],
+      &quot;nativeDisposition&quot;: &quot;create&quot;,
+      &quot;id&quot;: &quot;row:1&quot;,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored target inspection confirms requirements are outside this request-only trial; originals with count two remain retained. Use 150 minutes to preserve 2.5 hours.&quot;,
+        &quot;values&quot;: {
+          &quot;id&quot;: &quot;old-1&quot;,
+          &quot;name&quot;: &quot;WO-001&quot;,
+          &quot;description&quot;: &quot;Mill, inspect\nKeep exact source&quot;,
+          &quot;status&quot;: &quot;new&quot;,
+          &quot;start_ts&quot;: &quot;&quot;,
+          &quot;end_ts&quot;: &quot;&quot;,
+          &quot;resource_id&quot;: &quot;mill-a&quot;,
+          &quot;resource_name&quot;: &quot;&quot;,
+          &quot;earliest_start_ts&quot;: &quot;&quot;,
+          &quot;latest_end_ts&quot;: &quot;&quot;,
+          &quot;min_duration_value&quot;: &quot;150&quot;,
+          &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+          &quot;actual_duration_value&quot;: &quot;&quot;,
+          &quot;actual_duration_unit&quot;: &quot;&quot;,
+          &quot;requirements_count&quot;: &quot;0&quot;
+        },
+        &quot;acknowledged&quot;: [
+          &quot;id-ignored&quot;,
+          &quot;structural-scope&quot;
+        ]
+      },
+      &quot;ready&quot;: true,
+      &quot;unacknowledged&quot;: [],
+      &quot;status&quot;: {
+        &quot;pending&quot;: false,
+        &quot;done&quot;: {
+          &quot;batchId&quot;: &quot;requests-1&quot;,
+          &quot;state&quot;: &quot;attempted&quot;,
+          &quot;outcome&quot;: {
+            &quot;eventId&quot;: &quot;authored-7&quot;,
+            &quot;at&quot;: &quot;2026-10-15T01:00:07.000Z&quot;,
+            &quot;rowId&quot;: &quot;row:1&quot;,
+            &quot;status&quot;: &quot;created&quot;,
+            &quot;targetId&quot;: &quot;authored-request-701&quot;,
+            &quot;reason&quot;: &quot;First create returned an ID in the authored receiving scenario.&quot;,
+            &quot;reviewer&quot;: &quot;Authored operator&quot;,
+            &quot;evidence&quot;: {
+              &quot;text&quot;: &quot;{\&quot;id\&quot;:\&quot;authored-request-701\&quot;,\&quot;name\&quot;:\&quot;WO-001\&quot;}&quot;,
+              &quot;kind&quot;: &quot;authored-response&quot;
+            }
+          }
+        },
+        &quot;history&quot;: [
+          {
+            &quot;batchId&quot;: &quot;requests-1&quot;,
+            &quot;state&quot;: &quot;attempted&quot;,
+            &quot;outcome&quot;: {
+              &quot;eventId&quot;: &quot;authored-7&quot;,
+              &quot;at&quot;: &quot;2026-10-15T01:00:07.000Z&quot;,
+              &quot;rowId&quot;: &quot;row:1&quot;,
+              &quot;status&quot;: &quot;created&quot;,
+              &quot;targetId&quot;: &quot;authored-request-701&quot;,
+              &quot;reason&quot;: &quot;First create returned an ID in the authored receiving scenario.&quot;,
+              &quot;reviewer&quot;: &quot;Authored operator&quot;,
+              &quot;evidence&quot;: {
+                &quot;text&quot;: &quot;{\&quot;id\&quot;:\&quot;authored-request-701\&quot;,\&quot;name\&quot;:\&quot;WO-001\&quot;}&quot;,
+                &quot;kind&quot;: &quot;authored-response&quot;
+              }
+            }
+          }
+        ]
+      },
+      &quot;signature&quot;: &quot;cca8c885e3679fec7063d1faafb71d44e589b893885bcb2b1d97e36a6d075848&quot;
+    },
+    {
+      &quot;occurrenceId&quot;: &quot;requests:row:2&quot;,
+      &quot;index&quot;: 2,
+      &quot;line&quot;: 4,
+      &quot;original&quot;: {
+        &quot;id&quot;: &quot;old-2&quot;,
+        &quot;name&quot;: &quot;WO-002&quot;,
+        &quot;description&quot;: &quot;&quot;,
+        &quot;status&quot;: &quot;new&quot;,
+        &quot;start_ts&quot;: &quot;&quot;,
+        &quot;end_ts&quot;: &quot;&quot;,
+        &quot;resource_id&quot;: &quot;mill-a&quot;,
+        &quot;resource_name&quot;: &quot;&quot;,
+        &quot;earliest_start_ts&quot;: &quot;&quot;,
+        &quot;latest_end_ts&quot;: &quot;&quot;,
+        &quot;min_duration_value&quot;: &quot;90&quot;,
+        &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+        &quot;actual_duration_value&quot;: &quot;&quot;,
+        &quot;actual_duration_unit&quot;: &quot;&quot;,
+        &quot;requirements_count&quot;: &quot;0&quot;
+      },
+      &quot;values&quot;: {
+        &quot;id&quot;: &quot;old-2&quot;,
+        &quot;name&quot;: &quot;WO-002&quot;,
+        &quot;description&quot;: &quot;&quot;,
+        &quot;status&quot;: &quot;new&quot;,
+        &quot;start_ts&quot;: &quot;&quot;,
+        &quot;end_ts&quot;: &quot;&quot;,
+        &quot;resource_id&quot;: &quot;mill-a&quot;,
+        &quot;resource_name&quot;: &quot;&quot;,
+        &quot;earliest_start_ts&quot;: &quot;&quot;,
+        &quot;latest_end_ts&quot;: &quot;&quot;,
+        &quot;min_duration_value&quot;: &quot;90&quot;,
+        &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+        &quot;actual_duration_value&quot;: &quot;&quot;,
+        &quot;actual_duration_unit&quot;: &quot;&quot;,
+        &quot;requirements_count&quot;: &quot;0&quot;
+      },
+      &quot;nativePayload&quot;: {
+        &quot;name&quot;: &quot;WO-002&quot;,
+        &quot;status&quot;: &quot;new&quot;,
+        &quot;minimalDurationValue&quot;: 90,
+        &quot;minimalDurationUnit&quot;: &quot;minutes&quot;,
+        &quot;resourceIds&quot;: [
+          &quot;mill-a&quot;
+        ]
+      },
+      &quot;issues&quot;: [
+        {
+          &quot;code&quot;: &quot;id-ignored&quot;,
+          &quot;message&quot;: &quot;Import ignores id and creates a new request&quot;,
+          &quot;blocking&quot;: false
+        },
+        {
+          &quot;code&quot;: &quot;structural-scope&quot;,
+          &quot;message&quot;: &quot;Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions&quot;,
+          &quot;blocking&quot;: false
+        }
+      ],
+      &quot;nativeDisposition&quot;: &quot;create&quot;,
+      &quot;id&quot;: &quot;row:2&quot;,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored exact resource mill-a and root-request scope reviewed.&quot;,
+        &quot;values&quot;: {
+          &quot;id&quot;: &quot;old-2&quot;,
+          &quot;name&quot;: &quot;WO-002&quot;,
+          &quot;description&quot;: &quot;&quot;,
+          &quot;status&quot;: &quot;new&quot;,
+          &quot;start_ts&quot;: &quot;&quot;,
+          &quot;end_ts&quot;: &quot;&quot;,
+          &quot;resource_id&quot;: &quot;mill-a&quot;,
+          &quot;resource_name&quot;: &quot;&quot;,
+          &quot;earliest_start_ts&quot;: &quot;&quot;,
+          &quot;latest_end_ts&quot;: &quot;&quot;,
+          &quot;min_duration_value&quot;: &quot;90&quot;,
+          &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+          &quot;actual_duration_value&quot;: &quot;&quot;,
+          &quot;actual_duration_unit&quot;: &quot;&quot;,
+          &quot;requirements_count&quot;: &quot;0&quot;
+        },
+        &quot;acknowledged&quot;: [
+          &quot;id-ignored&quot;,
+          &quot;structural-scope&quot;
+        ]
+      },
+      &quot;ready&quot;: true,
+      &quot;unacknowledged&quot;: [],
+      &quot;status&quot;: {
+        &quot;pending&quot;: true,
+        &quot;done&quot;: null,
+        &quot;history&quot;: [
+          {
+            &quot;batchId&quot;: &quot;requests-1&quot;,
+            &quot;state&quot;: &quot;attempted&quot;,
+            &quot;outcome&quot;: {
+              &quot;eventId&quot;: &quot;authored-9&quot;,
+              &quot;at&quot;: &quot;2026-10-15T01:00:09.000Z&quot;,
+              &quot;rowId&quot;: &quot;row:2&quot;,
+              &quot;status&quot;: &quot;not-attempted&quot;,
+              &quot;targetId&quot;: null,
+              &quot;reason&quot;: &quot;Authored importer stopped before second row; complete response and target lookup are retained.&quot;,
+              &quot;reviewer&quot;: &quot;Authored operator&quot;,
+              &quot;evidence&quot;: {
+                &quot;text&quot;: &quot;{\&quot;created\&quot;:1,\&quot;stoppedBeforeRow\&quot;:2,\&quot;targetLookup\&quot;:[]}&quot;,
+                &quot;kind&quot;: &quot;authored-response&quot;
+              }
+            }
+          },
+          {
+            &quot;batchId&quot;: &quot;requests-remaining&quot;,
+            &quot;state&quot;: &quot;prepared&quot;,
+            &quot;outcome&quot;: null
+          }
+        ]
+      },
+      &quot;signature&quot;: &quot;b242bb42baef44e240164123097c6cc34c4d3cdffd219228a24634fcadf77053&quot;
+    }
+  ]
+}</pre></details></section><section><h2>workbook — workbook</h2><p>Tenant Authored receiving tenant; 1 retained source editions.</p><table><thead><tr><th>Row</th><th>Name</th><th>Review</th><th>Import state</th><th>Attention</th></tr></thead><tbody><tr><td>Jobs:6</td><td>EX-100 Rough</td><td>new</td><td>authored-job-801</td><td>Native workbook duration counts Monday–Friday; review actual site shifts, holidays, shutdowns and overtime in the target calendar. Existing stations are reused unchanged. Workbook names, notes and capacity do not update them.</td></tr><tr><td>Jobs:7</td><td>EX-100 Inspect</td><td>new</td><td>Prepared / unresolved</td><td>Native workbook duration counts Monday–Friday; review actual site shifts, holidays, shutdowns and overtime in the target calendar. Existing stations are reused unchanged. Workbook names, notes and capacity do not update them.</td></tr></tbody></table><details><summary>Full sources, corrections, payloads and review reasons</summary><pre>{
+  &quot;id&quot;: &quot;workbook&quot;,
+  &quot;kind&quot;: &quot;workbook&quot;,
+  &quot;format&quot;: &quot;sheets-json&quot;,
+  &quot;context&quot;: {
+    &quot;tenant&quot;: &quot;Authored receiving tenant&quot;,
+    &quot;siteId&quot;: &quot;authored-site&quot;,
+    &quot;typeKey&quot;: &quot;machine&quot;,
+    &quot;existingComplete&quot;: true,
+    &quot;existingResources&quot;: [
+      {
+        &quot;code&quot;: &quot;CNC-01&quot;,
+        &quot;id&quot;: &quot;authored-cnc&quot;
+      },
+      {
+        &quot;code&quot;: &quot;INSPECT&quot;,
+        &quot;id&quot;: &quot;authored-inspect&quot;
+      }
+    ],
+    &quot;lookupEvidence&quot;: {
+      &quot;text&quot;: &quot;{\&quot;site\&quot;:\&quot;authored-site\&quot;,\&quot;hasNextPage\&quot;:false,\&quot;resources\&quot;:[{\&quot;code\&quot;:\&quot;CNC-01\&quot;,\&quot;id\&quot;:\&quot;authored-cnc\&quot;},{\&quot;code\&quot;:\&quot;INSPECT\&quot;,\&quot;id\&quot;:\&quot;authored-inspect\&quot;}]}&quot;,
+      &quot;kind&quot;: &quot;authored-lookup&quot;
+    }
+  },
+  &quot;editions&quot;: [
+    {
+      &quot;eventId&quot;: &quot;authored-12&quot;,
+      &quot;at&quot;: &quot;2026-10-15T01:00:12.000Z&quot;,
+      &quot;artifact&quot;: {
+        &quot;filename&quot;: &quot;authored-workbook-sheets.json&quot;,
+        &quot;text&quot;: &quot;[{\&quot;name\&quot;:\&quot;Workstations\&quot;,\&quot;rows\&quot;:[[\&quot;Orkyo production import\&quot;],[\&quot;Codes match exactly, including letter case.\&quot;],[\&quot;Capacity hours/day is retained; native import does not map it.\&quot;],[],[\&quot;Code\&quot;,\&quot;Workstation\&quot;,\&quot;What stands there\&quot;,\&quot;Capacity (h/day)\&quot;,\&quot;Notes\&quot;],[\&quot;CNC-01\&quot;,\&quot;Machining centre\&quot;,\&quot;Fixture A\&quot;,8,\&quot;Authored example\&quot;],[\&quot;INSPECT\&quot;,\&quot;Inspection\&quot;,\&quot;\&quot;,6,\&quot;\&quot;]]},{\&quot;name\&quot;:\&quot;Jobs\&quot;,\&quot;rows\&quot;:[[\&quot;Orkyo production import\&quot;],[\&quot;End is inclusive; native request ends next midnight UTC.\&quot;],[\&quot;Duration counts Monday–Friday, with one-hour fallback.\&quot;],[],[\&quot;Job\&quot;,\&quot;Description\&quot;,\&quot;Workstation code\&quot;,\&quot;Start\&quot;,\&quot;End\&quot;,\&quot;Hours/day\&quot;],[\&quot;EX-100 Rough\&quot;,\&quot;Authored demonstration\&quot;,\&quot;CNC-01\&quot;,\&quot;2026-10-16\&quot;,\&quot;2026-10-19\&quot;,2.5],[\&quot;EX-100 Inspect\&quot;,\&quot;\&quot;,\&quot;INSPECT\&quot;,\&quot;2026-10-19\&quot;,\&quot;2026-10-19\&quot;,1.25]]}]&quot;,
+        &quot;bytes&quot;: 735,
+        &quot;sha256&quot;: &quot;b1fc4526c1cc5930df4b2515c0b680b4533a5583f1e91bfb16a7dead289d7dc6&quot;
+      },
+      &quot;reason&quot;: &quot;Original intake&quot;
+    }
+  ],
+  &quot;reviews&quot;: [
+    {
+      &quot;rowId&quot;: &quot;Jobs:6&quot;,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored site/code/actual geometry lookup and Monday-Friday window reviewed; station capacities remain separate.&quot;,
+        &quot;values&quot;: [
+          &quot;EX-100 Rough&quot;,
+          &quot;Authored demonstration&quot;,
+          &quot;CNC-01&quot;,
+          &quot;2026-10-16&quot;,
+          &quot;2026-10-19&quot;,
+          2.5
+        ],
+        &quot;acknowledged&quot;: [
+          &quot;site-calendar-not-applied&quot;,
+          &quot;reused-stations-not-updated&quot;
+        ]
+      },
+      &quot;eventId&quot;: &quot;authored-13&quot;,
+      &quot;at&quot;: &quot;2026-10-15T01:00:13.000Z&quot;
+    },
+    {
+      &quot;rowId&quot;: &quot;Jobs:7&quot;,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored site/code/actual geometry lookup and Monday-Friday window reviewed; station capacities remain separate.&quot;,
+        &quot;values&quot;: [
+          &quot;EX-100 Inspect&quot;,
+          &quot;&quot;,
+          &quot;INSPECT&quot;,
+          &quot;2026-10-19&quot;,
+          &quot;2026-10-19&quot;,
+          1.25
+        ],
+        &quot;acknowledged&quot;: [
+          &quot;site-calendar-not-applied&quot;,
+          &quot;reused-stations-not-updated&quot;
+        ]
+      },
+      &quot;eventId&quot;: &quot;authored-14&quot;,
+      &quot;at&quot;: &quot;2026-10-15T01:00:14.000Z&quot;
+    }
+  ],
+  &quot;inspection&quot;: {
+    &quot;ok&quot;: true,
+    &quot;plan&quot;: {
+      &quot;schema&quot;: &quot;tjlabs.orkyo-workbook-plan.v1&quot;,
+      &quot;sourceCommit&quot;: &quot;9b773566ecbfb0947f51f6e20ea925c03ddb2a22&quot;,
+      &quot;sheets&quot;: [
+        {
+          &quot;name&quot;: &quot;Workstations&quot;,
+          &quot;rows&quot;: [
+            [
+              &quot;Orkyo production import&quot;
+            ],
+            [
+              &quot;Codes match exactly, including letter case.&quot;
+            ],
+            [
+              &quot;Capacity hours/day is retained; native import does not map it.&quot;
+            ],
+            [],
+            [
+              &quot;Code&quot;,
+              &quot;Workstation&quot;,
+              &quot;What stands there&quot;,
+              &quot;Capacity (h/day)&quot;,
+              &quot;Notes&quot;
+            ],
+            [
+              &quot;CNC-01&quot;,
+              &quot;Machining centre&quot;,
+              &quot;Fixture A&quot;,
+              8,
+              &quot;Authored example&quot;
+            ],
+            [
+              &quot;INSPECT&quot;,
+              &quot;Inspection&quot;,
+              &quot;&quot;,
+              6,
+              &quot;&quot;
+            ]
+          ]
+        },
+        {
+          &quot;name&quot;: &quot;Jobs&quot;,
+          &quot;rows&quot;: [
+            [
+              &quot;Orkyo production import&quot;
+            ],
+            [
+              &quot;End is inclusive; native request ends next midnight UTC.&quot;
+            ],
+            [
+              &quot;Duration counts Monday–Friday, with one-hour fallback.&quot;
+            ],
+            [],
+            [
+              &quot;Job&quot;,
+              &quot;Description&quot;,
+              &quot;Workstation code&quot;,
+              &quot;Start&quot;,
+              &quot;End&quot;,
+              &quot;Hours/day&quot;
+            ],
+            [
+              &quot;EX-100 Rough&quot;,
+              &quot;Authored demonstration&quot;,
+              &quot;CNC-01&quot;,
+              &quot;2026-10-16&quot;,
+              &quot;2026-10-19&quot;,
+              2.5
+            ],
+            [
+              &quot;EX-100 Inspect&quot;,
+              &quot;&quot;,
+              &quot;INSPECT&quot;,
+              &quot;2026-10-19&quot;,
+              &quot;2026-10-19&quot;,
+              1.25
+            ]
+          ]
+        }
+      ],
+      &quot;rows&quot;: [
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 1,
+          &quot;cells&quot;: [
+            &quot;Orkyo production import&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 2,
+          &quot;cells&quot;: [
+            &quot;Codes match exactly, including letter case.&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 3,
+          &quot;cells&quot;: [
+            &quot;Capacity hours/day is retained; native import does not map it.&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 4,
+          &quot;cells&quot;: [],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 5,
+          &quot;cells&quot;: [
+            &quot;Code&quot;,
+            &quot;Workstation&quot;,
+            &quot;What stands there&quot;,
+            &quot;Capacity (h/day)&quot;,
+            &quot;Notes&quot;
+          ],
+          &quot;role&quot;: &quot;header&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 6,
+          &quot;cells&quot;: [
+            &quot;CNC-01&quot;,
+            &quot;Machining centre&quot;,
+            &quot;Fixture A&quot;,
+            8,
+            &quot;Authored example&quot;
+          ],
+          &quot;role&quot;: &quot;data&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 7,
+          &quot;cells&quot;: [
+            &quot;INSPECT&quot;,
+            &quot;Inspection&quot;,
+            &quot;&quot;,
+            6,
+            &quot;&quot;
+          ],
+          &quot;role&quot;: &quot;data&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 1,
+          &quot;cells&quot;: [
+            &quot;Orkyo production import&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 2,
+          &quot;cells&quot;: [
+            &quot;End is inclusive; native request ends next midnight UTC.&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 3,
+          &quot;cells&quot;: [
+            &quot;Duration counts Monday–Friday, with one-hour fallback.&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 4,
+          &quot;cells&quot;: [],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 5,
+          &quot;cells&quot;: [
+            &quot;Job&quot;,
+            &quot;Description&quot;,
+            &quot;Workstation code&quot;,
+            &quot;Start&quot;,
+            &quot;End&quot;,
+            &quot;Hours/day&quot;
+          ],
+          &quot;role&quot;: &quot;header&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 6,
+          &quot;cells&quot;: [
+            &quot;EX-100 Rough&quot;,
+            &quot;Authored demonstration&quot;,
+            &quot;CNC-01&quot;,
+            &quot;2026-10-16&quot;,
+            &quot;2026-10-19&quot;,
+            2.5
+          ],
+          &quot;role&quot;: &quot;data&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 7,
+          &quot;cells&quot;: [
+            &quot;EX-100 Inspect&quot;,
+            &quot;&quot;,
+            &quot;INSPECT&quot;,
+            &quot;2026-10-19&quot;,
+            &quot;2026-10-19&quot;,
+            1.25
+          ],
+          &quot;role&quot;: &quot;data&quot;
+        }
+      ],
+      &quot;context&quot;: {
+        &quot;siteId&quot;: &quot;authored-site&quot;,
+        &quot;typeKey&quot;: &quot;machine&quot;,
+        &quot;existingComplete&quot;: true,
+        &quot;existingResources&quot;: [
+          {
+            &quot;code&quot;: &quot;CNC-01&quot;,
+            &quot;id&quot;: &quot;authored-cnc&quot;
+          },
+          {
+            &quot;code&quot;: &quot;INSPECT&quot;,
+            &quot;id&quot;: &quot;authored-inspect&quot;
+          }
+        ],
+        &quot;priorJobCreates&quot;: []
+      },
+      &quot;nativeParsed&quot;: {
+        &quot;workstations&quot;: [
+          {
+            &quot;row&quot;: 6,
+            &quot;code&quot;: &quot;CNC-01&quot;,
+            &quot;name&quot;: &quot;Machining centre&quot;,
+            &quot;standsThere&quot;: &quot;Fixture A&quot;,
+            &quot;notes&quot;: &quot;Authored example&quot;
+          },
+          {
+            &quot;row&quot;: 7,
+            &quot;code&quot;: &quot;INSPECT&quot;,
+            &quot;name&quot;: &quot;Inspection&quot;,
+            &quot;standsThere&quot;: &quot;&quot;,
+            &quot;notes&quot;: &quot;&quot;
+          }
+        ],
+        &quot;jobs&quot;: [
+          {
+            &quot;row&quot;: 6,
+            &quot;job&quot;: &quot;EX-100 Rough&quot;,
+            &quot;description&quot;: &quot;Authored demonstration&quot;,
+            &quot;workstationCode&quot;: &quot;CNC-01&quot;,
+            &quot;start&quot;: &quot;2026-10-16&quot;,
+            &quot;end&quot;: &quot;2026-10-19&quot;,
+            &quot;hoursPerDay&quot;: 2.5
+          },
+          {
+            &quot;row&quot;: 7,
+            &quot;job&quot;: &quot;EX-100 Inspect&quot;,
+            &quot;description&quot;: &quot;&quot;,
+            &quot;workstationCode&quot;: &quot;INSPECT&quot;,
+            &quot;start&quot;: &quot;2026-10-19&quot;,
+            &quot;end&quot;: &quot;2026-10-19&quot;,
+            &quot;hoursPerDay&quot;: 1.25
+          }
+        ],
+        &quot;errors&quot;: []
+      },
+      &quot;workstations&quot;: [
+        {
+          &quot;row&quot;: 6,
+          &quot;code&quot;: &quot;CNC-01&quot;,
+          &quot;action&quot;: &quot;reuse&quot;,
+          &quot;existingResourceId&quot;: &quot;authored-cnc&quot;,
+          &quot;original&quot;: [
+            &quot;CNC-01&quot;,
+            &quot;Machining centre&quot;,
+            &quot;Fixture A&quot;,
+            8,
+            &quot;Authored example&quot;
+          ],
+          &quot;parsed&quot;: {
+            &quot;row&quot;: 6,
+            &quot;code&quot;: &quot;CNC-01&quot;,
+            &quot;name&quot;: &quot;Machining centre&quot;,
+            &quot;standsThere&quot;: &quot;Fixture A&quot;,
+            &quot;notes&quot;: &quot;Authored example&quot;
+          },
+          &quot;payload&quot;: null
+        },
+        {
+          &quot;row&quot;: 7,
+          &quot;code&quot;: &quot;INSPECT&quot;,
+          &quot;action&quot;: &quot;reuse&quot;,
+          &quot;existingResourceId&quot;: &quot;authored-inspect&quot;,
+          &quot;original&quot;: [
+            &quot;INSPECT&quot;,
+            &quot;Inspection&quot;,
+            &quot;&quot;,
+            6,
+            &quot;&quot;
+          ],
+          &quot;parsed&quot;: {
+            &quot;row&quot;: 7,
+            &quot;code&quot;: &quot;INSPECT&quot;,
+            &quot;name&quot;: &quot;Inspection&quot;,
+            &quot;standsThere&quot;: &quot;&quot;,
+            &quot;notes&quot;: &quot;&quot;
+          },
+          &quot;payload&quot;: null
+        }
+      ],
+      &quot;jobs&quot;: [
+        {
+          &quot;row&quot;: 6,
+          &quot;jobKey&quot;: &quot;[\&quot;authored-site\&quot;,\&quot;EX-100 Rough\&quot;,\&quot;Authored demonstration\&quot;,\&quot;CNC-01\&quot;,\&quot;2026-10-16\&quot;,\&quot;2026-10-19\&quot;,2.5]&quot;,
+          &quot;original&quot;: [
+            &quot;EX-100 Rough&quot;,
+            &quot;Authored demonstration&quot;,
+            &quot;CNC-01&quot;,
+            &quot;2026-10-16&quot;,
+            &quot;2026-10-19&quot;,
+            2.5
+          ],
+          &quot;parsed&quot;: {
+            &quot;row&quot;: 6,
+            &quot;job&quot;: &quot;EX-100 Rough&quot;,
+            &quot;description&quot;: &quot;Authored demonstration&quot;,
+            &quot;workstationCode&quot;: &quot;CNC-01&quot;,
+            &quot;start&quot;: &quot;2026-10-16&quot;,
+            &quot;end&quot;: &quot;2026-10-19&quot;,
+            &quot;hoursPerDay&quot;: 2.5
+          },
+          &quot;workingDays&quot;: 2,
+          &quot;minimumHours&quot;: 5,
+          &quot;payload&quot;: {
+            &quot;name&quot;: &quot;EX-100 Rough&quot;,
+            &quot;description&quot;: &quot;Authored demonstration&quot;,
+            &quot;siteId&quot;: &quot;authored-site&quot;,
+            &quot;resourceIds&quot;: [
+              &quot;authored-cnc&quot;
+            ],
+            &quot;startTs&quot;: &quot;2026-10-16T00:00:00Z&quot;,
+            &quot;endTs&quot;: &quot;2026-10-20T00:00:00Z&quot;,
+            &quot;minimalDurationValue&quot;: 5,
+            &quot;minimalDurationUnit&quot;: &quot;hours&quot;,
+            &quot;status&quot;: &quot;new&quot;
+          },
+          &quot;resourceBinding&quot;: {
+            &quot;code&quot;: &quot;CNC-01&quot;,
+            &quot;action&quot;: &quot;reuse&quot;,
+            &quot;existingResourceId&quot;: &quot;authored-cnc&quot;,
+            &quot;resolveAfterWorkstationCreate&quot;: false
+          },
+          &quot;priorCreates&quot;: []
+        },
+        {
+          &quot;row&quot;: 7,
+          &quot;jobKey&quot;: &quot;[\&quot;authored-site\&quot;,\&quot;EX-100 Inspect\&quot;,\&quot;\&quot;,\&quot;INSPECT\&quot;,\&quot;2026-10-19\&quot;,\&quot;2026-10-19\&quot;,1.25]&quot;,
+          &quot;original&quot;: [
+            &quot;EX-100 Inspect&quot;,
+            &quot;&quot;,
+            &quot;INSPECT&quot;,
+            &quot;2026-10-19&quot;,
+            &quot;2026-10-19&quot;,
+            1.25
+          ],
+          &quot;parsed&quot;: {
+            &quot;row&quot;: 7,
+            &quot;job&quot;: &quot;EX-100 Inspect&quot;,
+            &quot;description&quot;: &quot;&quot;,
+            &quot;workstationCode&quot;: &quot;INSPECT&quot;,
+            &quot;start&quot;: &quot;2026-10-19&quot;,
+            &quot;end&quot;: &quot;2026-10-19&quot;,
+            &quot;hoursPerDay&quot;: 1.25
+          },
+          &quot;workingDays&quot;: 1,
+          &quot;minimumHours&quot;: 1.25,
+          &quot;payload&quot;: {
+            &quot;name&quot;: &quot;EX-100 Inspect&quot;,
+            &quot;siteId&quot;: &quot;authored-site&quot;,
+            &quot;resourceIds&quot;: [
+              &quot;authored-inspect&quot;
+            ],
+            &quot;startTs&quot;: &quot;2026-10-19T00:00:00Z&quot;,
+            &quot;endTs&quot;: &quot;2026-10-20T00:00:00Z&quot;,
+            &quot;minimalDurationValue&quot;: 1.25,
+            &quot;minimalDurationUnit&quot;: &quot;hours&quot;,
+            &quot;status&quot;: &quot;new&quot;
+          },
+          &quot;resourceBinding&quot;: {
+            &quot;code&quot;: &quot;INSPECT&quot;,
+            &quot;action&quot;: &quot;reuse&quot;,
+            &quot;existingResourceId&quot;: &quot;authored-inspect&quot;,
+            &quot;resolveAfterWorkstationCreate&quot;: false
+          },
+          &quot;priorCreates&quot;: []
+        }
+      ],
+      &quot;issues&quot;: [
+        {
+          &quot;code&quot;: &quot;capacity-not-mapped&quot;,
+          &quot;message&quot;: &quot;Hours/day capacity is retained but is not imported as occupancy or calendar.&quot;,
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 6,
+          &quot;blocking&quot;: false,
+          &quot;originalValue&quot;: 8
+        },
+        {
+          &quot;code&quot;: &quot;capacity-not-mapped&quot;,
+          &quot;message&quot;: &quot;Hours/day capacity is retained but is not imported as occupancy or calendar.&quot;,
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 7,
+          &quot;blocking&quot;: false,
+          &quot;originalValue&quot;: 6
+        },
+        {
+          &quot;code&quot;: &quot;site-calendar-not-applied&quot;,
+          &quot;message&quot;: &quot;Native workbook duration counts Monday–Friday; review actual site shifts, holidays, shutdowns and overtime in the target calendar.&quot;,
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 0,
+          &quot;blocking&quot;: false
+        },
+        {
+          &quot;code&quot;: &quot;reused-stations-not-updated&quot;,
+          &quot;message&quot;: &quot;Existing stations are reused unchanged. Workbook names, notes and capacity do not update them.&quot;,
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 0,
+          &quot;blocking&quot;: false
+        }
+      ],
+      &quot;summary&quot;: {
+        &quot;sourceRows&quot;: 14,
+        &quot;workstations&quot;: 2,
+        &quot;createWorkstations&quot;: 0,
+        &quot;reuseWorkstations&quot;: 2,
+        &quot;createJobs&quot;: 2,
+        &quot;blocking&quot;: 0,
+        &quot;review&quot;: 4
+      },
+      &quot;execution&quot;: &quot;Stations first, then every job, sequentially. Completed writes remain after a later failure. Record actual IDs and prepare only remaining jobs after reconciling that run.&quot;
+    },
+    &quot;rows&quot;: [
+      {
+        &quot;id&quot;: &quot;Jobs:6&quot;,
+        &quot;original&quot;: [
+          &quot;EX-100 Rough&quot;,
+          &quot;Authored demonstration&quot;,
+          &quot;CNC-01&quot;,
+          &quot;2026-10-16&quot;,
+          &quot;2026-10-19&quot;,
+          2.5
+        ],
+        &quot;values&quot;: [
+          &quot;EX-100 Rough&quot;,
+          &quot;Authored demonstration&quot;,
+          &quot;CNC-01&quot;,
+          &quot;2026-10-16&quot;,
+          &quot;2026-10-19&quot;,
+          2.5
+        ],
+        &quot;nativePayload&quot;: {
+          &quot;name&quot;: &quot;EX-100 Rough&quot;,
+          &quot;description&quot;: &quot;Authored demonstration&quot;,
+          &quot;siteId&quot;: &quot;authored-site&quot;,
+          &quot;resourceIds&quot;: [
+            &quot;authored-cnc&quot;
+          ],
+          &quot;startTs&quot;: &quot;2026-10-16T00:00:00Z&quot;,
+          &quot;endTs&quot;: &quot;2026-10-20T00:00:00Z&quot;,
+          &quot;minimalDurationValue&quot;: 5,
+          &quot;minimalDurationUnit&quot;: &quot;hours&quot;,
+          &quot;status&quot;: &quot;new&quot;
+        },
+        &quot;nativeDisposition&quot;: &quot;create&quot;,
+        &quot;jobKey&quot;: &quot;[\&quot;authored-site\&quot;,\&quot;EX-100 Rough\&quot;,\&quot;Authored demonstration\&quot;,\&quot;CNC-01\&quot;,\&quot;2026-10-16\&quot;,\&quot;2026-10-19\&quot;,2.5]&quot;,
+        &quot;issues&quot;: [
+          {
+            &quot;code&quot;: &quot;site-calendar-not-applied&quot;,
+            &quot;message&quot;: &quot;Native workbook duration counts Monday–Friday; review actual site shifts, holidays, shutdowns and overtime in the target calendar.&quot;,
+            &quot;sheet&quot;: &quot;Jobs&quot;,
+            &quot;row&quot;: 0,
+            &quot;blocking&quot;: false
+          },
+          {
+            &quot;code&quot;: &quot;reused-stations-not-updated&quot;,
+            &quot;message&quot;: &quot;Existing stations are reused unchanged. Workbook names, notes and capacity do not update them.&quot;,
+            &quot;sheet&quot;: &quot;Workstations&quot;,
+            &quot;row&quot;: 0,
+            &quot;blocking&quot;: false
+          }
+        ],
+        &quot;index&quot;: 6
+      },
+      {
+        &quot;id&quot;: &quot;Jobs:7&quot;,
+        &quot;original&quot;: [
+          &quot;EX-100 Inspect&quot;,
+          &quot;&quot;,
+          &quot;INSPECT&quot;,
+          &quot;2026-10-19&quot;,
+          &quot;2026-10-19&quot;,
+          1.25
+        ],
+        &quot;values&quot;: [
+          &quot;EX-100 Inspect&quot;,
+          &quot;&quot;,
+          &quot;INSPECT&quot;,
+          &quot;2026-10-19&quot;,
+          &quot;2026-10-19&quot;,
+          1.25
+        ],
+        &quot;nativePayload&quot;: {
+          &quot;name&quot;: &quot;EX-100 Inspect&quot;,
+          &quot;siteId&quot;: &quot;authored-site&quot;,
+          &quot;resourceIds&quot;: [
+            &quot;authored-inspect&quot;
+          ],
+          &quot;startTs&quot;: &quot;2026-10-19T00:00:00Z&quot;,
+          &quot;endTs&quot;: &quot;2026-10-20T00:00:00Z&quot;,
+          &quot;minimalDurationValue&quot;: 1.25,
+          &quot;minimalDurationUnit&quot;: &quot;hours&quot;,
+          &quot;status&quot;: &quot;new&quot;
+        },
+        &quot;nativeDisposition&quot;: &quot;create&quot;,
+        &quot;jobKey&quot;: &quot;[\&quot;authored-site\&quot;,\&quot;EX-100 Inspect\&quot;,\&quot;\&quot;,\&quot;INSPECT\&quot;,\&quot;2026-10-19\&quot;,\&quot;2026-10-19\&quot;,1.25]&quot;,
+        &quot;issues&quot;: [
+          {
+            &quot;code&quot;: &quot;site-calendar-not-applied&quot;,
+            &quot;message&quot;: &quot;Native workbook duration counts Monday–Friday; review actual site shifts, holidays, shutdowns and overtime in the target calendar.&quot;,
+            &quot;sheet&quot;: &quot;Jobs&quot;,
+            &quot;row&quot;: 0,
+            &quot;blocking&quot;: false
+          },
+          {
+            &quot;code&quot;: &quot;reused-stations-not-updated&quot;,
+            &quot;message&quot;: &quot;Existing stations are reused unchanged. Workbook names, notes and capacity do not update them.&quot;,
+            &quot;sheet&quot;: &quot;Workstations&quot;,
+            &quot;row&quot;: 0,
+            &quot;blocking&quot;: false
+          }
+        ],
+        &quot;index&quot;: 7
+      }
+    ],
+    &quot;summary&quot;: {
+      &quot;sourceRows&quot;: 14,
+      &quot;workstations&quot;: 2,
+      &quot;createWorkstations&quot;: 0,
+      &quot;reuseWorkstations&quot;: 2,
+      &quot;createJobs&quot;: 2,
+      &quot;blocking&quot;: 0,
+      &quot;review&quot;: 4
+    }
+  },
+  &quot;rows&quot;: [
+    {
+      &quot;id&quot;: &quot;Jobs:6&quot;,
+      &quot;original&quot;: [
+        &quot;EX-100 Rough&quot;,
+        &quot;Authored demonstration&quot;,
+        &quot;CNC-01&quot;,
+        &quot;2026-10-16&quot;,
+        &quot;2026-10-19&quot;,
+        2.5
+      ],
+      &quot;values&quot;: [
+        &quot;EX-100 Rough&quot;,
+        &quot;Authored demonstration&quot;,
+        &quot;CNC-01&quot;,
+        &quot;2026-10-16&quot;,
+        &quot;2026-10-19&quot;,
+        2.5
+      ],
+      &quot;nativePayload&quot;: {
+        &quot;name&quot;: &quot;EX-100 Rough&quot;,
+        &quot;description&quot;: &quot;Authored demonstration&quot;,
+        &quot;siteId&quot;: &quot;authored-site&quot;,
+        &quot;resourceIds&quot;: [
+          &quot;authored-cnc&quot;
+        ],
+        &quot;startTs&quot;: &quot;2026-10-16T00:00:00Z&quot;,
+        &quot;endTs&quot;: &quot;2026-10-20T00:00:00Z&quot;,
+        &quot;minimalDurationValue&quot;: 5,
+        &quot;minimalDurationUnit&quot;: &quot;hours&quot;,
+        &quot;status&quot;: &quot;new&quot;
+      },
+      &quot;nativeDisposition&quot;: &quot;create&quot;,
+      &quot;jobKey&quot;: &quot;[\&quot;authored-site\&quot;,\&quot;EX-100 Rough\&quot;,\&quot;Authored demonstration\&quot;,\&quot;CNC-01\&quot;,\&quot;2026-10-16\&quot;,\&quot;2026-10-19\&quot;,2.5]&quot;,
+      &quot;issues&quot;: [
+        {
+          &quot;code&quot;: &quot;site-calendar-not-applied&quot;,
+          &quot;message&quot;: &quot;Native workbook duration counts Monday–Friday; review actual site shifts, holidays, shutdowns and overtime in the target calendar.&quot;,
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 0,
+          &quot;blocking&quot;: false
+        },
+        {
+          &quot;code&quot;: &quot;reused-stations-not-updated&quot;,
+          &quot;message&quot;: &quot;Existing stations are reused unchanged. Workbook names, notes and capacity do not update them.&quot;,
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 0,
+          &quot;blocking&quot;: false
+        }
+      ],
+      &quot;index&quot;: 6,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored site/code/actual geometry lookup and Monday-Friday window reviewed; station capacities remain separate.&quot;,
+        &quot;values&quot;: [
+          &quot;EX-100 Rough&quot;,
+          &quot;Authored demonstration&quot;,
+          &quot;CNC-01&quot;,
+          &quot;2026-10-16&quot;,
+          &quot;2026-10-19&quot;,
+          2.5
+        ],
+        &quot;acknowledged&quot;: [
+          &quot;site-calendar-not-applied&quot;,
+          &quot;reused-stations-not-updated&quot;
+        ]
+      },
+      &quot;ready&quot;: true,
+      &quot;unacknowledged&quot;: [],
+      &quot;status&quot;: {
+        &quot;pending&quot;: false,
+        &quot;done&quot;: {
+          &quot;batchId&quot;: &quot;jobs-1&quot;,
+          &quot;state&quot;: &quot;attempted&quot;,
+          &quot;outcome&quot;: {
+            &quot;eventId&quot;: &quot;authored-17&quot;,
+            &quot;at&quot;: &quot;2026-10-15T01:00:17.000Z&quot;,
+            &quot;rowId&quot;: &quot;Jobs:6&quot;,
+            &quot;status&quot;: &quot;created&quot;,
+            &quot;targetId&quot;: &quot;authored-job-801&quot;,
+            &quot;reason&quot;: &quot;Authored first job was created.&quot;,
+            &quot;reviewer&quot;: &quot;Authored operator&quot;,
+            &quot;evidence&quot;: {
+              &quot;text&quot;: &quot;{\&quot;id\&quot;:\&quot;authored-job-801\&quot;}&quot;,
+              &quot;kind&quot;: &quot;authored-response&quot;
+            }
+          }
+        },
+        &quot;history&quot;: [
+          {
+            &quot;batchId&quot;: &quot;jobs-1&quot;,
+            &quot;state&quot;: &quot;attempted&quot;,
+            &quot;outcome&quot;: {
+              &quot;eventId&quot;: &quot;authored-17&quot;,
+              &quot;at&quot;: &quot;2026-10-15T01:00:17.000Z&quot;,
+              &quot;rowId&quot;: &quot;Jobs:6&quot;,
+              &quot;status&quot;: &quot;created&quot;,
+              &quot;targetId&quot;: &quot;authored-job-801&quot;,
+              &quot;reason&quot;: &quot;Authored first job was created.&quot;,
+              &quot;reviewer&quot;: &quot;Authored operator&quot;,
+              &quot;evidence&quot;: {
+                &quot;text&quot;: &quot;{\&quot;id\&quot;:\&quot;authored-job-801\&quot;}&quot;,
+                &quot;kind&quot;: &quot;authored-response&quot;
+              }
+            }
+          }
+        ]
+      },
+      &quot;signature&quot;: &quot;d294831e1d18272218abdffbc29e3d8eb0950f2950f7f644bc489a516653529f&quot;
+    },
+    {
+      &quot;id&quot;: &quot;Jobs:7&quot;,
+      &quot;original&quot;: [
+        &quot;EX-100 Inspect&quot;,
+        &quot;&quot;,
+        &quot;INSPECT&quot;,
+        &quot;2026-10-19&quot;,
+        &quot;2026-10-19&quot;,
+        1.25
+      ],
+      &quot;values&quot;: [
+        &quot;EX-100 Inspect&quot;,
+        &quot;&quot;,
+        &quot;INSPECT&quot;,
+        &quot;2026-10-19&quot;,
+        &quot;2026-10-19&quot;,
+        1.25
+      ],
+      &quot;nativePayload&quot;: {
+        &quot;name&quot;: &quot;EX-100 Inspect&quot;,
+        &quot;siteId&quot;: &quot;authored-site&quot;,
+        &quot;resourceIds&quot;: [
+          &quot;authored-inspect&quot;
+        ],
+        &quot;startTs&quot;: &quot;2026-10-19T00:00:00Z&quot;,
+        &quot;endTs&quot;: &quot;2026-10-20T00:00:00Z&quot;,
+        &quot;minimalDurationValue&quot;: 1.25,
+        &quot;minimalDurationUnit&quot;: &quot;hours&quot;,
+        &quot;status&quot;: &quot;new&quot;
+      },
+      &quot;nativeDisposition&quot;: &quot;create&quot;,
+      &quot;jobKey&quot;: &quot;[\&quot;authored-site\&quot;,\&quot;EX-100 Inspect\&quot;,\&quot;\&quot;,\&quot;INSPECT\&quot;,\&quot;2026-10-19\&quot;,\&quot;2026-10-19\&quot;,1.25]&quot;,
+      &quot;issues&quot;: [
+        {
+          &quot;code&quot;: &quot;site-calendar-not-applied&quot;,
+          &quot;message&quot;: &quot;Native workbook duration counts Monday–Friday; review actual site shifts, holidays, shutdowns and overtime in the target calendar.&quot;,
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 0,
+          &quot;blocking&quot;: false
+        },
+        {
+          &quot;code&quot;: &quot;reused-stations-not-updated&quot;,
+          &quot;message&quot;: &quot;Existing stations are reused unchanged. Workbook names, notes and capacity do not update them.&quot;,
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 0,
+          &quot;blocking&quot;: false
+        }
+      ],
+      &quot;index&quot;: 7,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored site/code/actual geometry lookup and Monday-Friday window reviewed; station capacities remain separate.&quot;,
+        &quot;values&quot;: [
+          &quot;EX-100 Inspect&quot;,
+          &quot;&quot;,
+          &quot;INSPECT&quot;,
+          &quot;2026-10-19&quot;,
+          &quot;2026-10-19&quot;,
+          1.25
+        ],
+        &quot;acknowledged&quot;: [
+          &quot;site-calendar-not-applied&quot;,
+          &quot;reused-stations-not-updated&quot;
+        ]
+      },
+      &quot;ready&quot;: true,
+      &quot;unacknowledged&quot;: [],
+      &quot;status&quot;: {
+        &quot;pending&quot;: true,
+        &quot;done&quot;: null,
+        &quot;history&quot;: [
+          {
+            &quot;batchId&quot;: &quot;jobs-1&quot;,
+            &quot;state&quot;: &quot;attempted&quot;,
+            &quot;outcome&quot;: {
+              &quot;eventId&quot;: &quot;authored-18&quot;,
+              &quot;at&quot;: &quot;2026-10-15T01:00:18.000Z&quot;,
+              &quot;rowId&quot;: &quot;Jobs:7&quot;,
+              &quot;status&quot;: &quot;rejected&quot;,
+              &quot;targetId&quot;: null,
+              &quot;reason&quot;: &quot;Authored receiver rejected second job before creation.&quot;,
+              &quot;reviewer&quot;: &quot;Authored operator&quot;,
+              &quot;evidence&quot;: {
+                &quot;text&quot;: &quot;{\&quot;status\&quot;:400,\&quot;created\&quot;:false,\&quot;row\&quot;:7}&quot;,
+                &quot;kind&quot;: &quot;authored-response&quot;
+              }
+            }
+          },
+          {
+            &quot;batchId&quot;: &quot;jobs-remaining&quot;,
+            &quot;state&quot;: &quot;prepared&quot;,
+            &quot;outcome&quot;: null
+          }
+        ]
+      },
+      &quot;signature&quot;: &quot;6e81c88754468cc05cd2d8342f318b5b08f3777be51d0856e814b7b70577f42b&quot;
+    }
+  ]
+}</pre></details></section><section><h2>malformed — requests</h2><p>Tenant Authored receiving tenant; 2 retained source editions.</p><table><thead><tr><th>Row</th><th>Name</th><th>Review</th><th>Import state</th><th>Attention</th></tr></thead><tbody><tr><td>row:1</td><td>Repaired</td><td>Unreviewed</td><td>Review</td><td>Native import truncates or defaults minimal duration; use a positive whole number in the declared unit Native import defaults the missing or unknown duration unit to hours Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions</td></tr></tbody></table><details><summary>Full sources, corrections, payloads and review reasons</summary><pre>{
+  &quot;id&quot;: &quot;malformed&quot;,
+  &quot;kind&quot;: &quot;requests&quot;,
+  &quot;format&quot;: &quot;csv&quot;,
+  &quot;context&quot;: {
+    &quot;tenant&quot;: &quot;Authored receiving tenant&quot;
+  },
+  &quot;editions&quot;: [
+    {
+      &quot;eventId&quot;: &quot;authored-20&quot;,
+      &quot;at&quot;: &quot;2026-10-15T01:00:20.000Z&quot;,
+      &quot;artifact&quot;: {
+        &quot;filename&quot;: &quot;damaged.csv&quot;,
+        &quot;text&quot;: &quot;name,description\n\&quot;unfinished&quot;,
+        &quot;bytes&quot;: 28,
+        &quot;sha256&quot;: &quot;1ff2aa08f2b685c83078f4a8cff4443c0ca0d3c18c39177979846e2cf35c3282&quot;
+      },
+      &quot;reason&quot;: &quot;Original intake&quot;
+    },
+    {
+      &quot;eventId&quot;: &quot;authored-21&quot;,
+      &quot;at&quot;: &quot;2026-10-15T01:00:21.000Z&quot;,
+      &quot;artifact&quot;: {
+        &quot;filename&quot;: &quot;repaired.csv&quot;,
+        &quot;text&quot;: &quot;name,description\nRepaired,\&quot;complete\&quot;&quot;,
+        &quot;bytes&quot;: 36,
+        &quot;sha256&quot;: &quot;e25ed944940289b557ae18f891f403ad0c8583ea5ee671ebbd15d3dba7c74df6&quot;
+      },
+      &quot;reason&quot;: &quot;Authored source owner repaired the closing quote.&quot;,
+      &quot;previousReviews&quot;: []
+    }
+  ],
+  &quot;reviews&quot;: [],
+  &quot;inspection&quot;: {
+    &quot;ok&quot;: true,
+    &quot;plan&quot;: {
+      &quot;schema&quot;: &quot;orkyo-import-adapter.v1&quot;,
+      &quot;sourceCommit&quot;: &quot;9b773566ecbfb0947f51f6e20ea925c03ddb2a22&quot;,
+      &quot;source&quot;: {
+        &quot;id&quot;: &quot;malformed&quot;,
+        &quot;kind&quot;: &quot;requests&quot;,
+        &quot;format&quot;: &quot;csv&quot;,
+        &quot;text&quot;: &quot;name,description\nRepaired,\&quot;complete\&quot;&quot;
+      },
+      &quot;typeKey&quot;: &quot;&quot;,
+      &quot;customFieldTypes&quot;: {},
+      &quot;headers&quot;: [
+        &quot;name&quot;,
+        &quot;description&quot;
+      ],
+      &quot;rows&quot;: [
+        {
+          &quot;occurrenceId&quot;: &quot;malformed:row:1&quot;,
+          &quot;index&quot;: 1,
+          &quot;line&quot;: 2,
+          &quot;original&quot;: {
+            &quot;name&quot;: &quot;Repaired&quot;,
+            &quot;description&quot;: &quot;complete&quot;
+          },
+          &quot;values&quot;: {
+            &quot;name&quot;: &quot;Repaired&quot;,
+            &quot;description&quot;: &quot;complete&quot;
+          },
+          &quot;nativePayload&quot;: {
+            &quot;name&quot;: &quot;Repaired&quot;,
+            &quot;description&quot;: &quot;complete&quot;,
+            &quot;minimalDurationValue&quot;: 1,
+            &quot;minimalDurationUnit&quot;: &quot;hours&quot;
+          },
+          &quot;issues&quot;: [
+            {
+              &quot;code&quot;: &quot;duration-coercion&quot;,
+              &quot;message&quot;: &quot;Native import truncates or defaults minimal duration; use a positive whole number in the declared unit&quot;,
+              &quot;blocking&quot;: true
+            },
+            {
+              &quot;code&quot;: &quot;duration-unit&quot;,
+              &quot;message&quot;: &quot;Native import defaults the missing or unknown duration unit to hours&quot;,
+              &quot;blocking&quot;: true
+            },
+            {
+              &quot;code&quot;: &quot;structural-scope&quot;,
+              &quot;message&quot;: &quot;Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions&quot;,
+              &quot;blocking&quot;: false
+            }
+          ],
+          &quot;nativeDisposition&quot;: &quot;create&quot;
+        }
+      ],
+      &quot;summary&quot;: {
+        &quot;records&quot;: 1,
+        &quot;creates&quot;: 1,
+        &quot;skipped&quot;: 0,
+        &quot;needsReview&quot;: 1
+      },
+      &quot;notes&quot;: [
+        &quot;This is a local import preview. The target service validates and creates records when its authorized operator imports.&quot;,
+        &quot;Complete originals, row occurrences and unmapped fields remain in this result.&quot;
+      ]
+    },
+    &quot;rows&quot;: [
+      {
+        &quot;occurrenceId&quot;: &quot;malformed:row:1&quot;,
+        &quot;index&quot;: 1,
+        &quot;line&quot;: 2,
+        &quot;original&quot;: {
+          &quot;name&quot;: &quot;Repaired&quot;,
+          &quot;description&quot;: &quot;complete&quot;
+        },
+        &quot;values&quot;: {
+          &quot;name&quot;: &quot;Repaired&quot;,
+          &quot;description&quot;: &quot;complete&quot;
+        },
+        &quot;nativePayload&quot;: {
+          &quot;name&quot;: &quot;Repaired&quot;,
+          &quot;description&quot;: &quot;complete&quot;,
+          &quot;minimalDurationValue&quot;: 1,
+          &quot;minimalDurationUnit&quot;: &quot;hours&quot;
+        },
+        &quot;issues&quot;: [
+          {
+            &quot;code&quot;: &quot;duration-coercion&quot;,
+            &quot;message&quot;: &quot;Native import truncates or defaults minimal duration; use a positive whole number in the declared unit&quot;,
+            &quot;blocking&quot;: true
+          },
+          {
+            &quot;code&quot;: &quot;duration-unit&quot;,
+            &quot;message&quot;: &quot;Native import defaults the missing or unknown duration unit to hours&quot;,
+            &quot;blocking&quot;: true
+          },
+          {
+            &quot;code&quot;: &quot;structural-scope&quot;,
+            &quot;message&quot;: &quot;Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions&quot;,
+            &quot;blocking&quot;: false
+          }
+        ],
+        &quot;nativeDisposition&quot;: &quot;create&quot;,
+        &quot;id&quot;: &quot;row:1&quot;
+      }
+    ],
+    &quot;summary&quot;: {
+      &quot;records&quot;: 1,
+      &quot;creates&quot;: 1,
+      &quot;skipped&quot;: 0,
+      &quot;needsReview&quot;: 1
+    }
+  },
+  &quot;rows&quot;: [
+    {
+      &quot;occurrenceId&quot;: &quot;malformed:row:1&quot;,
+      &quot;index&quot;: 1,
+      &quot;line&quot;: 2,
+      &quot;original&quot;: {
+        &quot;name&quot;: &quot;Repaired&quot;,
+        &quot;description&quot;: &quot;complete&quot;
+      },
+      &quot;values&quot;: {
+        &quot;name&quot;: &quot;Repaired&quot;,
+        &quot;description&quot;: &quot;complete&quot;
+      },
+      &quot;nativePayload&quot;: {
+        &quot;name&quot;: &quot;Repaired&quot;,
+        &quot;description&quot;: &quot;complete&quot;,
+        &quot;minimalDurationValue&quot;: 1,
+        &quot;minimalDurationUnit&quot;: &quot;hours&quot;
+      },
+      &quot;issues&quot;: [
+        {
+          &quot;code&quot;: &quot;duration-coercion&quot;,
+          &quot;message&quot;: &quot;Native import truncates or defaults minimal duration; use a positive whole number in the declared unit&quot;,
+          &quot;blocking&quot;: true
+        },
+        {
+          &quot;code&quot;: &quot;duration-unit&quot;,
+          &quot;message&quot;: &quot;Native import defaults the missing or unknown duration unit to hours&quot;,
+          &quot;blocking&quot;: true
+        },
+        {
+          &quot;code&quot;: &quot;structural-scope&quot;,
+          &quot;message&quot;: &quot;Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions&quot;,
+          &quot;blocking&quot;: false
+        }
+      ],
+      &quot;nativeDisposition&quot;: &quot;create&quot;,
+      &quot;id&quot;: &quot;row:1&quot;,
+      &quot;review&quot;: null,
+      &quot;ready&quot;: false,
+      &quot;status&quot;: {
+        &quot;pending&quot;: false,
+        &quot;done&quot;: null,
+        &quot;history&quot;: []
+      },
+      &quot;signature&quot;: &quot;bc36dda8130599c6f142e0658bfc58c6f8f4aca4e3766503983f3f657e46e6d6&quot;
+    }
+  ]
+}</pre></details></section><h2>Frozen batches and outcomes</h2><details open><summary>requests-1 · attempted · 2/2 outcomes</summary><pre>{
+  &quot;id&quot;: &quot;requests-1&quot;,
+  &quot;sourceId&quot;: &quot;requests&quot;,
+  &quot;createdAt&quot;: &quot;2026-10-15T01:00:05.000Z&quot;,
+  &quot;eventId&quot;: &quot;authored-5&quot;,
+  &quot;state&quot;: &quot;attempted&quot;,
+  &quot;rows&quot;: [
+    {
+      &quot;occurrenceId&quot;: &quot;requests:row:1&quot;,
+      &quot;index&quot;: 1,
+      &quot;line&quot;: 2,
+      &quot;original&quot;: {
+        &quot;id&quot;: &quot;old-1&quot;,
+        &quot;name&quot;: &quot;WO-001&quot;,
+        &quot;description&quot;: &quot;Mill, inspect\nKeep exact source&quot;,
+        &quot;status&quot;: &quot;new&quot;,
+        &quot;start_ts&quot;: &quot;&quot;,
+        &quot;end_ts&quot;: &quot;&quot;,
+        &quot;resource_id&quot;: &quot;mill-a&quot;,
+        &quot;resource_name&quot;: &quot;&quot;,
+        &quot;earliest_start_ts&quot;: &quot;&quot;,
+        &quot;latest_end_ts&quot;: &quot;&quot;,
+        &quot;min_duration_value&quot;: &quot;2.5&quot;,
+        &quot;min_duration_unit&quot;: &quot;hours&quot;,
+        &quot;actual_duration_value&quot;: &quot;&quot;,
+        &quot;actual_duration_unit&quot;: &quot;&quot;,
+        &quot;requirements_count&quot;: &quot;2&quot;
+      },
+      &quot;values&quot;: {
+        &quot;id&quot;: &quot;old-1&quot;,
+        &quot;name&quot;: &quot;WO-001&quot;,
+        &quot;description&quot;: &quot;Mill, inspect\nKeep exact source&quot;,
+        &quot;status&quot;: &quot;new&quot;,
+        &quot;start_ts&quot;: &quot;&quot;,
+        &quot;end_ts&quot;: &quot;&quot;,
+        &quot;resource_id&quot;: &quot;mill-a&quot;,
+        &quot;resource_name&quot;: &quot;&quot;,
+        &quot;earliest_start_ts&quot;: &quot;&quot;,
+        &quot;latest_end_ts&quot;: &quot;&quot;,
+        &quot;min_duration_value&quot;: &quot;150&quot;,
+        &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+        &quot;actual_duration_value&quot;: &quot;&quot;,
+        &quot;actual_duration_unit&quot;: &quot;&quot;,
+        &quot;requirements_count&quot;: &quot;0&quot;
+      },
+      &quot;nativePayload&quot;: {
+        &quot;name&quot;: &quot;WO-001&quot;,
+        &quot;description&quot;: &quot;Mill, inspect\nKeep exact source&quot;,
+        &quot;status&quot;: &quot;new&quot;,
+        &quot;minimalDurationValue&quot;: 150,
+        &quot;minimalDurationUnit&quot;: &quot;minutes&quot;,
+        &quot;resourceIds&quot;: [
+          &quot;mill-a&quot;
+        ]
+      },
+      &quot;issues&quot;: [
+        {
+          &quot;code&quot;: &quot;id-ignored&quot;,
+          &quot;message&quot;: &quot;Import ignores id and creates a new request&quot;,
+          &quot;blocking&quot;: false
+        },
+        {
+          &quot;code&quot;: &quot;structural-scope&quot;,
+          &quot;message&quot;: &quot;Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions&quot;,
+          &quot;blocking&quot;: false
+        }
+      ],
+      &quot;nativeDisposition&quot;: &quot;create&quot;,
+      &quot;id&quot;: &quot;row:1&quot;,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored target inspection confirms requirements are outside this request-only trial; originals with count two remain retained. Use 150 minutes to preserve 2.5 hours.&quot;,
+        &quot;values&quot;: {
+          &quot;id&quot;: &quot;old-1&quot;,
+          &quot;name&quot;: &quot;WO-001&quot;,
+          &quot;description&quot;: &quot;Mill, inspect\nKeep exact source&quot;,
+          &quot;status&quot;: &quot;new&quot;,
+          &quot;start_ts&quot;: &quot;&quot;,
+          &quot;end_ts&quot;: &quot;&quot;,
+          &quot;resource_id&quot;: &quot;mill-a&quot;,
+          &quot;resource_name&quot;: &quot;&quot;,
+          &quot;earliest_start_ts&quot;: &quot;&quot;,
+          &quot;latest_end_ts&quot;: &quot;&quot;,
+          &quot;min_duration_value&quot;: &quot;150&quot;,
+          &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+          &quot;actual_duration_value&quot;: &quot;&quot;,
+          &quot;actual_duration_unit&quot;: &quot;&quot;,
+          &quot;requirements_count&quot;: &quot;0&quot;
+        },
+        &quot;acknowledged&quot;: [
+          &quot;id-ignored&quot;,
+          &quot;structural-scope&quot;
+        ]
+      },
+      &quot;ready&quot;: true,
+      &quot;unacknowledged&quot;: []
+    },
+    {
+      &quot;occurrenceId&quot;: &quot;requests:row:2&quot;,
+      &quot;index&quot;: 2,
+      &quot;line&quot;: 4,
+      &quot;original&quot;: {
+        &quot;id&quot;: &quot;old-2&quot;,
+        &quot;name&quot;: &quot;WO-002&quot;,
+        &quot;description&quot;: &quot;&quot;,
+        &quot;status&quot;: &quot;new&quot;,
+        &quot;start_ts&quot;: &quot;&quot;,
+        &quot;end_ts&quot;: &quot;&quot;,
+        &quot;resource_id&quot;: &quot;mill-a&quot;,
+        &quot;resource_name&quot;: &quot;&quot;,
+        &quot;earliest_start_ts&quot;: &quot;&quot;,
+        &quot;latest_end_ts&quot;: &quot;&quot;,
+        &quot;min_duration_value&quot;: &quot;90&quot;,
+        &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+        &quot;actual_duration_value&quot;: &quot;&quot;,
+        &quot;actual_duration_unit&quot;: &quot;&quot;,
+        &quot;requirements_count&quot;: &quot;0&quot;
+      },
+      &quot;values&quot;: {
+        &quot;id&quot;: &quot;old-2&quot;,
+        &quot;name&quot;: &quot;WO-002&quot;,
+        &quot;description&quot;: &quot;&quot;,
+        &quot;status&quot;: &quot;new&quot;,
+        &quot;start_ts&quot;: &quot;&quot;,
+        &quot;end_ts&quot;: &quot;&quot;,
+        &quot;resource_id&quot;: &quot;mill-a&quot;,
+        &quot;resource_name&quot;: &quot;&quot;,
+        &quot;earliest_start_ts&quot;: &quot;&quot;,
+        &quot;latest_end_ts&quot;: &quot;&quot;,
+        &quot;min_duration_value&quot;: &quot;90&quot;,
+        &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+        &quot;actual_duration_value&quot;: &quot;&quot;,
+        &quot;actual_duration_unit&quot;: &quot;&quot;,
+        &quot;requirements_count&quot;: &quot;0&quot;
+      },
+      &quot;nativePayload&quot;: {
+        &quot;name&quot;: &quot;WO-002&quot;,
+        &quot;status&quot;: &quot;new&quot;,
+        &quot;minimalDurationValue&quot;: 90,
+        &quot;minimalDurationUnit&quot;: &quot;minutes&quot;,
+        &quot;resourceIds&quot;: [
+          &quot;mill-a&quot;
+        ]
+      },
+      &quot;issues&quot;: [
+        {
+          &quot;code&quot;: &quot;id-ignored&quot;,
+          &quot;message&quot;: &quot;Import ignores id and creates a new request&quot;,
+          &quot;blocking&quot;: false
+        },
+        {
+          &quot;code&quot;: &quot;structural-scope&quot;,
+          &quot;message&quot;: &quot;Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions&quot;,
+          &quot;blocking&quot;: false
+        }
+      ],
+      &quot;nativeDisposition&quot;: &quot;create&quot;,
+      &quot;id&quot;: &quot;row:2&quot;,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored exact resource mill-a and root-request scope reviewed.&quot;,
+        &quot;values&quot;: {
+          &quot;id&quot;: &quot;old-2&quot;,
+          &quot;name&quot;: &quot;WO-002&quot;,
+          &quot;description&quot;: &quot;&quot;,
+          &quot;status&quot;: &quot;new&quot;,
+          &quot;start_ts&quot;: &quot;&quot;,
+          &quot;end_ts&quot;: &quot;&quot;,
+          &quot;resource_id&quot;: &quot;mill-a&quot;,
+          &quot;resource_name&quot;: &quot;&quot;,
+          &quot;earliest_start_ts&quot;: &quot;&quot;,
+          &quot;latest_end_ts&quot;: &quot;&quot;,
+          &quot;min_duration_value&quot;: &quot;90&quot;,
+          &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+          &quot;actual_duration_value&quot;: &quot;&quot;,
+          &quot;actual_duration_unit&quot;: &quot;&quot;,
+          &quot;requirements_count&quot;: &quot;0&quot;
+        },
+        &quot;acknowledged&quot;: [
+          &quot;id-ignored&quot;,
+          &quot;structural-scope&quot;
+        ]
+      },
+      &quot;ready&quot;: true,
+      &quot;unacknowledged&quot;: []
+    }
+  ],
+  &quot;file&quot;: {
+    &quot;filename&quot;: &quot;Orkyo_Reviewed_requests.csv&quot;,
+    &quot;mime&quot;: &quot;text/csv&quot;,
+    &quot;text&quot;: &quot;id,name,description,status,start_ts,end_ts,resource_id,resource_name,earliest_start_ts,latest_end_ts,min_duration_value,min_duration_unit,actual_duration_value,actual_duration_unit,requirements_count\nold-1,WO-001,\&quot;Mill, inspect\nKeep exact source\&quot;,new,,,mill-a,,,,150,minutes,,,0\nold-2,WO-002,,new,,,mill-a,,,,90,minutes,,,0\n&quot;,
+    &quot;bytes&quot;: 324,
+    &quot;sha256&quot;: &quot;bdf2f81fec3be02ac6e847af42e8cf0e3e0256e87a487e38bac1d3da0f62cf29&quot;
+  },
+  &quot;collisions&quot;: [],
+  &quot;sourceEdition&quot;: 1,
+  &quot;sourceSha256&quot;: &quot;cc4803d3889ce931a27838e5e869d2a7d726b8ac8186a26f1efa11db6d3b217b&quot;,
+  &quot;context&quot;: {
+    &quot;tenant&quot;: &quot;Authored receiving tenant&quot;
+  },
+  &quot;outcomes&quot;: [
+    {
+      &quot;eventId&quot;: &quot;authored-7&quot;,
+      &quot;at&quot;: &quot;2026-10-15T01:00:07.000Z&quot;,
+      &quot;rowId&quot;: &quot;row:1&quot;,
+      &quot;status&quot;: &quot;created&quot;,
+      &quot;targetId&quot;: &quot;authored-request-701&quot;,
+      &quot;reason&quot;: &quot;First create returned an ID in the authored receiving scenario.&quot;,
+      &quot;reviewer&quot;: &quot;Authored operator&quot;,
+      &quot;evidence&quot;: {
+        &quot;text&quot;: &quot;{\&quot;id\&quot;:\&quot;authored-request-701\&quot;,\&quot;name\&quot;:\&quot;WO-001\&quot;}&quot;,
+        &quot;kind&quot;: &quot;authored-response&quot;
+      }
+    },
+    {
+      &quot;eventId&quot;: &quot;authored-9&quot;,
+      &quot;at&quot;: &quot;2026-10-15T01:00:09.000Z&quot;,
+      &quot;rowId&quot;: &quot;row:2&quot;,
+      &quot;status&quot;: &quot;not-attempted&quot;,
+      &quot;targetId&quot;: null,
+      &quot;reason&quot;: &quot;Authored importer stopped before second row; complete response and target lookup are retained.&quot;,
+      &quot;reviewer&quot;: &quot;Authored operator&quot;,
+      &quot;evidence&quot;: {
+        &quot;text&quot;: &quot;{\&quot;created\&quot;:1,\&quot;stoppedBeforeRow\&quot;:2,\&quot;targetLookup\&quot;:[]}&quot;,
+        &quot;kind&quot;: &quot;authored-response&quot;
+      }
+    }
+  ],
+  &quot;attempt&quot;: {
+    &quot;eventId&quot;: &quot;authored-6&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:06.000Z&quot;,
+    &quot;operator&quot;: &quot;Authored operator&quot;,
+    &quot;route&quot;: &quot;Requests CSV import&quot;,
+    &quot;confirmTenant&quot;: &quot;Authored receiving tenant&quot;,
+    &quot;details&quot;: &quot;Authored partial-write scenario; these are not production service responses.&quot;
+  }
+}</pre></details><details open><summary>requests-remaining · prepared · 0/1 outcomes</summary><pre>{
+  &quot;id&quot;: &quot;requests-remaining&quot;,
+  &quot;sourceId&quot;: &quot;requests&quot;,
+  &quot;createdAt&quot;: &quot;2026-10-15T01:00:10.000Z&quot;,
+  &quot;eventId&quot;: &quot;authored-10&quot;,
+  &quot;state&quot;: &quot;prepared&quot;,
+  &quot;rows&quot;: [
+    {
+      &quot;occurrenceId&quot;: &quot;requests:row:2&quot;,
+      &quot;index&quot;: 2,
+      &quot;line&quot;: 4,
+      &quot;original&quot;: {
+        &quot;id&quot;: &quot;old-2&quot;,
+        &quot;name&quot;: &quot;WO-002&quot;,
+        &quot;description&quot;: &quot;&quot;,
+        &quot;status&quot;: &quot;new&quot;,
+        &quot;start_ts&quot;: &quot;&quot;,
+        &quot;end_ts&quot;: &quot;&quot;,
+        &quot;resource_id&quot;: &quot;mill-a&quot;,
+        &quot;resource_name&quot;: &quot;&quot;,
+        &quot;earliest_start_ts&quot;: &quot;&quot;,
+        &quot;latest_end_ts&quot;: &quot;&quot;,
+        &quot;min_duration_value&quot;: &quot;90&quot;,
+        &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+        &quot;actual_duration_value&quot;: &quot;&quot;,
+        &quot;actual_duration_unit&quot;: &quot;&quot;,
+        &quot;requirements_count&quot;: &quot;0&quot;
+      },
+      &quot;values&quot;: {
+        &quot;id&quot;: &quot;old-2&quot;,
+        &quot;name&quot;: &quot;WO-002&quot;,
+        &quot;description&quot;: &quot;&quot;,
+        &quot;status&quot;: &quot;new&quot;,
+        &quot;start_ts&quot;: &quot;&quot;,
+        &quot;end_ts&quot;: &quot;&quot;,
+        &quot;resource_id&quot;: &quot;mill-a&quot;,
+        &quot;resource_name&quot;: &quot;&quot;,
+        &quot;earliest_start_ts&quot;: &quot;&quot;,
+        &quot;latest_end_ts&quot;: &quot;&quot;,
+        &quot;min_duration_value&quot;: &quot;90&quot;,
+        &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+        &quot;actual_duration_value&quot;: &quot;&quot;,
+        &quot;actual_duration_unit&quot;: &quot;&quot;,
+        &quot;requirements_count&quot;: &quot;0&quot;
+      },
+      &quot;nativePayload&quot;: {
+        &quot;name&quot;: &quot;WO-002&quot;,
+        &quot;status&quot;: &quot;new&quot;,
+        &quot;minimalDurationValue&quot;: 90,
+        &quot;minimalDurationUnit&quot;: &quot;minutes&quot;,
+        &quot;resourceIds&quot;: [
+          &quot;mill-a&quot;
+        ]
+      },
+      &quot;issues&quot;: [
+        {
+          &quot;code&quot;: &quot;id-ignored&quot;,
+          &quot;message&quot;: &quot;Import ignores id and creates a new request&quot;,
+          &quot;blocking&quot;: false
+        },
+        {
+          &quot;code&quot;: &quot;structural-scope&quot;,
+          &quot;message&quot;: &quot;Per-page request CSV does not restore site, hierarchy, dependencies or requirement definitions&quot;,
+          &quot;blocking&quot;: false
+        }
+      ],
+      &quot;nativeDisposition&quot;: &quot;create&quot;,
+      &quot;id&quot;: &quot;row:2&quot;,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored exact resource mill-a and root-request scope reviewed.&quot;,
+        &quot;values&quot;: {
+          &quot;id&quot;: &quot;old-2&quot;,
+          &quot;name&quot;: &quot;WO-002&quot;,
+          &quot;description&quot;: &quot;&quot;,
+          &quot;status&quot;: &quot;new&quot;,
+          &quot;start_ts&quot;: &quot;&quot;,
+          &quot;end_ts&quot;: &quot;&quot;,
+          &quot;resource_id&quot;: &quot;mill-a&quot;,
+          &quot;resource_name&quot;: &quot;&quot;,
+          &quot;earliest_start_ts&quot;: &quot;&quot;,
+          &quot;latest_end_ts&quot;: &quot;&quot;,
+          &quot;min_duration_value&quot;: &quot;90&quot;,
+          &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+          &quot;actual_duration_value&quot;: &quot;&quot;,
+          &quot;actual_duration_unit&quot;: &quot;&quot;,
+          &quot;requirements_count&quot;: &quot;0&quot;
+        },
+        &quot;acknowledged&quot;: [
+          &quot;id-ignored&quot;,
+          &quot;structural-scope&quot;
+        ]
+      },
+      &quot;ready&quot;: true,
+      &quot;unacknowledged&quot;: []
+    }
+  ],
+  &quot;file&quot;: {
+    &quot;filename&quot;: &quot;Orkyo_Reviewed_requests.csv&quot;,
+    &quot;mime&quot;: &quot;text/csv&quot;,
+    &quot;text&quot;: &quot;id,name,description,status,start_ts,end_ts,resource_id,resource_name,earliest_start_ts,latest_end_ts,min_duration_value,min_duration_unit,actual_duration_value,actual_duration_unit,requirements_count\nold-2,WO-002,,new,,,mill-a,,,,90,minutes,,,0\n&quot;,
+    &quot;bytes&quot;: 245,
+    &quot;sha256&quot;: &quot;c7df4528034530e467b0e24a6f7abc9199e4efc76e27fbc3aa88b44f99cdc2b9&quot;
+  },
+  &quot;collisions&quot;: [],
+  &quot;sourceEdition&quot;: 1,
+  &quot;sourceSha256&quot;: &quot;cc4803d3889ce931a27838e5e869d2a7d726b8ac8186a26f1efa11db6d3b217b&quot;,
+  &quot;context&quot;: {
+    &quot;tenant&quot;: &quot;Authored receiving tenant&quot;
+  },
+  &quot;outcomes&quot;: [],
+  &quot;attempt&quot;: null
+}</pre></details><details open><summary>jobs-1 · attempted · 2/2 outcomes</summary><pre>{
+  &quot;id&quot;: &quot;jobs-1&quot;,
+  &quot;sourceId&quot;: &quot;workbook&quot;,
+  &quot;createdAt&quot;: &quot;2026-10-15T01:00:15.000Z&quot;,
+  &quot;eventId&quot;: &quot;authored-15&quot;,
+  &quot;state&quot;: &quot;attempted&quot;,
+  &quot;rows&quot;: [
+    {
+      &quot;id&quot;: &quot;Jobs:6&quot;,
+      &quot;original&quot;: [
+        &quot;EX-100 Rough&quot;,
+        &quot;Authored demonstration&quot;,
+        &quot;CNC-01&quot;,
+        &quot;2026-10-16&quot;,
+        &quot;2026-10-19&quot;,
+        2.5
+      ],
+      &quot;values&quot;: [
+        &quot;EX-100 Rough&quot;,
+        &quot;Authored demonstration&quot;,
+        &quot;CNC-01&quot;,
+        &quot;2026-10-16&quot;,
+        &quot;2026-10-19&quot;,
+        2.5
+      ],
+      &quot;nativePayload&quot;: {
+        &quot;name&quot;: &quot;EX-100 Rough&quot;,
+        &quot;description&quot;: &quot;Authored demonstration&quot;,
+        &quot;siteId&quot;: &quot;authored-site&quot;,
+        &quot;resourceIds&quot;: [
+          &quot;authored-cnc&quot;
+        ],
+        &quot;startTs&quot;: &quot;2026-10-16T00:00:00Z&quot;,
+        &quot;endTs&quot;: &quot;2026-10-20T00:00:00Z&quot;,
+        &quot;minimalDurationValue&quot;: 5,
+        &quot;minimalDurationUnit&quot;: &quot;hours&quot;,
+        &quot;status&quot;: &quot;new&quot;
+      },
+      &quot;nativeDisposition&quot;: &quot;create&quot;,
+      &quot;jobKey&quot;: &quot;[\&quot;authored-site\&quot;,\&quot;EX-100 Rough\&quot;,\&quot;Authored demonstration\&quot;,\&quot;CNC-01\&quot;,\&quot;2026-10-16\&quot;,\&quot;2026-10-19\&quot;,2.5]&quot;,
+      &quot;issues&quot;: [
+        {
+          &quot;code&quot;: &quot;site-calendar-not-applied&quot;,
+          &quot;message&quot;: &quot;Native workbook duration counts Monday–Friday; review actual site shifts, holidays, shutdowns and overtime in the target calendar.&quot;,
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 0,
+          &quot;blocking&quot;: false
+        },
+        {
+          &quot;code&quot;: &quot;reused-stations-not-updated&quot;,
+          &quot;message&quot;: &quot;Existing stations are reused unchanged. Workbook names, notes and capacity do not update them.&quot;,
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 0,
+          &quot;blocking&quot;: false
+        }
+      ],
+      &quot;index&quot;: 6,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored site/code/actual geometry lookup and Monday-Friday window reviewed; station capacities remain separate.&quot;,
+        &quot;values&quot;: [
+          &quot;EX-100 Rough&quot;,
+          &quot;Authored demonstration&quot;,
+          &quot;CNC-01&quot;,
+          &quot;2026-10-16&quot;,
+          &quot;2026-10-19&quot;,
+          2.5
+        ],
+        &quot;acknowledged&quot;: [
+          &quot;site-calendar-not-applied&quot;,
+          &quot;reused-stations-not-updated&quot;
+        ]
+      },
+      &quot;ready&quot;: true,
+      &quot;unacknowledged&quot;: []
+    },
+    {
+      &quot;id&quot;: &quot;Jobs:7&quot;,
+      &quot;original&quot;: [
+        &quot;EX-100 Inspect&quot;,
+        &quot;&quot;,
+        &quot;INSPECT&quot;,
+        &quot;2026-10-19&quot;,
+        &quot;2026-10-19&quot;,
+        1.25
+      ],
+      &quot;values&quot;: [
+        &quot;EX-100 Inspect&quot;,
+        &quot;&quot;,
+        &quot;INSPECT&quot;,
+        &quot;2026-10-19&quot;,
+        &quot;2026-10-19&quot;,
+        1.25
+      ],
+      &quot;nativePayload&quot;: {
+        &quot;name&quot;: &quot;EX-100 Inspect&quot;,
+        &quot;siteId&quot;: &quot;authored-site&quot;,
+        &quot;resourceIds&quot;: [
+          &quot;authored-inspect&quot;
+        ],
+        &quot;startTs&quot;: &quot;2026-10-19T00:00:00Z&quot;,
+        &quot;endTs&quot;: &quot;2026-10-20T00:00:00Z&quot;,
+        &quot;minimalDurationValue&quot;: 1.25,
+        &quot;minimalDurationUnit&quot;: &quot;hours&quot;,
+        &quot;status&quot;: &quot;new&quot;
+      },
+      &quot;nativeDisposition&quot;: &quot;create&quot;,
+      &quot;jobKey&quot;: &quot;[\&quot;authored-site\&quot;,\&quot;EX-100 Inspect\&quot;,\&quot;\&quot;,\&quot;INSPECT\&quot;,\&quot;2026-10-19\&quot;,\&quot;2026-10-19\&quot;,1.25]&quot;,
+      &quot;issues&quot;: [
+        {
+          &quot;code&quot;: &quot;site-calendar-not-applied&quot;,
+          &quot;message&quot;: &quot;Native workbook duration counts Monday–Friday; review actual site shifts, holidays, shutdowns and overtime in the target calendar.&quot;,
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 0,
+          &quot;blocking&quot;: false
+        },
+        {
+          &quot;code&quot;: &quot;reused-stations-not-updated&quot;,
+          &quot;message&quot;: &quot;Existing stations are reused unchanged. Workbook names, notes and capacity do not update them.&quot;,
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 0,
+          &quot;blocking&quot;: false
+        }
+      ],
+      &quot;index&quot;: 7,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored site/code/actual geometry lookup and Monday-Friday window reviewed; station capacities remain separate.&quot;,
+        &quot;values&quot;: [
+          &quot;EX-100 Inspect&quot;,
+          &quot;&quot;,
+          &quot;INSPECT&quot;,
+          &quot;2026-10-19&quot;,
+          &quot;2026-10-19&quot;,
+          1.25
+        ],
+        &quot;acknowledged&quot;: [
+          &quot;site-calendar-not-applied&quot;,
+          &quot;reused-stations-not-updated&quot;
+        ]
+      },
+      &quot;ready&quot;: true,
+      &quot;unacknowledged&quot;: []
+    }
+  ],
+  &quot;file&quot;: {
+    &quot;filename&quot;: &quot;Orkyo_Reviewed_Jobs.xlsx&quot;,
+    &quot;mime&quot;: &quot;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&quot;,
+    &quot;sheets&quot;: [
+      {
+        &quot;name&quot;: &quot;Workstations&quot;,
+        &quot;rows&quot;: [
+          [
+            &quot;Orkyo production import&quot;
+          ],
+          [
+            &quot;Codes match exactly, including letter case.&quot;
+          ],
+          [
+            &quot;Capacity hours/day is retained; native import does not map it.&quot;
+          ],
+          [],
+          [
+            &quot;Code&quot;,
+            &quot;Workstation&quot;,
+            &quot;What stands there&quot;,
+            &quot;Capacity (h/day)&quot;,
+            &quot;Notes&quot;
+          ],
+          [
+            &quot;CNC-01&quot;,
+            &quot;Machining centre&quot;,
+            &quot;Fixture A&quot;,
+            8,
+            &quot;Authored example&quot;
+          ],
+          [
+            &quot;INSPECT&quot;,
+            &quot;Inspection&quot;,
+            &quot;&quot;,
+            6,
+            &quot;&quot;
+          ]
+        ]
+      },
+      {
+        &quot;name&quot;: &quot;Jobs&quot;,
+        &quot;rows&quot;: [
+          [
+            &quot;Orkyo production import&quot;
+          ],
+          [
+            &quot;End is inclusive; native request ends next midnight UTC.&quot;
+          ],
+          [
+            &quot;Duration counts Monday–Friday, with one-hour fallback.&quot;
+          ],
+          [],
+          [
+            &quot;Job&quot;,
+            &quot;Description&quot;,
+            &quot;Workstation code&quot;,
+            &quot;Start&quot;,
+            &quot;End&quot;,
+            &quot;Hours/day&quot;
+          ],
+          [
+            &quot;EX-100 Rough&quot;,
+            &quot;Authored demonstration&quot;,
+            &quot;CNC-01&quot;,
+            &quot;2026-10-16&quot;,
+            &quot;2026-10-19&quot;,
+            2.5
+          ],
+          [
+            &quot;EX-100 Inspect&quot;,
+            &quot;&quot;,
+            &quot;INSPECT&quot;,
+            &quot;2026-10-19&quot;,
+            &quot;2026-10-19&quot;,
+            1.25
+          ]
+        ]
+      }
+    ],
+    &quot;preview&quot;: {
+      &quot;schema&quot;: &quot;tjlabs.orkyo-workbook-plan.v1&quot;,
+      &quot;sourceCommit&quot;: &quot;9b773566ecbfb0947f51f6e20ea925c03ddb2a22&quot;,
+      &quot;sheets&quot;: [
+        {
+          &quot;name&quot;: &quot;Workstations&quot;,
+          &quot;rows&quot;: [
+            [
+              &quot;Orkyo production import&quot;
+            ],
+            [
+              &quot;Codes match exactly, including letter case.&quot;
+            ],
+            [
+              &quot;Capacity hours/day is retained; native import does not map it.&quot;
+            ],
+            [],
+            [
+              &quot;Code&quot;,
+              &quot;Workstation&quot;,
+              &quot;What stands there&quot;,
+              &quot;Capacity (h/day)&quot;,
+              &quot;Notes&quot;
+            ],
+            [
+              &quot;CNC-01&quot;,
+              &quot;Machining centre&quot;,
+              &quot;Fixture A&quot;,
+              8,
+              &quot;Authored example&quot;
+            ],
+            [
+              &quot;INSPECT&quot;,
+              &quot;Inspection&quot;,
+              &quot;&quot;,
+              6,
+              &quot;&quot;
+            ]
+          ]
+        },
+        {
+          &quot;name&quot;: &quot;Jobs&quot;,
+          &quot;rows&quot;: [
+            [
+              &quot;Orkyo production import&quot;
+            ],
+            [
+              &quot;End is inclusive; native request ends next midnight UTC.&quot;
+            ],
+            [
+              &quot;Duration counts Monday–Friday, with one-hour fallback.&quot;
+            ],
+            [],
+            [
+              &quot;Job&quot;,
+              &quot;Description&quot;,
+              &quot;Workstation code&quot;,
+              &quot;Start&quot;,
+              &quot;End&quot;,
+              &quot;Hours/day&quot;
+            ],
+            [
+              &quot;EX-100 Rough&quot;,
+              &quot;Authored demonstration&quot;,
+              &quot;CNC-01&quot;,
+              &quot;2026-10-16&quot;,
+              &quot;2026-10-19&quot;,
+              2.5
+            ],
+            [
+              &quot;EX-100 Inspect&quot;,
+              &quot;&quot;,
+              &quot;INSPECT&quot;,
+              &quot;2026-10-19&quot;,
+              &quot;2026-10-19&quot;,
+              1.25
+            ]
+          ]
+        }
+      ],
+      &quot;rows&quot;: [
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 1,
+          &quot;cells&quot;: [
+            &quot;Orkyo production import&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 2,
+          &quot;cells&quot;: [
+            &quot;Codes match exactly, including letter case.&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 3,
+          &quot;cells&quot;: [
+            &quot;Capacity hours/day is retained; native import does not map it.&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 4,
+          &quot;cells&quot;: [],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 5,
+          &quot;cells&quot;: [
+            &quot;Code&quot;,
+            &quot;Workstation&quot;,
+            &quot;What stands there&quot;,
+            &quot;Capacity (h/day)&quot;,
+            &quot;Notes&quot;
+          ],
+          &quot;role&quot;: &quot;header&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 6,
+          &quot;cells&quot;: [
+            &quot;CNC-01&quot;,
+            &quot;Machining centre&quot;,
+            &quot;Fixture A&quot;,
+            8,
+            &quot;Authored example&quot;
+          ],
+          &quot;role&quot;: &quot;data&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 7,
+          &quot;cells&quot;: [
+            &quot;INSPECT&quot;,
+            &quot;Inspection&quot;,
+            &quot;&quot;,
+            6,
+            &quot;&quot;
+          ],
+          &quot;role&quot;: &quot;data&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 1,
+          &quot;cells&quot;: [
+            &quot;Orkyo production import&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 2,
+          &quot;cells&quot;: [
+            &quot;End is inclusive; native request ends next midnight UTC.&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 3,
+          &quot;cells&quot;: [
+            &quot;Duration counts Monday–Friday, with one-hour fallback.&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 4,
+          &quot;cells&quot;: [],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 5,
+          &quot;cells&quot;: [
+            &quot;Job&quot;,
+            &quot;Description&quot;,
+            &quot;Workstation code&quot;,
+            &quot;Start&quot;,
+            &quot;End&quot;,
+            &quot;Hours/day&quot;
+          ],
+          &quot;role&quot;: &quot;header&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 6,
+          &quot;cells&quot;: [
+            &quot;EX-100 Rough&quot;,
+            &quot;Authored demonstration&quot;,
+            &quot;CNC-01&quot;,
+            &quot;2026-10-16&quot;,
+            &quot;2026-10-19&quot;,
+            2.5
+          ],
+          &quot;role&quot;: &quot;data&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 7,
+          &quot;cells&quot;: [
+            &quot;EX-100 Inspect&quot;,
+            &quot;&quot;,
+            &quot;INSPECT&quot;,
+            &quot;2026-10-19&quot;,
+            &quot;2026-10-19&quot;,
+            1.25
+          ],
+          &quot;role&quot;: &quot;data&quot;
+        }
+      ],
+      &quot;context&quot;: {
+        &quot;siteId&quot;: &quot;authored-site&quot;,
+        &quot;typeKey&quot;: &quot;machine&quot;,
+        &quot;existingComplete&quot;: true,
+        &quot;existingResources&quot;: [
+          {
+            &quot;code&quot;: &quot;CNC-01&quot;,
+            &quot;id&quot;: &quot;authored-cnc&quot;
+          },
+          {
+            &quot;code&quot;: &quot;INSPECT&quot;,
+            &quot;id&quot;: &quot;authored-inspect&quot;
+          }
+        ],
+        &quot;priorJobCreates&quot;: []
+      },
+      &quot;nativeParsed&quot;: {
+        &quot;workstations&quot;: [
+          {
+            &quot;row&quot;: 6,
+            &quot;code&quot;: &quot;CNC-01&quot;,
+            &quot;name&quot;: &quot;Machining centre&quot;,
+            &quot;standsThere&quot;: &quot;Fixture A&quot;,
+            &quot;notes&quot;: &quot;Authored example&quot;
+          },
+          {
+            &quot;row&quot;: 7,
+            &quot;code&quot;: &quot;INSPECT&quot;,
+            &quot;name&quot;: &quot;Inspection&quot;,
+            &quot;standsThere&quot;: &quot;&quot;,
+            &quot;notes&quot;: &quot;&quot;
+          }
+        ],
+        &quot;jobs&quot;: [
+          {
+            &quot;row&quot;: 6,
+            &quot;job&quot;: &quot;EX-100 Rough&quot;,
+            &quot;description&quot;: &quot;Authored demonstration&quot;,
+            &quot;workstationCode&quot;: &quot;CNC-01&quot;,
+            &quot;start&quot;: &quot;2026-10-16&quot;,
+            &quot;end&quot;: &quot;2026-10-19&quot;,
+            &quot;hoursPerDay&quot;: 2.5
+          },
+          {
+            &quot;row&quot;: 7,
+            &quot;job&quot;: &quot;EX-100 Inspect&quot;,
+            &quot;description&quot;: &quot;&quot;,
+            &quot;workstationCode&quot;: &quot;INSPECT&quot;,
+            &quot;start&quot;: &quot;2026-10-19&quot;,
+            &quot;end&quot;: &quot;2026-10-19&quot;,
+            &quot;hoursPerDay&quot;: 1.25
+          }
+        ],
+        &quot;errors&quot;: []
+      },
+      &quot;workstations&quot;: [
+        {
+          &quot;row&quot;: 6,
+          &quot;code&quot;: &quot;CNC-01&quot;,
+          &quot;action&quot;: &quot;reuse&quot;,
+          &quot;existingResourceId&quot;: &quot;authored-cnc&quot;,
+          &quot;original&quot;: [
+            &quot;CNC-01&quot;,
+            &quot;Machining centre&quot;,
+            &quot;Fixture A&quot;,
+            8,
+            &quot;Authored example&quot;
+          ],
+          &quot;parsed&quot;: {
+            &quot;row&quot;: 6,
+            &quot;code&quot;: &quot;CNC-01&quot;,
+            &quot;name&quot;: &quot;Machining centre&quot;,
+            &quot;standsThere&quot;: &quot;Fixture A&quot;,
+            &quot;notes&quot;: &quot;Authored example&quot;
+          },
+          &quot;payload&quot;: null
+        },
+        {
+          &quot;row&quot;: 7,
+          &quot;code&quot;: &quot;INSPECT&quot;,
+          &quot;action&quot;: &quot;reuse&quot;,
+          &quot;existingResourceId&quot;: &quot;authored-inspect&quot;,
+          &quot;original&quot;: [
+            &quot;INSPECT&quot;,
+            &quot;Inspection&quot;,
+            &quot;&quot;,
+            6,
+            &quot;&quot;
+          ],
+          &quot;parsed&quot;: {
+            &quot;row&quot;: 7,
+            &quot;code&quot;: &quot;INSPECT&quot;,
+            &quot;name&quot;: &quot;Inspection&quot;,
+            &quot;standsThere&quot;: &quot;&quot;,
+            &quot;notes&quot;: &quot;&quot;
+          },
+          &quot;payload&quot;: null
+        }
+      ],
+      &quot;jobs&quot;: [
+        {
+          &quot;row&quot;: 6,
+          &quot;jobKey&quot;: &quot;[\&quot;authored-site\&quot;,\&quot;EX-100 Rough\&quot;,\&quot;Authored demonstration\&quot;,\&quot;CNC-01\&quot;,\&quot;2026-10-16\&quot;,\&quot;2026-10-19\&quot;,2.5]&quot;,
+          &quot;original&quot;: [
+            &quot;EX-100 Rough&quot;,
+            &quot;Authored demonstration&quot;,
+            &quot;CNC-01&quot;,
+            &quot;2026-10-16&quot;,
+            &quot;2026-10-19&quot;,
+            2.5
+          ],
+          &quot;parsed&quot;: {
+            &quot;row&quot;: 6,
+            &quot;job&quot;: &quot;EX-100 Rough&quot;,
+            &quot;description&quot;: &quot;Authored demonstration&quot;,
+            &quot;workstationCode&quot;: &quot;CNC-01&quot;,
+            &quot;start&quot;: &quot;2026-10-16&quot;,
+            &quot;end&quot;: &quot;2026-10-19&quot;,
+            &quot;hoursPerDay&quot;: 2.5
+          },
+          &quot;workingDays&quot;: 2,
+          &quot;minimumHours&quot;: 5,
+          &quot;payload&quot;: {
+            &quot;name&quot;: &quot;EX-100 Rough&quot;,
+            &quot;description&quot;: &quot;Authored demonstration&quot;,
+            &quot;siteId&quot;: &quot;authored-site&quot;,
+            &quot;resourceIds&quot;: [
+              &quot;authored-cnc&quot;
+            ],
+            &quot;startTs&quot;: &quot;2026-10-16T00:00:00Z&quot;,
+            &quot;endTs&quot;: &quot;2026-10-20T00:00:00Z&quot;,
+            &quot;minimalDurationValue&quot;: 5,
+            &quot;minimalDurationUnit&quot;: &quot;hours&quot;,
+            &quot;status&quot;: &quot;new&quot;
+          },
+          &quot;resourceBinding&quot;: {
+            &quot;code&quot;: &quot;CNC-01&quot;,
+            &quot;action&quot;: &quot;reuse&quot;,
+            &quot;existingResourceId&quot;: &quot;authored-cnc&quot;,
+            &quot;resolveAfterWorkstationCreate&quot;: false
+          },
+          &quot;priorCreates&quot;: []
+        },
+        {
+          &quot;row&quot;: 7,
+          &quot;jobKey&quot;: &quot;[\&quot;authored-site\&quot;,\&quot;EX-100 Inspect\&quot;,\&quot;\&quot;,\&quot;INSPECT\&quot;,\&quot;2026-10-19\&quot;,\&quot;2026-10-19\&quot;,1.25]&quot;,
+          &quot;original&quot;: [
+            &quot;EX-100 Inspect&quot;,
+            &quot;&quot;,
+            &quot;INSPECT&quot;,
+            &quot;2026-10-19&quot;,
+            &quot;2026-10-19&quot;,
+            1.25
+          ],
+          &quot;parsed&quot;: {
+            &quot;row&quot;: 7,
+            &quot;job&quot;: &quot;EX-100 Inspect&quot;,
+            &quot;description&quot;: &quot;&quot;,
+            &quot;workstationCode&quot;: &quot;INSPECT&quot;,
+            &quot;start&quot;: &quot;2026-10-19&quot;,
+            &quot;end&quot;: &quot;2026-10-19&quot;,
+            &quot;hoursPerDay&quot;: 1.25
+          },
+          &quot;workingDays&quot;: 1,
+          &quot;minimumHours&quot;: 1.25,
+          &quot;payload&quot;: {
+            &quot;name&quot;: &quot;EX-100 Inspect&quot;,
+            &quot;siteId&quot;: &quot;authored-site&quot;,
+            &quot;resourceIds&quot;: [
+              &quot;authored-inspect&quot;
+            ],
+            &quot;startTs&quot;: &quot;2026-10-19T00:00:00Z&quot;,
+            &quot;endTs&quot;: &quot;2026-10-20T00:00:00Z&quot;,
+            &quot;minimalDurationValue&quot;: 1.25,
+            &quot;minimalDurationUnit&quot;: &quot;hours&quot;,
+            &quot;status&quot;: &quot;new&quot;
+          },
+          &quot;resourceBinding&quot;: {
+            &quot;code&quot;: &quot;INSPECT&quot;,
+            &quot;action&quot;: &quot;reuse&quot;,
+            &quot;existingResourceId&quot;: &quot;authored-inspect&quot;,
+            &quot;resolveAfterWorkstationCreate&quot;: false
+          },
+          &quot;priorCreates&quot;: []
+        }
+      ],
+      &quot;issues&quot;: [
+        {
+          &quot;code&quot;: &quot;capacity-not-mapped&quot;,
+          &quot;message&quot;: &quot;Hours/day capacity is retained but is not imported as occupancy or calendar.&quot;,
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 6,
+          &quot;blocking&quot;: false,
+          &quot;originalValue&quot;: 8
+        },
+        {
+          &quot;code&quot;: &quot;capacity-not-mapped&quot;,
+          &quot;message&quot;: &quot;Hours/day capacity is retained but is not imported as occupancy or calendar.&quot;,
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 7,
+          &quot;blocking&quot;: false,
+          &quot;originalValue&quot;: 6
+        },
+        {
+          &quot;code&quot;: &quot;site-calendar-not-applied&quot;,
+          &quot;message&quot;: &quot;Native workbook duration counts Monday–Friday; review actual site shifts, holidays, shutdowns and overtime in the target calendar.&quot;,
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 0,
+          &quot;blocking&quot;: false
+        },
+        {
+          &quot;code&quot;: &quot;reused-stations-not-updated&quot;,
+          &quot;message&quot;: &quot;Existing stations are reused unchanged. Workbook names, notes and capacity do not update them.&quot;,
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 0,
+          &quot;blocking&quot;: false
+        }
+      ],
+      &quot;summary&quot;: {
+        &quot;sourceRows&quot;: 14,
+        &quot;workstations&quot;: 2,
+        &quot;createWorkstations&quot;: 0,
+        &quot;reuseWorkstations&quot;: 2,
+        &quot;createJobs&quot;: 2,
+        &quot;blocking&quot;: 0,
+        &quot;review&quot;: 4
+      },
+      &quot;execution&quot;: &quot;Stations first, then every job, sequentially. Completed writes remain after a later failure. Record actual IDs and prepare only remaining jobs after reconciling that run.&quot;
+    }
+  },
+  &quot;collisions&quot;: [],
+  &quot;sourceEdition&quot;: 1,
+  &quot;sourceSha256&quot;: &quot;b1fc4526c1cc5930df4b2515c0b680b4533a5583f1e91bfb16a7dead289d7dc6&quot;,
+  &quot;context&quot;: {
+    &quot;tenant&quot;: &quot;Authored receiving tenant&quot;,
+    &quot;siteId&quot;: &quot;authored-site&quot;,
+    &quot;typeKey&quot;: &quot;machine&quot;,
+    &quot;existingComplete&quot;: true,
+    &quot;existingResources&quot;: [
+      {
+        &quot;code&quot;: &quot;CNC-01&quot;,
+        &quot;id&quot;: &quot;authored-cnc&quot;
+      },
+      {
+        &quot;code&quot;: &quot;INSPECT&quot;,
+        &quot;id&quot;: &quot;authored-inspect&quot;
+      }
+    ],
+    &quot;lookupEvidence&quot;: {
+      &quot;text&quot;: &quot;{\&quot;site\&quot;:\&quot;authored-site\&quot;,\&quot;hasNextPage\&quot;:false,\&quot;resources\&quot;:[{\&quot;code\&quot;:\&quot;CNC-01\&quot;,\&quot;id\&quot;:\&quot;authored-cnc\&quot;},{\&quot;code\&quot;:\&quot;INSPECT\&quot;,\&quot;id\&quot;:\&quot;authored-inspect\&quot;}]}&quot;,
+      &quot;kind&quot;: &quot;authored-lookup&quot;
+    }
+  },
+  &quot;outcomes&quot;: [
+    {
+      &quot;eventId&quot;: &quot;authored-17&quot;,
+      &quot;at&quot;: &quot;2026-10-15T01:00:17.000Z&quot;,
+      &quot;rowId&quot;: &quot;Jobs:6&quot;,
+      &quot;status&quot;: &quot;created&quot;,
+      &quot;targetId&quot;: &quot;authored-job-801&quot;,
+      &quot;reason&quot;: &quot;Authored first job was created.&quot;,
+      &quot;reviewer&quot;: &quot;Authored operator&quot;,
+      &quot;evidence&quot;: {
+        &quot;text&quot;: &quot;{\&quot;id\&quot;:\&quot;authored-job-801\&quot;}&quot;,
+        &quot;kind&quot;: &quot;authored-response&quot;
+      }
+    },
+    {
+      &quot;eventId&quot;: &quot;authored-18&quot;,
+      &quot;at&quot;: &quot;2026-10-15T01:00:18.000Z&quot;,
+      &quot;rowId&quot;: &quot;Jobs:7&quot;,
+      &quot;status&quot;: &quot;rejected&quot;,
+      &quot;targetId&quot;: null,
+      &quot;reason&quot;: &quot;Authored receiver rejected second job before creation.&quot;,
+      &quot;reviewer&quot;: &quot;Authored operator&quot;,
+      &quot;evidence&quot;: {
+        &quot;text&quot;: &quot;{\&quot;status\&quot;:400,\&quot;created\&quot;:false,\&quot;row\&quot;:7}&quot;,
+        &quot;kind&quot;: &quot;authored-response&quot;
+      }
+    }
+  ],
+  &quot;attempt&quot;: {
+    &quot;eventId&quot;: &quot;authored-16&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:16.000Z&quot;,
+    &quot;operator&quot;: &quot;Authored operator&quot;,
+    &quot;route&quot;: &quot;Production workbook import&quot;,
+    &quot;confirmTenant&quot;: &quot;Authored receiving tenant&quot;,
+    &quot;details&quot;: &quot;&quot;
+  }
+}</pre></details><details open><summary>jobs-remaining · prepared · 0/1 outcomes</summary><pre>{
+  &quot;id&quot;: &quot;jobs-remaining&quot;,
+  &quot;sourceId&quot;: &quot;workbook&quot;,
+  &quot;createdAt&quot;: &quot;2026-10-15T01:00:19.000Z&quot;,
+  &quot;eventId&quot;: &quot;authored-19&quot;,
+  &quot;state&quot;: &quot;prepared&quot;,
+  &quot;rows&quot;: [
+    {
+      &quot;id&quot;: &quot;Jobs:7&quot;,
+      &quot;original&quot;: [
+        &quot;EX-100 Inspect&quot;,
+        &quot;&quot;,
+        &quot;INSPECT&quot;,
+        &quot;2026-10-19&quot;,
+        &quot;2026-10-19&quot;,
+        1.25
+      ],
+      &quot;values&quot;: [
+        &quot;EX-100 Inspect&quot;,
+        &quot;&quot;,
+        &quot;INSPECT&quot;,
+        &quot;2026-10-19&quot;,
+        &quot;2026-10-19&quot;,
+        1.25
+      ],
+      &quot;nativePayload&quot;: {
+        &quot;name&quot;: &quot;EX-100 Inspect&quot;,
+        &quot;siteId&quot;: &quot;authored-site&quot;,
+        &quot;resourceIds&quot;: [
+          &quot;authored-inspect&quot;
+        ],
+        &quot;startTs&quot;: &quot;2026-10-19T00:00:00Z&quot;,
+        &quot;endTs&quot;: &quot;2026-10-20T00:00:00Z&quot;,
+        &quot;minimalDurationValue&quot;: 1.25,
+        &quot;minimalDurationUnit&quot;: &quot;hours&quot;,
+        &quot;status&quot;: &quot;new&quot;
+      },
+      &quot;nativeDisposition&quot;: &quot;create&quot;,
+      &quot;jobKey&quot;: &quot;[\&quot;authored-site\&quot;,\&quot;EX-100 Inspect\&quot;,\&quot;\&quot;,\&quot;INSPECT\&quot;,\&quot;2026-10-19\&quot;,\&quot;2026-10-19\&quot;,1.25]&quot;,
+      &quot;issues&quot;: [
+        {
+          &quot;code&quot;: &quot;site-calendar-not-applied&quot;,
+          &quot;message&quot;: &quot;Native workbook duration counts Monday–Friday; review actual site shifts, holidays, shutdowns and overtime in the target calendar.&quot;,
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 0,
+          &quot;blocking&quot;: false
+        },
+        {
+          &quot;code&quot;: &quot;reused-stations-not-updated&quot;,
+          &quot;message&quot;: &quot;Existing stations are reused unchanged. Workbook names, notes and capacity do not update them.&quot;,
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 0,
+          &quot;blocking&quot;: false
+        }
+      ],
+      &quot;index&quot;: 7,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored site/code/actual geometry lookup and Monday-Friday window reviewed; station capacities remain separate.&quot;,
+        &quot;values&quot;: [
+          &quot;EX-100 Inspect&quot;,
+          &quot;&quot;,
+          &quot;INSPECT&quot;,
+          &quot;2026-10-19&quot;,
+          &quot;2026-10-19&quot;,
+          1.25
+        ],
+        &quot;acknowledged&quot;: [
+          &quot;site-calendar-not-applied&quot;,
+          &quot;reused-stations-not-updated&quot;
+        ]
+      },
+      &quot;ready&quot;: true,
+      &quot;unacknowledged&quot;: []
+    }
+  ],
+  &quot;file&quot;: {
+    &quot;filename&quot;: &quot;Orkyo_Reviewed_Jobs.xlsx&quot;,
+    &quot;mime&quot;: &quot;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&quot;,
+    &quot;sheets&quot;: [
+      {
+        &quot;name&quot;: &quot;Workstations&quot;,
+        &quot;rows&quot;: [
+          [
+            &quot;Orkyo production import&quot;
+          ],
+          [
+            &quot;Codes match exactly, including letter case.&quot;
+          ],
+          [
+            &quot;Capacity hours/day is retained; native import does not map it.&quot;
+          ],
+          [],
+          [
+            &quot;Code&quot;,
+            &quot;Workstation&quot;,
+            &quot;What stands there&quot;,
+            &quot;Capacity (h/day)&quot;,
+            &quot;Notes&quot;
+          ],
+          [
+            &quot;CNC-01&quot;,
+            &quot;Machining centre&quot;,
+            &quot;Fixture A&quot;,
+            8,
+            &quot;Authored example&quot;
+          ],
+          [
+            &quot;INSPECT&quot;,
+            &quot;Inspection&quot;,
+            &quot;&quot;,
+            6,
+            &quot;&quot;
+          ]
+        ]
+      },
+      {
+        &quot;name&quot;: &quot;Jobs&quot;,
+        &quot;rows&quot;: [
+          [
+            &quot;Orkyo production import&quot;
+          ],
+          [
+            &quot;End is inclusive; native request ends next midnight UTC.&quot;
+          ],
+          [
+            &quot;Duration counts Monday–Friday, with one-hour fallback.&quot;
+          ],
+          [],
+          [
+            &quot;Job&quot;,
+            &quot;Description&quot;,
+            &quot;Workstation code&quot;,
+            &quot;Start&quot;,
+            &quot;End&quot;,
+            &quot;Hours/day&quot;
+          ],
+          [
+            &quot;EX-100 Inspect&quot;,
+            &quot;&quot;,
+            &quot;INSPECT&quot;,
+            &quot;2026-10-19&quot;,
+            &quot;2026-10-19&quot;,
+            1.25
+          ]
+        ]
+      }
+    ],
+    &quot;preview&quot;: {
+      &quot;schema&quot;: &quot;tjlabs.orkyo-workbook-plan.v1&quot;,
+      &quot;sourceCommit&quot;: &quot;9b773566ecbfb0947f51f6e20ea925c03ddb2a22&quot;,
+      &quot;sheets&quot;: [
+        {
+          &quot;name&quot;: &quot;Workstations&quot;,
+          &quot;rows&quot;: [
+            [
+              &quot;Orkyo production import&quot;
+            ],
+            [
+              &quot;Codes match exactly, including letter case.&quot;
+            ],
+            [
+              &quot;Capacity hours/day is retained; native import does not map it.&quot;
+            ],
+            [],
+            [
+              &quot;Code&quot;,
+              &quot;Workstation&quot;,
+              &quot;What stands there&quot;,
+              &quot;Capacity (h/day)&quot;,
+              &quot;Notes&quot;
+            ],
+            [
+              &quot;CNC-01&quot;,
+              &quot;Machining centre&quot;,
+              &quot;Fixture A&quot;,
+              8,
+              &quot;Authored example&quot;
+            ],
+            [
+              &quot;INSPECT&quot;,
+              &quot;Inspection&quot;,
+              &quot;&quot;,
+              6,
+              &quot;&quot;
+            ]
+          ]
+        },
+        {
+          &quot;name&quot;: &quot;Jobs&quot;,
+          &quot;rows&quot;: [
+            [
+              &quot;Orkyo production import&quot;
+            ],
+            [
+              &quot;End is inclusive; native request ends next midnight UTC.&quot;
+            ],
+            [
+              &quot;Duration counts Monday–Friday, with one-hour fallback.&quot;
+            ],
+            [],
+            [
+              &quot;Job&quot;,
+              &quot;Description&quot;,
+              &quot;Workstation code&quot;,
+              &quot;Start&quot;,
+              &quot;End&quot;,
+              &quot;Hours/day&quot;
+            ],
+            [
+              &quot;EX-100 Inspect&quot;,
+              &quot;&quot;,
+              &quot;INSPECT&quot;,
+              &quot;2026-10-19&quot;,
+              &quot;2026-10-19&quot;,
+              1.25
+            ]
+          ]
+        }
+      ],
+      &quot;rows&quot;: [
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 1,
+          &quot;cells&quot;: [
+            &quot;Orkyo production import&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 2,
+          &quot;cells&quot;: [
+            &quot;Codes match exactly, including letter case.&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 3,
+          &quot;cells&quot;: [
+            &quot;Capacity hours/day is retained; native import does not map it.&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 4,
+          &quot;cells&quot;: [],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 5,
+          &quot;cells&quot;: [
+            &quot;Code&quot;,
+            &quot;Workstation&quot;,
+            &quot;What stands there&quot;,
+            &quot;Capacity (h/day)&quot;,
+            &quot;Notes&quot;
+          ],
+          &quot;role&quot;: &quot;header&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 6,
+          &quot;cells&quot;: [
+            &quot;CNC-01&quot;,
+            &quot;Machining centre&quot;,
+            &quot;Fixture A&quot;,
+            8,
+            &quot;Authored example&quot;
+          ],
+          &quot;role&quot;: &quot;data&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 7,
+          &quot;cells&quot;: [
+            &quot;INSPECT&quot;,
+            &quot;Inspection&quot;,
+            &quot;&quot;,
+            6,
+            &quot;&quot;
+          ],
+          &quot;role&quot;: &quot;data&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 1,
+          &quot;cells&quot;: [
+            &quot;Orkyo production import&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 2,
+          &quot;cells&quot;: [
+            &quot;End is inclusive; native request ends next midnight UTC.&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 3,
+          &quot;cells&quot;: [
+            &quot;Duration counts Monday–Friday, with one-hour fallback.&quot;
+          ],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 4,
+          &quot;cells&quot;: [],
+          &quot;role&quot;: &quot;instruction&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 5,
+          &quot;cells&quot;: [
+            &quot;Job&quot;,
+            &quot;Description&quot;,
+            &quot;Workstation code&quot;,
+            &quot;Start&quot;,
+            &quot;End&quot;,
+            &quot;Hours/day&quot;
+          ],
+          &quot;role&quot;: &quot;header&quot;
+        },
+        {
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 6,
+          &quot;cells&quot;: [
+            &quot;EX-100 Inspect&quot;,
+            &quot;&quot;,
+            &quot;INSPECT&quot;,
+            &quot;2026-10-19&quot;,
+            &quot;2026-10-19&quot;,
+            1.25
+          ],
+          &quot;role&quot;: &quot;data&quot;
+        }
+      ],
+      &quot;context&quot;: {
+        &quot;siteId&quot;: &quot;authored-site&quot;,
+        &quot;typeKey&quot;: &quot;machine&quot;,
+        &quot;existingComplete&quot;: true,
+        &quot;existingResources&quot;: [
+          {
+            &quot;code&quot;: &quot;CNC-01&quot;,
+            &quot;id&quot;: &quot;authored-cnc&quot;
+          },
+          {
+            &quot;code&quot;: &quot;INSPECT&quot;,
+            &quot;id&quot;: &quot;authored-inspect&quot;
+          }
+        ],
+        &quot;priorJobCreates&quot;: []
+      },
+      &quot;nativeParsed&quot;: {
+        &quot;workstations&quot;: [
+          {
+            &quot;row&quot;: 6,
+            &quot;code&quot;: &quot;CNC-01&quot;,
+            &quot;name&quot;: &quot;Machining centre&quot;,
+            &quot;standsThere&quot;: &quot;Fixture A&quot;,
+            &quot;notes&quot;: &quot;Authored example&quot;
+          },
+          {
+            &quot;row&quot;: 7,
+            &quot;code&quot;: &quot;INSPECT&quot;,
+            &quot;name&quot;: &quot;Inspection&quot;,
+            &quot;standsThere&quot;: &quot;&quot;,
+            &quot;notes&quot;: &quot;&quot;
+          }
+        ],
+        &quot;jobs&quot;: [
+          {
+            &quot;row&quot;: 6,
+            &quot;job&quot;: &quot;EX-100 Inspect&quot;,
+            &quot;description&quot;: &quot;&quot;,
+            &quot;workstationCode&quot;: &quot;INSPECT&quot;,
+            &quot;start&quot;: &quot;2026-10-19&quot;,
+            &quot;end&quot;: &quot;2026-10-19&quot;,
+            &quot;hoursPerDay&quot;: 1.25
+          }
+        ],
+        &quot;errors&quot;: []
+      },
+      &quot;workstations&quot;: [
+        {
+          &quot;row&quot;: 6,
+          &quot;code&quot;: &quot;CNC-01&quot;,
+          &quot;action&quot;: &quot;reuse&quot;,
+          &quot;existingResourceId&quot;: &quot;authored-cnc&quot;,
+          &quot;original&quot;: [
+            &quot;CNC-01&quot;,
+            &quot;Machining centre&quot;,
+            &quot;Fixture A&quot;,
+            8,
+            &quot;Authored example&quot;
+          ],
+          &quot;parsed&quot;: {
+            &quot;row&quot;: 6,
+            &quot;code&quot;: &quot;CNC-01&quot;,
+            &quot;name&quot;: &quot;Machining centre&quot;,
+            &quot;standsThere&quot;: &quot;Fixture A&quot;,
+            &quot;notes&quot;: &quot;Authored example&quot;
+          },
+          &quot;payload&quot;: null
+        },
+        {
+          &quot;row&quot;: 7,
+          &quot;code&quot;: &quot;INSPECT&quot;,
+          &quot;action&quot;: &quot;reuse&quot;,
+          &quot;existingResourceId&quot;: &quot;authored-inspect&quot;,
+          &quot;original&quot;: [
+            &quot;INSPECT&quot;,
+            &quot;Inspection&quot;,
+            &quot;&quot;,
+            6,
+            &quot;&quot;
+          ],
+          &quot;parsed&quot;: {
+            &quot;row&quot;: 7,
+            &quot;code&quot;: &quot;INSPECT&quot;,
+            &quot;name&quot;: &quot;Inspection&quot;,
+            &quot;standsThere&quot;: &quot;&quot;,
+            &quot;notes&quot;: &quot;&quot;
+          },
+          &quot;payload&quot;: null
+        }
+      ],
+      &quot;jobs&quot;: [
+        {
+          &quot;row&quot;: 6,
+          &quot;jobKey&quot;: &quot;[\&quot;authored-site\&quot;,\&quot;EX-100 Inspect\&quot;,\&quot;\&quot;,\&quot;INSPECT\&quot;,\&quot;2026-10-19\&quot;,\&quot;2026-10-19\&quot;,1.25]&quot;,
+          &quot;original&quot;: [
+            &quot;EX-100 Inspect&quot;,
+            &quot;&quot;,
+            &quot;INSPECT&quot;,
+            &quot;2026-10-19&quot;,
+            &quot;2026-10-19&quot;,
+            1.25
+          ],
+          &quot;parsed&quot;: {
+            &quot;row&quot;: 6,
+            &quot;job&quot;: &quot;EX-100 Inspect&quot;,
+            &quot;description&quot;: &quot;&quot;,
+            &quot;workstationCode&quot;: &quot;INSPECT&quot;,
+            &quot;start&quot;: &quot;2026-10-19&quot;,
+            &quot;end&quot;: &quot;2026-10-19&quot;,
+            &quot;hoursPerDay&quot;: 1.25
+          },
+          &quot;workingDays&quot;: 1,
+          &quot;minimumHours&quot;: 1.25,
+          &quot;payload&quot;: {
+            &quot;name&quot;: &quot;EX-100 Inspect&quot;,
+            &quot;siteId&quot;: &quot;authored-site&quot;,
+            &quot;resourceIds&quot;: [
+              &quot;authored-inspect&quot;
+            ],
+            &quot;startTs&quot;: &quot;2026-10-19T00:00:00Z&quot;,
+            &quot;endTs&quot;: &quot;2026-10-20T00:00:00Z&quot;,
+            &quot;minimalDurationValue&quot;: 1.25,
+            &quot;minimalDurationUnit&quot;: &quot;hours&quot;,
+            &quot;status&quot;: &quot;new&quot;
+          },
+          &quot;resourceBinding&quot;: {
+            &quot;code&quot;: &quot;INSPECT&quot;,
+            &quot;action&quot;: &quot;reuse&quot;,
+            &quot;existingResourceId&quot;: &quot;authored-inspect&quot;,
+            &quot;resolveAfterWorkstationCreate&quot;: false
+          },
+          &quot;priorCreates&quot;: []
+        }
+      ],
+      &quot;issues&quot;: [
+        {
+          &quot;code&quot;: &quot;capacity-not-mapped&quot;,
+          &quot;message&quot;: &quot;Hours/day capacity is retained but is not imported as occupancy or calendar.&quot;,
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 6,
+          &quot;blocking&quot;: false,
+          &quot;originalValue&quot;: 8
+        },
+        {
+          &quot;code&quot;: &quot;capacity-not-mapped&quot;,
+          &quot;message&quot;: &quot;Hours/day capacity is retained but is not imported as occupancy or calendar.&quot;,
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 7,
+          &quot;blocking&quot;: false,
+          &quot;originalValue&quot;: 6
+        },
+        {
+          &quot;code&quot;: &quot;site-calendar-not-applied&quot;,
+          &quot;message&quot;: &quot;Native workbook duration counts Monday–Friday; review actual site shifts, holidays, shutdowns and overtime in the target calendar.&quot;,
+          &quot;sheet&quot;: &quot;Jobs&quot;,
+          &quot;row&quot;: 0,
+          &quot;blocking&quot;: false
+        },
+        {
+          &quot;code&quot;: &quot;reused-stations-not-updated&quot;,
+          &quot;message&quot;: &quot;Existing stations are reused unchanged. Workbook names, notes and capacity do not update them.&quot;,
+          &quot;sheet&quot;: &quot;Workstations&quot;,
+          &quot;row&quot;: 0,
+          &quot;blocking&quot;: false
+        }
+      ],
+      &quot;summary&quot;: {
+        &quot;sourceRows&quot;: 13,
+        &quot;workstations&quot;: 2,
+        &quot;createWorkstations&quot;: 0,
+        &quot;reuseWorkstations&quot;: 2,
+        &quot;createJobs&quot;: 1,
+        &quot;blocking&quot;: 0,
+        &quot;review&quot;: 4
+      },
+      &quot;execution&quot;: &quot;Stations first, then every job, sequentially. Completed writes remain after a later failure. Record actual IDs and prepare only remaining jobs after reconciling that run.&quot;
+    }
+  },
+  &quot;collisions&quot;: [],
+  &quot;sourceEdition&quot;: 1,
+  &quot;sourceSha256&quot;: &quot;b1fc4526c1cc5930df4b2515c0b680b4533a5583f1e91bfb16a7dead289d7dc6&quot;,
+  &quot;context&quot;: {
+    &quot;tenant&quot;: &quot;Authored receiving tenant&quot;,
+    &quot;siteId&quot;: &quot;authored-site&quot;,
+    &quot;typeKey&quot;: &quot;machine&quot;,
+    &quot;existingComplete&quot;: true,
+    &quot;existingResources&quot;: [
+      {
+        &quot;code&quot;: &quot;CNC-01&quot;,
+        &quot;id&quot;: &quot;authored-cnc&quot;
+      },
+      {
+        &quot;code&quot;: &quot;INSPECT&quot;,
+        &quot;id&quot;: &quot;authored-inspect&quot;
+      }
+    ],
+    &quot;lookupEvidence&quot;: {
+      &quot;text&quot;: &quot;{\&quot;site\&quot;:\&quot;authored-site\&quot;,\&quot;hasNextPage\&quot;:false,\&quot;resources\&quot;:[{\&quot;code\&quot;:\&quot;CNC-01\&quot;,\&quot;id\&quot;:\&quot;authored-cnc\&quot;},{\&quot;code\&quot;:\&quot;INSPECT\&quot;,\&quot;id\&quot;:\&quot;authored-inspect\&quot;}]}&quot;,
+      &quot;kind&quot;: &quot;authored-lookup&quot;
+    }
+  },
+  &quot;outcomes&quot;: [],
+  &quot;attempt&quot;: null
+}</pre></details><h2>Retained notes</h2><pre>[]</pre><h2>Event history</h2><pre>[
+  {
+    &quot;id&quot;: &quot;authored-1&quot;,
+    &quot;seq&quot;: 1,
+    &quot;previous&quot;: &quot;3da3a254ee86d0eb4446236f1d05ba64e9ba00184fe38168cb0ea82d166cc5ac&quot;,
+    &quot;type&quot;: &quot;intake&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:01.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;sourceId&quot;: &quot;requests&quot;,
+      &quot;kind&quot;: &quot;requests&quot;,
+      &quot;format&quot;: &quot;csv&quot;,
+      &quot;context&quot;: {
+        &quot;tenant&quot;: &quot;Authored receiving tenant&quot;
+      },
+      &quot;artifact&quot;: {
+        &quot;filename&quot;: &quot;authored-requests.csv&quot;,
+        &quot;text&quot;: &quot;id,name,description,status,start_ts,end_ts,resource_id,resource_name,earliest_start_ts,latest_end_ts,min_duration_value,min_duration_unit,actual_duration_value,actual_duration_unit,requirements_count\nold-1,WO-001,\&quot;Mill, inspect\nKeep exact source\&quot;,new,,,mill-a,,,,2.5,hours,,,2\nold-2,WO-002,,new,,,mill-a,,,,90,minutes,,,0\n&quot;
+      }
+    },
+    &quot;sha256&quot;: &quot;7d41e8007c30f282851ccd3bc0eee1f2c70336703a218a565942bc14fa40849a&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-3&quot;,
+    &quot;seq&quot;: 2,
+    &quot;previous&quot;: &quot;7d41e8007c30f282851ccd3bc0eee1f2c70336703a218a565942bc14fa40849a&quot;,
+    &quot;type&quot;: &quot;review&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:03.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;sourceId&quot;: &quot;requests&quot;,
+      &quot;rowId&quot;: &quot;row:1&quot;,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored target inspection confirms requirements are outside this request-only trial; originals with count two remain retained. Use 150 minutes to preserve 2.5 hours.&quot;,
+        &quot;values&quot;: {
+          &quot;id&quot;: &quot;old-1&quot;,
+          &quot;name&quot;: &quot;WO-001&quot;,
+          &quot;description&quot;: &quot;Mill, inspect\nKeep exact source&quot;,
+          &quot;status&quot;: &quot;new&quot;,
+          &quot;start_ts&quot;: &quot;&quot;,
+          &quot;end_ts&quot;: &quot;&quot;,
+          &quot;resource_id&quot;: &quot;mill-a&quot;,
+          &quot;resource_name&quot;: &quot;&quot;,
+          &quot;earliest_start_ts&quot;: &quot;&quot;,
+          &quot;latest_end_ts&quot;: &quot;&quot;,
+          &quot;min_duration_value&quot;: &quot;150&quot;,
+          &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+          &quot;actual_duration_value&quot;: &quot;&quot;,
+          &quot;actual_duration_unit&quot;: &quot;&quot;,
+          &quot;requirements_count&quot;: &quot;0&quot;
+        },
+        &quot;acknowledged&quot;: [
+          &quot;id-ignored&quot;,
+          &quot;structural-scope&quot;
+        ]
+      }
+    },
+    &quot;sha256&quot;: &quot;6bb84d794fe174e730eabf60ddc824c6de2c3d470e231fbb021f63c18f99ff5d&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-4&quot;,
+    &quot;seq&quot;: 3,
+    &quot;previous&quot;: &quot;6bb84d794fe174e730eabf60ddc824c6de2c3d470e231fbb021f63c18f99ff5d&quot;,
+    &quot;type&quot;: &quot;review&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:04.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;sourceId&quot;: &quot;requests&quot;,
+      &quot;rowId&quot;: &quot;row:2&quot;,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored exact resource mill-a and root-request scope reviewed.&quot;,
+        &quot;values&quot;: {
+          &quot;id&quot;: &quot;old-2&quot;,
+          &quot;name&quot;: &quot;WO-002&quot;,
+          &quot;description&quot;: &quot;&quot;,
+          &quot;status&quot;: &quot;new&quot;,
+          &quot;start_ts&quot;: &quot;&quot;,
+          &quot;end_ts&quot;: &quot;&quot;,
+          &quot;resource_id&quot;: &quot;mill-a&quot;,
+          &quot;resource_name&quot;: &quot;&quot;,
+          &quot;earliest_start_ts&quot;: &quot;&quot;,
+          &quot;latest_end_ts&quot;: &quot;&quot;,
+          &quot;min_duration_value&quot;: &quot;90&quot;,
+          &quot;min_duration_unit&quot;: &quot;minutes&quot;,
+          &quot;actual_duration_value&quot;: &quot;&quot;,
+          &quot;actual_duration_unit&quot;: &quot;&quot;,
+          &quot;requirements_count&quot;: &quot;0&quot;
+        },
+        &quot;acknowledged&quot;: [
+          &quot;id-ignored&quot;,
+          &quot;structural-scope&quot;
+        ]
+      }
+    },
+    &quot;sha256&quot;: &quot;c921451a5d8e6848df636c53c9d24bd97ce61447fda88ab70dadf00ea634907f&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-5&quot;,
+    &quot;seq&quot;: 4,
+    &quot;previous&quot;: &quot;c921451a5d8e6848df636c53c9d24bd97ce61447fda88ab70dadf00ea634907f&quot;,
+    &quot;type&quot;: &quot;prepare&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:05.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;sourceId&quot;: &quot;requests&quot;,
+      &quot;batchId&quot;: &quot;requests-1&quot;,
+      &quot;rowIds&quot;: [
+        &quot;row:1&quot;,
+        &quot;row:2&quot;
+      ]
+    },
+    &quot;sha256&quot;: &quot;ab5036ee9a88ff0bfc2989e723ff9f334158380494a7bd0eb116f785daed0dc8&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-6&quot;,
+    &quot;seq&quot;: 5,
+    &quot;previous&quot;: &quot;ab5036ee9a88ff0bfc2989e723ff9f334158380494a7bd0eb116f785daed0dc8&quot;,
+    &quot;type&quot;: &quot;attempt&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:06.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;batchId&quot;: &quot;requests-1&quot;,
+      &quot;confirmTenant&quot;: &quot;Authored receiving tenant&quot;,
+      &quot;operator&quot;: &quot;Authored operator&quot;,
+      &quot;route&quot;: &quot;Requests CSV import&quot;,
+      &quot;details&quot;: &quot;Authored partial-write scenario; these are not production service responses.&quot;
+    },
+    &quot;sha256&quot;: &quot;b0fba0cd6fef6579937fb36e40b6ab0964ac5d576756014720124390b660a547&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-7&quot;,
+    &quot;seq&quot;: 6,
+    &quot;previous&quot;: &quot;b0fba0cd6fef6579937fb36e40b6ab0964ac5d576756014720124390b660a547&quot;,
+    &quot;type&quot;: &quot;resolve&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:07.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;batchId&quot;: &quot;requests-1&quot;,
+      &quot;rowId&quot;: &quot;row:1&quot;,
+      &quot;status&quot;: &quot;created&quot;,
+      &quot;targetId&quot;: &quot;authored-request-701&quot;,
+      &quot;reviewer&quot;: &quot;Authored operator&quot;,
+      &quot;reason&quot;: &quot;First create returned an ID in the authored receiving scenario.&quot;,
+      &quot;evidence&quot;: {
+        &quot;text&quot;: &quot;{\&quot;id\&quot;:\&quot;authored-request-701\&quot;,\&quot;name\&quot;:\&quot;WO-001\&quot;}&quot;,
+        &quot;kind&quot;: &quot;authored-response&quot;
+      }
+    },
+    &quot;sha256&quot;: &quot;6cc22efb0502beae2618a6750cde248e3c1069c73fc4a5204023d51a4fd94e85&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-9&quot;,
+    &quot;seq&quot;: 7,
+    &quot;previous&quot;: &quot;6cc22efb0502beae2618a6750cde248e3c1069c73fc4a5204023d51a4fd94e85&quot;,
+    &quot;type&quot;: &quot;resolve&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:09.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;batchId&quot;: &quot;requests-1&quot;,
+      &quot;rowId&quot;: &quot;row:2&quot;,
+      &quot;status&quot;: &quot;not-attempted&quot;,
+      &quot;reviewer&quot;: &quot;Authored operator&quot;,
+      &quot;reason&quot;: &quot;Authored importer stopped before second row; complete response and target lookup are retained.&quot;,
+      &quot;evidence&quot;: {
+        &quot;text&quot;: &quot;{\&quot;created\&quot;:1,\&quot;stoppedBeforeRow\&quot;:2,\&quot;targetLookup\&quot;:[]}&quot;,
+        &quot;kind&quot;: &quot;authored-response&quot;
+      }
+    },
+    &quot;sha256&quot;: &quot;507f75217230ddd1a24961a81d8cfe97ab1a188d0f1dfaaee2eeb15c8ca17b54&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-10&quot;,
+    &quot;seq&quot;: 8,
+    &quot;previous&quot;: &quot;507f75217230ddd1a24961a81d8cfe97ab1a188d0f1dfaaee2eeb15c8ca17b54&quot;,
+    &quot;type&quot;: &quot;prepare&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:10.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;sourceId&quot;: &quot;requests&quot;,
+      &quot;batchId&quot;: &quot;requests-remaining&quot;,
+      &quot;rowIds&quot;: [
+        &quot;row:2&quot;
+      ]
+    },
+    &quot;sha256&quot;: &quot;19038ffaa3897a4f36a507ee7eb904fe8f4ca9fc11e4eb7d274a5d6b7246a0dd&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-12&quot;,
+    &quot;seq&quot;: 9,
+    &quot;previous&quot;: &quot;19038ffaa3897a4f36a507ee7eb904fe8f4ca9fc11e4eb7d274a5d6b7246a0dd&quot;,
+    &quot;type&quot;: &quot;intake&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:12.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;sourceId&quot;: &quot;workbook&quot;,
+      &quot;kind&quot;: &quot;workbook&quot;,
+      &quot;format&quot;: &quot;sheets-json&quot;,
+      &quot;context&quot;: {
+        &quot;tenant&quot;: &quot;Authored receiving tenant&quot;,
+        &quot;siteId&quot;: &quot;authored-site&quot;,
+        &quot;typeKey&quot;: &quot;machine&quot;,
+        &quot;existingComplete&quot;: true,
+        &quot;existingResources&quot;: [
+          {
+            &quot;code&quot;: &quot;CNC-01&quot;,
+            &quot;id&quot;: &quot;authored-cnc&quot;
+          },
+          {
+            &quot;code&quot;: &quot;INSPECT&quot;,
+            &quot;id&quot;: &quot;authored-inspect&quot;
+          }
+        ],
+        &quot;lookupEvidence&quot;: {
+          &quot;text&quot;: &quot;{\&quot;site\&quot;:\&quot;authored-site\&quot;,\&quot;hasNextPage\&quot;:false,\&quot;resources\&quot;:[{\&quot;code\&quot;:\&quot;CNC-01\&quot;,\&quot;id\&quot;:\&quot;authored-cnc\&quot;},{\&quot;code\&quot;:\&quot;INSPECT\&quot;,\&quot;id\&quot;:\&quot;authored-inspect\&quot;}]}&quot;,
+          &quot;kind&quot;: &quot;authored-lookup&quot;
+        }
+      },
+      &quot;artifact&quot;: {
+        &quot;filename&quot;: &quot;authored-workbook-sheets.json&quot;,
+        &quot;text&quot;: &quot;[{\&quot;name\&quot;:\&quot;Workstations\&quot;,\&quot;rows\&quot;:[[\&quot;Orkyo production import\&quot;],[\&quot;Codes match exactly, including letter case.\&quot;],[\&quot;Capacity hours/day is retained; native import does not map it.\&quot;],[],[\&quot;Code\&quot;,\&quot;Workstation\&quot;,\&quot;What stands there\&quot;,\&quot;Capacity (h/day)\&quot;,\&quot;Notes\&quot;],[\&quot;CNC-01\&quot;,\&quot;Machining centre\&quot;,\&quot;Fixture A\&quot;,8,\&quot;Authored example\&quot;],[\&quot;INSPECT\&quot;,\&quot;Inspection\&quot;,\&quot;\&quot;,6,\&quot;\&quot;]]},{\&quot;name\&quot;:\&quot;Jobs\&quot;,\&quot;rows\&quot;:[[\&quot;Orkyo production import\&quot;],[\&quot;End is inclusive; native request ends next midnight UTC.\&quot;],[\&quot;Duration counts Monday–Friday, with one-hour fallback.\&quot;],[],[\&quot;Job\&quot;,\&quot;Description\&quot;,\&quot;Workstation code\&quot;,\&quot;Start\&quot;,\&quot;End\&quot;,\&quot;Hours/day\&quot;],[\&quot;EX-100 Rough\&quot;,\&quot;Authored demonstration\&quot;,\&quot;CNC-01\&quot;,\&quot;2026-10-16\&quot;,\&quot;2026-10-19\&quot;,2.5],[\&quot;EX-100 Inspect\&quot;,\&quot;\&quot;,\&quot;INSPECT\&quot;,\&quot;2026-10-19\&quot;,\&quot;2026-10-19\&quot;,1.25]]}]&quot;
+      }
+    },
+    &quot;sha256&quot;: &quot;e70413ce0d287cab1dceb9562ffc1578d3284d099495eec692cbce680f08abfb&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-13&quot;,
+    &quot;seq&quot;: 10,
+    &quot;previous&quot;: &quot;e70413ce0d287cab1dceb9562ffc1578d3284d099495eec692cbce680f08abfb&quot;,
+    &quot;type&quot;: &quot;review&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:13.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;sourceId&quot;: &quot;workbook&quot;,
+      &quot;rowId&quot;: &quot;Jobs:6&quot;,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored site/code/actual geometry lookup and Monday-Friday window reviewed; station capacities remain separate.&quot;,
+        &quot;values&quot;: [
+          &quot;EX-100 Rough&quot;,
+          &quot;Authored demonstration&quot;,
+          &quot;CNC-01&quot;,
+          &quot;2026-10-16&quot;,
+          &quot;2026-10-19&quot;,
+          2.5
+        ],
+        &quot;acknowledged&quot;: [
+          &quot;site-calendar-not-applied&quot;,
+          &quot;reused-stations-not-updated&quot;
+        ]
+      }
+    },
+    &quot;sha256&quot;: &quot;0b2ec70eef8b4e1762e34f387f5bf96850fa9a3436cc707ec0124e1608170b71&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-14&quot;,
+    &quot;seq&quot;: 11,
+    &quot;previous&quot;: &quot;0b2ec70eef8b4e1762e34f387f5bf96850fa9a3436cc707ec0124e1608170b71&quot;,
+    &quot;type&quot;: &quot;review&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:14.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;sourceId&quot;: &quot;workbook&quot;,
+      &quot;rowId&quot;: &quot;Jobs:7&quot;,
+      &quot;review&quot;: {
+        &quot;action&quot;: &quot;new&quot;,
+        &quot;reviewer&quot;: &quot;Authored receiving operator&quot;,
+        &quot;reason&quot;: &quot;Authored site/code/actual geometry lookup and Monday-Friday window reviewed; station capacities remain separate.&quot;,
+        &quot;values&quot;: [
+          &quot;EX-100 Inspect&quot;,
+          &quot;&quot;,
+          &quot;INSPECT&quot;,
+          &quot;2026-10-19&quot;,
+          &quot;2026-10-19&quot;,
+          1.25
+        ],
+        &quot;acknowledged&quot;: [
+          &quot;site-calendar-not-applied&quot;,
+          &quot;reused-stations-not-updated&quot;
+        ]
+      }
+    },
+    &quot;sha256&quot;: &quot;4a3156eddd7fbf832c66ebc9c0fd154dcb377142ceca28f64538c788614c1cf6&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-15&quot;,
+    &quot;seq&quot;: 12,
+    &quot;previous&quot;: &quot;4a3156eddd7fbf832c66ebc9c0fd154dcb377142ceca28f64538c788614c1cf6&quot;,
+    &quot;type&quot;: &quot;prepare&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:15.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;sourceId&quot;: &quot;workbook&quot;,
+      &quot;batchId&quot;: &quot;jobs-1&quot;,
+      &quot;rowIds&quot;: [
+        &quot;Jobs:6&quot;,
+        &quot;Jobs:7&quot;
+      ]
+    },
+    &quot;sha256&quot;: &quot;060c9c84f80ccd2bfd26af4aedfe81faa8a9f77b43dc811ce4cd884ce5538a7a&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-16&quot;,
+    &quot;seq&quot;: 13,
+    &quot;previous&quot;: &quot;060c9c84f80ccd2bfd26af4aedfe81faa8a9f77b43dc811ce4cd884ce5538a7a&quot;,
+    &quot;type&quot;: &quot;attempt&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:16.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;batchId&quot;: &quot;jobs-1&quot;,
+      &quot;confirmTenant&quot;: &quot;Authored receiving tenant&quot;,
+      &quot;operator&quot;: &quot;Authored operator&quot;,
+      &quot;route&quot;: &quot;Production workbook import&quot;
+    },
+    &quot;sha256&quot;: &quot;842ed3978c5e49208cdc1c72d13d976d17311cd8cf338bdd83d553c3ae32ebb8&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-17&quot;,
+    &quot;seq&quot;: 14,
+    &quot;previous&quot;: &quot;842ed3978c5e49208cdc1c72d13d976d17311cd8cf338bdd83d553c3ae32ebb8&quot;,
+    &quot;type&quot;: &quot;resolve&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:17.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;batchId&quot;: &quot;jobs-1&quot;,
+      &quot;rowId&quot;: &quot;Jobs:6&quot;,
+      &quot;status&quot;: &quot;created&quot;,
+      &quot;targetId&quot;: &quot;authored-job-801&quot;,
+      &quot;reviewer&quot;: &quot;Authored operator&quot;,
+      &quot;reason&quot;: &quot;Authored first job was created.&quot;,
+      &quot;evidence&quot;: {
+        &quot;text&quot;: &quot;{\&quot;id\&quot;:\&quot;authored-job-801\&quot;}&quot;,
+        &quot;kind&quot;: &quot;authored-response&quot;
+      }
+    },
+    &quot;sha256&quot;: &quot;2135d4432431f6af0d5d4ed6b5ecbf7ada679e22084969ab8db8ba8f6d8ab5ff&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-18&quot;,
+    &quot;seq&quot;: 15,
+    &quot;previous&quot;: &quot;2135d4432431f6af0d5d4ed6b5ecbf7ada679e22084969ab8db8ba8f6d8ab5ff&quot;,
+    &quot;type&quot;: &quot;resolve&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:18.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;batchId&quot;: &quot;jobs-1&quot;,
+      &quot;rowId&quot;: &quot;Jobs:7&quot;,
+      &quot;status&quot;: &quot;rejected&quot;,
+      &quot;reviewer&quot;: &quot;Authored operator&quot;,
+      &quot;reason&quot;: &quot;Authored receiver rejected second job before creation.&quot;,
+      &quot;evidence&quot;: {
+        &quot;text&quot;: &quot;{\&quot;status\&quot;:400,\&quot;created\&quot;:false,\&quot;row\&quot;:7}&quot;,
+        &quot;kind&quot;: &quot;authored-response&quot;
+      }
+    },
+    &quot;sha256&quot;: &quot;a6fbf441b3eee17eb16e9f2d2dc5914c7f74a999c242068ad9723c9135af5732&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-19&quot;,
+    &quot;seq&quot;: 16,
+    &quot;previous&quot;: &quot;a6fbf441b3eee17eb16e9f2d2dc5914c7f74a999c242068ad9723c9135af5732&quot;,
+    &quot;type&quot;: &quot;prepare&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:19.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;sourceId&quot;: &quot;workbook&quot;,
+      &quot;batchId&quot;: &quot;jobs-remaining&quot;,
+      &quot;rowIds&quot;: [
+        &quot;Jobs:7&quot;
+      ]
+    },
+    &quot;sha256&quot;: &quot;18b0a9ccf77e1e61e22090067d1ebccb19f976fbf5a99eccf5facc436bf132f2&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-20&quot;,
+    &quot;seq&quot;: 17,
+    &quot;previous&quot;: &quot;18b0a9ccf77e1e61e22090067d1ebccb19f976fbf5a99eccf5facc436bf132f2&quot;,
+    &quot;type&quot;: &quot;intake&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:20.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;sourceId&quot;: &quot;malformed&quot;,
+      &quot;kind&quot;: &quot;requests&quot;,
+      &quot;format&quot;: &quot;csv&quot;,
+      &quot;context&quot;: {
+        &quot;tenant&quot;: &quot;Authored receiving tenant&quot;
+      },
+      &quot;artifact&quot;: {
+        &quot;filename&quot;: &quot;damaged.csv&quot;,
+        &quot;text&quot;: &quot;name,description\n\&quot;unfinished&quot;
+      }
+    },
+    &quot;sha256&quot;: &quot;2cfc8dda7072f91bba8f1c175754aa47f6080d1ad1f88a76935814087af268a4&quot;
+  },
+  {
+    &quot;id&quot;: &quot;authored-21&quot;,
+    &quot;seq&quot;: 18,
+    &quot;previous&quot;: &quot;2cfc8dda7072f91bba8f1c175754aa47f6080d1ad1f88a76935814087af268a4&quot;,
+    &quot;type&quot;: &quot;correct-source&quot;,
+    &quot;at&quot;: &quot;2026-10-15T01:00:21.000Z&quot;,
+    &quot;payload&quot;: {
+      &quot;sourceId&quot;: &quot;malformed&quot;,
+      &quot;reason&quot;: &quot;Authored source owner repaired the closing quote.&quot;,
+      &quot;artifact&quot;: {
+        &quot;filename&quot;: &quot;repaired.csv&quot;,
+        &quot;text&quot;: &quot;name,description\nRepaired,\&quot;complete\&quot;&quot;
+      }
+    },
+    &quot;sha256&quot;: &quot;b51a2045476a04b977a67b929c83b9fc3ef894106f7051fff35864f6d0e23ce3&quot;
+  }
+]</pre>
