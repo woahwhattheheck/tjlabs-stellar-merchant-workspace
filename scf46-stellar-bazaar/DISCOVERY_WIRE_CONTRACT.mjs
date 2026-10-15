@@ -98,6 +98,28 @@ assert.deepEqual(incompleteReadiness.body, { ready: false, x402Version: 2, catal
   resources: 1, observedResources: 0, unreadyResources: 1 });
 assert.equal(JSON.stringify(incompleteReadiness.body).includes('unobserved.example'), false);
 
+// Public list/search enforce the aggregate gate. Pagination or a selective
+// query cannot hide the incomplete row and expose a deceptively ready subset.
+incomplete.insertValidated(entry({ url: 'https://ready.example/weather',
+  description: 'Observed ready weather row' }), { lastUpdated: AT[0] });
+const incompleteHandler = createDiscoveryServer(incomplete);
+for (const path of ['/discovery/resources?limit=1',
+  '/discovery/search?query=observed%20ready&limit=1']) {
+  const blocked = await request(incompleteHandler, path);
+  assert.equal(blocked.status, 503);
+  assert.equal(blocked.body.error, 'DISCOVERY_NOT_READY');
+  assert.deepEqual({ ready: blocked.body.ready, x402Version: blocked.body.x402Version,
+    catalogVersion: blocked.body.catalogVersion, resources: blocked.body.resources,
+    observedResources: blocked.body.observedResources,
+    unreadyResources: blocked.body.unreadyResources },
+  { ready: false, x402Version: 2, catalogVersion: 2,
+    resources: 2, observedResources: 1, unreadyResources: 1 });
+  assert.equal(JSON.stringify(blocked.body).includes('ready.example'), false);
+  assert.equal(JSON.stringify(blocked.body).includes('unobserved.example'), false);
+  assert.equal(JSON.stringify(blocked.body).includes(TERMS.payTo), false);
+  assert.equal(JSON.stringify(blocked.body).includes('observed ready'), false);
+}
+
 // The production settlement path carries trusted observedAt and only accepted
 // corrections replace it; a stale conflicting write cannot move lastUpdated.
 const INFO_SCHEMA = { $schema: 'https://json-schema.org/draft/2020-12/schema', type: 'object',
@@ -150,4 +172,5 @@ console.log(JSON.stringify({ officialVersion: listed.body.x402Version,
   listEnvelope: 'items', searchEnvelope: 'resources', rows: listed.body.items.length,
   mcpTools: 2, internalShapePreserved: true, detached: true,
   readiness: ready.body, incompleteReadiness: incompleteReadiness.body,
+  incompletePublicDiscoveryBlocked: true,
   correctionTimestamp: AT[1], staleTimestampPreserved: true, durableReopen: true }));
