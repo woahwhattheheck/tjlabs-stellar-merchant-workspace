@@ -8,8 +8,8 @@
     },
     {
       "path": "application-provider.mjs",
-      "bytes": 4211,
-      "sha256": "a99383bdeb4b1591e5ec73860dba5effa08235ec664fd7a391045d858124a88b"
+      "bytes": 4186,
+      "sha256": "fa15ef467345d65c222630a2dad0f099ef421329ede5811bf92cb921bb804757"
     },
     {
       "path": "binary.cjs",
@@ -2788,8 +2788,8 @@
     },
     {
       "path": "host/store.mjs",
-      "bytes": 5753,
-      "sha256": "c7c2bd63266cb7979b19b3ee1bede5b9935beb1b2d1c8e29854628902fb3ffe8"
+      "bytes": 5723,
+      "sha256": "5182bc611d45cb5f06813333e8a2f4579ed18567cee8283cc655be987c036a49"
     },
     {
       "path": "INSTALLED_OPERATION.md",
@@ -2798,8 +2798,8 @@
     },
     {
       "path": "INSTALLED_RECEIVING.md",
-      "bytes": 2246,
-      "sha256": "0b26cfbbe3fec0686589bcf84540824218e7b462f7201a99d72dbe64cad1be2c"
+      "bytes": 3045,
+      "sha256": "ba296501d2968e52d9b65e3e7aa09429b4bff0bcbb4fbdad637716df9d866a09"
     },
     {
       "path": "installed-cli.mjs",
@@ -2818,8 +2818,8 @@
     },
     {
       "path": "merchant-provider.mjs",
-      "bytes": 2626,
-      "sha256": "61376ad304f8df2511df19b0dc15d4e98e8888e673281687f06fc1c883162cae"
+      "bytes": 2618,
+      "sha256": "f3a64185d080e3fc795d216c5a2c2e052cb4ff6474fff20f50b400dba89035fe"
     },
     {
       "path": "NATIVE.md",
@@ -2973,8 +2973,8 @@
     },
     {
       "path": "setup.mjs",
-      "bytes": 2723,
-      "sha256": "c413af5ded24eec46201ce7c5ee5950f7f7865625999acc8f172fbe948495db6"
+      "bytes": 2695,
+      "sha256": "0ec9c808c723c71c9c73522a4b49031d36da9189908a0f67a07a24762fa00ef2"
     },
     {
       "path": "sha256.cjs",
@@ -2983,8 +2983,8 @@
     },
     {
       "path": "SOURCE_MANIFEST.json",
-      "bytes": 133983,
-      "sha256": "aa82bf2f4655cf880753ac04e38420540ca0e971ebb0240a779283ee68539508"
+      "bytes": 134740,
+      "sha256": "eaabb2a5796c683c8cc417f808025c4402f4ab7c928f70a6c66362499d1ed6ad"
     },
     {
       "path": "source-view.cjs",
@@ -3220,6 +3220,26 @@
       "path": "tools.mjs",
       "bytes": 6557,
       "sha256": "8956a94aa68302c21bf1eb4a50273ae0c8b38f9edc454d253f85f22b9c1b821b"
+    },
+    {
+      "path": "vendor/merchant-shared/merchant/provider-contract.mjs",
+      "bytes": 6260,
+      "sha256": "abbc3a9f344f7e1be07f3085e6554f2c0ce1ccf131338d7ffa36f5694628394b"
+    },
+    {
+      "path": "vendor/merchant-shared/operations/history.mjs",
+      "bytes": 42366,
+      "sha256": "5928c1243549c7db21942bb6ce7188060b32e5e75d4690374a88fe7b2ed96de5"
+    },
+    {
+      "path": "vendor/merchant-shared/runtime-workspace/application-provider.mjs",
+      "bytes": 9395,
+      "sha256": "0f638caeeaa5c78560ebd262c0e410cb0dfd4fcd886748f5136cd08755e019c9"
+    },
+    {
+      "path": "vendor/merchant-shared/runtime-workspace/storage.mjs",
+      "bytes": 23911,
+      "sha256": "d42495664abaf6f43d1ce4d92ba7cbcbe07c554310f1c2f58d068c208fcc57fa"
     },
     {
       "path": "vendor/PAKO_LICENSE.txt",

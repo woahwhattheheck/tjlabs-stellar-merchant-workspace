@@ -1,5 +1,5 @@
 // MIT. Source-owned Merchant customer-agent lifecycle.
-import {defineMerchantProvider,MERCHANT_PROVIDER_SCHEMA} from '../../stellar-forge/mcp-merchant-operator/provider-contract.mjs';
+import {defineMerchantProvider,MERCHANT_PROVIDER_SCHEMA} from './vendor/merchant-shared/merchant/provider-contract.mjs';
 import {procurementSavingsTools} from './tools.mjs';
 export default defineMerchantProvider({schema:MERCHANT_PROVIDER_SCHEMA,id:'procurement-savings-study',family:'procurementSavingsStudy',title:'Procurement Savings Reconciliation Study Desk',order:1430,catalogOrder:1430,configKey:'procurementSavingsStudy',summary:true,dependencies:[],
  configuration:{input:'procurementSavingsStudyConnection',privateExports:true,read:async(value,{hostPath})=>(await import('./mcp.mjs')).readProcurementSavingsStudyConfiguration(hostPath(value))},
