@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "planning-review",
+  "description": "Complete original planning source reconciliation, revision proposals and named Planning/Operations reviews with recoverable editable sessions",
+  "components": [
+    "products/planning-review"
+  ],
+  "commands": {
+    "planning-workspace": "products/planning-review/cli.mjs",
+    "planning-managed": "products/planning-review/managed.mjs"
+  },
+  "commandDescriptions": {
+    "planning-workspace": "Create, receive and export complete Supplied plan sessions",
+    "planning-managed": "Open the managed planning operator through Applications"
+  },
+  "exports": {
+    "./products/planning": "./source/products/planning-review/runtime.mjs",
+    "./products/planning/client": "./source/products/planning-review/host/client.mjs",
+    "./products/planning/server": "./source/products/planning-review/host/server.mjs"
+  },
+  "applicationProviders": {
+    "planning-review": "products/planning-review/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "planning-review": "products/planning-review/merchant-provider.mjs"
+  }
+}
