@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "import-host-reconciliation",
+  "description": "Complete import-to-host reconciliation with managed editable sessions and retained original recovery",
+  "components": [
+    "products/import-host-reconciliation"
+  ],
+  "commands": {
+    "import-host-workspace": "products/import-host-reconciliation/cli.mjs",
+    "import-host-managed": "products/import-host-reconciliation/managed.mjs"
+  },
+  "commandDescriptions": {
+    "import-host-workspace": "Create, receive and export complete import-to-host sessions",
+    "import-host-managed": "Open the managed reconciliation operator through Applications"
+  },
+  "exports": {
+    "./products/import-host": "./source/products/import-host-reconciliation/runtime.mjs",
+    "./products/import-host/client": "./source/products/import-host-reconciliation/host/client.mjs",
+    "./products/import-host/server": "./source/products/import-host-reconciliation/host/server.mjs"
+  },
+  "applicationProviders": {
+    "import-host-reconciliation": "products/import-host-reconciliation/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "import-host-reconciliation": "products/import-host-reconciliation/merchant-provider.mjs"
+  }
+}
