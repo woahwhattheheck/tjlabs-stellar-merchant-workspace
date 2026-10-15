@@ -1,0 +1,105 @@
+{
+  "schema": "tjlabs.source-manifest.v1",
+  "files": [
+    {
+      "path": "vendor/archive-codec.mjs",
+      "bytes": 16616,
+      "sha256": "c128d4b5f1d1fcb519e5cb81b5b40cb18a7fdb012826bb9daee49e2a43d47472"
+    },
+    {
+      "path": "source/openapi.json",
+      "bytes": 48490,
+      "sha256": "400e26983fdfda0fd1930c75b94737821be1763e463719c2895a26873ec8b99c"
+    },
+    {
+      "path": "src/delivery-core.mjs",
+      "bytes": 21159,
+      "sha256": "87bc2c1371acbc8131e5860404789b7042fec3cc17ed93b0e90f122293df1deb"
+    },
+    {
+      "path": "examples/authored-working.json",
+      "bytes": 83218,
+      "sha256": "652fe1a53a313eaee7993ba124e2112e58239beb392e02c44d229a09f46ee6cf"
+    },
+    {
+      "path": "examples/authored-report.html",
+      "bytes": 3733,
+      "sha256": "e838d44ffd4acf0058f8484fcb026025d255702d68f93ef29b73ea31f3211fd1"
+    },
+    {
+      "path": "native/receiver.mjs",
+      "bytes": 27224,
+      "sha256": "1909e8eb049bb5c0c9d8dae0ad7cb120c2ac3eb8bfb69fbb8987e9bd78dade65"
+    },
+    {
+      "path": "src/storage.mjs",
+      "bytes": 2295,
+      "sha256": "ebcabc9fab0aafa4e2b7cea46574596913e087f4750f99f0faa61727f35d76a3"
+    },
+    {
+      "path": "src/desk.mjs",
+      "bytes": 14182,
+      "sha256": "7662aeabd113ffd37f9a367de9d161551a62d94fba572a333fc8f967e60241e8"
+    },
+    {
+      "path": "src/shell.html",
+      "bytes": 6930,
+      "sha256": "5211f34d7c01841a2aefcdbce599d4642b9c7fe7dccc8e1d81e106a979b40359"
+    },
+    {
+      "path": "build.mjs",
+      "bytes": 2404,
+      "sha256": "6d054f814acb670cfa56ff7cb5ff836b5e00d184b0087d3d2cbf134bd7451c6c"
+    },
+    {
+      "path": "pipeline-desk.html",
+      "bytes": 206339,
+      "sha256": "0188d7b17e84cdd270b0c5d0b420a753c693bc9563c2a17e637fa01eaf3b73f9"
+    },
+    {
+      "path": "examples/prepare-aloha-coffee-test.json",
+      "bytes": 486,
+      "sha256": "9f01270edf6553e44d29c3534564bfc56233c5bfd915ec6a28dfd82d99c5dcff"
+    },
+    {
+      "path": "source/public-aloha-source.json",
+      "bytes": 34809,
+      "sha256": "8575fdb21a4866b1d44b55ab725ec21949b84d13879e7b1beaebcd0caa2cbdc1"
+    },
+    {
+      "path": "source/ALOHA_SELECTION.md",
+      "bytes": 1672,
+      "sha256": "49cd153e0167270a1cfdb55f8c4b37870b6ff359f32d896ac4e494a3762d0393"
+    },
+    {
+      "path": "START.md",
+      "bytes": 11607,
+      "sha256": "2ac04d3c1de33801babca6331f5d68ee4a0cf8220019af00d46dc1d6645d64e0"
+    },
+    {
+      "path": "RECEIVING.md",
+      "bytes": 4944,
+      "sha256": "e0868637daf16d7cb2e6a9fba5b61f985a9fa0e2fcd06dc191ac9caf70fe4b06"
+    },
+    {
+      "path": "native/browser-receiving.mjs",
+      "bytes": 6433,
+      "sha256": "9a0c645f5f463a98ad2fed569ab8fe8c3f571129ae3806fd7ccb7d2eb2442a0c"
+    },
+    {
+      "path": "examples/blank-working.json",
+      "bytes": 65968,
+      "sha256": "6c4cab1f9f6d05d695f8b6fa7741d05b8951d0e297e44b990d85a4d1268e995b"
+    },
+    {
+      "path": "blank-desk.html",
+      "bytes": 192665,
+      "sha256": "54074534c82ebc91a0e65ee10af9ee9f72d91dc94a4ce1984635909543221336"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1445,
+      "sha256": "24a6f9560c45255458e98c8e152521c90b87ea51982753b4b4ffa4a88bf20544"
+    }
+  ]
+}

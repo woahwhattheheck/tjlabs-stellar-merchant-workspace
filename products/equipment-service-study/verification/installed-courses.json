@@ -1,0 +1,32 @@
+{
+  "schema": "equipment-service.installed-course-record/v1",
+  "sourceCheckpoint": "9284405a4cf16c999508a49b43ae31da06804962290a08475ba3e16e30679832",
+  "browser": {
+    "surface": "Actual assembled production HTML and handlers, injected DOM and atomic IndexedDB",
+    "checks": [
+      "Every ordinary service and commercial section renders through assembled production handlers",
+      "Complete authored service, commerce, report chronology and recurring work results remain exact",
+      "Complete pending asset CSV retains BOM and CRLF",
+      "Actual mapped unit import retains the entire original",
+      "Ordinary commercial correction retains the exact whole invoice-line preimage",
+      "Binary technical source bytes remain exact",
+      "Exact source-document digest helper retains its complete draft",
+      "Document chronology correction retains prior metadata",
+      "Current configured technical or commercial review binds the exact source",
+      "Competing complete saved head detected",
+      "Explicit adoption retains complete competing service and commercial preimage",
+      "Continued editing and portable actor/session reopen"
+    ],
+    "ms": 150664
+  },
+  "assessmentCache": {
+    "rawMs": 3418,
+    "missMs": 3423,
+    "hitMs": 14,
+    "wholeParity": true,
+    "independentReturn": true
+  },
+  "merchant": {
+    "status": "RUNNING"
+  }
+}

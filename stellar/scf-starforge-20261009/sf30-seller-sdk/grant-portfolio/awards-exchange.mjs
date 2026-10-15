@@ -10,6 +10,7 @@ const canonical=value=>Array.isArray(value)?value.map(canonical):plain(value)?Ob
 const need=(condition,message)=>{if(!condition)throw Object.assign(new Error(message),{code:'GRANT_AWARDS_EXCHANGE'});};
 /** All IDs and column meanings come from the caller. The original synchronous API is retained. */
 export function prepareAwardCsvImport(portfolio,input){
+  need(!input.continuation,'Review and submit a completed-row continuation through its complete session engine.');
   const csv=originalAwardCsvBytes(input.csv);
   if(input.rowReview)verifyAwardCsvRowReview(portfolio,input.rowReview,csv);
   const plan=prepareAwardCsvImportStructure(portfolio,{...input,csv},sha(csv));

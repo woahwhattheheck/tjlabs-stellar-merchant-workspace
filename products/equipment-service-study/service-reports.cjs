@@ -6,6 +6,7 @@ function basis(report,inputs){return C.hash({report:report.values||report,inputs
 function evaluate(w,rows,selected,ctx,cut,evidence){
  const v=ctx.view(cut),out=[];
  for(const rr of v.current.reports){const z=rr.values,es=[],at=time(z.as_of),gen=time(z.generated_at),from=time(z.population_start),to=time(z.population_end),expected=/^(0|[1-9]\d*)$/.test(z.expected_cases||'')&&z.expected_cases.length<16?Number(z.expected_cases):null,inputs=v.current.report_inputs.filter(x=>x.values.report_id===z.report_id),bound=basis(rr,inputs),results=[];
+ if(!z.report_id||v.current.reports.filter(x=>x.values.report_id===z.report_id).length!==1)es.push('REPORT_IDENTITY_AMBIGUOUS');
  if(at===null||gen===null||at>gen||gen>cut||gen>time(z.recorded_at)||from===null||to===null||from>=to||to>at||!ctx.person(z.prepared_by,gen))es.push('REPORT_TIME_OR_PREPARER_UNRESOLVED');
  for(const ir of inputs){const q=ir.values,e=[],ex=w.extracts.find(x=>x.id===q.extract_id&&x.kind===q.family&&x.side===w.config.service.side);
  if(!ROLES[q.family]||q.role!==ROLES[q.family])e.push('REPORT_SOURCE_ROLE_UNRESOLVED');

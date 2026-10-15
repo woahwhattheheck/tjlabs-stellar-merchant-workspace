@@ -61,8 +61,9 @@ async function refresh(selectId = S.portfolio && S.portfolio.id, selectRevision 
   if (refreshEpoch !== S.refreshEpoch) return;
   if (S.portfolio?.id !== portfolio?.id || S.portfolio?.snapshot !== portfolio?.snapshot) {
     S.review = {}; S.offset = 0; S.totalsOffset = 0;
-    if ($("#detail-dialog").open) $("#detail-dialog").close();
+    if ($("#detail-dialog").open && !await closeDetail()) return;
   }
+  if (refreshEpoch !== S.refreshEpoch) return;
   S.state = state; S.portfolio = portfolio;
   $("#connection").textContent = state.sources.length + " source editions · Workspace revision " + state.revision;
   const selected = $("#portfolio-select");
@@ -453,8 +454,23 @@ async function detail(ref) {
     throw new Error("The selected portfolio revision changed. Open its current record again.");
   return full;
 }
-function showDialog(title, elements) {
-  $("#detail-title").textContent = title; $("#detail-content").replaceChildren(...elements); $("#detail-dialog").showModal();
+let detailRetention = null;
+function retainDetail(owner, retain) { detailRetention = { owner, retain }; }
+async function preserveDetail(next = []) {
+  const held = detailRetention;
+  if (!held || next.some(element => element === held.owner || element.contains?.(held.owner))) return;
+  await held.retain();
+  if (detailRetention === held) detailRetention = null;
+}
+async function closeDetail() {
+  try { await preserveDetail(); $("#detail-dialog").close(); return true; }
+  catch (error) { failure(error); return false; }
+}
+async function showDialog(title, elements) {
+  try {
+    await preserveDetail(elements);
+    $("#detail-title").textContent = title; $("#detail-content").replaceChildren(...elements); $("#detail-dialog").showModal();
+  } catch (error) { failure(error); }
 }
 async function showRecord(ref) {
   const full = await detail(ref);
@@ -658,7 +674,7 @@ const programmeConsole = GrantProgrammeConsole({state:() => S, node, button, fie
 const governanceConsole = GrantGovernanceConsole({state:() => S, node, button, field, panel, heading, metric,
   table, api, response, runOriginal, action, render, notice, failure, showDialog, currentEdit, rawDetails, sourceName, download});
 const awardsConsole = GrantAwardsConsole({state:() => S, node, button, field, panel, heading, metric,
-  table, api, response, runOriginal, action, render, notice, failure, showDialog, currentEdit, rawDetails, sourceName});
+  table, api, response, runOriginal, action, render, notice, failure, showDialog, retainDetail, currentEdit, rawDetails, sourceName});
 const planningConsole = GrantBudgetPlanningConsole({state:() => S, node, button, field, panel, heading, metric,
   table, api, response, action, runOriginal, render, notice, failure, showDialog, currentEdit, rawDetails, sourceName});
 async function render() {
@@ -690,7 +706,8 @@ $("#refresh").addEventListener("click", () => refresh().catch(failure));
 $("#new-portfolio").addEventListener("click", () => {
   ++S.refreshEpoch; S.portfolio = null; S.view = "portfolios"; S.review = {}; $("#portfolio-select").value = ""; $("#revision-select").replaceChildren(node("option", "—")); render().catch(failure);
 });
-$("#close-detail").addEventListener("click", () => $("#detail-dialog").close());
+$("#close-detail").addEventListener("click", () => { closeDetail(); });
+$("#detail-dialog").addEventListener("cancel", event => { event.preventDefault(); closeDetail(); });
 if (!/^[A-Za-z0-9_-]{43}$/.test(S.token)) {
   notice("Open this workspace's saved console link to connect.", "error");
   $("#connection").textContent = "Connection required";

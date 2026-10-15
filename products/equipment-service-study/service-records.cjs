@@ -4,7 +4,7 @@ const {time,positive,uniq}=T,parse=s=>{try{return C.parse(s);}catch{return null;
 function records(ctx,cut){
  const current=(kind,at=cut)=>ctx.view(at).current[kind]||[],get=(kind,key,id,at=cut)=>ctx.view(at).get(kind,key,id),ic=new Map(),wc=new Map(),cc=new Map();
  const instant=(value,recorded,at)=>time(value)!==null&&time(value)<=at&&time(value)<=time(recorded);
- function inspection(id,at=cut){const key=id+'\0'+at;if(ic.has(key))return ic.get(key);const r=get('inspections','inspection_id',id,at);if(!r)return null;const z=r.values,e=ctx.rowContext(r,at),a=time(z.started_at),b=time(z.completed_at),c=ctx.serviceCase(z.case_id,at),asset=a===null?null:ctx.asset(z.asset_id,a);
+ function inspection(id,at=cut){const key=id+'\0'+at;if(ic.has(key))return ic.get(key);const r=get('inspections','inspection_id',id,at);if(!r)return null;const z=r.values,e=ctx.rowContext(r,at),a=time(z.started_at),b=time(z.completed_at),c=a===null?null:ctx.serviceCase(z.case_id,a),asset=a===null?null:ctx.asset(z.asset_id,a);
  if(!c||c.values.asset_id!==z.asset_id||!asset||asset.values.customer_id!==c.values.customer_id)e.push('INSPECTION_CASE_ASSET_UNRESOLVED');
  if(a===null||b===null||a>b||b>at||b>time(z.recorded_at)||c&&a<time(c.values.received_at))e.push('INSPECTION_TIME_UNRESOLVED');
  const procedure=asset&&a!==null?ctx.procedure(z.procedure_record_id,a,asset,c?.values.requested_action):null;
@@ -27,13 +27,13 @@ function records(ctx,cut){
  if(z.reported_result==='pass'&&observations.some(x=>x.answer==='fail'))e.push('REPORTED_RESULT_CONTRADICTS_ITEM');
  if(procedure?.values.requires_signature==='true'){const t=time(z.signed_at);if(t===null||b===null||t<b||t>time(z.recorded_at)||!ctx.doc(z.signature_document_id,at))e.push('INSPECTION_SIGNATURE_UNRESOLVED');}
  const out={...z,valid:!e.length,issues:uniq(e),items:observations,procedure_id:procedure?.values.procedure_id||null,recorded_technical_result:z.reported_result};ic.set(key,out);return out;}
- function work(id,at=cut){const key=id+'\0'+at;if(wc.has(key))return wc.get(key);const r=get('work','work_id',id,at);if(!r)return null;const z=r.values,e=ctx.rowContext(r,at),a=time(z.performed_at),b=time(z.completed_at),c=ctx.serviceCase(z.case_id,at),asset=a===null?null:ctx.asset(z.asset_id,a);
+ function work(id,at=cut){const key=id+'\0'+at;if(wc.has(key))return wc.get(key);const r=get('work','work_id',id,at);if(!r)return null;const z=r.values,e=ctx.rowContext(r,at),a=time(z.performed_at),b=time(z.completed_at),c=a===null?null:ctx.serviceCase(z.case_id,a),asset=a===null?null:ctx.asset(z.asset_id,a);
  if(!c||c.values.asset_id!==z.asset_id||!asset||asset.values.customer_id!==c.values.customer_id)e.push('WORK_CASE_ASSET_UNRESOLVED');
  if(a===null||b===null||a>b||b>at||b>time(z.recorded_at)||c&&a<time(c.values.received_at)||!positive(z.quantity)||!z.unit)e.push('WORK_TIME_OR_QUANTITY_UNRESOLVED');
  const p=asset&&a!==null?ctx.procedure(z.procedure_record_id,a,asset,z.action):null;
  if(!p||z.procedure_sha256!==C.hash(p.values))e.push('WORK_PROCEDURE_BINDING');
  if(!asset||!p||!ctx.authority(z.technician_id,'perform_work',a,{...asset.values,procedure_id:p.values.procedure_id}))e.push('WORK_TECHNICIAN_AUTHORITY');
- if(!['completed','failed','unrepairable','partial','unknown'].includes(z.disposition))e.push('WORK_DISPOSITION_UNMAPPED');
+ if(!['complete','failed','unrepairable','partial','unknown'].includes(z.disposition))e.push('WORK_DISPOSITION_UNMAPPED');
  if(z.result_document_id&&!ctx.doc(z.result_document_id,at))e.push('WORK_RESULT_UNAVAILABLE');
  if(z.deficiency_id){const d=get('deficiencies','deficiency_id',z.deficiency_id,at);if(!d||d.values.case_id!==z.case_id||d.values.asset_id!==z.asset_id)e.push('WORK_DEFICIENCY_LINEAGE');}
  const out={...z,valid:!e.length,issues:uniq(e)};wc.set(key,out);return out;}
@@ -44,21 +44,21 @@ function records(ctx,cut){
  if(!['open','quoted','awaiting_approval','approved','declined','closed','unknown'].includes(z.state))e.push('DEFICIENCY_STATE_UNMAPPED');
  if(!['true','false'].includes(z.requires_reinspection))e.push('DEFICIENCY_REINSPECTION_RULE_UNKNOWN');
  if(z.state==='closed'){if(!['repair','replacement','no_action'].includes(z.resolution)||!ctx.person(z.decided_by,state)||!ctx.doc(z.decision_document_id,at))e.push('DEFICIENCY_CLOSURE_UNRESOLVED');
- if(z.resolution==='repair'){const x=work(z.work_id,at);if(!x?.valid||x.case_id!==z.case_id||x.asset_id!==z.asset_id||x.disposition!=='completed'||time(x.completed_at)>state)e.push('DEFICIENCY_REPAIR_UNRESOLVED');}
- if(z.requires_reinspection==='true'){const x=inspection(z.reinspection_id,at);if(!x?.valid||x.asset_id!==z.asset_id||time(x.completed_at)>state||time(x.started_at)<a)e.push('DEFICIENCY_REINSPECTION_UNRESOLVED');}}
+ if(z.resolution==='repair'){const x=work(z.work_id,at);if(!x?.valid||x.case_id!==z.case_id||x.asset_id!==z.asset_id||x.disposition!=='complete'||time(x.completed_at)>state)e.push('DEFICIENCY_REPAIR_UNRESOLVED');}
+ if(z.requires_reinspection==='true'){const x=inspection(z.reinspection_id,at),repair=z.resolution==='repair'?work(z.work_id,at):null;if(!x?.valid||x.asset_id!==z.asset_id||time(x.completed_at)>state||time(x.started_at)<a||repair&&time(x.started_at)<time(repair.completed_at))e.push('DEFICIENCY_REINSPECTION_UNRESOLVED');}}
  return{...z,valid:!e.length,issues:uniq(e),closed:z.state==='closed'&&!e.length};}
- function certificate(id,at=cut){const key=id+'\0'+at;if(cc.has(key))return cc.get(key);const r=get('certificates','certificate_id',id,at);if(!r)return null;const z=r.values,e=ctx.rowContext(r,at),issued=time(z.issued_at),signed=time(z.signed_at),c=ctx.serviceCase(z.case_id,at),a=issued===null?null:ctx.asset(z.asset_id,issued),i=inspection(z.inspection_id,at);
+ function certificate(id,at=cut){const key=id+'\0'+at;if(cc.has(key))return cc.get(key);const r=get('certificates','certificate_id',id,at);if(!r)return null;const z=r.values,e=ctx.rowContext(r,at),issued=time(z.issued_at),signed=time(z.signed_at),c=issued===null?null:ctx.serviceCase(z.case_id,issued),a=issued===null?null:ctx.asset(z.asset_id,issued),i=issued===null?null:inspection(z.inspection_id,issued);
  if(!c||c.values.asset_id!==z.asset_id||!a||!i?.valid||i.case_id!==z.case_id||i.asset_id!==z.asset_id)e.push('CERTIFICATE_CASE_INSPECTION_LINEAGE');
  if(issued===null||signed===null||signed>issued||issued>at||issued>time(z.recorded_at)||i&&time(i.completed_at)>signed)e.push('CERTIFICATE_TIME_UNRESOLVED');
  const p=a&&i?ctx.procedure(z.procedure_record_id,time(i.started_at),a,c?.values.requested_action):null;
  if(!p||z.procedure_sha256!==C.hash(p.values)||i&&i.procedure_record_id!==z.procedure_record_id)e.push('CERTIFICATE_PROCEDURE_BINDING');
  if(!a||!p||!ctx.authority(z.signed_by,'sign_certificate',signed,{...a.values,procedure_id:p.values.procedure_id}))e.push('CERTIFICATE_SIGNATORY_AUTHORITY');
- if(!ctx.doc(z.document_id,at))e.push('CERTIFICATE_ORIGINAL_UNAVAILABLE');
+ if(issued===null||!ctx.doc(z.document_id,issued))e.push('CERTIFICATE_ORIGINAL_UNAVAILABLE');
  const ids=parse(z.work_ids_json);if(!Array.isArray(ids)||ids.some(x=>typeof x!=='string')||new Set(ids).size!==ids.length)e.push('CERTIFICATE_WORK_LIST_UNRESOLVED');
- const ws=Array.isArray(ids)?ids.map(x=>work(x,at)):[];
+ const ws=Array.isArray(ids)&&signed!==null?ids.map(x=>work(x,signed)):[];
  if(ws.some(x=>!x?.valid||x.case_id!==z.case_id||x.asset_id!==z.asset_id||time(x.completed_at)>signed))e.push('CERTIFICATE_WORK_LINEAGE');
- if(p?.values.requires_completed_work==='true'&&(!ws.length||ws.some(x=>x.disposition!=='completed')))e.push('CERTIFICATE_COMPLETED_WORK_UNOBSERVED');
- const ds=current('deficiencies',at).filter(x=>x.values.case_id===z.case_id&&time(x.values.observed_at)<=issued).map(x=>deficiency(x,at));
+ if(p?.values.requires_completed_work==='true'&&(!ws.length||ws.some(x=>x.disposition!=='complete')))e.push('CERTIFICATE_COMPLETED_WORK_UNOBSERVED');
+ const ds=issued===null?[]:current('deficiencies',issued).filter(x=>x.values.case_id===z.case_id&&time(x.values.observed_at)<=issued).map(x=>deficiency(x,issued));
  if(p?.values.requires_closed_deficiencies==='true'&&ds.some(x=>!x.closed||time(x.state_at)>issued))e.push('CERTIFICATE_DEFICIENCIES_UNRESOLVED');
  if(z.supersedes_certificate_id){const previous=get('certificates','certificate_id',z.supersedes_certificate_id,at);if(!previous||previous.values.asset_id!==z.asset_id||previous.values.case_id!==z.case_id||time(previous.values.issued_at)>=issued)e.push('CERTIFICATE_PREDECESSOR_UNRESOLVED');}
  const replacements=current('certificates',at).filter(x=>x.values.supersedes_certificate_id===id&&instant(x.values.issued_at,x.values.recorded_at,at));

@@ -185,3 +185,33 @@ Inspect all outgoing attachments and visible empty/error/recovery states. Fix an
 observed fault within this same source edition; source execution alone is not
 rendered/native acceptance. Preserve the original CEDAR/0DF8 commercial and
 receiving operation and its retained completed outcomes.
+
+## Saved-intake working library in the original browser course
+
+The current source includes `intake-working-receiving.mjs`, a supplied-page chapter invoked by the existing `awards-receiving.mjs` operation. It receives that operation's authenticated page, original CSV/columns, and complete-file/screenshot callbacks. It starts no host, browser process or additional native controller.
+
+The chapter operates the real controls to retain original intake A, including an unchecked correction draft and its row-editor position; closes and reloads; creates later B; opens portable A in the same browser; verifies that B remains complete; and opens A in an independently authenticated context of the same admitted browser. Every download is read from its actual retained file, parsed by the installed working-file model, and compared with the exact original CSV. Desktop and 390-pixel captures join the original evidence collection.
+
+The original caller journals the complete chapter result and all files under its existing operation. Retained legacy plan inputs and original action IDs remain authoritative. The updated original browser intake prepares a reviewed session-v2 batch for new work, while preserving completed single-plan v1 continuation. A completed batch is reconciled without posting a new action.
+
+Read [the full saved-intake guide](../../AWARDS_INTAKE_WORKING_FILES.md) before receiving. The producing worker must open, run and inspect the exact outgoing rendered application at desktop and narrow width; operate the critical controls, downloads and exports; open every attachment; and independently reopen working files and native archives. Report actual repairs and native results in the same private case. Source-adapter execution is labelled separately from actual browser and native use.
+
+## Completed rows and later exception resolution
+
+The existing `import-session-receiving.mjs` course adds **row-continuation** after its original **row-review** phase. It uses the same source/recipient connections, selection.json, run identity, original action recorder, export helper and independent history comparison. It creates a separately named internal example; previously admitted capacity and row-review action inputs remain unchanged.
+
+```sh
+node grant-portfolio/examples/awards/import-session-receiving.mjs --phase row-continuation --source-connection /absolute/source/console-url.json --recipient-connection /absolute/recipient/console-url.json --out /absolute/original-course --actor "Original operator"
+```
+
+The chapter retains a four-row BOM/quoted-CRLF source: one submitted application, two explicit exceptions and one agreed footer. It records the first application, then performs the native model's supported withdrawal of that same original application. Following sessions correct the amount exception and resolve the other exception under separate stable operation IDs. Only original row 2 and then row 4 are written; the withdrawn first application remains byte-for-byte unchanged. Completed retries return the original requests without a second write.
+
+Complete source CSV, current row reviews and preceding completion-history documents are read from the actual native source and independent recipient. The whole portfolio archive and every historical revision are compared through the existing receiver. At the chapter's retained cold boundary, reopen the same two Consoles and repeat the same phase/directory. It resumes the existing operation and records the original request/source/application identities.
+
+### Operate the actual browser continuation
+
+The new `row-continuation-receiving.mjs` also exports `runAwardCsvContinuationBrowser`, a supplied-page chapter. It borrows an already authenticated Awards page and the original receiver's callbacks; it starts no browser, host or controller. Inputs are page, csvPath, sessionPath, the original zero-based exception rowIndex, exact correction header/value/reason, retainDownload, captureViews and reopenPage. The optional readOriginal callback reads/waits for the existing native request; explicit saveReviewed:true operates **Save reviewed batch**. The default prepares and retains the complete current session.
+
+retainDownload(trigger,label) returns the original complete {path,bytes,sha256} descriptor. The chapter reads every retained download in full. captureViews(label) uses the existing desktop and 390px capture routine. reopenPage closes/reloads the current page, selects the latest same portfolio and returns to Awards. The chapter opens the previous session, resolves one exception, downloads unfinished whole working state, cold reopens/restores it, prepares exactly that original row, retains the complete reviewed session, and optionally saves it once through the original UI. It then reopens and inspects the retained original operation.
+
+The producing worker must personally open/run/view the exact outgoing desktop and narrow screens, operate the critical controls and inspect every complete attachment, export and independently reopened working file. The current source execution report distinguishes V8 interface-adapter execution from this actual browser/native use. Use the following complete source before a new admission; an already admitted older run completes under its frozen source binding. A supplied-page chapter can extend that existing authenticated workspace without replacing its journal binding.

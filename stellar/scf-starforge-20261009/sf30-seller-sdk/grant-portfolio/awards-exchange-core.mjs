@@ -2,12 +2,14 @@
 // Hashes are computed by the caller with its native SHA-256 implementation.
 import {materializeAwardCsvRowReview,encodeAwardCsvRowReview} from './awards-import-row-review.mjs';
 import {sha256Bytes} from './awards-import-hash.mjs';
+import {carriedAwardCsvRows,encodeAwardCsvContinuation} from './awards-import-continuation.mjs';
 const GRANT_PORTFOLIO_MAX_ACTION_BYTES=1024*1024;
 import {originalAwardCsvBytes,parseAwardCsvText,AWARD_CSV_MAX_SOURCE_BYTES,AWARD_CSV_MAX_ROWS} from './awards-csv-source.mjs';
 export {originalAwardCsvBytes,parseAwardCsvText,AWARD_CSV_MAX_SOURCE_BYTES,AWARD_CSV_MAX_ROWS};
 const utf8=text=>new TextEncoder().encode(text);
 const SCHEMA='stellar-forge.awards-csv-import-plan.v1';
 const REVIEWED_SCHEMA='stellar-forge.awards-csv-import-plan.v2';
+const CONTINUED_SCHEMA='stellar-forge.awards-csv-import-plan.v3';
 const canonical=value=>Array.isArray(value)?value.map(canonical):value!==null&&typeof value==='object'?
   Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])):value;
 const same=(left,right)=>JSON.stringify(canonical(left))===JSON.stringify(canonical(right));
@@ -35,7 +37,7 @@ function programmeRecord(portfolio,name,ident){
  */
 function prepareStructure(portfolio,input,sourceSha256,cache){
   need(HASH.test(sourceSha256||''),'Supply the computed SHA-256 of the complete original CSV bytes.');
-  exact(input,['operationId','csv','filename','documentId','roundId','actor','mapping','identities','status','rowIndexes','rowReview','reviewDocumentId'],
+  exact(input,['operationId','csv','filename','documentId','roundId','actor','mapping','identities','status','rowIndexes','rowReview','reviewDocumentId','continuation','continuationDocumentId'],
     ['operationId','csv','filename','documentId','roundId','actor','mapping','identities']);
   need(plain(portfolio?.definition?.programme)&&Number.isSafeInteger(portfolio.revision)&&portfolio.revision>0,
     'Open the exact original programme portfolio revision.');
@@ -76,10 +78,18 @@ function prepareStructure(portfolio,input,sourceSha256,cache){
   need(plain(input.identities.applications)&&plain(input.identities.partners)&&
     (input.identities.projects===undefined||plain(input.identities.projects)),'Supply explicit stable application and programme identity maps.');
   const lookup=(group,key)=>{need(Object.hasOwn(input.identities[group]??{},key),'No selected '+group+' identity for '+key);return id(input.identities[group][key]);};
-  const accepted=reviewed?.acceptedRowIndexes??null,acceptedSet=accepted?new Set(accepted):null;
+  const accepted=reviewed?.acceptedRowIndexes??null;
+  const continuation=input.continuation??null,continuationDocumentId=continuation?id(input.continuationDocumentId):null;
+  need(continuation||input.continuationDocumentId===undefined,'Completion evidence requires its full original continuation.');
+  need(!continuation||review,'A continuation retains the complete current row review.');
+  const carried=continuation?(cache?.carried??carriedAwardCsvRows(continuation,review,input.csv)):[];
+  const carriedSet=new Set(carried.map(row=>row.rowIndex)),eligible=accepted?.filter(i=>!carriedSet.has(i))??null;
+  const acceptedSet=eligible?new Set(eligible):null;
+  if(continuation)need(continuationDocumentId!==documentId&&continuationDocumentId!==reviewDocumentId,
+    'Use separate original CSV, current review and completed-history document identities.');
   const applicationFor=(index,reference)=>reviewed?id(reviewed.applicationIds[index]):lookup('applications',reference);
-  const selected=input.rowIndexes??accepted??undefined;
-  need(selected===undefined||Array.isArray(selected)&&(selected.length>0||reviewed&&accepted.length===0)&&selected.length<=parsed.rows.length&&
+  const selected=input.rowIndexes??eligible??undefined;
+  need(selected===undefined||Array.isArray(selected)&&(selected.length>0||reviewed&&eligible.length===0)&&selected.length<=parsed.rows.length&&
     selected.every((index,position)=>Number.isSafeInteger(index)&&index>=0&&index<parsed.rows.length&&
       (position===0||selected[position-1]<index)&&(!acceptedSet||acceptedSet.has(index))),
     'Review nonempty, distinct CSV data-row indexes in their original increasing order (zero based).');
@@ -127,16 +137,17 @@ function prepareStructure(portfolio,input,sourceSha256,cache){
       answers:Object.entries(map.answers).map(([criterionId,column])=>({criterionId,response:original[column]})),
       requestedAmount,submittedDate:map.submittedDate&&original[map.submittedDate]||null,status,
       notes:map.notes?original[map.notes]:'',sourceRefs:before?.sourceRefs||[],
-      evidenceIds:[...new Set([...(before?.evidenceIds||[]),documentId,...(review?[reviewDocumentId]:[])])],supersedesId:before?.supersedesId||null};
+      evidenceIds:[...new Set([...(before?.evidenceIds||[]),documentId,...(review?[reviewDocumentId]:[]),...(continuation?[continuationDocumentId]:[])])],supersedesId:before?.supersedesId||null};
     changes.push({collection:'applications',id:ident,expectedRevision:before?.revision||0,fields});
   }
   const descriptor={sha256:hash,bytes:parsed.bytes.length,filename:input.filename,contentType:'text/csv'};
   const document=programmes.documents.get(documentId);
   need(!document||!document.archived&&document.nodeId===round.programmeNodeId&&document.object&&
     Object.keys(descriptor).every(k=>document.object[k]===descriptor[k]),'The selected original import document ID has different bytes or programme scope.');
-  const mappingEvidence={schema:review?REVIEWED_SCHEMA:SCHEMA,operationId:input.operationId,roundId:round.id,roundRevision:round.revision,
+  const mappingEvidence={schema:continuation?CONTINUED_SCHEMA:review?REVIEWED_SCHEMA:SCHEMA,operationId:input.operationId,roundId:round.id,roundRevision:round.revision,
     roundSha256:round.sha256,columns:map,rows:parsed.rows.length,source:{sha256:hash,bytes:parsed.bytes.length,filename:input.filename},
     ...(review?{rowReview:{schema:review.schema,reviewId:review.reviewId,sha256:review.sha256,documentId:reviewDocumentId,counts:review.counts}}:{}),
+    ...(continuation?{continuation:{sha256:continuation.sha256,documentId:continuationDocumentId,previousSessionSha256:continuation.previous.sha256,carriedRows:carried.length}}:{}),
     ...(selected===undefined?{}:parsed.rows.length<=2000?{selectedRowIndexes:[...selected],selectedRows:changes.length}:
       {rowSelectionSchema:'stellar-forge.csv-row-ranges.v1',selectedRowRanges:awardCsvRowRanges(selected),selectedRows:changes.length})};
   const mappingText=JSON.stringify(mappingEvidence,null,2);
@@ -158,6 +169,18 @@ function prepareStructure(portfolio,input,sourceSha256,cache){
   need(!retainedReview||!retainedReview.archived&&retainedReview.nodeId===round.programmeNodeId&&
     same(retainedReview.object,reviewObject)&&retainedReview.content===reviewContent,
     'The selected row-review document already retains another review or programme scope.');
+  let continuationEvidence=cache?.continuationEvidence??null;
+  if(continuation&&!continuationEvidence){
+    const bytes=encodeAwardCsvContinuation(continuation);
+    continuationEvidence={object:{sha256:sha256Bytes(bytes),bytes:bytes.length,filename:'Award_Completed_'+continuation.previous.sessionId+'.json',contentType:'application/json'},
+      content:JSON.stringify({schema:continuation.schema,sha256:continuation.sha256,previousSessionId:continuation.previous.sessionId,
+        previousSessionSha256:continuation.previous.sha256,source:continuation.previous.source,carriedRows:carried.length},null,2)};
+    if(cache)cache.continuationEvidence=continuationEvidence;
+  }
+  const retainedContinuation=continuation?programmes.documents.get(continuationDocumentId):null;
+  need(!retainedContinuation||!retainedContinuation.archived&&retainedContinuation.nodeId===round.programmeNodeId&&
+    same(retainedContinuation.object,continuationEvidence.object)&&retainedContinuation.content===continuationEvidence.content,
+    'The selected completion-history document retains different original outcomes.');
   const payload={id:portfolio.id,expectedPortfolioRevision:portfolio.revision,name,notes,sources,review:definition.review,
     ...(document?{}:{programme:{schema:'stellar-forge.grant-programme.v1',
       expectedProgrammeRevision:portfolio.definition.programme.revision,actor:input.actor,changes:[{collection:'documents',id:documentId,
@@ -174,16 +197,21 @@ function prepareStructure(portfolio,input,sourceSha256,cache){
     if(!retainedReview)programmeChanges.push({collection:'documents',id:reviewDocumentId,expectedRevision:0,
       fields:{nodeId:round.programmeNodeId,title:'Reviewed original rows · '+input.filename,category:'other',owner:input.actor,status:'current',
         object:reviewObject,description:'Every original source row, explicit disposition and reason, and literal working corrections.',content:reviewContent}});
+    if(continuation&&!retainedContinuation)programmeChanges.push({collection:'documents',id:continuationDocumentId,expectedRevision:0,
+      fields:{nodeId:round.programmeNodeId,title:'Completed original rows · '+input.filename,category:'other',owner:input.actor,status:'current',
+        object:{...continuationEvidence.object},description:'Complete prior reviewed session and native operation, source-row and historical application result bindings.',
+        content:continuationEvidence.content}});
     if(programmeChanges.length)payload.programme={schema:'stellar-forge.grant-programme.v1',
       expectedProgrammeRevision:portfolio.definition.programme.revision,actor:input.actor,changes:programmeChanges};
     if(!changes.length)delete payload.awards;
     need(utf8(JSON.stringify(action)).byteLength<=GRANT_PORTFOLIO_MAX_ACTION_BYTES,
       'The complete mapped action exceeds the original request limit. Prepare separate explicit import operations with retained source evidence.');
   }
-  return {schema:review?REVIEWED_SCHEMA:SCHEMA,portfolio:{id:portfolio.id,revision:portfolio.revision,snapshot:portfolio.snapshot},
+  return {schema:continuation?CONTINUED_SCHEMA:review?REVIEWED_SCHEMA:SCHEMA,portfolio:{id:portfolio.id,revision:portfolio.revision,snapshot:portfolio.snapshot},
     source:descriptor,documentId,round:{id:round.id,revision:round.revision,sha256:round.sha256},
     rows:changes.length,mapping:JSON.parse(JSON.stringify(map)),...(selected===undefined?{}:{sourceRows:parsed.rows.length,rowIndexes:[...selected]}),
-    ...(review?{rowReview:{sha256:review.sha256,documentId:reviewDocumentId,object:reviewObject,counts:{...review.counts}}}:{}),action};
+    ...(review?{rowReview:{sha256:review.sha256,documentId:reviewDocumentId,object:reviewObject,counts:{...review.counts}}}:{}),
+    ...(continuation?{continuation:{sha256:continuation.sha256,documentId:continuationDocumentId,object:{...continuationEvidence.object},carriedRows:carried.length}}:{}),action};
 }
 /** Exact half-open data-row ranges. The full source and saved plan keep every row. */
 export function awardCsvRowRanges(indexes){
@@ -201,11 +229,13 @@ export function createAwardCsvImportPlanner(portfolio,input,sourceSha256){
   const {csv:ignored,...fields}=input,common=JSON.parse(JSON.stringify(fields));
   const cache={parsed:csvInput(csv),reviewSource:common.rowReview?canonical(common.rowReview):null,
     reviewed:common.rowReview?materializeAwardCsvRowReview(common.rowReview,csv):null,reviewEvidence:null,
+    carried:common.continuation?carriedAwardCsvRows(common.continuation,common.rowReview,csv):[],continuationEvidence:null,
     applications:new Map(basis.definition.awards.records.applications.map(r=>[r.id,r])),
     programmes:Object.fromEntries(['partners','nodes','documents'].map(name=>[name,
       new Map(basis.definition.programme.records[name].map(r=>[r.id,r]))])),referencesValidated:false};
+  const carriedIndexes=new Set(cache.carried.map(row=>row.rowIndex));
   return Object.freeze({rows:cache.parsed.rows.length,headers:Object.freeze([...cache.parsed.headers]),
-    ...(cache.reviewed?{acceptedRowIndexes:Object.freeze([...cache.reviewed.acceptedRowIndexes])}:{}),
+    ...(cache.reviewed?{acceptedRowIndexes:Object.freeze(cache.reviewed.acceptedRowIndexes.filter(i=>!carriedIndexes.has(i)))}:{}),
     plan(selection={}){
       exact(selection,['operationId','documentId','rowIndexes']);
       return prepareStructure(basis,{...common,...selection,csv},sourceSha256,cache);
