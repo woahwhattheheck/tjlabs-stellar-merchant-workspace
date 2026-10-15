@@ -86,6 +86,13 @@ route and declared input metadata retained in each HTTP or MCP discovery entry.
 The complete supported schema fields and text limits are documented in
 [the query engine guide](QUERY_ENGINE.md).
 
+Catalog admission and Atlas search apply the same x402 Bazaar soft-drop rules to
+provider metadata. `serviceName` and `tags` are bounded printable metadata;
+`iconUrl` must be an absolute HTTP(S) URL without userinfo, control characters,
+an IP literal, an encoded loopback name, an all-digit host or a hexadecimal host.
+This validation performs no DNS lookup or icon fetch. A UI that later fetches an
+accepted icon must still enforce its own response and network policy.
+
 A new search expression reuses the lexical state of already prepared rows.
 A selective search prepares its selected corpus; later searches prepare
 additional rows as they need them. Replacing or retiring an offer updates its

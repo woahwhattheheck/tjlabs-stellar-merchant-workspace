@@ -1,6 +1,5 @@
 // MIT. x402 v2 Bazaar discovery-core prototype: no settlement or external registrations.
 import { createHash } from 'node:crypto';
-import { isIP } from 'node:net';
 import { inspectResourceURL, inspectRouteTemplate } from '../../stellar-forge/route-identity/identity.mjs';
 import { CatalogQueryIndex } from './query-index.mjs';
 import { validateCatalogEntryIdentity, sanitizeResourceSearchMetadata } from './entry-identity.mjs';
@@ -14,23 +13,7 @@ export function isValidRouteTemplate(template) {
 }
 
 export function sanitizeResourceServiceMetadata(resource) {
-  const result = sanitizeResourceSearchMetadata(resource);
-  if (typeof result.iconUrl === 'string') {
-    try {
-      if (result.iconUrl.length > 2048 || /[\x00-\x1f\x7f]/.test(result.iconUrl)) throw Error('invalid');
-      const u = new URL(result.iconUrl);
-      const h = decodeURIComponent(u.hostname).toLowerCase().replace(/\.$/,'');
-      // Discovery consumers may fetch icons. Do not advertise explicitly local
-      // DNS names as otherwise public-looking icon URLs; syntax-only protection,
-      // not a substitute for a consumer's DNS/IP checks at fetch time.
-      const localName = ['localhost','local','localdomain','internal','home.arpa',
-        'ip6-localhost','ip6-loopback'].includes(h) ||
-        ['.localhost','.local','.localdomain','.internal','.home.arpa'].some(s => h.endsWith(s));
-      if (!['http:', 'https:'].includes(u.protocol) || u.username || u.password || isIP(h) ||
-          localName || /^\d+$/.test(h) || /^0x[0-9a-f]+$/.test(h)) throw Error('invalid');
-    } catch { delete result.iconUrl; }
-  } else delete result.iconUrl;
-  return result;
+  return sanitizeResourceSearchMetadata(resource);
 }
 
 function filtersFrom(params) {
