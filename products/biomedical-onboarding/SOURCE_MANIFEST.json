@@ -13,8 +13,8 @@
     },
     {
       "path": "INSTALLED_OPERATION.md",
-      "bytes": 6507,
-      "sha256": "06bfc805ca97a11360c6dd6e931abb9fb57f677db8522a07da1f9f2c37e0b7b5"
+      "bytes": 6787,
+      "sha256": "8f7d4c98a0c5c149b69d31b63671dbd5a49dd9303b2c927078558be3fabb958b"
     },
     {
       "path": "INSTALLED_RECEIVING.md",
@@ -208,8 +208,8 @@
     },
     {
       "path": "operator/installed-desk.js",
-      "bytes": 42739,
-      "sha256": "d6b2cd18452f2cd9566bf4b6283a45fce5dbe7e125dacf778171fb68ccca6a06"
+      "bytes": 42984,
+      "sha256": "e2cd514c1fa6947ff3163a46ee16bb106bdb7b7ce6595a5923f901d681a33846"
     },
     {
       "path": "operator/native-course.cjs",
@@ -283,8 +283,8 @@
     },
     {
       "path": "receiving/installed-result.json",
-      "bytes": 4304,
-      "sha256": "4bc599eee69c5387d20abf97dbdf75e1a6cb81817e5e6460f91d4c01e2a06ce0"
+      "bytes": 4420,
+      "sha256": "31697bdd6442c2c3f708769412f5bc1c7d0e16306c5b9e1b7750b05c4a73b53d"
     },
     {
       "path": "runtime.mjs",

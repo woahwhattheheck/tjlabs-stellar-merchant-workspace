@@ -61,12 +61,15 @@
     "backups": 8
   },
   "capacity": {
-    "schema": "biomedical.installed-capacity-course.v1",
-    "maxBytes": 107542,
-    "completeEditorBytes": 107030,
+    "schema": "biomedical.installed-capacity-course.v2",
+    "maxBytes": 108584,
+    "completeEditorBytes": 108072,
     "selectedStudyPreserved": true,
-    "completeIncomingFilePreserved": true,
-    "completeEmergencyExport": "Biomedical_Onboarding_Complete_Emergency.json",
+    "completeIncomingFileAndMetadataDownloaded": true,
+    "explicitClearFreesCapacity": true,
+    "existingRetainedEmergencyAndActorPreserved": true,
+    "saveQueueRecoversAfterOversize": true,
+    "subsequentViewSavedAndReopened": true,
     "productionInstalledLimit": 134217728,
     "originalSessionLimit": 41943040
   },
