@@ -1,0 +1,19 @@
+{
+  "schema": "commons.seeded-checkpoint-cache/v1",
+  "verifiedSeedHead": "68ef6e2e09d1082e632592174a2551b9834003cf",
+  "completeIndexExact": true,
+  "requiredObjects": 734,
+  "charactersAvailable": 104991880,
+  "statistics": {
+    "seededPayloads": 635,
+    "computedPayloads": 0,
+    "livePayloads": 635,
+    "fresh": {
+      "livePayloads": 0,
+      "computedPayloads": 0,
+      "payloadHits": 0,
+      "hashedCharacters": 10281096
+    }
+  },
+  "elapsed": 9497
+}
