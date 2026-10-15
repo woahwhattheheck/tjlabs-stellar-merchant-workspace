@@ -258,8 +258,8 @@
     },
     {
       "path": "src/session.mjs",
-      "bytes": 3817,
-      "sha256": "e1103163d399eb93fc8f896a5554178712680f5d1d78de355326a88037c559a4"
+      "bytes": 3962,
+      "sha256": "169809526fc9e757d2290a7d1d4efe5089baa60bc5796ee3a9bf7561df517fd9"
     },
     {
       "path": "src/style.css",

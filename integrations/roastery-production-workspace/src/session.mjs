@@ -7,7 +7,7 @@ export function createRoasterySessionAPI(core,C,options={}){
  function create(label='Roastery production'){const w=core.empty();w.caseName=label;return fromWorkspace(w);}
  function validate(s){
   need(s?.schema===schema&&typeof s.draft?.actor==='string'&&typeof s.draft.profileSearch==='string'&&typeof s.draft.profileGroup==='string'&&Array.isArray(s.backups)&&typeof s.createdAt==='string'&&typeof s.updatedAt==='string','Choose a complete roastery editor session');
-  core.reopen(s.workspace);
+  need(JSON.stringify(core.reopen(s.workspace))===JSON.stringify(s.workspace),'Saved workspace is incomplete; receive the original workspace through its supported import');
   for(const b of s.backups){need(b&&typeof b.id==='string'&&typeof b.reason==='string'&&typeof b.at==='string'&&b.snapshot&&!b.snapshot.backups&&hash(JSON.stringify(b.snapshot))===b.sha256,'Complete prior session identity differs');validate({...clone(b.snapshot),backups:[]});}
   need(C.utf8Encode(JSON.stringify(s)).length<=limit,'Complete working session exceeds 128 MiB; save the handover before beginning another period');return s;
  }
