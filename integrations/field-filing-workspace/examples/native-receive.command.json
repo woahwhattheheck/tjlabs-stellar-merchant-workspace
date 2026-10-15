@@ -1,0 +1,80 @@
+{
+  "action": "receive",
+  "input": {
+    "id": "native-source-edition",
+    "label": "Authored original-file intake",
+    "receivedAt": "2026-11-02T19:00:00Z",
+    "settings": {
+      "dayStart": "2026-10-20T00:00:00-04:00",
+      "dayEnd": "2026-10-21T00:00:00-04:00",
+      "asOf": "2026-10-20T14:00:00-04:00"
+    },
+    "notes": "Authored exact file intake; browser drafts remain independent."
+  },
+  "sourceFiles": {
+    "resources": {
+      "path": "resources.csv",
+      "name": "resources.csv"
+    },
+    "availability": {
+      "path": "availability.csv",
+      "name": "availability.csv"
+    },
+    "booking_revisions": {
+      "path": "booking_revisions.csv",
+      "name": "booking_revisions.csv"
+    },
+    "quoted_lines": {
+      "path": "quoted_lines.csv",
+      "name": "quoted_lines.csv"
+    },
+    "completions": {
+      "path": "completions.csv",
+      "name": "completions.csv"
+    },
+    "invoice_lines": {
+      "path": "invoice_lines.csv",
+      "name": "invoice_lines.csv"
+    },
+    "payments": {
+      "path": "payments.csv",
+      "name": "payments.csv"
+    },
+    "allocations": {
+      "path": "allocations.csv",
+      "name": "allocations.csv"
+    },
+    "systems": {
+      "path": "systems.csv",
+      "name": "systems.csv"
+    },
+    "arrival_promises": {
+      "path": "arrival_promises.csv",
+      "name": "arrival_promises.csv"
+    },
+    "field_versions": {
+      "path": "field_versions.csv",
+      "name": "field_versions.csv"
+    },
+    "form_templates": {
+      "path": "form_templates.csv",
+      "name": "form_templates.csv"
+    },
+    "form_instances": {
+      "path": "form_instances.csv",
+      "name": "form_instances.csv"
+    },
+    "signatures": {
+      "path": "signatures.csv",
+      "name": "signatures.csv"
+    },
+    "filing_attempts": {
+      "path": "filing_attempts.csv",
+      "name": "filing_attempts.csv"
+    },
+    "filing_events": {
+      "path": "filing_events.csv",
+      "name": "filing_events.csv"
+    }
+  }
+}

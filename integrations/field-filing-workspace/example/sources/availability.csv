@@ -1,0 +1,4 @@
+window_id,resource_id,state,start_at,end_at,reference
+W-C,CREW-A,available,2026-10-20T08:00:00-04:00,2026-10-20T18:00:00-04:00,Declared crew day
+W-T,TRUCK-A,available,2026-10-20T08:00:00-04:00,2026-10-20T18:00:00-04:00,Declared truck day
+W-BREAK,CREW-A,blocked,2026-10-20T12:00:00-04:00,2026-10-20T12:30:00-04:00,Declared break
