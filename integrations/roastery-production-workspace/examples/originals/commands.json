@@ -1,0 +1,54 @@
+[
+  {
+    "op": "name",
+    "value": "Authored two-lot native example"
+  },
+  {
+    "op": "receive",
+    "table": "lots",
+    "path": "lots.csv",
+    "at": "2026-10-15"
+  },
+  {
+    "op": "receive",
+    "table": "profiles",
+    "path": "profiles.csv",
+    "at": "2026-10-15"
+  },
+  {
+    "op": "receive",
+    "table": "products",
+    "path": "products.csv",
+    "at": "2026-10-15"
+  },
+  {
+    "op": "receive",
+    "table": "recipes",
+    "path": "recipes.csv",
+    "at": "2026-10-15"
+  },
+  {
+    "op": "receive",
+    "table": "orders",
+    "path": "orders.csv",
+    "at": "2026-10-15"
+  },
+  {
+    "op": "receive",
+    "table": "roasted",
+    "path": "roasted.csv",
+    "at": "2026-10-15"
+  },
+  {
+    "op": "receive",
+    "table": "packaged",
+    "path": "packaged.csv",
+    "at": "2026-10-15"
+  },
+  {
+    "op": "freeze",
+    "reviewer": "Example reviewer",
+    "note": "Authored native flow",
+    "at": "2026-10-15"
+  }
+]
