@@ -1,0 +1,1497 @@
+{
+  "schema": "margin.source-study/v1",
+  "id": "authored-margin-study",
+  "config": {
+    "label": "Authored three-plant margin source study",
+    "data_class": "authored_course",
+    "source_scope": "Authored original ERP/HRIS/production/finance source exports",
+    "returned_scope": "Authored mapped study return",
+    "authority_notes": "Illustrative fixtures only. Actual source owners authorise plant records and interpretations.",
+    "margin": {
+      "side": "returned",
+      "as_of": "2026-10-14T23:59:59Z",
+      "currency": "USD",
+      "basis_unit": "kg",
+      "accounting_basis": "accrual",
+      "scope_notes": "Three authored plants; two full fiscal weeks; USD accrual. Cooked plant remains a distinct process specification.",
+      "comparability_notes": "Raw X and Y use matching good-output definitions. Production slices are disjoint authored lots.",
+      "required_review_roles": [
+        "operations",
+        "finance"
+      ],
+      "comparisons": [
+        {
+          "id": "baseline-A",
+          "label": "Plant A matched week comparison",
+          "kind": "baseline_current",
+          "reference_site_id": "A",
+          "reference_period_id": "P0",
+          "current_site_id": "A",
+          "current_period_id": "P1",
+          "equivalence_basis": "Same authored recipe, net good-output and disjoint lot basis",
+          "source_ref": "authored/example-source",
+          "comparison_keys": [
+            "X",
+            "Y"
+          ]
+        },
+        {
+          "id": "site-A-B",
+          "label": "Current week A to B",
+          "kind": "cross_site",
+          "reference_site_id": "A",
+          "reference_period_id": "P1",
+          "current_site_id": "B",
+          "current_period_id": "P1",
+          "equivalence_basis": "Same authored raw recipe and accepted net mass",
+          "source_ref": "authored/example-source",
+          "comparison_keys": [
+            "X",
+            "Y"
+          ]
+        },
+        {
+          "id": "site-A-C",
+          "label": "Raw versus cooked qualification",
+          "kind": "cross_site",
+          "reference_site_id": "A",
+          "reference_period_id": "P1",
+          "current_site_id": "C",
+          "current_period_id": "P1",
+          "equivalence_basis": "Deliberately unresolved different cooked process; retained for review",
+          "source_ref": "authored/example-source",
+          "comparison_keys": [
+            "X",
+            "Y"
+          ]
+        }
+      ]
+    },
+    "selection": {
+      "source": {
+        "sites": "extract-a7312036d994b5f75d11d93ed324684d",
+        "periods": "extract-f4a1b5239d815c36741e10b21e20f42b",
+        "skus": "extract-df86753d29e9b6ed907c44cb8f03d0df",
+        "units": "extract-99d9e32a75857716aab4d9b2473ad105",
+        "production": "extract-5421a8aadc0cdfd4efdfbbbb89d4990f",
+        "costs": "extract-8d272667724363065ce3f52225e7c5e3",
+        "allocations": "extract-394c6bfe4cf854c8c5ccd103fd4b090b",
+        "hours": "extract-fbb371a9a1beed893637c7ca98fabd5f",
+        "coverage": "extract-1e3f0b539ec635f728d76483bbc4c4bc",
+        "finance": "extract-5377f1190aa9b9e0e8693d60c62d7f10",
+        "benefits": "extract-c4dab01c330f278db8807b5138de03df"
+      },
+      "returned": {
+        "sites": "extract-b323cf03938ca5adef7ce55adc2e6e68",
+        "periods": "extract-11858a446c3e2ca722f4b613fe6061ee",
+        "skus": "extract-315f80d6357b8176bb3a8c05011e872e",
+        "units": "extract-c2a65ca625633fdd8c17545b7b476f21",
+        "production": "extract-481db390157956be7efbcaedad4c1398",
+        "costs": "extract-625adb47ffbf2ca72ca69db93969e7ca",
+        "allocations": "extract-e2a464d08de9bb0e4a5f8910de98f45c",
+        "hours": "extract-af015f002565a17ec223a69759953717",
+        "coverage": "extract-013f7aa85d1433acb3ff454e4ecc9ced",
+        "finance": "extract-9e10f9b87ed0c2a4848a3db30afbb033",
+        "benefits": "extract-39403e04c244736f169151748cc78522"
+      }
+    }
+  },
+  "originals": [
+    {
+      "id": "original-2aad3b6fa6aace4f70b62af0c5537f38",
+      "name": "source-sites.csv",
+      "content": "id,name,system_label,currency,external_ref\r\nA,Authored North plant,Authored mapped ERP/HRIS extracts,USD,authored/example-source\r\nB,Authored South plant,Authored mapped ERP/HRIS extracts,USD,authored/example-source\r\nC,Authored Cooked plant,Authored mapped ERP/HRIS extracts,USD,authored/example-source\r\n",
+      "sha256": "8142f753ae5ac67ed7d47cdfdd7db71d4c8e74b03ee87663b5e2e13abd67a75d",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-2336747e0b28435cfa4e4e2e367ac54d",
+      "name": "returned-sites.csv",
+      "content": "id,name,system_label,currency,external_ref\r\nA,Authored North plant,Authored mapped ERP/HRIS extracts,USD,authored/example-source\r\nB,Authored South plant,Authored mapped ERP/HRIS extracts,USD,authored/example-source\r\nC,Authored Cooked plant,Authored mapped ERP/HRIS extracts,USD,authored/example-source\r\n",
+      "sha256": "8142f753ae5ac67ed7d47cdfdd7db71d4c8e74b03ee87663b5e2e13abd67a75d",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-e638e59205c07f39076c6b7e2d553517",
+      "name": "source-periods.csv",
+      "content": "id,label,starts_at,ends_at,calendar_basis,external_ref\r\nP0,Reference fiscal week,2026-09-28T00:00:00Z,2026-10-05T00:00:00Z,\"Authored Monday fiscal week, UTC boundaries\",authored/example-source\r\nP1,Current fiscal week,2026-10-05T00:00:00Z,2026-10-12T00:00:00Z,\"Authored Monday fiscal week, UTC boundaries\",authored/example-source\r\n",
+      "sha256": "b81e8af5bc22d135edebf6e985a3c80d22ae6e3584fdb194b039a6a0ba6be1da",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-4f3f71543b50ba3197879ef9e23443a4",
+      "name": "returned-periods.csv",
+      "content": "id,label,starts_at,ends_at,calendar_basis,external_ref\r\nP0,Reference fiscal week,2026-09-28T00:00:00Z,2026-10-05T00:00:00Z,\"Authored Monday fiscal week, UTC boundaries\",authored/example-source\r\nP1,Current fiscal week,2026-10-05T00:00:00Z,2026-10-12T00:00:00Z,\"Authored Monday fiscal week, UTC boundaries\",authored/example-source\r\n",
+      "sha256": "b81e8af5bc22d135edebf6e985a3c80d22ae6e3584fdb194b039a6a0ba6be1da",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-891c152470af812ce873857a4cd213b3",
+      "name": "source-skus.csv",
+      "content": "id,site_id,local_sku,comparison_key,process_spec,output_basis,good_definition,yield_definition,external_ref\r\nAX,A,A-X,X,Raw recipe-v1,net_good,Accepted raw net mass,Raw accepted net mass / input net mass,authored/example-source\r\nAY,A,A-Y,Y,Raw recipe-v1,net_good,Accepted raw net mass,Raw accepted net mass / input net mass,authored/example-source\r\nBX,B,B-X,X,Raw recipe-v1,net_good,Accepted raw net mass,Raw accepted net mass / input net mass,authored/example-source\r\nBY,B,B-Y,Y,Raw recipe-v1,net_good,Accepted raw net mass,Raw accepted net mass / input net mass,authored/example-source\r\nCX,C,C-X,X,Cooked recipe-v2,net_good,Accepted cooked net mass,Cooked good mass / wet ingredients incl additions,authored/example-source\r\nCY,C,C-Y,Y,Cooked recipe-v2,net_good,Accepted cooked net mass,Cooked good mass / wet ingredients incl additions,authored/example-source\r\n",
+      "sha256": "f5ac3c21c34c219743991e58df6b777b7052a9e05e238fc2908a1044eb5299b3",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-8e7b1125249a936e368651207f199012",
+      "name": "returned-skus.csv",
+      "content": "id,site_id,local_sku,comparison_key,process_spec,output_basis,good_definition,yield_definition,external_ref\r\nAX,A,A-X,X,Raw recipe-v1,net_good,Accepted raw net mass,Raw accepted net mass / input net mass,authored/example-source\r\nAY,A,A-Y,Y,Raw recipe-v1,net_good,Accepted raw net mass,Raw accepted net mass / input net mass,authored/example-source\r\nBX,B,B-X,X,Raw recipe-v1,net_good,Accepted raw net mass,Raw accepted net mass / input net mass,authored/example-source\r\nBY,B,B-Y,Y,Raw recipe-v1,net_good,Accepted raw net mass,Raw accepted net mass / input net mass,authored/example-source\r\nCX,C,C-X,X,Cooked recipe-v2,net_good,Accepted cooked net mass,Cooked good mass / wet ingredients incl additions,authored/example-source\r\nCY,C,C-Y,Y,Cooked recipe-v2,net_good,Accepted cooked net mass,Cooked good mass / wet ingredients incl additions,authored/example-source\r\n",
+      "sha256": "f5ac3c21c34c219743991e58df6b777b7052a9e05e238fc2908a1044eb5299b3",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-3daecf85a45148571035fc93b2b5e580",
+      "name": "source-units.csv",
+      "content": "id,sku_id,source_unit,basis_unit,factor_numerator,factor_denominator,source_ref\r\nAXkg,AX,kg,kg,1,1,authored/example-source\r\nAXg,AX,g,kg,1,1000,authored/example-source\r\nAYkg,AY,kg,kg,1,1,authored/example-source\r\nAYg,AY,g,kg,1,1000,authored/example-source\r\nBXkg,BX,kg,kg,1,1,authored/example-source\r\nBXg,BX,g,kg,1,1000,authored/example-source\r\nBYkg,BY,kg,kg,1,1,authored/example-source\r\nBYg,BY,g,kg,1,1000,authored/example-source\r\nCXkg,CX,kg,kg,1,1,authored/example-source\r\nCXg,CX,g,kg,1,1000,authored/example-source\r\nCYkg,CY,kg,kg,1,1,authored/example-source\r\nCYg,CY,g,kg,1,1000,authored/example-source\r\n",
+      "sha256": "0f473a6d5be1439864e36562cb6cfa55bfb3928d179c2a610bc3a375f5f7cfa3",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-d17871fd3df1158ac9ca792606de3ee3",
+      "name": "returned-units.csv",
+      "content": "id,sku_id,source_unit,basis_unit,factor_numerator,factor_denominator,source_ref\r\nAXkg,AX,kg,kg,1,1,authored/example-source\r\nAXg,AX,g,kg,1,1000,authored/example-source\r\nAYkg,AY,kg,kg,1,1,authored/example-source\r\nAYg,AY,g,kg,1,1000,authored/example-source\r\nBXkg,BX,kg,kg,1,1,authored/example-source\r\nBXg,BX,g,kg,1,1000,authored/example-source\r\nBYkg,BY,kg,kg,1,1,authored/example-source\r\nBYg,BY,g,kg,1,1000,authored/example-source\r\nCXkg,CX,kg,kg,1,1,authored/example-source\r\nCXg,CX,g,kg,1,1000,authored/example-source\r\nCYkg,CY,kg,kg,1,1,authored/example-source\r\nCYg,CY,g,kg,1,1000,authored/example-source\r\n",
+      "sha256": "0f473a6d5be1439864e36562cb6cfa55bfb3928d179c2a610bc3a375f5f7cfa3",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-73b720516aea29645820d4c0b73369ec",
+      "name": "source-production.csv",
+      "content": "id,site_id,sku_id,period_id,slice_key,good_quantity,good_unit_id,input_quantity,input_unit_id,output_scope,input_scope,included,exclusion_reason,source_ref\r\nprodAXP0,A,AX,P0,AXP0-disjoint-lot,100000,AXg,125,AXkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodAYP0,A,AY,P0,AYP0-disjoint-lot,100,AYkg,125,AYkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodAXP1,A,AX,P1,AXP1-disjoint-lot,200000,AXg,225,AXkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodAYP1,A,AY,P1,AYP1-disjoint-lot,50,AYkg,75,AYkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodBXP0,B,BX,P0,BXP0-disjoint-lot,100000,BXg,125,BXkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodBYP0,B,BY,P0,BYP0-disjoint-lot,100,BYkg,125,BYkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodBXP1,B,BX,P1,BXP1-disjoint-lot,100000,BXg,125,BXkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodBYP1,B,BY,P1,BYP1-disjoint-lot,100,BYkg,125,BYkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodCXP0,C,CX,P0,CXP0-disjoint-lot,100000,CXg,125,CXkg,Accepted cooked net mass,Wet ingredients plus additions,true,,authored/example-source\r\nprodCYP0,C,CY,P0,CYP0-disjoint-lot,100,CYkg,125,CYkg,Accepted cooked net mass,Wet ingredients plus additions,true,,authored/example-source\r\nprodCXP1,C,CX,P1,CXP1-disjoint-lot,100000,CXg,125,CXkg,Accepted cooked net mass,Wet ingredients plus additions,true,,authored/example-source\r\nprodCYP1,C,CY,P1,CYP1-disjoint-lot,100,CYkg,125,CYkg,Accepted cooked net mass,Wet ingredients plus additions,true,,authored/example-source\r\n",
+      "sha256": "6e66bf56d440f211aff211d0f45ac747865646868566502027dcd33aa9c2332b",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-a65a68533fbb9fa78e248bbfcdc1e183",
+      "name": "returned-production.csv",
+      "content": "id,site_id,sku_id,period_id,slice_key,good_quantity,good_unit_id,input_quantity,input_unit_id,output_scope,input_scope,included,exclusion_reason,source_ref\r\nprodAXP0,A,AX,P0,AXP0-disjoint-lot,100000,AXg,125,AXkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodAYP0,A,AY,P0,AYP0-disjoint-lot,100,AYkg,125,AYkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodAXP1,A,AX,P1,AXP1-disjoint-lot,180000,AXg,225,AXkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodAYP1,A,AY,P1,AYP1-disjoint-lot,50,AYkg,75,AYkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodBXP0,B,BX,P0,BXP0-disjoint-lot,100000,BXg,125,BXkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodBYP0,B,BY,P0,BYP0-disjoint-lot,100,BYkg,125,BYkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodBXP1,B,BX,P1,BXP1-disjoint-lot,100000,BXg,125,BXkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodBYP1,B,BY,P1,BYP1-disjoint-lot,100,BYkg,125,BYkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodCXP0,C,CX,P0,CXP0-disjoint-lot,100000,CXg,125,CXkg,Accepted cooked net mass,Wet ingredients plus additions,true,,authored/example-source\r\nprodCYP0,C,CY,P0,CYP0-disjoint-lot,100,CYkg,125,CYkg,Accepted cooked net mass,Wet ingredients plus additions,true,,authored/example-source\r\nprodCXP1,C,CX,P1,CXP1-disjoint-lot,100000,CXg,125,CXkg,Accepted cooked net mass,Wet ingredients plus additions,true,,authored/example-source\r\nprodCYP1,C,CY,P1,CYP1-disjoint-lot,100,CYkg,125,CYkg,Accepted cooked net mass,Wet ingredients plus additions,true,,authored/example-source\r\n",
+      "sha256": "8798ceaeac93d3b55720e09e4b407dff2902999506bd9f89e348320350c3b5f9",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-affa0e3da1239d194a2372d99f1d80a9",
+      "name": "source-costs.csv",
+      "content": "id,site_id,period_id,economic_pool_id,cost_category,currency,amount,accounting_basis,included,exclusion_reason,source_ref\r\npermanentAXP0,A,P0,AX-permanent,permanent,USD,160,accrual,true,,authored/example-source\r\nagencyAXP0,A,P0,AX-agency,agency,USD,40,accrual,true,,authored/example-source\r\npermanentAYP0,A,P0,AY-permanent,permanent,USD,320,accrual,true,,authored/example-source\r\nagencyAYP0,A,P0,AY-agency,agency,USD,80,accrual,true,,authored/example-source\r\npermanentAXP1,A,P1,AX-permanent,permanent,USD,240,accrual,true,,authored/example-source\r\nagencyAXP1,A,P1,AX-agency,agency,USD,60,accrual,true,,authored/example-source\r\npermanentAYP1,A,P1,AY-permanent,permanent,USD,200,accrual,true,,authored/example-source\r\nagencyAYP1,A,P1,AY-agency,agency,USD,50,accrual,true,,authored/example-source\r\npermanentBXP0,B,P0,BX-permanent,permanent,USD,144,accrual,true,,authored/example-source\r\nagencyBXP0,B,P0,BX-agency,agency,USD,36,accrual,true,,authored/example-source\r\npermanentBYP0,B,P0,BY-permanent,permanent,USD,336,accrual,true,,authored/example-source\r\nagencyBYP0,B,P0,BY-agency,agency,USD,84,accrual,true,,authored/example-source\r\npermanentBXP1,B,P1,BX-permanent,permanent,USD,144,accrual,true,,authored/example-source\r\nagencyBXP1,B,P1,BX-agency,agency,USD,36,accrual,true,,authored/example-source\r\npermanentBYP1,B,P1,BY-permanent,permanent,USD,336,accrual,true,,authored/example-source\r\nagencyBYP1,B,P1,BY-agency,agency,USD,84,accrual,true,,authored/example-source\r\npermanentCXP0,C,P0,CX-permanent,permanent,USD,208,accrual,true,,authored/example-source\r\nagencyCXP0,C,P0,CX-agency,agency,USD,52,accrual,true,,authored/example-source\r\npermanentCYP0,C,P0,CY-permanent,permanent,USD,384,accrual,true,,authored/example-source\r\nagencyCYP0,C,P0,CY-agency,agency,USD,96,accrual,true,,authored/example-source\r\npermanentCXP1,C,P1,CX-permanent,permanent,USD,208,accrual,true,,authored/example-source\r\nagencyCXP1,C,P1,CX-agency,agency,USD,52,accrual,true,,authored/example-source\r\npermanentCYP1,C,P1,CY-permanent,permanent,USD,384,accrual,true,,authored/example-source\r\nagencyCYP1,C,P1,CY-agency,agency,USD,96,accrual,true,,authored/example-source\r\nagency-import-duplicate,A,P1,AX-agency,agency,USD,60,accrual,false,Same economic cost already represented by agencyAXP1; retained source-system duplicate,authored/example-source\r\n",
+      "sha256": "6539fceac289415afb22f579c7461170302264661db1ce5df142c8269e4ac1fd",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-927b079028cfb4eb1ffe61dd1bcd0266",
+      "name": "returned-costs.csv",
+      "content": "id,site_id,period_id,economic_pool_id,cost_category,currency,amount,accounting_basis,included,exclusion_reason,source_ref\r\npermanentAXP0,A,P0,AX-permanent,permanent,USD,160,accrual,true,,authored/example-source\r\nagencyAXP0,A,P0,AX-agency,agency,USD,40,accrual,true,,authored/example-source\r\npermanentAYP0,A,P0,AY-permanent,permanent,USD,320,accrual,true,,authored/example-source\r\nagencyAYP0,A,P0,AY-agency,agency,USD,80,accrual,true,,authored/example-source\r\npermanentAXP1,A,P1,AX-permanent,permanent,USD,240,accrual,true,,authored/example-source\r\nagencyAXP1,A,P1,AX-agency,agency,USD,60,accrual,true,,authored/example-source\r\npermanentAYP1,A,P1,AY-permanent,permanent,USD,200,accrual,true,,authored/example-source\r\nagencyAYP1,A,P1,AY-agency,agency,USD,50,accrual,true,,authored/example-source\r\npermanentBXP0,B,P0,BX-permanent,permanent,USD,144,accrual,true,,authored/example-source\r\nagencyBXP0,B,P0,BX-agency,agency,USD,36,accrual,true,,authored/example-source\r\npermanentBYP0,B,P0,BY-permanent,permanent,USD,336,accrual,true,,authored/example-source\r\nagencyBYP0,B,P0,BY-agency,agency,USD,84,accrual,true,,authored/example-source\r\npermanentBXP1,B,P1,BX-permanent,permanent,USD,144,accrual,true,,authored/example-source\r\nagencyBXP1,B,P1,BX-agency,agency,USD,36,accrual,true,,authored/example-source\r\npermanentBYP1,B,P1,BY-permanent,permanent,USD,336,accrual,true,,authored/example-source\r\nagencyBYP1,B,P1,BY-agency,agency,USD,84,accrual,true,,authored/example-source\r\npermanentCXP0,C,P0,CX-permanent,permanent,USD,208,accrual,true,,authored/example-source\r\nagencyCXP0,C,P0,CX-agency,agency,USD,52,accrual,true,,authored/example-source\r\npermanentCYP0,C,P0,CY-permanent,permanent,USD,384,accrual,true,,authored/example-source\r\nagencyCYP0,C,P0,CY-agency,agency,USD,96,accrual,true,,authored/example-source\r\npermanentCXP1,C,P1,CX-permanent,permanent,USD,208,accrual,true,,authored/example-source\r\nagencyCXP1,C,P1,CX-agency,agency,USD,52,accrual,true,,authored/example-source\r\npermanentCYP1,C,P1,CY-permanent,permanent,USD,384,accrual,true,,authored/example-source\r\nagencyCYP1,C,P1,CY-agency,agency,USD,96,accrual,true,,authored/example-source\r\nagency-import-duplicate,A,P1,AX-agency,agency,USD,60,accrual,true,Same economic cost already represented by agencyAXP1; retained source-system duplicate,authored/example-source\r\n",
+      "sha256": "ab12a19703d915ec7c228e2bec80d856836fb34b25a3e1aeba0d335574627eb4",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-3bba96118a2070c17c6385b7d5be755f",
+      "name": "source-allocations.csv",
+      "content": "id,cost_id,sku_id,share_numerator,share_denominator,allocation_basis,source_ref\r\nallocpermanentAXP0,permanentAXP0,AX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyAXP0,agencyAXP0,AX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentAYP0,permanentAYP0,AY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyAYP0,agencyAYP0,AY,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentAXP1,permanentAXP1,AX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyAXP1,agencyAXP1,AX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentAYP1,permanentAYP1,AY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyAYP1,agencyAYP1,AY,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentBXP0,permanentBXP0,BX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyBXP0,agencyBXP0,BX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentBYP0,permanentBYP0,BY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyBYP0,agencyBYP0,BY,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentBXP1,permanentBXP1,BX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyBXP1,agencyBXP1,BX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentBYP1,permanentBYP1,BY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyBYP1,agencyBYP1,BY,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentCXP0,permanentCXP0,CX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyCXP0,agencyCXP0,CX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentCYP0,permanentCYP0,CY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyCYP0,agencyCYP0,CY,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentCXP1,permanentCXP1,CX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyCXP1,agencyCXP1,CX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentCYP1,permanentCYP1,CY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyCYP1,agencyCYP1,CY,1,1,Authored direct job allocation,authored/example-source\r\nalloc-duplicate,agency-import-duplicate,AX,1,1,Same invoice scope as original,authored/example-source\r\n",
+      "sha256": "3a39fc679df1eab19144ae614318549eeaecfa8f5acb92f8b2683fc7f95419bd",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-8cee84380904af53b411f0687c3c5180",
+      "name": "returned-allocations.csv",
+      "content": "id,cost_id,sku_id,share_numerator,share_denominator,allocation_basis,source_ref\r\nallocpermanentAXP0,permanentAXP0,AX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyAXP0,agencyAXP0,AX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentAYP0,permanentAYP0,AY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyAYP0,agencyAYP0,AY,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentAXP1,permanentAXP1,AX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyAXP1,agencyAXP1,AX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentAYP1,permanentAYP1,AY,1,2,Authored direct job allocation,authored/example-source\r\nallocagencyAYP1,agencyAYP1,AY,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentBXP0,permanentBXP0,BX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyBXP0,agencyBXP0,BX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentBYP0,permanentBYP0,BY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyBYP0,agencyBYP0,BY,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentBXP1,permanentBXP1,BX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyBXP1,agencyBXP1,BX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentBYP1,permanentBYP1,BY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyBYP1,agencyBYP1,BY,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentCXP0,permanentCXP0,CX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyCXP0,agencyCXP0,CX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentCYP0,permanentCYP0,CY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyCYP0,agencyCYP0,CY,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentCXP1,permanentCXP1,CX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyCXP1,agencyCXP1,CX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentCYP1,permanentCYP1,CY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyCYP1,agencyCYP1,CY,1,1,Authored direct job allocation,authored/example-source\r\nalloc-duplicate,agency-import-duplicate,AX,1,1,Same invoice scope as original,authored/example-source\r\n",
+      "sha256": "8ff0fb969ddfe7d8e98d31f693f425ca6492875ed68320e037bd6e980853cdbf",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-1d19720feb2be4f96aa8d0a994fadcfa",
+      "name": "source-hours.csv",
+      "content": "id,site_id,sku_id,period_id,economic_pool_id,worker_type,active_hours,entry_type,included,exclusion_reason,source_ref\r\nhrsAXP0,A,AX,P0,active-AXP0,Documented combined permanent/agency active work,8,observed,true,,authored/example-source\r\nhrsAYP0,A,AY,P0,active-AYP0,Documented combined permanent/agency active work,16,observed,true,,authored/example-source\r\nhrsAXP1,A,AX,P1,active-AXP1,Documented combined permanent/agency active work,12,observed,true,,authored/example-source\r\nhrsAYP1,A,AY,P1,active-AYP1,Documented combined permanent/agency active work,10,observed,true,,authored/example-source\r\nhrsBXP0,B,BX,P0,active-BXP0,Documented combined permanent/agency active work,7.2,observed,true,,authored/example-source\r\nhrsBYP0,B,BY,P0,active-BYP0,Documented combined permanent/agency active work,16.8,observed,true,,authored/example-source\r\nhrsBXP1,B,BX,P1,active-BXP1,Documented combined permanent/agency active work,7.2,observed,true,,authored/example-source\r\nhrsBYP1,B,BY,P1,active-BYP1,Documented combined permanent/agency active work,16.8,observed,true,,authored/example-source\r\nhrsCXP0,C,CX,P0,active-CXP0,Documented combined permanent/agency active work,10.4,observed,true,,authored/example-source\r\nhrsCYP0,C,CY,P0,active-CYP0,Documented combined permanent/agency active work,19.2,observed,true,,authored/example-source\r\nhrsCXP1,C,CX,P1,active-CXP1,Documented combined permanent/agency active work,10.4,observed,true,,authored/example-source\r\nhrsCYP1,C,CY,P1,active-CYP1,Documented combined permanent/agency active work,19.2,observed,true,,authored/example-source\r\n",
+      "sha256": "b7c7debfca4065ca4e42320df6ccab2f71f59abfcccceb0f7f1240ca24ad0f64",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-a22309fc39b5f26f3b3444255fc11581",
+      "name": "returned-hours.csv",
+      "content": "id,site_id,sku_id,period_id,economic_pool_id,worker_type,active_hours,entry_type,included,exclusion_reason,source_ref\r\nhrsAXP0,A,AX,P0,active-AXP0,Documented combined permanent/agency active work,8,observed,true,,authored/example-source\r\nhrsAYP0,A,AY,P0,active-AYP0,Documented combined permanent/agency active work,16,observed,true,,authored/example-source\r\nhrsAXP1,A,AX,P1,active-AXP1,Documented combined permanent/agency active work,12,observed,true,,authored/example-source\r\nhrsAYP1,A,AY,P1,active-AYP1,Documented combined permanent/agency active work,10,observed,true,,authored/example-source\r\nhrsBXP0,B,BX,P0,active-BXP0,Documented combined permanent/agency active work,7.2,observed,true,,authored/example-source\r\nhrsBYP0,B,BY,P0,active-BYP0,Documented combined permanent/agency active work,16.8,observed,true,,authored/example-source\r\nhrsBXP1,B,BX,P1,active-BXP1,Documented combined permanent/agency active work,7.2,observed,true,,authored/example-source\r\nhrsBYP1,B,BY,P1,active-BYP1,Documented combined permanent/agency active work,16.8,observed,true,,authored/example-source\r\nhrsCXP0,C,CX,P0,active-CXP0,Documented combined permanent/agency active work,10.4,observed,true,,authored/example-source\r\nhrsCYP0,C,CY,P0,active-CYP0,Documented combined permanent/agency active work,19.2,observed,true,,authored/example-source\r\nhrsCXP1,C,CX,P1,active-CXP1,Documented combined permanent/agency active work,10.4,observed,true,,authored/example-source\r\nhrsCYP1,C,CY,P1,active-CYP1,Documented combined permanent/agency active work,19.2,observed,true,,authored/example-source\r\n",
+      "sha256": "b7c7debfca4065ca4e42320df6ccab2f71f59abfcccceb0f7f1240ca24ad0f64",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-880c422128bf29a680610bdb9c2e829d",
+      "name": "source-coverage.csv",
+      "content": "id,site_id,period_id,dataset,status,reviewed_by,reviewed_at,source_ref\r\nAP0production,A,P0,production,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP0permanent,A,P0,permanent,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP0agency,A,P0,agency,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP0other_direct,A,P0,other_direct,observed_zero,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP0hours,A,P0,hours,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP0finance,A,P0,finance,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP1production,A,P1,production,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP1permanent,A,P1,permanent,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP1agency,A,P1,agency,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP1other_direct,A,P1,other_direct,observed_zero,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP1hours,A,P1,hours,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP1finance,A,P1,finance,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP0production,B,P0,production,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP0permanent,B,P0,permanent,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP0agency,B,P0,agency,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP0other_direct,B,P0,other_direct,observed_zero,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP0hours,B,P0,hours,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP0finance,B,P0,finance,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP1production,B,P1,production,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP1permanent,B,P1,permanent,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP1agency,B,P1,agency,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP1other_direct,B,P1,other_direct,observed_zero,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP1hours,B,P1,hours,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP1finance,B,P1,finance,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP0production,C,P0,production,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP0permanent,C,P0,permanent,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP0agency,C,P0,agency,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP0other_direct,C,P0,other_direct,observed_zero,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP0hours,C,P0,hours,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP0finance,C,P0,finance,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP1production,C,P1,production,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP1permanent,C,P1,permanent,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP1agency,C,P1,agency,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP1other_direct,C,P1,other_direct,observed_zero,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP1hours,C,P1,hours,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP1finance,C,P1,finance,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\n",
+      "sha256": "eb6afb2b57119dc5900ef5ba6c25a9eeedbef098aa0fa26521d6e38cbe490d7e",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-301d628e74ce79397bc8871245eb96c2",
+      "name": "returned-coverage.csv",
+      "content": "id,site_id,period_id,dataset,status,reviewed_by,reviewed_at,source_ref\r\nAP0production,A,P0,production,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP0permanent,A,P0,permanent,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP0agency,A,P0,agency,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP0other_direct,A,P0,other_direct,observed_zero,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP0hours,A,P0,hours,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP0finance,A,P0,finance,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP1production,A,P1,production,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP1permanent,A,P1,permanent,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP1agency,A,P1,agency,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP1other_direct,A,P1,other_direct,observed_zero,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP1hours,A,P1,hours,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nAP1finance,A,P1,finance,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP0production,B,P0,production,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP0permanent,B,P0,permanent,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP0agency,B,P0,agency,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP0other_direct,B,P0,other_direct,observed_zero,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP0hours,B,P0,hours,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP0finance,B,P0,finance,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP1production,B,P1,production,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP1permanent,B,P1,permanent,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP1agency,B,P1,agency,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP1other_direct,B,P1,other_direct,observed_zero,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP1hours,B,P1,hours,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nBP1finance,B,P1,finance,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP0production,C,P0,production,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP0permanent,C,P0,permanent,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP0agency,C,P0,agency,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP0other_direct,C,P0,other_direct,observed_zero,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP0hours,C,P0,hours,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP0finance,C,P0,finance,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP1production,C,P1,production,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP1permanent,C,P1,permanent,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP1agency,C,P1,agency,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP1other_direct,C,P1,other_direct,observed_zero,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP1hours,C,P1,hours,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\nCP1finance,C,P1,finance,complete,Authored operations/finance reviewer,2026-10-14T18:00:00Z,authored/example-source\r\n",
+      "sha256": "eb6afb2b57119dc5900ef5ba6c25a9eeedbef098aa0fa26521d6e38cbe490d7e",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-43e0dcff49f7961758465ea7bd0b2bca",
+      "name": "source-finance.csv",
+      "content": "id,site_id,period_id,economic_pool_id,net_sales,cogs,currency,accounting_basis,included,exclusion_reason,source_ref\r\nfinAP0,A,P0,ledger-A,10000,7000,USD,accrual,true,,authored/example-source\r\nfinAP1,A,P1,ledger-A,10000,7000,USD,accrual,true,,authored/example-source\r\nfinBP0,B,P0,ledger-B,10000,7000,USD,accrual,true,,authored/example-source\r\nfinBP1,B,P1,ledger-B,10000,7000,USD,accrual,true,,authored/example-source\r\nfinCP0,C,P0,ledger-C,10000,7000,USD,accrual,true,,authored/example-source\r\nfinCP1,C,P1,ledger-C,10000,7000,USD,accrual,true,,authored/example-source\r\n",
+      "sha256": "f38d8a6188e3d42eed5019b14afb855127e7f2104d41494755967c13a3f93c4c",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-3b2086091d44f8d14178435e7f57adb3",
+      "name": "returned-finance.csv",
+      "content": "id,site_id,period_id,economic_pool_id,net_sales,cogs,currency,accounting_basis,included,exclusion_reason,source_ref\r\nfinAP0,A,P0,ledger-A,10000,7000,USD,accrual,true,,authored/example-source\r\nfinAP1,A,P1,ledger-A,10000,7000,USD,accrual,true,,authored/example-source\r\nfinBP0,B,P0,ledger-B,10000,7000,USD,accrual,true,,authored/example-source\r\nfinBP1,B,P1,ledger-B,10000,7000,USD,accrual,true,,authored/example-source\r\nfinCP0,C,P0,ledger-C,10000,7000,USD,accrual,true,,authored/example-source\r\nfinCP1,C,P1,ledger-C,10000,7000,USD,accrual,true,,authored/example-source\r\n",
+      "sha256": "f38d8a6188e3d42eed5019b14afb855127e7f2104d41494755967c13a3f93c4c",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-8ee066178edf3a24acb499214e1ede7a",
+      "name": "source-benefits.csv",
+      "content": "id,site_id,period_id,economic_pool_id,kind,amount,currency,capacity_quantity,capacity_unit,status,accepted_by,accepted_at,independence_basis,source_ref\r\npotential-1,A,P1,proposed-opportunity,potential,500,USD,,,declared,,,Authored declared opportunity only,authored/example-source\r\nrealised-1,A,P1,accepted-specific-invoice-credit,realised_cash,75,USD,,,finance_accepted,Authored finance owner,2026-10-14T18:00:00Z,\"Separate actual invoice credit; no benchmark-derived labour, yield or COGS claim added\",authored/example-source\r\ncapacity-1,A,P1,observed-hours-capacity,unmonetized_capacity,,,2,person_hours,observed,,,Authored observed capacity; no cash amount,authored/example-source\r\n",
+      "sha256": "df153b340957e9a098082ce3818c172c951e5e6a1ff413aa67a52002c4350d97",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-507bedb1de0bc358a78eb012e5a2b544",
+      "name": "returned-benefits.csv",
+      "content": "id,site_id,period_id,economic_pool_id,kind,amount,currency,capacity_quantity,capacity_unit,status,accepted_by,accepted_at,independence_basis,source_ref\r\npotential-1,A,P1,proposed-opportunity,potential,500,USD,,,declared,,,Authored declared opportunity only,authored/example-source\r\nrealised-1,A,P1,accepted-specific-invoice-credit,realised_cash,75,USD,,,finance_accepted,Authored finance owner,2026-10-14T18:00:00Z,\"Separate actual invoice credit; no benchmark-derived labour, yield or COGS claim added\",authored/example-source\r\ncapacity-1,A,P1,observed-hours-capacity,unmonetized_capacity,,,2,person_hours,observed,,,Authored observed capacity; no cash amount,authored/example-source\r\n",
+      "sha256": "df153b340957e9a098082ce3818c172c951e5e6a1ff413aa67a52002c4350d97",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-f2e2b80a32118c3bf694b1cfc384163a",
+      "name": "corrected-production.csv",
+      "content": "id,site_id,sku_id,period_id,slice_key,good_quantity,good_unit_id,input_quantity,input_unit_id,output_scope,input_scope,included,exclusion_reason,source_ref\r\nprodAXP0,A,AX,P0,AXP0-disjoint-lot,100000,AXg,125,AXkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodAYP0,A,AY,P0,AYP0-disjoint-lot,100,AYkg,125,AYkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodAXP1,A,AX,P1,AXP1-disjoint-lot,200000,AXg,225,AXkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodAYP1,A,AY,P1,AYP1-disjoint-lot,50,AYkg,75,AYkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodBXP0,B,BX,P0,BXP0-disjoint-lot,100000,BXg,125,BXkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodBYP0,B,BY,P0,BYP0-disjoint-lot,100,BYkg,125,BYkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodBXP1,B,BX,P1,BXP1-disjoint-lot,100000,BXg,125,BXkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodBYP1,B,BY,P1,BYP1-disjoint-lot,100,BYkg,125,BYkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source\r\nprodCXP0,C,CX,P0,CXP0-disjoint-lot,100000,CXg,125,CXkg,Accepted cooked net mass,Wet ingredients plus additions,true,,authored/example-source\r\nprodCYP0,C,CY,P0,CYP0-disjoint-lot,100,CYkg,125,CYkg,Accepted cooked net mass,Wet ingredients plus additions,true,,authored/example-source\r\nprodCXP1,C,CX,P1,CXP1-disjoint-lot,100000,CXg,125,CXkg,Accepted cooked net mass,Wet ingredients plus additions,true,,authored/example-source\r\nprodCYP1,C,CY,P1,CYP1-disjoint-lot,100,CYkg,125,CYkg,Accepted cooked net mass,Wet ingredients plus additions,true,,authored/example-source\r\n",
+      "sha256": "6e66bf56d440f211aff211d0f45ac747865646868566502027dcd33aa9c2332b",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-f802b43bf4fbedd8f1db7c6269c93fdc",
+      "name": "corrected-costs.csv",
+      "content": "id,site_id,period_id,economic_pool_id,cost_category,currency,amount,accounting_basis,included,exclusion_reason,source_ref\r\npermanentAXP0,A,P0,AX-permanent,permanent,USD,160,accrual,true,,authored/example-source\r\nagencyAXP0,A,P0,AX-agency,agency,USD,40,accrual,true,,authored/example-source\r\npermanentAYP0,A,P0,AY-permanent,permanent,USD,320,accrual,true,,authored/example-source\r\nagencyAYP0,A,P0,AY-agency,agency,USD,80,accrual,true,,authored/example-source\r\npermanentAXP1,A,P1,AX-permanent,permanent,USD,240,accrual,true,,authored/example-source\r\nagencyAXP1,A,P1,AX-agency,agency,USD,60,accrual,true,,authored/example-source\r\npermanentAYP1,A,P1,AY-permanent,permanent,USD,200,accrual,true,,authored/example-source\r\nagencyAYP1,A,P1,AY-agency,agency,USD,50,accrual,true,,authored/example-source\r\npermanentBXP0,B,P0,BX-permanent,permanent,USD,144,accrual,true,,authored/example-source\r\nagencyBXP0,B,P0,BX-agency,agency,USD,36,accrual,true,,authored/example-source\r\npermanentBYP0,B,P0,BY-permanent,permanent,USD,336,accrual,true,,authored/example-source\r\nagencyBYP0,B,P0,BY-agency,agency,USD,84,accrual,true,,authored/example-source\r\npermanentBXP1,B,P1,BX-permanent,permanent,USD,144,accrual,true,,authored/example-source\r\nagencyBXP1,B,P1,BX-agency,agency,USD,36,accrual,true,,authored/example-source\r\npermanentBYP1,B,P1,BY-permanent,permanent,USD,336,accrual,true,,authored/example-source\r\nagencyBYP1,B,P1,BY-agency,agency,USD,84,accrual,true,,authored/example-source\r\npermanentCXP0,C,P0,CX-permanent,permanent,USD,208,accrual,true,,authored/example-source\r\nagencyCXP0,C,P0,CX-agency,agency,USD,52,accrual,true,,authored/example-source\r\npermanentCYP0,C,P0,CY-permanent,permanent,USD,384,accrual,true,,authored/example-source\r\nagencyCYP0,C,P0,CY-agency,agency,USD,96,accrual,true,,authored/example-source\r\npermanentCXP1,C,P1,CX-permanent,permanent,USD,208,accrual,true,,authored/example-source\r\nagencyCXP1,C,P1,CX-agency,agency,USD,52,accrual,true,,authored/example-source\r\npermanentCYP1,C,P1,CY-permanent,permanent,USD,384,accrual,true,,authored/example-source\r\nagencyCYP1,C,P1,CY-agency,agency,USD,96,accrual,true,,authored/example-source\r\nagency-import-duplicate,A,P1,AX-agency,agency,USD,60,accrual,false,Same economic cost already represented by agencyAXP1; retained source-system duplicate,authored/example-source\r\n",
+      "sha256": "6539fceac289415afb22f579c7461170302264661db1ce5df142c8269e4ac1fd",
+      "captured_at": "2026-10-15T05:00:00Z"
+    },
+    {
+      "id": "original-0643bdb55c430504e575762bd74c50ed",
+      "name": "corrected-allocations.csv",
+      "content": "id,cost_id,sku_id,share_numerator,share_denominator,allocation_basis,source_ref\r\nallocpermanentAXP0,permanentAXP0,AX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyAXP0,agencyAXP0,AX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentAYP0,permanentAYP0,AY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyAYP0,agencyAYP0,AY,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentAXP1,permanentAXP1,AX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyAXP1,agencyAXP1,AX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentAYP1,permanentAYP1,AY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyAYP1,agencyAYP1,AY,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentBXP0,permanentBXP0,BX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyBXP0,agencyBXP0,BX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentBYP0,permanentBYP0,BY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyBYP0,agencyBYP0,BY,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentBXP1,permanentBXP1,BX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyBXP1,agencyBXP1,BX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentBYP1,permanentBYP1,BY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyBYP1,agencyBYP1,BY,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentCXP0,permanentCXP0,CX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyCXP0,agencyCXP0,CX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentCYP0,permanentCYP0,CY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyCYP0,agencyCYP0,CY,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentCXP1,permanentCXP1,CX,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyCXP1,agencyCXP1,CX,1,1,Authored direct job allocation,authored/example-source\r\nallocpermanentCYP1,permanentCYP1,CY,1,1,Authored direct job allocation,authored/example-source\r\nallocagencyCYP1,agencyCYP1,CY,1,1,Authored direct job allocation,authored/example-source\r\nalloc-duplicate,agency-import-duplicate,AX,1,1,Same invoice scope as original,authored/example-source\r\n",
+      "sha256": "3a39fc679df1eab19144ae614318549eeaecfa8f5acb92f8b2683fc7f95419bd",
+      "captured_at": "2026-10-15T05:00:00Z"
+    }
+  ],
+  "documents": [],
+  "document_links": [],
+  "extracts": [
+    {
+      "id": "extract-a7312036d994b5f75d11d93ed324684d",
+      "kind": "sites",
+      "side": "source",
+      "original_id": "original-2aad3b6fa6aace4f70b62af0c5537f38",
+      "mapping": {
+        "id": "id",
+        "name": "name",
+        "system_label": "system_label",
+        "currency": "currency",
+        "external_ref": "external_ref"
+      },
+      "label": "Authored source sites",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-b323cf03938ca5adef7ce55adc2e6e68",
+      "kind": "sites",
+      "side": "returned",
+      "original_id": "original-2336747e0b28435cfa4e4e2e367ac54d",
+      "mapping": {
+        "id": "id",
+        "name": "name",
+        "system_label": "system_label",
+        "currency": "currency",
+        "external_ref": "external_ref"
+      },
+      "label": "Authored returned sites",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-f4a1b5239d815c36741e10b21e20f42b",
+      "kind": "periods",
+      "side": "source",
+      "original_id": "original-e638e59205c07f39076c6b7e2d553517",
+      "mapping": {
+        "id": "id",
+        "label": "label",
+        "starts_at": "starts_at",
+        "ends_at": "ends_at",
+        "calendar_basis": "calendar_basis",
+        "external_ref": "external_ref"
+      },
+      "label": "Authored source periods",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-11858a446c3e2ca722f4b613fe6061ee",
+      "kind": "periods",
+      "side": "returned",
+      "original_id": "original-4f3f71543b50ba3197879ef9e23443a4",
+      "mapping": {
+        "id": "id",
+        "label": "label",
+        "starts_at": "starts_at",
+        "ends_at": "ends_at",
+        "calendar_basis": "calendar_basis",
+        "external_ref": "external_ref"
+      },
+      "label": "Authored returned periods",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-df86753d29e9b6ed907c44cb8f03d0df",
+      "kind": "skus",
+      "side": "source",
+      "original_id": "original-891c152470af812ce873857a4cd213b3",
+      "mapping": {
+        "id": "id",
+        "site_id": "site_id",
+        "local_sku": "local_sku",
+        "comparison_key": "comparison_key",
+        "process_spec": "process_spec",
+        "output_basis": "output_basis",
+        "good_definition": "good_definition",
+        "yield_definition": "yield_definition",
+        "external_ref": "external_ref"
+      },
+      "label": "Authored source skus",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-315f80d6357b8176bb3a8c05011e872e",
+      "kind": "skus",
+      "side": "returned",
+      "original_id": "original-8e7b1125249a936e368651207f199012",
+      "mapping": {
+        "id": "id",
+        "site_id": "site_id",
+        "local_sku": "local_sku",
+        "comparison_key": "comparison_key",
+        "process_spec": "process_spec",
+        "output_basis": "output_basis",
+        "good_definition": "good_definition",
+        "yield_definition": "yield_definition",
+        "external_ref": "external_ref"
+      },
+      "label": "Authored returned skus",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-99d9e32a75857716aab4d9b2473ad105",
+      "kind": "units",
+      "side": "source",
+      "original_id": "original-3daecf85a45148571035fc93b2b5e580",
+      "mapping": {
+        "id": "id",
+        "sku_id": "sku_id",
+        "source_unit": "source_unit",
+        "basis_unit": "basis_unit",
+        "factor_numerator": "factor_numerator",
+        "factor_denominator": "factor_denominator",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored source units",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-c2a65ca625633fdd8c17545b7b476f21",
+      "kind": "units",
+      "side": "returned",
+      "original_id": "original-d17871fd3df1158ac9ca792606de3ee3",
+      "mapping": {
+        "id": "id",
+        "sku_id": "sku_id",
+        "source_unit": "source_unit",
+        "basis_unit": "basis_unit",
+        "factor_numerator": "factor_numerator",
+        "factor_denominator": "factor_denominator",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored returned units",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-5421a8aadc0cdfd4efdfbbbb89d4990f",
+      "kind": "production",
+      "side": "source",
+      "original_id": "original-73b720516aea29645820d4c0b73369ec",
+      "mapping": {
+        "id": "id",
+        "site_id": "site_id",
+        "sku_id": "sku_id",
+        "period_id": "period_id",
+        "slice_key": "slice_key",
+        "good_quantity": "good_quantity",
+        "good_unit_id": "good_unit_id",
+        "input_quantity": "input_quantity",
+        "input_unit_id": "input_unit_id",
+        "output_scope": "output_scope",
+        "input_scope": "input_scope",
+        "included": "included",
+        "exclusion_reason": "exclusion_reason",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored source production",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-b3f1a62f35dc8008773a8002ff7a0b9f",
+      "kind": "production",
+      "side": "returned",
+      "original_id": "original-a65a68533fbb9fa78e248bbfcdc1e183",
+      "mapping": {
+        "id": "id",
+        "site_id": "site_id",
+        "sku_id": "sku_id",
+        "period_id": "period_id",
+        "slice_key": "slice_key",
+        "good_quantity": "good_quantity",
+        "good_unit_id": "good_unit_id",
+        "input_quantity": "input_quantity",
+        "input_unit_id": "input_unit_id",
+        "output_scope": "output_scope",
+        "input_scope": "input_scope",
+        "included": "included",
+        "exclusion_reason": "exclusion_reason",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored returned production",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-8d272667724363065ce3f52225e7c5e3",
+      "kind": "costs",
+      "side": "source",
+      "original_id": "original-affa0e3da1239d194a2372d99f1d80a9",
+      "mapping": {
+        "id": "id",
+        "site_id": "site_id",
+        "period_id": "period_id",
+        "economic_pool_id": "economic_pool_id",
+        "cost_category": "cost_category",
+        "currency": "currency",
+        "amount": "amount",
+        "accounting_basis": "accounting_basis",
+        "included": "included",
+        "exclusion_reason": "exclusion_reason",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored source costs",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-f393d8db58ad40ec305ef21d34227f99",
+      "kind": "costs",
+      "side": "returned",
+      "original_id": "original-927b079028cfb4eb1ffe61dd1bcd0266",
+      "mapping": {
+        "id": "id",
+        "site_id": "site_id",
+        "period_id": "period_id",
+        "economic_pool_id": "economic_pool_id",
+        "cost_category": "cost_category",
+        "currency": "currency",
+        "amount": "amount",
+        "accounting_basis": "accounting_basis",
+        "included": "included",
+        "exclusion_reason": "exclusion_reason",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored returned costs",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-394c6bfe4cf854c8c5ccd103fd4b090b",
+      "kind": "allocations",
+      "side": "source",
+      "original_id": "original-3bba96118a2070c17c6385b7d5be755f",
+      "mapping": {
+        "id": "id",
+        "cost_id": "cost_id",
+        "sku_id": "sku_id",
+        "share_numerator": "share_numerator",
+        "share_denominator": "share_denominator",
+        "allocation_basis": "allocation_basis",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored source allocations",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-bd1f31f71ae75064b315a9c027cb8166",
+      "kind": "allocations",
+      "side": "returned",
+      "original_id": "original-8cee84380904af53b411f0687c3c5180",
+      "mapping": {
+        "id": "id",
+        "cost_id": "cost_id",
+        "sku_id": "sku_id",
+        "share_numerator": "share_numerator",
+        "share_denominator": "share_denominator",
+        "allocation_basis": "allocation_basis",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored returned allocations",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-fbb371a9a1beed893637c7ca98fabd5f",
+      "kind": "hours",
+      "side": "source",
+      "original_id": "original-1d19720feb2be4f96aa8d0a994fadcfa",
+      "mapping": {
+        "id": "id",
+        "site_id": "site_id",
+        "sku_id": "sku_id",
+        "period_id": "period_id",
+        "economic_pool_id": "economic_pool_id",
+        "worker_type": "worker_type",
+        "active_hours": "active_hours",
+        "entry_type": "entry_type",
+        "included": "included",
+        "exclusion_reason": "exclusion_reason",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored source hours",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-af015f002565a17ec223a69759953717",
+      "kind": "hours",
+      "side": "returned",
+      "original_id": "original-a22309fc39b5f26f3b3444255fc11581",
+      "mapping": {
+        "id": "id",
+        "site_id": "site_id",
+        "sku_id": "sku_id",
+        "period_id": "period_id",
+        "economic_pool_id": "economic_pool_id",
+        "worker_type": "worker_type",
+        "active_hours": "active_hours",
+        "entry_type": "entry_type",
+        "included": "included",
+        "exclusion_reason": "exclusion_reason",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored returned hours",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-1e3f0b539ec635f728d76483bbc4c4bc",
+      "kind": "coverage",
+      "side": "source",
+      "original_id": "original-880c422128bf29a680610bdb9c2e829d",
+      "mapping": {
+        "id": "id",
+        "site_id": "site_id",
+        "period_id": "period_id",
+        "dataset": "dataset",
+        "status": "status",
+        "reviewed_by": "reviewed_by",
+        "reviewed_at": "reviewed_at",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored source coverage",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-013f7aa85d1433acb3ff454e4ecc9ced",
+      "kind": "coverage",
+      "side": "returned",
+      "original_id": "original-301d628e74ce79397bc8871245eb96c2",
+      "mapping": {
+        "id": "id",
+        "site_id": "site_id",
+        "period_id": "period_id",
+        "dataset": "dataset",
+        "status": "status",
+        "reviewed_by": "reviewed_by",
+        "reviewed_at": "reviewed_at",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored returned coverage",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-5377f1190aa9b9e0e8693d60c62d7f10",
+      "kind": "finance",
+      "side": "source",
+      "original_id": "original-43e0dcff49f7961758465ea7bd0b2bca",
+      "mapping": {
+        "id": "id",
+        "site_id": "site_id",
+        "period_id": "period_id",
+        "economic_pool_id": "economic_pool_id",
+        "net_sales": "net_sales",
+        "cogs": "cogs",
+        "currency": "currency",
+        "accounting_basis": "accounting_basis",
+        "included": "included",
+        "exclusion_reason": "exclusion_reason",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored source finance",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-9e10f9b87ed0c2a4848a3db30afbb033",
+      "kind": "finance",
+      "side": "returned",
+      "original_id": "original-3b2086091d44f8d14178435e7f57adb3",
+      "mapping": {
+        "id": "id",
+        "site_id": "site_id",
+        "period_id": "period_id",
+        "economic_pool_id": "economic_pool_id",
+        "net_sales": "net_sales",
+        "cogs": "cogs",
+        "currency": "currency",
+        "accounting_basis": "accounting_basis",
+        "included": "included",
+        "exclusion_reason": "exclusion_reason",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored returned finance",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-c4dab01c330f278db8807b5138de03df",
+      "kind": "benefits",
+      "side": "source",
+      "original_id": "original-8ee066178edf3a24acb499214e1ede7a",
+      "mapping": {
+        "id": "id",
+        "site_id": "site_id",
+        "period_id": "period_id",
+        "economic_pool_id": "economic_pool_id",
+        "kind": "kind",
+        "amount": "amount",
+        "currency": "currency",
+        "capacity_quantity": "capacity_quantity",
+        "capacity_unit": "capacity_unit",
+        "status": "status",
+        "accepted_by": "accepted_by",
+        "accepted_at": "accepted_at",
+        "independence_basis": "independence_basis",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored source benefits",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-39403e04c244736f169151748cc78522",
+      "kind": "benefits",
+      "side": "returned",
+      "original_id": "original-507bedb1de0bc358a78eb012e5a2b544",
+      "mapping": {
+        "id": "id",
+        "site_id": "site_id",
+        "period_id": "period_id",
+        "economic_pool_id": "economic_pool_id",
+        "kind": "kind",
+        "amount": "amount",
+        "currency": "currency",
+        "capacity_quantity": "capacity_quantity",
+        "capacity_unit": "capacity_unit",
+        "status": "status",
+        "accepted_by": "accepted_by",
+        "accepted_at": "accepted_at",
+        "independence_basis": "independence_basis",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored returned benefits",
+      "available_at": "2026-10-14T18:00:00Z"
+    },
+    {
+      "id": "extract-481db390157956be7efbcaedad4c1398",
+      "kind": "production",
+      "side": "returned",
+      "original_id": "original-f2e2b80a32118c3bf694b1cfc384163a",
+      "mapping": {
+        "id": "id",
+        "site_id": "site_id",
+        "sku_id": "sku_id",
+        "period_id": "period_id",
+        "slice_key": "slice_key",
+        "good_quantity": "good_quantity",
+        "good_unit_id": "good_unit_id",
+        "input_quantity": "input_quantity",
+        "input_unit_id": "input_unit_id",
+        "output_scope": "output_scope",
+        "input_scope": "input_scope",
+        "included": "included",
+        "exclusion_reason": "exclusion_reason",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored corrected production",
+      "available_at": "2026-10-14T18:00:00Z",
+      "derivation": {
+        "source_extract_id": "extract-b3f1a62f35dc8008773a8002ff7a0b9f",
+        "reason": "Restore the actual authored source values, retaining preceding return",
+        "at": "2026-10-15T05:00:00Z"
+      }
+    },
+    {
+      "id": "extract-625adb47ffbf2ca72ca69db93969e7ca",
+      "kind": "costs",
+      "side": "returned",
+      "original_id": "original-f802b43bf4fbedd8f1db7c6269c93fdc",
+      "mapping": {
+        "id": "id",
+        "site_id": "site_id",
+        "period_id": "period_id",
+        "economic_pool_id": "economic_pool_id",
+        "cost_category": "cost_category",
+        "currency": "currency",
+        "amount": "amount",
+        "accounting_basis": "accounting_basis",
+        "included": "included",
+        "exclusion_reason": "exclusion_reason",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored corrected costs",
+      "available_at": "2026-10-14T18:00:00Z",
+      "derivation": {
+        "source_extract_id": "extract-f393d8db58ad40ec305ef21d34227f99",
+        "reason": "Restore the actual authored source values, retaining preceding return",
+        "at": "2026-10-15T05:00:00Z"
+      }
+    },
+    {
+      "id": "extract-e2a464d08de9bb0e4a5f8910de98f45c",
+      "kind": "allocations",
+      "side": "returned",
+      "original_id": "original-0643bdb55c430504e575762bd74c50ed",
+      "mapping": {
+        "id": "id",
+        "cost_id": "cost_id",
+        "sku_id": "sku_id",
+        "share_numerator": "share_numerator",
+        "share_denominator": "share_denominator",
+        "allocation_basis": "allocation_basis",
+        "source_ref": "source_ref"
+      },
+      "label": "Authored corrected allocations",
+      "available_at": "2026-10-14T18:00:00Z",
+      "derivation": {
+        "source_extract_id": "extract-bd1f31f71ae75064b315a9c027cb8166",
+        "reason": "Restore the actual authored source values, retaining preceding return",
+        "at": "2026-10-15T05:00:00Z"
+      }
+    }
+  ],
+  "crosswalks": [
+    {
+      "kind": "sites",
+      "source_id": "A",
+      "target_id": "A"
+    },
+    {
+      "kind": "sites",
+      "source_id": "B",
+      "target_id": "B"
+    },
+    {
+      "kind": "sites",
+      "source_id": "C",
+      "target_id": "C"
+    },
+    {
+      "kind": "periods",
+      "source_id": "P0",
+      "target_id": "P0"
+    },
+    {
+      "kind": "periods",
+      "source_id": "P1",
+      "target_id": "P1"
+    },
+    {
+      "kind": "skus",
+      "source_id": "AX",
+      "target_id": "AX"
+    },
+    {
+      "kind": "skus",
+      "source_id": "AY",
+      "target_id": "AY"
+    },
+    {
+      "kind": "skus",
+      "source_id": "BX",
+      "target_id": "BX"
+    },
+    {
+      "kind": "skus",
+      "source_id": "BY",
+      "target_id": "BY"
+    },
+    {
+      "kind": "skus",
+      "source_id": "CX",
+      "target_id": "CX"
+    },
+    {
+      "kind": "skus",
+      "source_id": "CY",
+      "target_id": "CY"
+    },
+    {
+      "kind": "units",
+      "source_id": "AXkg",
+      "target_id": "AXkg"
+    },
+    {
+      "kind": "units",
+      "source_id": "AXg",
+      "target_id": "AXg"
+    },
+    {
+      "kind": "units",
+      "source_id": "AYkg",
+      "target_id": "AYkg"
+    },
+    {
+      "kind": "units",
+      "source_id": "AYg",
+      "target_id": "AYg"
+    },
+    {
+      "kind": "units",
+      "source_id": "BXkg",
+      "target_id": "BXkg"
+    },
+    {
+      "kind": "units",
+      "source_id": "BXg",
+      "target_id": "BXg"
+    },
+    {
+      "kind": "units",
+      "source_id": "BYkg",
+      "target_id": "BYkg"
+    },
+    {
+      "kind": "units",
+      "source_id": "BYg",
+      "target_id": "BYg"
+    },
+    {
+      "kind": "units",
+      "source_id": "CXkg",
+      "target_id": "CXkg"
+    },
+    {
+      "kind": "units",
+      "source_id": "CXg",
+      "target_id": "CXg"
+    },
+    {
+      "kind": "units",
+      "source_id": "CYkg",
+      "target_id": "CYkg"
+    },
+    {
+      "kind": "units",
+      "source_id": "CYg",
+      "target_id": "CYg"
+    },
+    {
+      "kind": "production",
+      "source_id": "prodAXP0",
+      "target_id": "prodAXP0"
+    },
+    {
+      "kind": "production",
+      "source_id": "prodAYP0",
+      "target_id": "prodAYP0"
+    },
+    {
+      "kind": "production",
+      "source_id": "prodAXP1",
+      "target_id": "prodAXP1"
+    },
+    {
+      "kind": "production",
+      "source_id": "prodAYP1",
+      "target_id": "prodAYP1"
+    },
+    {
+      "kind": "production",
+      "source_id": "prodBXP0",
+      "target_id": "prodBXP0"
+    },
+    {
+      "kind": "production",
+      "source_id": "prodBYP0",
+      "target_id": "prodBYP0"
+    },
+    {
+      "kind": "production",
+      "source_id": "prodBXP1",
+      "target_id": "prodBXP1"
+    },
+    {
+      "kind": "production",
+      "source_id": "prodBYP1",
+      "target_id": "prodBYP1"
+    },
+    {
+      "kind": "production",
+      "source_id": "prodCXP0",
+      "target_id": "prodCXP0"
+    },
+    {
+      "kind": "production",
+      "source_id": "prodCYP0",
+      "target_id": "prodCYP0"
+    },
+    {
+      "kind": "production",
+      "source_id": "prodCXP1",
+      "target_id": "prodCXP1"
+    },
+    {
+      "kind": "production",
+      "source_id": "prodCYP1",
+      "target_id": "prodCYP1"
+    },
+    {
+      "kind": "costs",
+      "source_id": "permanentAXP0",
+      "target_id": "permanentAXP0"
+    },
+    {
+      "kind": "costs",
+      "source_id": "agencyAXP0",
+      "target_id": "agencyAXP0"
+    },
+    {
+      "kind": "costs",
+      "source_id": "permanentAYP0",
+      "target_id": "permanentAYP0"
+    },
+    {
+      "kind": "costs",
+      "source_id": "agencyAYP0",
+      "target_id": "agencyAYP0"
+    },
+    {
+      "kind": "costs",
+      "source_id": "permanentAXP1",
+      "target_id": "permanentAXP1"
+    },
+    {
+      "kind": "costs",
+      "source_id": "agencyAXP1",
+      "target_id": "agencyAXP1"
+    },
+    {
+      "kind": "costs",
+      "source_id": "permanentAYP1",
+      "target_id": "permanentAYP1"
+    },
+    {
+      "kind": "costs",
+      "source_id": "agencyAYP1",
+      "target_id": "agencyAYP1"
+    },
+    {
+      "kind": "costs",
+      "source_id": "permanentBXP0",
+      "target_id": "permanentBXP0"
+    },
+    {
+      "kind": "costs",
+      "source_id": "agencyBXP0",
+      "target_id": "agencyBXP0"
+    },
+    {
+      "kind": "costs",
+      "source_id": "permanentBYP0",
+      "target_id": "permanentBYP0"
+    },
+    {
+      "kind": "costs",
+      "source_id": "agencyBYP0",
+      "target_id": "agencyBYP0"
+    },
+    {
+      "kind": "costs",
+      "source_id": "permanentBXP1",
+      "target_id": "permanentBXP1"
+    },
+    {
+      "kind": "costs",
+      "source_id": "agencyBXP1",
+      "target_id": "agencyBXP1"
+    },
+    {
+      "kind": "costs",
+      "source_id": "permanentBYP1",
+      "target_id": "permanentBYP1"
+    },
+    {
+      "kind": "costs",
+      "source_id": "agencyBYP1",
+      "target_id": "agencyBYP1"
+    },
+    {
+      "kind": "costs",
+      "source_id": "permanentCXP0",
+      "target_id": "permanentCXP0"
+    },
+    {
+      "kind": "costs",
+      "source_id": "agencyCXP0",
+      "target_id": "agencyCXP0"
+    },
+    {
+      "kind": "costs",
+      "source_id": "permanentCYP0",
+      "target_id": "permanentCYP0"
+    },
+    {
+      "kind": "costs",
+      "source_id": "agencyCYP0",
+      "target_id": "agencyCYP0"
+    },
+    {
+      "kind": "costs",
+      "source_id": "permanentCXP1",
+      "target_id": "permanentCXP1"
+    },
+    {
+      "kind": "costs",
+      "source_id": "agencyCXP1",
+      "target_id": "agencyCXP1"
+    },
+    {
+      "kind": "costs",
+      "source_id": "permanentCYP1",
+      "target_id": "permanentCYP1"
+    },
+    {
+      "kind": "costs",
+      "source_id": "agencyCYP1",
+      "target_id": "agencyCYP1"
+    },
+    {
+      "kind": "costs",
+      "source_id": "agency-import-duplicate",
+      "target_id": "agency-import-duplicate"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocpermanentAXP0",
+      "target_id": "allocpermanentAXP0"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocagencyAXP0",
+      "target_id": "allocagencyAXP0"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocpermanentAYP0",
+      "target_id": "allocpermanentAYP0"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocagencyAYP0",
+      "target_id": "allocagencyAYP0"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocpermanentAXP1",
+      "target_id": "allocpermanentAXP1"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocagencyAXP1",
+      "target_id": "allocagencyAXP1"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocpermanentAYP1",
+      "target_id": "allocpermanentAYP1"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocagencyAYP1",
+      "target_id": "allocagencyAYP1"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocpermanentBXP0",
+      "target_id": "allocpermanentBXP0"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocagencyBXP0",
+      "target_id": "allocagencyBXP0"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocpermanentBYP0",
+      "target_id": "allocpermanentBYP0"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocagencyBYP0",
+      "target_id": "allocagencyBYP0"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocpermanentBXP1",
+      "target_id": "allocpermanentBXP1"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocagencyBXP1",
+      "target_id": "allocagencyBXP1"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocpermanentBYP1",
+      "target_id": "allocpermanentBYP1"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocagencyBYP1",
+      "target_id": "allocagencyBYP1"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocpermanentCXP0",
+      "target_id": "allocpermanentCXP0"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocagencyCXP0",
+      "target_id": "allocagencyCXP0"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocpermanentCYP0",
+      "target_id": "allocpermanentCYP0"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocagencyCYP0",
+      "target_id": "allocagencyCYP0"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocpermanentCXP1",
+      "target_id": "allocpermanentCXP1"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocagencyCXP1",
+      "target_id": "allocagencyCXP1"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocpermanentCYP1",
+      "target_id": "allocpermanentCYP1"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "allocagencyCYP1",
+      "target_id": "allocagencyCYP1"
+    },
+    {
+      "kind": "allocations",
+      "source_id": "alloc-duplicate",
+      "target_id": "alloc-duplicate"
+    },
+    {
+      "kind": "hours",
+      "source_id": "hrsAXP0",
+      "target_id": "hrsAXP0"
+    },
+    {
+      "kind": "hours",
+      "source_id": "hrsAYP0",
+      "target_id": "hrsAYP0"
+    },
+    {
+      "kind": "hours",
+      "source_id": "hrsAXP1",
+      "target_id": "hrsAXP1"
+    },
+    {
+      "kind": "hours",
+      "source_id": "hrsAYP1",
+      "target_id": "hrsAYP1"
+    },
+    {
+      "kind": "hours",
+      "source_id": "hrsBXP0",
+      "target_id": "hrsBXP0"
+    },
+    {
+      "kind": "hours",
+      "source_id": "hrsBYP0",
+      "target_id": "hrsBYP0"
+    },
+    {
+      "kind": "hours",
+      "source_id": "hrsBXP1",
+      "target_id": "hrsBXP1"
+    },
+    {
+      "kind": "hours",
+      "source_id": "hrsBYP1",
+      "target_id": "hrsBYP1"
+    },
+    {
+      "kind": "hours",
+      "source_id": "hrsCXP0",
+      "target_id": "hrsCXP0"
+    },
+    {
+      "kind": "hours",
+      "source_id": "hrsCYP0",
+      "target_id": "hrsCYP0"
+    },
+    {
+      "kind": "hours",
+      "source_id": "hrsCXP1",
+      "target_id": "hrsCXP1"
+    },
+    {
+      "kind": "hours",
+      "source_id": "hrsCYP1",
+      "target_id": "hrsCYP1"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "AP0production",
+      "target_id": "AP0production"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "AP0permanent",
+      "target_id": "AP0permanent"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "AP0agency",
+      "target_id": "AP0agency"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "AP0other_direct",
+      "target_id": "AP0other_direct"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "AP0hours",
+      "target_id": "AP0hours"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "AP0finance",
+      "target_id": "AP0finance"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "AP1production",
+      "target_id": "AP1production"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "AP1permanent",
+      "target_id": "AP1permanent"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "AP1agency",
+      "target_id": "AP1agency"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "AP1other_direct",
+      "target_id": "AP1other_direct"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "AP1hours",
+      "target_id": "AP1hours"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "AP1finance",
+      "target_id": "AP1finance"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "BP0production",
+      "target_id": "BP0production"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "BP0permanent",
+      "target_id": "BP0permanent"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "BP0agency",
+      "target_id": "BP0agency"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "BP0other_direct",
+      "target_id": "BP0other_direct"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "BP0hours",
+      "target_id": "BP0hours"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "BP0finance",
+      "target_id": "BP0finance"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "BP1production",
+      "target_id": "BP1production"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "BP1permanent",
+      "target_id": "BP1permanent"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "BP1agency",
+      "target_id": "BP1agency"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "BP1other_direct",
+      "target_id": "BP1other_direct"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "BP1hours",
+      "target_id": "BP1hours"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "BP1finance",
+      "target_id": "BP1finance"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "CP0production",
+      "target_id": "CP0production"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "CP0permanent",
+      "target_id": "CP0permanent"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "CP0agency",
+      "target_id": "CP0agency"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "CP0other_direct",
+      "target_id": "CP0other_direct"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "CP0hours",
+      "target_id": "CP0hours"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "CP0finance",
+      "target_id": "CP0finance"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "CP1production",
+      "target_id": "CP1production"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "CP1permanent",
+      "target_id": "CP1permanent"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "CP1agency",
+      "target_id": "CP1agency"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "CP1other_direct",
+      "target_id": "CP1other_direct"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "CP1hours",
+      "target_id": "CP1hours"
+    },
+    {
+      "kind": "coverage",
+      "source_id": "CP1finance",
+      "target_id": "CP1finance"
+    },
+    {
+      "kind": "finance",
+      "source_id": "finAP0",
+      "target_id": "finAP0"
+    },
+    {
+      "kind": "finance",
+      "source_id": "finAP1",
+      "target_id": "finAP1"
+    },
+    {
+      "kind": "finance",
+      "source_id": "finBP0",
+      "target_id": "finBP0"
+    },
+    {
+      "kind": "finance",
+      "source_id": "finBP1",
+      "target_id": "finBP1"
+    },
+    {
+      "kind": "finance",
+      "source_id": "finCP0",
+      "target_id": "finCP0"
+    },
+    {
+      "kind": "finance",
+      "source_id": "finCP1",
+      "target_id": "finCP1"
+    },
+    {
+      "kind": "benefits",
+      "source_id": "potential-1",
+      "target_id": "potential-1"
+    },
+    {
+      "kind": "benefits",
+      "source_id": "realised-1",
+      "target_id": "realised-1"
+    },
+    {
+      "kind": "benefits",
+      "source_id": "capacity-1",
+      "target_id": "capacity-1"
+    }
+  ],
+  "reviews": [],
+  "notes": ""
+}

@@ -1,0 +1,7 @@
+id,site_id,local_sku,comparison_key,process_spec,output_basis,good_definition,yield_definition,external_ref
+AX,A,A-X,X,Raw recipe-v1,net_good,Accepted raw net mass,Raw accepted net mass / input net mass,authored/example-source
+AY,A,A-Y,Y,Raw recipe-v1,net_good,Accepted raw net mass,Raw accepted net mass / input net mass,authored/example-source
+BX,B,B-X,X,Raw recipe-v1,net_good,Accepted raw net mass,Raw accepted net mass / input net mass,authored/example-source
+BY,B,B-Y,Y,Raw recipe-v1,net_good,Accepted raw net mass,Raw accepted net mass / input net mass,authored/example-source
+CX,C,C-X,X,Cooked recipe-v2,net_good,Accepted cooked net mass,Cooked good mass / wet ingredients incl additions,authored/example-source
+CY,C,C-Y,Y,Cooked recipe-v2,net_good,Accepted cooked net mass,Cooked good mass / wet ingredients incl additions,authored/example-source

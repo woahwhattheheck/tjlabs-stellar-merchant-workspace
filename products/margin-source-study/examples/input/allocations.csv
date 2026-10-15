@@ -1,0 +1,26 @@
+id,cost_id,sku_id,share_numerator,share_denominator,allocation_basis,source_ref
+allocpermanentAXP0,permanentAXP0,AX,1,1,Authored direct job allocation,authored/example-source
+allocagencyAXP0,agencyAXP0,AX,1,1,Authored direct job allocation,authored/example-source
+allocpermanentAYP0,permanentAYP0,AY,1,1,Authored direct job allocation,authored/example-source
+allocagencyAYP0,agencyAYP0,AY,1,1,Authored direct job allocation,authored/example-source
+allocpermanentAXP1,permanentAXP1,AX,1,1,Authored direct job allocation,authored/example-source
+allocagencyAXP1,agencyAXP1,AX,1,1,Authored direct job allocation,authored/example-source
+allocpermanentAYP1,permanentAYP1,AY,1,1,Authored direct job allocation,authored/example-source
+allocagencyAYP1,agencyAYP1,AY,1,1,Authored direct job allocation,authored/example-source
+allocpermanentBXP0,permanentBXP0,BX,1,1,Authored direct job allocation,authored/example-source
+allocagencyBXP0,agencyBXP0,BX,1,1,Authored direct job allocation,authored/example-source
+allocpermanentBYP0,permanentBYP0,BY,1,1,Authored direct job allocation,authored/example-source
+allocagencyBYP0,agencyBYP0,BY,1,1,Authored direct job allocation,authored/example-source
+allocpermanentBXP1,permanentBXP1,BX,1,1,Authored direct job allocation,authored/example-source
+allocagencyBXP1,agencyBXP1,BX,1,1,Authored direct job allocation,authored/example-source
+allocpermanentBYP1,permanentBYP1,BY,1,1,Authored direct job allocation,authored/example-source
+allocagencyBYP1,agencyBYP1,BY,1,1,Authored direct job allocation,authored/example-source
+allocpermanentCXP0,permanentCXP0,CX,1,1,Authored direct job allocation,authored/example-source
+allocagencyCXP0,agencyCXP0,CX,1,1,Authored direct job allocation,authored/example-source
+allocpermanentCYP0,permanentCYP0,CY,1,1,Authored direct job allocation,authored/example-source
+allocagencyCYP0,agencyCYP0,CY,1,1,Authored direct job allocation,authored/example-source
+allocpermanentCXP1,permanentCXP1,CX,1,1,Authored direct job allocation,authored/example-source
+allocagencyCXP1,agencyCXP1,CX,1,1,Authored direct job allocation,authored/example-source
+allocpermanentCYP1,permanentCYP1,CY,1,1,Authored direct job allocation,authored/example-source
+allocagencyCYP1,agencyCYP1,CY,1,1,Authored direct job allocation,authored/example-source
+alloc-duplicate,agency-import-duplicate,AX,1,1,Same invoice scope as original,authored/example-source

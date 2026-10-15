@@ -1,0 +1,410 @@
+{
+  "schema": "margin.source-manifest/v1",
+  "files": [
+    {
+      "path": "DELIVERY.md",
+      "bytes": 1453,
+      "sha256": "aeb3ad235721982fcd23bb398fa3bb6167ef75cee13dc8ed73ace7d0b7c331c1"
+    },
+    {
+      "path": "DOMAIN_CONTRACT.md",
+      "bytes": 5579,
+      "sha256": "8a6ca7ffedc8c2e884e2ae982d2b776ac1a32ecc6f5f05c2bdcf2f22500823a7"
+    },
+    {
+      "path": "INSTALLED_OPERATION.md",
+      "bytes": 4729,
+      "sha256": "6e4f1752166262038a0e9e3d77fc3f0ed6fcbcb7a9ac6666a7626b6bb89ef035"
+    },
+    {
+      "path": "INSTALLED_RECEIVING.md",
+      "bytes": 989,
+      "sha256": "0c0e9882ae2a942dede02579002e98e686820ae7589c52e28a764656d606f63d"
+    },
+    {
+      "path": "MEASUREMENT.md",
+      "bytes": 6165,
+      "sha256": "3b9f80c81de49f2d654146da642322cfe4ac22d25f1b2c54dfbcfe83cc8446a3"
+    },
+    {
+      "path": "NATIVE.md",
+      "bytes": 3716,
+      "sha256": "4b922c5ea5dabc41c157ba7bfcf81a9a751057e66f669605e1e32105d8ca8e3c"
+    },
+    {
+      "path": "OPERATOR.md",
+      "bytes": 4555,
+      "sha256": "aafe13555c7c46c67cc8c475f21411cb2ad12ea9b7fccfb3fa26d8ff23574c96"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2872,
+      "sha256": "33dd473161d562460fbbdc93906ac041c010762396c1e0c5e74326fadbf21377"
+    },
+    {
+      "path": "RECEIVING.md",
+      "bytes": 2341,
+      "sha256": "161a6f6becd945733b6d2fe77df54780d5ec7cf0ec20370bc2f85162f9850131"
+    },
+    {
+      "path": "SOURCE_INTAKE.md",
+      "bytes": 7180,
+      "sha256": "6d7c8968f33268879214915cda568439bfadd2db9457b280793c21de7778a8a7"
+    },
+    {
+      "path": "application-provider.mjs",
+      "bytes": 3905,
+      "sha256": "29eeb1b1e3287b9f21118b0e6e2f54703100927f9960dcac867ad4a332fefe15"
+    },
+    {
+      "path": "binary.cjs",
+      "bytes": 1021,
+      "sha256": "99479b36e6f6e2e08da08d9faf25f02ca0f344df41902b08e8df06a1c6acf291"
+    },
+    {
+      "path": "core.cjs",
+      "bytes": 23611,
+      "sha256": "16ef5a0a8f015daab5f7118d29c473f174f1d06f4638991284186c4c0a661ba8"
+    },
+    {
+      "path": "csv.cjs",
+      "bytes": 1550,
+      "sha256": "945ce2b5c97de19b8cfc912c24d9ebd76b20a06938fc45e4f3a18bed67842e8e"
+    },
+    {
+      "path": "examples/build-course.cjs",
+      "bytes": 11956,
+      "sha256": "72e1d55afa7c9be29508c5e1f5cfa441f8a7bdc271d7097c9ff861b5a99c746b"
+    },
+    {
+      "path": "examples/corrected.study.json",
+      "bytes": 80574,
+      "sha256": "f69a95df5feb7fbe1f207cefce913e454d4b0e6322eac118347aeb7ee9302de7"
+    },
+    {
+      "path": "examples/first.study.json",
+      "bytes": 70417,
+      "sha256": "7dcb45266d35a387f18364764f6ada397090ed1d18c7f61d173f97f1cc42006e"
+    },
+    {
+      "path": "examples/input/allocations.csv",
+      "bytes": 2416,
+      "sha256": "3a39fc679df1eab19144ae614318549eeaecfa8f5acb92f8b2683fc7f95419bd"
+    },
+    {
+      "path": "examples/input/benefits.csv",
+      "bytes": 686,
+      "sha256": "df153b340957e9a098082ce3818c172c951e5e6a1ff413aa67a52002c4350d97"
+    },
+    {
+      "path": "examples/input/costs.csv",
+      "bytes": 2318,
+      "sha256": "6539fceac289415afb22f579c7461170302264661db1ce5df142c8269e4ac1fd"
+    },
+    {
+      "path": "examples/input/coverage.csv",
+      "bytes": 4362,
+      "sha256": "eb6afb2b57119dc5900ef5ba6c25a9eeedbef098aa0fa26521d6e38cbe490d7e"
+    },
+    {
+      "path": "examples/input/finance.csv",
+      "bytes": 567,
+      "sha256": "f38d8a6188e3d42eed5019b14afb855127e7f2104d41494755967c13a3f93c4c"
+    },
+    {
+      "path": "examples/input/hours.csv",
+      "bytes": 1572,
+      "sha256": "b7c7debfca4065ca4e42320df6ccab2f71f59abfcccceb0f7f1240ca24ad0f64"
+    },
+    {
+      "path": "examples/input/periods.csv",
+      "bytes": 330,
+      "sha256": "b81e8af5bc22d135edebf6e985a3c80d22ae6e3584fdb194b039a6a0ba6be1da"
+    },
+    {
+      "path": "examples/input/production.csv",
+      "bytes": 1735,
+      "sha256": "6e66bf56d440f211aff211d0f45ac747865646868566502027dcd33aa9c2332b"
+    },
+    {
+      "path": "examples/input/sites.csv",
+      "bytes": 303,
+      "sha256": "8142f753ae5ac67ed7d47cdfdd7db71d4c8e74b03ee87663b5e2e13abd67a75d"
+    },
+    {
+      "path": "examples/input/skus.csv",
+      "bytes": 863,
+      "sha256": "f5ac3c21c34c219743991e58df6b777b7052a9e05e238fc2908a1044eb5299b3"
+    },
+    {
+      "path": "examples/input/units.csv",
+      "bytes": 603,
+      "sha256": "0f473a6d5be1439864e36562cb6cfa55bfb3928d179c2a610bc3a375f5f7cfa3"
+    },
+    {
+      "path": "host/client.mjs",
+      "bytes": 4238,
+      "sha256": "60d1405831e49fc6f22fa87b51d74fcc8fd68000a76bfb2d9bf61efa71b0ca70"
+    },
+    {
+      "path": "host/codec.mjs",
+      "bytes": 28418,
+      "sha256": "ab609271b0bcb6aac8b732db7b437edd69bb7865dcaea4fd5cf1ec162de15c45"
+    },
+    {
+      "path": "host/domain.mjs",
+      "bytes": 4007,
+      "sha256": "e851bbde8a0a0d99484430e790340d1be1e8929631c3779a48e54f0bc3468d58"
+    },
+    {
+      "path": "host/export-core.mjs",
+      "bytes": 2953,
+      "sha256": "90515a3d183623f171c8752db13c22f2330f4116dbe59a1998e8fba3994c2e82"
+    },
+    {
+      "path": "host/export.mjs",
+      "bytes": 1578,
+      "sha256": "c45d11e02a5fe0a31b8558747a7bdb62073b6115c00070c2078043e53ad9d5df"
+    },
+    {
+      "path": "host/io.mjs",
+      "bytes": 3112,
+      "sha256": "9ea801c97489f288a1e6b4955b8b5e262ebb881b1ecd0eaa07f2cd2c916fde83"
+    },
+    {
+      "path": "host/model.cjs",
+      "bytes": 5001,
+      "sha256": "9c59c2a1a2a8518474328fcdf7b7d2167accbdfe43efa0d7c7e08314f9c2b0b4"
+    },
+    {
+      "path": "host/server.mjs",
+      "bytes": 6921,
+      "sha256": "5823787f3bb74eb719edfbcb4abee0c90857a634b67e38e3945edd4c829543cb"
+    },
+    {
+      "path": "host/store.mjs",
+      "bytes": 5649,
+      "sha256": "f2aac073c5ba76f146c93d3221e8040c8ab3186b8bf998b6e3fa85cfe3311d26"
+    },
+    {
+      "path": "installed-cli.mjs",
+      "bytes": 4560,
+      "sha256": "de1e36539ccc26d641de26e503085285d0da683baa5c088b61a7c43fc80dfb5c"
+    },
+    {
+      "path": "managed.mjs",
+      "bytes": 2582,
+      "sha256": "50d778cd980b61776bff7aedf307c8f90c737893fba009df995e6c666df5a8fe"
+    },
+    {
+      "path": "margin.cjs",
+      "bytes": 26809,
+      "sha256": "c1ba446cb31ad1fcaf6e649729f8d657a6b3409f5424b04c1a2aa1748d7ed8e0"
+    },
+    {
+      "path": "mcp.mjs",
+      "bytes": 8750,
+      "sha256": "2101efe8e79aea4218cf3d15668f2704532216d7c707d9ab8f9fd9b32f4ba455"
+    },
+    {
+      "path": "merchant-provider.mjs",
+      "bytes": 1895,
+      "sha256": "1ac15a8fae8c07fceb488b70b1428ee3fc01dc9bc019cd31e46fff37c0ea5abb"
+    },
+    {
+      "path": "native/margin-desk.cjs",
+      "bytes": 7982,
+      "sha256": "df3a940ae863fc68eaa60162c405cdbfca672b7876fd4c488168cb8425b8560d"
+    },
+    {
+      "path": "native/receive-installed.mjs",
+      "bytes": 4427,
+      "sha256": "decc29a9276035bba1c5f19a475700c00c3caee1c8d6d9473c85e3e79543a8a0"
+    },
+    {
+      "path": "operator/browser-course.cjs",
+      "bytes": 11896,
+      "sha256": "a0c7a4cd78645e606ce714ee79b204e885ca8c72493e9e4a202c85af1fbe999c"
+    },
+    {
+      "path": "operator/complete-course.cjs",
+      "bytes": 80,
+      "sha256": "1c96fe4133826bd14761e339004881d04e346009202576a7f28b7ef1d8c3d39b"
+    },
+    {
+      "path": "operator/desk.js",
+      "bytes": 56587,
+      "sha256": "0cadc039fe6b30abf2dbf7a961803f3a378ad3dca29fe8eaac951e6fbfd72554"
+    },
+    {
+      "path": "operator/installed-desk.js",
+      "bytes": 59397,
+      "sha256": "fb1649deaf92f3b73d437501411cfa758ad85297847a75c7e7969e2b9cb5339b"
+    },
+    {
+      "path": "operator/native-course.cjs",
+      "bytes": 8480,
+      "sha256": "1b3265e2cdf8e7d074387e33d100fde292e7072c7f18dda95fd4b63b99a7163a"
+    },
+    {
+      "path": "operator/render-desk.cjs",
+      "bytes": 6056,
+      "sha256": "f253c92d313a7ac6b9ef8356e7ecb12d4f72efb0b8cf9338a7bc9bbfb8888288"
+    },
+    {
+      "path": "operator/run-course.cjs",
+      "bytes": 1012,
+      "sha256": "d8c2c986ddd8c905f41e3612004120450bca0974999a1d8d8a23126ccacaeb09"
+    },
+    {
+      "path": "package.json",
+      "bytes": 217,
+      "sha256": "31a613e643ecada3f15db7d3ae4bb5bfba6b3a4ad4ef21227c1861e168b1fba2"
+    },
+    {
+      "path": "rational.cjs",
+      "bytes": 1350,
+      "sha256": "b2b38848a914a327cfecc271cf53ca0b52a6186b1d28bd38b3dc8677ca9974a2"
+    },
+    {
+      "path": "receiving/installed-result.json",
+      "bytes": 4626,
+      "sha256": "e6a0a1918c2b8b0844427224a822138de6399c0453d274b36df2e2c0685d00f1"
+    },
+    {
+      "path": "runtime.mjs",
+      "bytes": 3246,
+      "sha256": "7c111bd4c6d4341f941fa0fced25c9a4a7c84bbb83374a3dfae937a04ae21786"
+    },
+    {
+      "path": "session.cjs",
+      "bytes": 8515,
+      "sha256": "5ed9a9f2afd70f9111c23245ce35d5e35c8e5352d95e443259977ec184112abf"
+    },
+    {
+      "path": "setup.mjs",
+      "bytes": 2579,
+      "sha256": "ff4cfd96a24fa9a319f2154cad7e8c028abe477cec914150b06ce8a7da30217b"
+    },
+    {
+      "path": "sha256.cjs",
+      "bytes": 19696,
+      "sha256": "f37a1319db3aa8b9bd15ae2fea89cf0b79677e2a2eb295e63efa4d34f8308230"
+    },
+    {
+      "path": "src/archive.mjs",
+      "bytes": 507,
+      "sha256": "670e27e3431df8e7bfddeb9c50c21968e6d9a4bd2e8a5306480844fbc69e018b"
+    },
+    {
+      "path": "src/build-installed.mjs",
+      "bytes": 8434,
+      "sha256": "fc9d7a924796cdc3718563dda4f224173fb22787d44da8f10e76bb67b37e3b10"
+    },
+    {
+      "path": "src/connected_zip.cjs",
+      "bytes": 12090,
+      "sha256": "857c79f789e9cf4f6321bf22804e1c8d55af6758495ae1ba09d4fa72fd97bb26"
+    },
+    {
+      "path": "src/managed-storage.mjs",
+      "bytes": 7787,
+      "sha256": "0d8ee2e8c1aa06cc78e57edcd26d367b6f60ab943370a218d44862a3b0e8d5d0"
+    },
+    {
+      "path": "src/managed.js",
+      "bytes": 14268,
+      "sha256": "afebc78803dabd814bbb0543394087d5d1910db42b5e623c4286e8541deb3ecf"
+    },
+    {
+      "path": "src/session-cache.cjs",
+      "bytes": 2425,
+      "sha256": "31918d561d7c4ccde1d849a7db2236e067d8b8971522c9b78ff88db4d50af966"
+    },
+    {
+      "path": "src/session.mjs",
+      "bytes": 3830,
+      "sha256": "9a5b9e9ba2cdcc9a529f22a47904012c34fa52f612033ba4cf9a54f5a95b4a7a"
+    },
+    {
+      "path": "templates/allocations.csv",
+      "bytes": 81,
+      "sha256": "ae9fcae2844382e1b7231e9e596c32395a0a04ee520586240e8092e1b35afdf3"
+    },
+    {
+      "path": "templates/benefits.csv",
+      "bytes": 153,
+      "sha256": "44ebeb0b85b285904a0f468e401ef9622dd980e957548c599089c5d50740beb8"
+    },
+    {
+      "path": "templates/costs.csv",
+      "bytes": 123,
+      "sha256": "a62db1bb35bb4c04fb13713f4ba435c7734107a22fc9e0b49a7175388c235b76"
+    },
+    {
+      "path": "templates/coverage.csv",
+      "bytes": 72,
+      "sha256": "5543657558e53c93cdc5ee1031159d0a2bf3444a1ef830c83ed7b7d05fe24af1"
+    },
+    {
+      "path": "templates/finance.csv",
+      "bytes": 117,
+      "sha256": "6c8e8df801a00dcf110efe1942cfe8e49d4008dfc15632fc3a522f5f0bc4c76b"
+    },
+    {
+      "path": "templates/hours.csv",
+      "bytes": 119,
+      "sha256": "0473bc4fba2a47496edb1854c95ea8fee1c38ae45c1737d5b22e88e861fd3b3c"
+    },
+    {
+      "path": "templates/periods.csv",
+      "bytes": 56,
+      "sha256": "e943e6aa23df03ec0a7f3ee7db6cdefcc88728310a503f3b2c4f2b205ff7d8af"
+    },
+    {
+      "path": "templates/production.csv",
+      "bytes": 157,
+      "sha256": "f6478cae88cb745c79f2878416a2e8069f211836e09dce9e012602371718bd01"
+    },
+    {
+      "path": "templates/sites.csv",
+      "bytes": 44,
+      "sha256": "5ed01d0cb4a3fd1d62506cd6a724af7ad689d320efb9c754f677aa07ae37ae5f"
+    },
+    {
+      "path": "templates/skus.csv",
+      "bytes": 109,
+      "sha256": "a05424d15b3c3800dca5bd30170604c2c08309683bd2a1a24f77f771335db635"
+    },
+    {
+      "path": "templates/units.csv",
+      "bytes": 81,
+      "sha256": "07dc155e633cd2728408ba583207e7fc72267981319bf5496bf7ed94692293a7"
+    },
+    {
+      "path": "tools.mjs",
+      "bytes": 4501,
+      "sha256": "5453160f5e98ca62d765638960fe8f171341484c68edcaddfa9eba8ddcb0b9c1"
+    },
+    {
+      "path": "verification/browser-course.json",
+      "bytes": 1877,
+      "sha256": "61d590dda545b2be01726cd04d6d264619f06ea5a41c97ef3b467b8a284800c9"
+    },
+    {
+      "path": "verification/model-course.json",
+      "bytes": 6671,
+      "sha256": "a727965ed786214d010551b0a97cecedddfb3458f6f5eea1fc2c621ef1472b4b"
+    },
+    {
+      "path": "verification/native-course.json",
+      "bytes": 5452,
+      "sha256": "4efad47a7ca2f3e8fcb5f55072647b1879b560aa4451db8318edb8d9f984136f"
+    },
+    {
+      "path": "zip.cjs",
+      "bytes": 2008,
+      "sha256": "0db36ea7dfaa084be2da89e185576017d596f33b8a174ec61199ee17bc0ea1a9"
+    }
+  ]
+}
