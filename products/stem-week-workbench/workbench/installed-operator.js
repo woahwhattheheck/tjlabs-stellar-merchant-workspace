@@ -1,0 +1,94 @@
+function mountInstalledStemWeekDesk(root,initial,core,copyStore,C,S,files,managedConfig){
+"use strict";
+const q=id=>root.querySelector('[data-id="'+id+'"]'),clone=x=>JSON.parse(JSON.stringify(x)),esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const tables=Object.keys(core.columns),uid=p=>p+"-"+(globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+"-"+Math.random().toString(36).slice(2));
+const reviewFields=["action","reviewer","reason","quantity","evidence"];
+let state,session=S.receive(JSON.stringify(initial)),baseVersion=null,dirty=false,busy=false,lastExported="",cached=null,managed=null,persistTimer=null;
+const weeks=S.weeks;
+function parseTarget(t){if(!t)return null;const p=JSON.parse(t);return {targetType:p[0],targetId:p[1]}}
+function wrap(w){return S.desk(S.fromWorkspace(w))}
+function validate(v){return S.validateDesk(v)}
+function getSession(){captureForms();const n=S.clone(session);n.workspace=clone(state.workspace);n.editor=clone(state.session);n.draft.actor=q("actor").value;return S.validate(n)}
+function setSession(incoming){const next=S.prepare(incoming);session=next;state=S.desk(next);cached=null;q("actor").value=next.draft.actor;dirty=false;lastExported=""}
+function selectDesk(candidate,reason){const next=S.clone(getSession());next.workspace=candidate.workspace;next.editor=candidate.session;setSession(S.transition(getSession(),next,reason))}
+setSession(session);
+
+function selection(){return {editionId:state.session.editionId,week:state.session.week,basis:state.session.basis}}
+function plan(){if(!state.session.editionId)return null;const key=state.workspace.head+"|"+JSON.stringify(selection());if(cached?.key!==key)cached={key,value:core.plan(state.workspace,selection())};return cached.value}
+function draftKey(){const t=parseTarget(state.session.target);return t?JSON.stringify([state.session.editionId,state.session.week,state.session.basis,t.targetType,t.targetId,state.session.decisionId]):null}
+function draft(){const key=draftKey();if(!key)return {action:"hold",reviewer:"",reason:"",quantity:"",evidence:""};if(!Object.hasOwn(state.session.decisionDrafts,key)){const d=plan()?.decisions.find(d=>d.id===state.session.decisionId);state.session.decisionDrafts[key]={action:d?.action||"hold",reviewer:d?.reviewer||"",reason:d?.reason||"",quantity:d?.quantity===null||d?.quantity===undefined?"":String(d.quantity),evidence:d?.evidence||""}}return state.session.decisionDrafts[key]}
+function captureForms(){state.session.projectLabel=q("project-label").value;state.session.sourceDraft.label=q("edition-label").value;state.session.sourceDraft.notes=q("source-notes").value;for(const t of tables)state.session.sourceDraft.sources[t].name=q(t+"-name").value;const k=draftKey();if(k){const d=draft();for(const f of reviewFields)d[f]=q("decision-"+f).value}}
+function say(x){q("notice").textContent=x}
+function body(){return JSON.stringify(S.pack(getSession()))}
+function changed(msg){dirty=true;lastExported="";session.updatedAt=S.now();if(msg)say(msg);renderPrior();if(managed){clearTimeout(persistTimer);persistTimer=setTimeout(()=>managed.persist(),250)}}
+function availability(){if(busy)return;const p=plan();q("record-decision").disabled=!p||!state.session.target;for(const f of reviewFields)q("decision-"+f).disabled=!p||!state.session.target;for(const k of ["reconciliation","pull","shares","decisions","report","copy-edition"])q(k).disabled=!p;for(const t of tables)q(t+"-original").disabled=!p}
+function lock(on){busy=on;root.querySelectorAll("button,input,select,textarea").forEach(e=>e.disabled=on);if(!on)availability()}
+async function run(fn){if(busy)return;captureForms();lock(true);try{return await fn()}catch(e){say(e.message)}finally{lock(false)}}
+function download(name,type,text){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement("a");a.href=url;a.download=name;root.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
+async function originalText(file){return new TextDecoder("utf-8",{fatal:true,ignoreBOM:true}).decode(await file.arrayBuffer())}
+function exportFull(){captureForms();download("Stem_Week_Working.json","application/json",JSON.stringify(S.pack(getSession()),null,2)+"\n");lastExported=body();say("Complete workspace downloaded, including original sources, earlier editions, decisions and unfinished forms.")}
+async function listCopies(){const c=await copyStore.list(),old=q("copies").value;q("copies").innerHTML=c.map(x=>"<option value='"+esc(x.id)+"'>"+esc(x.createdAt+" · "+x.title)+"</option>").join("");if(c.some(x=>x.id===old))q("copies").value=old;return c}
+async function retainCurrent(){if(managed){await managed.persist();return true}if(!dirty)return true;if(lastExported===body()&&confirm("Confirm the complete current workspace file has been saved before replacing this working copy."))return true;try{await copyStore.retain(body(),state.workspace.label+" · before opening another copy");await listCopies();return true}catch(e){say("Keep this working copy open. Download the complete workspace, confirm it is saved, then retry opening. "+e.message);return false}}
+async function adopt(candidate,newBase){const incoming=candidate?.schema===S.schema?candidate:S.receive(JSON.stringify(candidate));const next=S.replace(getSession(),incoming,"Complete editor before opening another copy");if(!await retainCurrent())return false;setSession(next);if(newBase!==undefined)baseVersion=newBase;dirty=newBase===undefined;render();return true}
+function renderPrior(){q("prior-sessions").innerHTML=session.backups.map(b=>"<option value='"+esc(b.id)+"'>"+esc(b.at+" · "+b.reason)+"</option>").join("")}
+const val=v=>v===null?"Missing":typeof v==="boolean"?(v?"Yes":"No"):v;
+function table(h,rows){return "<table><thead><tr>"+h.map(x=>"<th>"+esc(x)+"</th>").join("")+"</tr></thead><tbody>"+rows.map(r=>"<tr>"+r.map(x=>"<td>"+esc(val(x))+"</td>").join("")+"</tr>").join("")+"</tbody></table>"}
+function renderDecision(){const p=plan(),t=parseTarget(state.session.target);const ds=p&&t?p.decisions.filter(d=>d.targetType===t.targetType&&d.targetId===t.targetId):[];
+ if(!ds.some(d=>d.id===state.session.decisionId))state.session.decisionId="";
+ q("decision-id").innerHTML="<option value=''>New decision</option>"+ds.map(d=>"<option value='"+esc(d.id)+"'>"+esc(d.id+" · revision "+d.revision+" · "+d.action)+"</option>").join("");q("decision-id").value=state.session.decisionId;
+ const d=draft();for(const f of reviewFields)q("decision-"+f).value=d[f];
+ const selected=p&&t?(t.targetType==="variety"?p.rows.find(r=>r.varietyId===t.targetId):p.commitments.find(r=>r.commitment_id===t.targetId)):null;
+ q("target-details").textContent=selected?JSON.stringify(selected,null,2):"Select a variety or commitment.";
+ q("decision-history").textContent=p&&t?JSON.stringify(p.decisionHistory.filter(d=>d.targetType===t.targetType&&d.targetId===t.targetId),null,2):"";
+ availability();
+}
+function renderPlan(){
+ const p=plan();q("edition").innerHTML="<option value=''>Choose source edition</option>"+state.workspace.editions.map(e=>"<option value='"+esc(e.id)+"'>"+esc(e.label)+"</option>").join("");q("edition").value=state.session.editionId;
+ q("week").innerHTML=weeks(state.workspace,state.session.editionId).map(w=>"<option>"+esc(w)+"</option>").join("");q("week").value=state.session.week;q("basis").value=state.session.basis;
+ q("summary").textContent=p?p.editionLabel+" · week "+p.week+" · "+p.basis.toUpperCase()+" basis · "+p.summary.firmDemand+" firm stems · "+p.summary.knownShortage+" known shortage · "+p.summary.incompleteVarieties+" varieties have MISSING supply counts":"Create or select a source edition.";
+ q("attention").innerHTML=p?(p.attention.length?"<ul>"+p.attention.map(a=>"<li><strong>"+esc(a.targetId)+"</strong>: "+esc(a.message)+(a.quantity===null?"":" ("+esc(a.quantity)+")")+"</li>").join("")+"</ul>":"<p>All selected-basis variety counts are complete and no shortages or tentative scenarios are present.</p>"):"";
+ q("reconciliation-table").innerHTML=p?table(["Variety","Crop / cultivar","Known "+p.basis,"Complete","Firm","Tentative","Short","Surplus","Projected","Actual","Actual − projected"],p.rows.map(r=>[r.varietyId,r.crop+" / "+r.variety,r.selectedSupply,r.selectedComplete,r.firmDemand,r.tentativeDemand,r.shortage,r.surplus,r.projected,r.actual,r.actualMinusProjected])):"";
+ q("pull-table").innerHTML=p?table(["Order","Channel","Variety","Pieces","Priority","Base","Buffer","Required","Allocated","Short"],p.pull.map(r=>[r.commitmentId,r.channel,r.varietyId,r.quantity,r.priority,r.baseStems,r.bufferStems,r.requiredStems,r.allocatedStems,r.shortStems])):"";
+ q("shares-table").innerHTML=p?table(["Commitment","State","Recipe","Shares","Buffer bps","Source"],p.shares.map(r=>[r.commitmentId,r.status,r.recipeId,r.shares,r.bufferBps,r.sourceRef])):"";
+ q("full-plan").textContent=p?JSON.stringify(p,null,2):"";
+ const targets=p?[...p.rows.map(r=>({key:JSON.stringify(["variety",r.varietyId]),label:"Variety · "+r.varietyId+" · "+r.variety})),...p.commitments.map(c=>({key:JSON.stringify(["commitment",c.commitment_id]),label:"Commitment · "+c.commitment_id+" · "+c.status}))]:[];
+ if(!targets.some(t=>t.key===state.session.target)){state.session.target=targets[0]?.key||"";state.session.decisionId=""}
+ q("target").innerHTML=targets.map(t=>"<option value='"+esc(t.key)+"'>"+esc(t.label)+"</option>").join("");q("target").value=state.session.target;renderDecision();
+}
+function render(){renderPrior();q("project-label").value=state.session.projectLabel;q("project-id").textContent=state.workspace.id;q("edition-label").value=state.session.sourceDraft.label;q("source-notes").value=state.session.sourceDraft.notes;for(const t of tables){q(t+"-name").value=state.session.sourceDraft.sources[t].name;q(t+"-text").value=state.session.sourceDraft.sources[t].text}renderPlan()}
+for(const id of ["project-label","edition-label","source-notes",...tables.map(t=>t+"-name")])q(id).addEventListener("input",()=>{if(busy)return;captureForms();changed("Unfinished source fields retained in this working copy. Save or export the complete workspace.")});
+for(const t of tables){q(t+"-text").addEventListener("input",e=>{if(busy)return;state.session.sourceDraft.sources[t].text=e.target.value;changed("Edited "+t+" draft retained. Creating a new edition preserves the prior originals.")});q(t+"-file").onchange=e=>{const file=e.target.files?.[0],input=e.target;if(!file||busy)return;run(async()=>{const text=await originalText(file);const next=clone(state);next.session.sourceDraft.sources[t]={name:file.name,text};selectDesk(next,"Complete editor before loading "+t+" original");render();changed("Complete original "+t+" file loaded, preserving UTF-8 BOM and line endings. Create an edition to validate all four tables.");input.value=""})};q(t+"-original").onclick=()=>run(()=>{const e=state.workspace.editions.find(e=>e.id===state.session.editionId);if(!e)throw Error("Select an edition");download(e.sources[t].name,"text/csv;charset=utf-8",e.sources[t].text);say("Retained "+t+" original exported.")})}
+for(const f of reviewFields)q("decision-"+f).addEventListener("input",()=>{if(busy)return;captureForms();changed("Decision draft retained for this exact edition, week, basis and target.")});
+function selectContext(change,reason){try{if(busy)return;captureForms();const next=clone(state);change(next.session);selectDesk(next,reason);render();changed()}catch(e){render();say(e.message)}}
+q("edition").onchange=()=>selectContext(s=>{s.editionId=q("edition").value;s.week=weeks(state.workspace,s.editionId)[0]||'';s.target='';s.decisionId='';},"Complete editor before selecting source edition");
+for(const id of ["week","basis"])q(id).onchange=()=>selectContext(s=>{s[id]=q(id).value;s.target='';s.decisionId='';},"Complete editor before selecting "+id);
+q("target").onchange=()=>selectContext(s=>{s.target=q("target").value;s.decisionId='';},"Complete editor before selecting target");
+q("decision-id").onchange=()=>selectContext(s=>{s.decisionId=q("decision-id").value;},"Complete editor before selecting correction");
+q("receive").onclick=()=>run(()=>{const d=clone(state.session.sourceDraft),id=uid("edition");const next=core.addEdition(state.workspace,{id,label:d.label,sources:d.sources,notes:d.notes});const firstWeek=weeks(next,id)[0];if(!firstWeek)throw Error("The source edition needs at least one dated supply or commitment row");const candidate=clone(state);candidate.workspace=next;candidate.session.editionId=id;candidate.session.week=firstWeek;candidate.session.target="";candidate.session.decisionId="";selectDesk(candidate,"Complete editor before receiving weekly sources");render();changed("Complete immutable source edition created. Select a week and basis, inspect missing counts, then save or export.")});
+q("copy-edition").onclick=()=>run(async()=>{const e=state.workspace.editions.find(x=>x.id===state.session.editionId);if(!e)throw Error("Select an edition");const next=clone(state);next.session.sourceDraft={label:e.label+" · revision",notes:e.notes,sources:Object.fromEntries(tables.map(t=>[t,{name:e.sources[t].name,text:e.sources[t].text}]))};selectDesk(next,"Complete editor before copying retained originals");render();changed("Selected originals copied into the draft for a NEW edition. Earlier source and decisions remain intact.")});
+q("load-example").onclick=()=>run(async()=>{const next=clone(state);next.session.sourceDraft={label:"Authored weekly flower example",notes:"Authored operating example; quantities are not any researched farm's observations.",sources:clone(core.sampleSources)};selectDesk(next,"Complete editor before loading authored sources");render();changed("Authored example loaded into unfinished forms. Create an edition to run its selected week.")});
+q("record-decision").onclick=()=>run(()=>{const t=parseTarget(state.session.target);if(!t)throw Error("Choose a target");const d=clone(draft()),id=state.session.decisionId||uid("decision");const next=clone(state);next.workspace=core.decide(state.workspace,{id,...selection(),...t,action:d.action,reviewer:d.reviewer,reason:d.reason,quantity:d.quantity||null,evidence:d.evidence});next.session.decisionId=id;selectDesk(next,"Complete editor before recording grower decision");render();changed("Grower decision retained against this exact source selection. Arithmetic is unchanged until a new source edition is received.")});
+q("save").onclick=()=>run(async()=>{validate(state);const r=await copyStore.save(body(),baseVersion,state.workspace.label);await listCopies();if(r.saved){baseVersion=r.version;dirty=false;say("Complete workspace saved with an independently retained proposed copy.")}else{dirty=true;say("Saved head differs. This complete proposed copy is retained separately. Open the saved head or selected recovery copy before continuing.")}});
+q("restore").onclick=()=>run(async()=>{const h=await copyStore.read("head");if(!h)throw Error("No saved head");if(await adopt(JSON.parse(h.body),h.version))say("Saved head opened with original sources and unfinished fields.")});
+q("open-copy").onclick=()=>{const id=q("copies").value;run(async()=>{if(!id)throw Error("Select a saved copy");const r=await copyStore.read(id);if(!r)throw Error("Copy missing");if(await adopt(JSON.parse(r.body)))say("Independent complete copy opened; saved head remains separately retained.")})};
+q("refresh-copies").onclick=()=>run(async()=>say((await listCopies()).length+" complete saved copies available."));
+q("json").onclick=()=>{try{exportFull()}catch(e){say(e.message)}};
+q("import").onchange=e=>{const file=e.target.files?.[0],input=e.target;if(!file||busy)return;run(async()=>{const candidate=JSON.parse((await originalText(file)).replace(/^\uFEFF/,""));if(await adopt(candidate))say("Complete workspace opened. Save this version or continue its weekly plan.");input.value=""})};
+q("new-project").onclick=()=>run(async()=>{const w=core.create({id:uid("farm"),label:state.session.projectLabel});if(await adopt(wrap(w)))say("New farm workspace opened after retaining the prior working copy.")});
+for(const kind of ["reconciliation","pull","shares","decisions"])q(kind).onclick=()=>run(()=>{if(!plan())throw Error("Select a source week");download("Stem_Week_"+kind+".csv","text/csv;charset=utf-8",core.csv(state.workspace,selection(),kind));say("Complete "+kind+" CSV exported for the selected edition, week and basis.")});
+q("report").onclick=()=>run(()=>{if(!plan())throw Error("Select a source week");download("Stem_Week_Report.html","text/html",core.report(state.workspace,selection()));say("Readable report exported with original sources and core history. Full workspace also retains unfinished forms.")});
+window.addEventListener("beforeunload",e=>{if(dirty){e.preventDefault();e.returnValue=""}});
+q("actor").oninput=()=>changed("Operation actor updated.");
+q("restore-prior").onclick=()=>run(()=>{setSession(S.restoreBackup(getSession(),q("prior-sessions").value));render();changed("Complete prior editor restored; displaced work remains retained.")});
+q("domain-export").onclick=()=>run(()=>download("Stem_Week_Original_Workspace.json","application/json",JSON.stringify(state.workspace,null,2)+"\n"));
+q("desk-export").onclick=()=>run(()=>download("Stem_Week_Complete_Workspace.json","application/json",JSON.stringify(validate(state),null,2)+"\n"));
+q("editable-export").onclick=()=>run(()=>download("Stem_Week_Editable.html","text/html",buildStemWeekDesk(files,{carrier:S.pack(getSession())})));
+q("source-export").onclick=()=>run(()=>download("Stem_Week_Complete_Source.json","application/json",JSON.stringify({schema:"tjlabs.stemweek-complete-source.v1",files},null,2)+"\n"));
+q("handover-export").onclick=()=>run(async()=>{if(managed){await managed.export();return}const carrier=S.pack(getSession()),bytes=buildStemWeekExport(files,{installationId:"standalone",sha256:carrier.sha256,sequence:0,carrier,receipts:[],rejections:[]},[],[],{codec:C,core,sessions:S,buildDesk:buildStemWeekDesk,zip:globalThis.StemWeekZIP});download("Stem_Week_Complete_Handover.zip","application/zip",bytes)});
+render();
+if(managedConfig){
+ for(const k of ["save","restore","copies","refresh-copies","open-copy"])q(k).hidden=true;
+ managed=createManagedSession({C,S,config:managedConfig,getSession,setSession,render,notice:say,download:(name,data,type="application/json")=>download(name,type,data),isOperatorBusy:()=>busy,recoveryStorage:createManagedRecoveryStore({C,A:createStemWeekArchive(core,C)})});
+}else{say("Complete original source, review and receiving workspace ready.");listCopies().catch(e=>say("Browser storage unavailable. Complete workspace download remains available. "+e.message))}
+return {getState:()=>clone(state),session:()=>S.clone(getSession()),validate,getDirty:()=>dirty,adopt,render};
+}

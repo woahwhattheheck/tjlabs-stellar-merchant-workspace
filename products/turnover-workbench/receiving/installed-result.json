@@ -61,5 +61,15 @@
     "immutableWorkspaceObjects": 5,
     "expandedBytes": 532398,
     "proposalMetadataBytes": 56111
+  },
+  "rejectedContext": {
+    "schema": "stellar-forge.turnover-rejected-context-course.v1",
+    "capacity": 14509,
+    "fields": [
+      "edition",
+      "cue"
+    ],
+    "completeEditorUnchanged": true,
+    "displayedSelectionRestored": true
   }
 }
