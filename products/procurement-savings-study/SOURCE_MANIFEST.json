@@ -2856,8 +2856,8 @@
     },
     {
       "path": "operator/installed-desk.js",
-      "bytes": 69929,
-      "sha256": "87c16a8c17c227d5db554fd18cf2a4a7ade770fde01b6182061de893fa88eb72"
+      "bytes": 70388,
+      "sha256": "c079dd441cb08ad0d5563ae8592b23194642a590c2adae8bb1721b8dacc8508f"
     },
     {
       "path": "operator/native-course.cjs",
@@ -2936,8 +2936,8 @@
     },
     {
       "path": "receiving/portable-course.cjs",
-      "bytes": 11696,
-      "sha256": "0196fa6b3712bc0cde164faf6221ee80ca03045a9d1410de4f7c026272849ecd"
+      "bytes": 11716,
+      "sha256": "b2514405dd69bbeb6c994956130e4f2b8b27bd3083f9538a2d6cd7b881735ae8"
     },
     {
       "path": "receiving/prepared-stream.cjs",

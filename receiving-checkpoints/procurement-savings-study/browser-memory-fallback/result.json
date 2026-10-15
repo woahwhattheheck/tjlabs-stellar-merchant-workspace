@@ -1,0 +1,74 @@
+{
+  "schema": "tjlabs.procurement-browser-memory-fallback.v1",
+  "surface": "Actual assembled production HTML/controllers with supplied browser DOM and atomic IndexedDB adapters",
+  "checks": [
+    "Actual assembled controller opens in memory with the original storage-denial reason",
+    "Actor, unfinished note and later navigation retain complete working edits and original guidance",
+    "Explicit saved-copy operations retain working state without a null database transaction",
+    "Working recovery control produces its complete download",
+    "Downloaded original carrier reopens with exact actor and unfinished note",
+    "The same generated source continues complete recovery in the ordinary atomic storage path"
+  ],
+  "deniedOpenCalls": 1,
+  "download": {
+    "name": "Procurement_Savings_Reconciliation_Study_Working.json",
+    "bytes": 5984,
+    "sha256": "01ec56349adb358f6fc5cdd9ed158720f0d44982e6f22b931028bce3433e3f68"
+  },
+  "preservedDraftActor": true,
+  "elapsedMs": 47495,
+  "sourceCommit": "2c670ff6d06be9f169102a036cea4d0fecf5601d",
+  "controller": {
+    "bytes": 70388,
+    "sha256": "c079dd441cb08ad0d5563ae8592b23194642a590c2adae8bb1721b8dacc8508f"
+  },
+  "receivingAdapter": {
+    "bytes": 11716,
+    "sha256": "b2514405dd69bbeb6c994956130e4f2b8b27bd3083f9538a2d6cd7b881735ae8"
+  },
+  "sourceAssembly": {
+    "files": 664,
+    "source": {
+      "bytes": 10269667,
+      "sha256": "7bbe79cf76930b188063fa261a6571e652b113143f4220e093458c325dd59b8a"
+    },
+    "html": {
+      "bytes": 3002256,
+      "sha256": "77f2ec3366ae88f535a8ce4b5b8b00ee2845ecaf760392ed7e135a7229f707e3"
+    },
+    "controller": {
+      "bytes": 70388,
+      "sha256": "c079dd441cb08ad0d5563ae8592b23194642a590c2adae8bb1721b8dacc8508f"
+    },
+    "receivingAdapter": {
+      "bytes": 11716,
+      "sha256": "b2514405dd69bbeb6c994956130e4f2b8b27bd3083f9538a2d6cd7b881735ae8"
+    },
+    "predecessor": {
+      "files": 664,
+      "source": {
+        "bytes": 10269181,
+        "sha256": "5ab66ebde2b3d87780ea4dfa64180a0ce1fbbfafadb8fca1e96e5308f11c2f8e"
+      },
+      "html": {
+        "bytes": 3001589,
+        "sha256": "ebc0737de730f334f1b3e35b379a9ebf21c3f4195180b34cf52dbd752fa11ca7"
+      },
+      "executed658": {
+        "source": {
+          "bytes": 9982266,
+          "sha256": "e0264d15818218e5e84de2155ca887efd7e2e35086f419feedcbf81643f3f99b"
+        },
+        "html": {
+          "bytes": 2880102,
+          "sha256": "2cc9958d60e44513fe4e79a33b0956400fa09054cc3c7ac6ff25c42007ce8920"
+        },
+        "files": 658,
+        "donorFilesUnchanged": 612
+      }
+    }
+  },
+  "upperMembers": 662,
+  "lowerMembers": 663,
+  "embeddedBankExact": true
+}
