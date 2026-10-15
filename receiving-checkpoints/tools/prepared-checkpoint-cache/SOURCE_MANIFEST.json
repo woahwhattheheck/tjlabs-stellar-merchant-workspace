@@ -8,8 +8,8 @@
     },
     {
       "path": "checkpoint-storage-cache.cjs",
-      "bytes": 3507,
-      "sha256": "d692b466c73d983b543c041e4b968988d14b557a377c2f5c070ee184653a1502"
+      "bytes": 3625,
+      "sha256": "bff39c118069c3417c9678e84ce522a99aa65a20661320816a31153704f821a9"
     },
     {
       "path": "before-prepared-zip.cjs",
