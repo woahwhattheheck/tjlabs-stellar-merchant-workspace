@@ -191,7 +191,7 @@ function createZipBuilder(options={},checkpoint=null){
   if(options.deflateRaw!==undefined&&typeof options.deflateRaw!=='function')throw TypeError('ZIP deflateRaw must be a function');
   if(options.inflateRaw!==undefined&&typeof options.inflateRaw!=='function')throw TypeError('ZIP inflateRaw must be a function');
   const stableOptions={timestamp,maxBytes:selectedLimits.maxBytes,maxEntries:selectedLimits.maxEntries,maxUncompressedBytes:compression.maxUncompressedBytes,compression:compression.selected,deflate:JSON.parse(JSON.stringify(compression.deflate))};
-  const records=[],names=new Set(),byName=new Map(),restoredPayloads=new Map(),usedPayloads=new Set(),retainedPayloads=new WeakSet();let uncompressedBytes=0,packedBytes=22,retainedPackedBytes=0;
+  const records=[],names=new Set(),byName=new Map(),restoredPayloads=new Map(),usedPayloads=new Set(),retainedPayloads=new WeakSet(),encodedPayloads=new WeakMap();let uncompressedBytes=0,packedBytes=22,retainedPackedBytes=0;
   const metadata=r=>({name:r.name,mode:r.mode,bytes:r.bytes,compressedBytes:r.packed.length,method:r.method,crc32:r.crc});
   function admit(r){
     if(records.length>=selectedLimits.maxEntries)throw RangeError('ZIP entry collection exceeds its limit');
@@ -238,11 +238,11 @@ function createZipBuilder(options={},checkpoint=null){
     const config={expected_bytes:bytes,expected_crc32:crc,max_output_bytes:Math.max(1,bytes),max_input_bytes:Math.max(1,Math.min(selectedLimits.maxBytes,0x7fffffff))};
     const data=method===0?packed:options.inflateRaw?options.inflateRaw(packed,config):require('./connected_gzip.cjs').inflateRawBytes(packed,config).data;
     if(!(data instanceof Uint8Array)||data.length!==bytes||crc32(data)!==crc)throw TypeError('Prepared ZIP original bytes changed: '+name);
-    restoredPayloads.set(restoreKey,packed);return admit({name,names:nameBytes,mode,bytes,crc,method,packed});
+    restoredPayloads.set(restoreKey,packed);encodedPayloads.set(packed,encodedPayload);return admit({name,names:nameBytes,mode,bytes,crc,method,packed});
   }
   if(checkpoint){if(checkpoint.entries.length>selectedLimits.maxEntries)throw RangeError('ZIP entry collection exceeds its limit');for(const entry of checkpoint.entries)restore(entry);if(usedPayloads.size!==checkpoint.payloads.length)throw TypeError('Prepared ZIP checkpoint contains unreferenced payloads');checkPaths(records);restoredPayloads.clear();}
   function snapshot(){
-    const indices=new WeakMap(),payloads=[];const entries=records.map(r=>{let index=indices.get(r.packed);if(index===undefined){index=payloads.length;payloads.push(base64(r.packed));indices.set(r.packed,index);}return {...metadata(r),payload_index:index};});
+    const indices=new WeakMap(),payloads=[];const entries=records.map(r=>{let index=indices.get(r.packed);if(index===undefined){index=payloads.length;let encoded=encodedPayloads.get(r.packed);if(encoded===undefined){encoded=base64(r.packed);encodedPayloads.set(r.packed,encoded);}payloads.push(encoded);indices.set(r.packed,index);}return {...metadata(r),payload_index:index};});
     return {schema:'commons.prepared-zip.v1',options:{...stableOptions,deflate:JSON.parse(JSON.stringify(stableOptions.deflate))},entries,payloads};
   }
   function statistics(){return{entries:records.length,uncompressedBytes,archiveBytes:packedBytes,retainedPackedBytes};}
