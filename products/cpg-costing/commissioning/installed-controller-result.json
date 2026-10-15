@@ -1,0 +1,94 @@
+{
+  "runtime": "Production source executed with explicit in-memory DOM/storage/download adapters",
+  "checks": [
+    "Actual file handler preserves exact original bytes",
+    "Original-table inspection, exact column mapping and replacement preserve prior draft",
+    "Actual row editor, complete calculation preview and immutable costing edition",
+    "Exact baseline/candidate comparison, full reports and named review",
+    "Complete unfinished drafts survive working JSON and cold editable controller; every source/original/working ZIP member exact"
+  ],
+  "sections": 7,
+  "downloads": [
+    {
+      "name": "Costing_Comparison.json",
+      "bytes": 29391,
+      "sha256": "7d76f27eafd3d86e72baf1f118d6afa7e113c201934546e0fbd960a033646023"
+    },
+    {
+      "name": "Costing_Comparison.csv",
+      "bytes": 34260,
+      "sha256": "0cb55ab47f53f4bb91a88b5f5119bd3c1e64b9c3d8c6cce050b7ba246d5da04c"
+    },
+    {
+      "name": "Costing_Report.json",
+      "bytes": 77906,
+      "sha256": "ced583822a9e9135cc6ca740c1fa97bb9e2ed0c12c0b421207ef1def7f636f0f"
+    },
+    {
+      "name": "Costing_Report.csv",
+      "bytes": 70029,
+      "sha256": "1fe2228d37e19b01deebbcae0cb27f0336f442e15d8bf9149e5b789d4c9bfcbb"
+    },
+    {
+      "name": "Costing_Working.json",
+      "bytes": 885177,
+      "sha256": "c6cd92c3bd417be8f5b12331a4da89bcfb23a2d6f738e1288ae9745fe22aa3c3"
+    },
+    {
+      "name": "Costing_Editable.html",
+      "bytes": 914587,
+      "sha256": "848ace4ddc090cd5cf41e171b29b4ae68de7d6fd6de2c5350ffed21e007d2b4c"
+    },
+    {
+      "name": "Costing_Complete_Application_Source.json",
+      "bytes": 700639,
+      "sha256": "1b74ac428b2c010fd33653a20e09fc8164270217ed51d5ce047f4499c65e940d"
+    },
+    {
+      "name": "CPG_Costing_Workspace.json",
+      "bytes": 317576,
+      "sha256": "f7b3b8400322ed44a0a1f1a48feec3c79068c156bc37c91c772aee38af3a295e"
+    },
+    {
+      "name": "Costing_Complete_Handover.zip",
+      "bytes": 2462045,
+      "sha256": "4c12539484995ad3606f01e71f09365581ba6a804b57cd2b26d88fb111754f66"
+    },
+    {
+      "name": "Costing_Working.json",
+      "bytes": 885177,
+      "sha256": "c6cd92c3bd417be8f5b12331a4da89bcfb23a2d6f738e1288ae9745fe22aa3c3"
+    }
+  ],
+  "counts": {
+    "sources": 2,
+    "editions": 3,
+    "reviews": 2,
+    "backups": 3
+  },
+  "workingSha256": "c6cd92c3bd417be8f5b12331a4da89bcfb23a2d6f738e1288ae9745fe22aa3c3",
+  "zipBytes": 2462045,
+  "rootSha256": "b347f3f25db2f34b5473abad4ac92b9a5bf31637eafb2da5107bb4aa21229239",
+  "sources": [
+    {
+      "path": "operator/controller.js",
+      "sha256": "eaa1ed48d81c1158ebb0a53de4770b62f88fde3399933cd985c56574b0797067"
+    },
+    {
+      "path": "operator/build.mjs",
+      "sha256": "6b69c95dd2ada1f8b9c890965d48eef360251944648b885972e0428e99cd456e"
+    },
+    {
+      "path": "commissioning/controller-course.mjs",
+      "sha256": "13e21504ae41d404c97a4c15ff8b9c0640194ef1a701c966b4cb25a183e5ff9b"
+    },
+    {
+      "path": "operator/session.mjs",
+      "sha256": "d8d70fc9c486b756bd667185b0284152bb671b480741e95396a8ec44aca6f3ee"
+    },
+    {
+      "path": "costing/core.mjs",
+      "sha256": "ef00c259b6f2d125dcf5a646ca589f7ba80da73259c9fa309357df8534ee5081"
+    }
+  ]
+}

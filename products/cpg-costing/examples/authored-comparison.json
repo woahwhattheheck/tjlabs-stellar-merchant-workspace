@@ -1,0 +1,474 @@
+{
+  "schema": "tjlabs.cpg-costing-comparison.v1",
+  "leftEditionId": "3a64e415b1d8510a7a7b57ebaaeed422eac6091ca1391f8483d6a9d090232dcb",
+  "rightEditionId": "ef9b1c4f1ae73333b4c294ce85d7a4d4e5e57dc8dda419d2ea2a4d6f50f4e2df",
+  "leftName": "Authored baseline",
+  "rightName": "Authored supplier invoice correction",
+  "rows": [
+    {
+      "table": "lots",
+      "id": "oats-r1",
+      "metric": "unitCost",
+      "left": {
+        "value": "2.2",
+        "exact": {
+          "numerator": "11",
+          "denominator": "5"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"pointer\":\"/lots/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "right": {
+        "value": "2.4",
+        "exact": {
+          "numerator": "12",
+          "denominator": "5"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"format\":\"csv\",\"record\":2,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "delta": "0.2",
+      "comparable": true,
+      "reasons": []
+    },
+    {
+      "table": "lots",
+      "id": "bags-r1",
+      "metric": "unitCost",
+      "left": {
+        "value": "0.15",
+        "exact": {
+          "numerator": "3",
+          "denominator": "20"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"pointer\":\"/lots/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "right": {
+        "value": "0.15",
+        "exact": {
+          "numerator": "3",
+          "denominator": "20"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"format\":\"csv\",\"record\":3,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "delta": "0",
+      "comparable": true,
+      "reasons": []
+    },
+    {
+      "table": "boms",
+      "id": "blend-v1",
+      "metric": "unitCost",
+      "left": {
+        "value": "2.2",
+        "exact": {
+          "numerator": "11",
+          "denominator": "5"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"pointer\":\"/lots/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomRevisions/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomLines/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "right": {
+        "value": "2.4",
+        "exact": {
+          "numerator": "12",
+          "denominator": "5"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"format\":\"csv\",\"record\":2,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomRevisions/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomLines/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "delta": "0.2",
+      "comparable": true,
+      "reasons": []
+    },
+    {
+      "table": "boms",
+      "id": "granola-v1",
+      "metric": "unitCost",
+      "left": {
+        "value": "2.1",
+        "exact": {
+          "numerator": "21",
+          "denominator": "10"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"pointer\":\"/lots/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomRevisions/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomLines/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/lots/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomRevisions/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomLines/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomLines/2\",\"record\":3,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "right": {
+        "value": "2.25",
+        "exact": {
+          "numerator": "9",
+          "denominator": "4"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"format\":\"csv\",\"record\":2,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomRevisions/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomLines/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"format\":\"csv\",\"record\":3,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/chargeAllocations/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomRevisions/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomLines/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomLines/2\",\"record\":3,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "delta": "0.15",
+      "comparable": true,
+      "reasons": []
+    },
+    {
+      "table": "boms",
+      "id": "snack-v1",
+      "metric": "unitCost",
+      "left": {
+        "value": "0.875",
+        "exact": {
+          "numerator": "7",
+          "denominator": "8"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"pointer\":\"/lots/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/lots/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomRevisions/2\",\"record\":3,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomLines/3\",\"record\":4,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomLines/4\",\"record\":5,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "right": {
+        "value": "0.925",
+        "exact": {
+          "numerator": "37",
+          "denominator": "40"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"format\":\"csv\",\"record\":2,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"format\":\"csv\",\"record\":3,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/chargeAllocations/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomRevisions/2\",\"record\":3,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomLines/3\",\"record\":4,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/bomLines/4\",\"record\":5,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "delta": "0.05",
+      "comparable": true,
+      "reasons": []
+    },
+    {
+      "table": "batches",
+      "id": "batch-a",
+      "metric": "unitCost",
+      "left": {
+        "value": "2.33333333",
+        "exact": {
+          "numerator": "7",
+          "denominator": "3"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"pointer\":\"/lots/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/lots/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batchCosts/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batches/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "right": {
+        "value": "2.5",
+        "exact": {
+          "numerator": "5",
+          "denominator": "2"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"format\":\"csv\",\"record\":2,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"format\":\"csv\",\"record\":3,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/chargeAllocations/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batchCosts/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batches/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "delta": "0.16666667",
+      "comparable": true,
+      "reasons": []
+    },
+    {
+      "table": "batches",
+      "id": "batch-b",
+      "metric": "unitCost",
+      "left": {
+        "value": "0.875",
+        "exact": {
+          "numerator": "7",
+          "denominator": "8"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"pointer\":\"/lots/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/2\",\"record\":3,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/lots/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/3\",\"record\":4,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batchCosts/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batches/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "right": {
+        "value": "0.925",
+        "exact": {
+          "numerator": "37",
+          "denominator": "40"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"format\":\"csv\",\"record\":2,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/2\",\"record\":3,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"format\":\"csv\",\"record\":3,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/chargeAllocations/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/3\",\"record\":4,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batchCosts/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batches/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "delta": "0.05",
+      "comparable": true,
+      "reasons": []
+    },
+    {
+      "table": "sales",
+      "id": "sale-dtc",
+      "metric": "contribution",
+      "left": {
+        "value": "70.5",
+        "exact": {
+          "numerator": "141",
+          "denominator": "2"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"pointer\":\"/sales/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/lots/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/lots/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batchCosts/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batches/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/fees/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/fees/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "right": {
+        "value": "65.5",
+        "exact": {
+          "numerator": "131",
+          "denominator": "2"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"pointer\":\"/sales/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"format\":\"csv\",\"record\":2,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"format\":\"csv\",\"record\":3,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/chargeAllocations/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batchCosts/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batches/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/fees/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/fees/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "delta": "-5",
+      "comparable": true,
+      "reasons": []
+    },
+    {
+      "table": "sales",
+      "id": "sale-wholesale",
+      "metric": "contribution",
+      "left": {
+        "value": "36.66666667",
+        "exact": {
+          "numerator": "110",
+          "denominator": "3"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"pointer\":\"/sales/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/lots/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/lots/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batchCosts/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batches/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/fees/2\",\"record\":3,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "right": {
+        "value": "30",
+        "exact": {
+          "numerator": "30",
+          "denominator": "1"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"pointer\":\"/sales/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"format\":\"csv\",\"record\":2,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"format\":\"csv\",\"record\":3,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/chargeAllocations/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batchCosts/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batches/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/fees/2\",\"record\":3,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "delta": "-6.66666667",
+      "comparable": true,
+      "reasons": []
+    },
+    {
+      "table": "sales",
+      "id": "sale-market",
+      "metric": "contribution",
+      "left": {
+        "value": "39.5",
+        "exact": {
+          "numerator": "79",
+          "denominator": "2"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"pointer\":\"/sales/2\",\"record\":3,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/lots/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/2\",\"record\":3,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/lots/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/3\",\"record\":4,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batchCosts/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batches/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/fees/3\",\"record\":4,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/fees/4\",\"record\":5,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "right": {
+        "value": "36.5",
+        "exact": {
+          "numerator": "73",
+          "denominator": "2"
+        },
+        "status": "complete",
+        "missing": [],
+        "sourceRefs": [
+          "{\"pointer\":\"/sales/2\",\"record\":3,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"format\":\"csv\",\"record\":2,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/charges/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/chargeAllocations/0\",\"record\":1,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/2\",\"record\":3,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"format\":\"csv\",\"record\":3,\"sourceId\":\"6c42e7fc95b4a5d160da5b16e221f89de78b1bed8929346c70efcdd3e1305d8a\"}",
+          "{\"pointer\":\"/chargeAllocations/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/consumption/3\",\"record\":4,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batchCosts/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/batches/1\",\"record\":2,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/fees/3\",\"record\":4,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}",
+          "{\"pointer\":\"/fees/4\",\"record\":5,\"sourceId\":\"9bf1a0e14cbdcd4cc6173573d4476e139b80db98b6c159954465bb36ffe40b70\"}"
+        ]
+      },
+      "delta": "-3",
+      "comparable": true,
+      "reasons": []
+    }
+  ],
+  "interpretation": "Observed candidate minus baseline for matching selected records. This is not proof of operational improvement; changed quantities, periods and source coverage remain visible in each full edition."
+}

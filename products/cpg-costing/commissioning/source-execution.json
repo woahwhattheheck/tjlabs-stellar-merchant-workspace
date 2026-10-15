@@ -1,0 +1,123 @@
+{
+  "schema": "tjlabs.cpg-costing-course.v1",
+  "engine": "cpg-costing-1.1.0",
+  "status": "passed",
+  "execution": "Actual production pure modules executed in V8 with explicit UTF-8/Base64/SHA runtime adapter; no Node/browser execution claimed.",
+  "checks": [
+    {
+      "label": "Exact baseline contribution",
+      "status": "passed",
+      "detail": "440/3 across three recorded sales"
+    },
+    {
+      "label": "Candidate propagation",
+      "status": "passed",
+      "detail": "Single oat invoice 200→220 changes all dependent costs without changing retained baseline"
+    },
+    {
+      "label": "Full source/edition/review reopen",
+      "status": "passed",
+      "detail": "2100162ffb8d2706cecfd8d781b071f7262fb82e316c4a8d393eb0dc384b7440"
+    },
+    {
+      "label": "Same operation replay",
+      "status": "passed",
+      "detail": "No duplicate edition"
+    },
+    {
+      "label": "Stale preview adoption",
+      "status": "passed",
+      "detail": "Rejected without changing original workspace"
+    },
+    {
+      "label": "Changed original source rejects",
+      "status": "passed",
+      "detail": "Rejected without changing original workspace"
+    },
+    {
+      "label": "Net revenue does not deduct reflected fees twice",
+      "status": "passed",
+      "detail": "Gross150 less4.5 processor less5 fulfillment equals net145.5 less5 fulfillment"
+    },
+    {
+      "label": "Unknown coverage is not zero",
+      "status": "passed",
+      "detail": "Known amount remains visible"
+    },
+    {
+      "label": "Aggregate lot overdraw",
+      "status": "passed",
+      "detail": "Two batches jointly exceed100lb"
+    },
+    {
+      "label": "Aggregate channel overdraw",
+      "status": "passed",
+      "detail": "Multiple sales jointly exceed90 good units"
+    },
+    {
+      "label": "Rate currency mismatch",
+      "status": "passed",
+      "detail": "No cross-currency combination"
+    },
+    {
+      "label": "Conflicting conversion paths",
+      "status": "passed",
+      "detail": "Built-in SI factor cannot be overridden silently"
+    },
+    {
+      "label": "Future source date",
+      "status": "passed",
+      "detail": "Receipt after assessment date cannot produce complete costs"
+    },
+    {
+      "label": "Recipe effective date",
+      "status": "passed",
+      "detail": "Batch on Oct5 cannot use recipe starting Oct6"
+    },
+    {
+      "label": "Incomplete edition remains reopenable",
+      "status": "passed",
+      "detail": "Error report is strict JSON and preserved"
+    },
+    {
+      "label": "Original occurrence resolution",
+      "status": "passed",
+      "detail": "Invalid source pointer is a finding, not verified evidence"
+    },
+    {
+      "label": "Comparison cohort qualification",
+      "status": "passed",
+      "detail": "Changed sold quantity prevents like-for-like delta"
+    },
+    {
+      "label": "Original large decimal token",
+      "status": "passed",
+      "detail": "No Number conversion"
+    },
+    {
+      "label": "Original JSON numeric lexeme",
+      "status": "passed",
+      "detail": "Decimal digits survive JSON intake"
+    },
+    {
+      "label": "Duplicate source JSON members",
+      "status": "passed",
+      "detail": "Rejected without changing original workspace"
+    },
+    {
+      "label": "Explicit five-percent extra input",
+      "status": "passed",
+      "detail": "153 ×12oz ÷16 ×1.05 =120.4875lb"
+    },
+    {
+      "label": "Explicit ninety-five-percent yield",
+      "status": "passed",
+      "detail": "153 ×12oz ÷16 ÷0.95 =2295/19lb; distinct convention"
+    }
+  ],
+  "workspaceRoot": "2100162ffb8d2706cecfd8d781b071f7262fb82e316c4a8d393eb0dc384b7440",
+  "reportHashes": [
+    "d26673c828daa39620e5419f7b802976a71d8808381aabd5cdf32df747d275c5",
+    "20626aba01d5dc10afbd391d03f17717134bca71d5b568a4b58b53ffbe589618"
+  ]
+}

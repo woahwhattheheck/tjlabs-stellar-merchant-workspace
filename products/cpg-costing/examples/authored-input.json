@@ -1,0 +1,315 @@
+{
+  "schema": "tjlabs.cpg-costing-input.v1",
+  "currency": "USD",
+  "asOf": "2026-10-14",
+  "unitConversions": [],
+  "lots": [
+    {
+      "id": "oats-r1",
+      "itemId": "oats",
+      "receivedDate": "2026-10-01",
+      "quantity": "100",
+      "unit": "lb",
+      "invoiceAmount": "200",
+      "currency": "USD",
+      "chargesComplete": "yes",
+      "evidence": "confirmed"
+    },
+    {
+      "id": "bags-r1",
+      "itemId": "bags",
+      "receivedDate": "2026-10-01",
+      "quantity": "200",
+      "unit": "each",
+      "invoiceAmount": "20",
+      "currency": "USD",
+      "chargesComplete": "yes",
+      "evidence": "confirmed"
+    }
+  ],
+  "charges": [
+    {
+      "id": "freight-r1",
+      "label": "Inbound freight",
+      "amount": "30",
+      "currency": "USD",
+      "method": "weighted",
+      "evidence": "confirmed"
+    }
+  ],
+  "chargeAllocations": [
+    {
+      "chargeId": "freight-r1",
+      "lotId": "oats-r1",
+      "weight": "2"
+    },
+    {
+      "chargeId": "freight-r1",
+      "lotId": "bags-r1",
+      "weight": "1"
+    }
+  ],
+  "standardSelections": [
+    {
+      "itemId": "oats",
+      "lotId": "oats-r1"
+    },
+    {
+      "itemId": "bags",
+      "lotId": "bags-r1"
+    }
+  ],
+  "bomRevisions": [
+    {
+      "id": "blend-v1",
+      "sku": "oat-blend",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "",
+      "outputQuantity": "75",
+      "outputUnit": "lb",
+      "otherCost": "0",
+      "currency": "USD",
+      "evidence": "confirmed",
+      "costsComplete": "yes"
+    },
+    {
+      "id": "granola-v1",
+      "sku": "granola-12oz",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "",
+      "outputQuantity": "100",
+      "outputUnit": "each",
+      "otherCost": "30",
+      "currency": "USD",
+      "evidence": "confirmed",
+      "costsComplete": "yes"
+    },
+    {
+      "id": "snack-v1",
+      "sku": "snack",
+      "effectiveFrom": "2026-10-01",
+      "effectiveTo": "",
+      "outputQuantity": "80",
+      "outputUnit": "each",
+      "otherCost": "14",
+      "currency": "USD",
+      "evidence": "confirmed",
+      "costsComplete": "yes"
+    }
+  ],
+  "bomLines": [
+    {
+      "id": "l1",
+      "revisionId": "blend-v1",
+      "componentType": "item",
+      "componentId": "oats",
+      "quantity": "75",
+      "unit": "lb"
+    },
+    {
+      "id": "l2",
+      "revisionId": "granola-v1",
+      "componentType": "bom",
+      "componentId": "blend-v1",
+      "quantity": "1200",
+      "unit": "oz"
+    },
+    {
+      "id": "l3",
+      "revisionId": "granola-v1",
+      "componentType": "item",
+      "componentId": "bags",
+      "quantity": "100",
+      "unit": "each"
+    },
+    {
+      "id": "l4",
+      "revisionId": "snack-v1",
+      "componentType": "item",
+      "componentId": "oats",
+      "quantity": "20",
+      "unit": "lb"
+    },
+    {
+      "id": "l5",
+      "revisionId": "snack-v1",
+      "componentType": "item",
+      "componentId": "bags",
+      "quantity": "80",
+      "unit": "each"
+    }
+  ],
+  "batches": [
+    {
+      "id": "batch-a",
+      "sku": "granola-12oz",
+      "revisionId": "granola-v1",
+      "productionDate": "2026-10-05",
+      "goodQuantity": "90",
+      "outputUnit": "each",
+      "scrapQuantity": "10",
+      "scrapUnit": "each",
+      "consumptionComplete": "yes",
+      "costsComplete": "yes"
+    },
+    {
+      "id": "batch-b",
+      "sku": "snack",
+      "revisionId": "snack-v1",
+      "productionDate": "2026-10-06",
+      "goodQuantity": "80",
+      "outputUnit": "each",
+      "scrapQuantity": "0",
+      "scrapUnit": "each",
+      "consumptionComplete": "yes",
+      "costsComplete": "yes"
+    }
+  ],
+  "consumption": [
+    {
+      "id": "c1",
+      "batchId": "batch-a",
+      "kind": "receipt",
+      "referenceId": "oats-r1",
+      "quantity": "75",
+      "unit": "lb"
+    },
+    {
+      "id": "c2",
+      "batchId": "batch-a",
+      "kind": "receipt",
+      "referenceId": "bags-r1",
+      "quantity": "100",
+      "unit": "each"
+    },
+    {
+      "id": "c3",
+      "batchId": "batch-b",
+      "kind": "receipt",
+      "referenceId": "oats-r1",
+      "quantity": "20",
+      "unit": "lb"
+    },
+    {
+      "id": "c4",
+      "batchId": "batch-b",
+      "kind": "receipt",
+      "referenceId": "bags-r1",
+      "quantity": "80",
+      "unit": "each"
+    }
+  ],
+  "batchCosts": [
+    {
+      "id": "bca",
+      "batchId": "batch-a",
+      "category": "Recorded labor and co-packer fee",
+      "amount": "30",
+      "currency": "USD",
+      "evidence": "confirmed"
+    },
+    {
+      "id": "bcb",
+      "batchId": "batch-b",
+      "category": "Recorded labor and co-packer fee",
+      "amount": "14",
+      "currency": "USD",
+      "evidence": "confirmed"
+    }
+  ],
+  "sales": [
+    {
+      "id": "sale-dtc",
+      "batchId": "batch-a",
+      "channel": "DTC",
+      "quantity": "30",
+      "unit": "each",
+      "revenue": "150",
+      "currency": "USD",
+      "periodStart": "2026-10-07",
+      "periodEnd": "2026-10-14",
+      "feesComplete": "yes",
+      "revenueBasis": "gross"
+    },
+    {
+      "id": "sale-wholesale",
+      "batchId": "batch-a",
+      "channel": "Wholesale",
+      "quantity": "40",
+      "unit": "each",
+      "revenue": "140",
+      "currency": "USD",
+      "periodStart": "2026-10-07",
+      "periodEnd": "2026-10-14",
+      "feesComplete": "yes",
+      "revenueBasis": "gross"
+    },
+    {
+      "id": "sale-market",
+      "batchId": "batch-b",
+      "channel": "Marketplace",
+      "quantity": "60",
+      "unit": "each",
+      "revenue": "120",
+      "currency": "USD",
+      "periodStart": "2026-10-07",
+      "periodEnd": "2026-10-14",
+      "feesComplete": "yes",
+      "revenueBasis": "gross"
+    }
+  ],
+  "fees": [
+    {
+      "id": "f1",
+      "saleId": "sale-dtc",
+      "category": "Processor percentage",
+      "kind": "rate",
+      "ratePercent": "3",
+      "currency": "USD",
+      "evidence": "confirmed",
+      "treatment": "deduct",
+      "rateBase": "recorded_revenue"
+    },
+    {
+      "id": "f2",
+      "saleId": "sale-dtc",
+      "category": "Fulfillment",
+      "kind": "amount",
+      "amount": "5",
+      "currency": "USD",
+      "evidence": "confirmed",
+      "treatment": "deduct"
+    },
+    {
+      "id": "f3",
+      "saleId": "sale-wholesale",
+      "category": "Recorded deduction",
+      "kind": "amount",
+      "amount": "10",
+      "currency": "USD",
+      "evidence": "confirmed",
+      "treatment": "deduct"
+    },
+    {
+      "id": "f4",
+      "saleId": "sale-market",
+      "category": "Marketplace percentage",
+      "kind": "rate",
+      "ratePercent": "15",
+      "currency": "USD",
+      "evidence": "confirmed",
+      "treatment": "deduct",
+      "rateBase": "recorded_revenue"
+    },
+    {
+      "id": "f5",
+      "saleId": "sale-market",
+      "category": "Fulfillment",
+      "kind": "amount",
+      "amount": "10",
+      "currency": "USD",
+      "evidence": "confirmed",
+      "treatment": "deduct"
+    }
+  ]
+}

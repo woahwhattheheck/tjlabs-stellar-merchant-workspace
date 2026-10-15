@@ -1,0 +1,14 @@
+{
+  "schema": "tjlabs.cpg-costing-workspace.v1",
+  "engine": "cpg-costing-1.1.0",
+  "initial": {
+    "title": "Blank CPG costing workspace",
+    "createdAt": "2026-10-14T00:00:00Z",
+    "id": "680132e078568618f398963a"
+  },
+  "sources": [],
+  "editions": [],
+  "reviews": [],
+  "operations": [],
+  "rootSha256": "8a8a629e52ced23cd7946d3c814ee48d4f284a32595e9be398d896b59e566fd4"
+}

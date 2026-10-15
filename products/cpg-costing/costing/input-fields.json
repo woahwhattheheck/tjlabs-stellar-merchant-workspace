@@ -1,0 +1,116 @@
+{
+  "unitConversions": [
+    "id",
+    "itemId",
+    "fromUnit",
+    "toUnit",
+    "factor"
+  ],
+  "lots": [
+    "id",
+    "itemId",
+    "receivedDate",
+    "quantity",
+    "unit",
+    "invoiceAmount",
+    "currency",
+    "chargesComplete",
+    "evidence",
+    "unitPrice",
+    "priceQuantity",
+    "priceUnit"
+  ],
+  "charges": [
+    "id",
+    "label",
+    "amount",
+    "currency",
+    "method",
+    "evidence"
+  ],
+  "chargeAllocations": [
+    "chargeId",
+    "lotId",
+    "amount",
+    "weight"
+  ],
+  "standardSelections": [
+    "itemId",
+    "lotId"
+  ],
+  "bomRevisions": [
+    "id",
+    "sku",
+    "effectiveFrom",
+    "effectiveTo",
+    "outputQuantity",
+    "outputUnit",
+    "otherCost",
+    "currency",
+    "evidence",
+    "costsComplete"
+  ],
+  "bomLines": [
+    "id",
+    "revisionId",
+    "componentType",
+    "componentId",
+    "quantity",
+    "unit",
+    "quantityBasis",
+    "yieldPercent"
+  ],
+  "batches": [
+    "id",
+    "sku",
+    "revisionId",
+    "productionDate",
+    "goodQuantity",
+    "outputUnit",
+    "scrapQuantity",
+    "scrapUnit",
+    "consumptionComplete",
+    "costsComplete"
+  ],
+  "consumption": [
+    "id",
+    "batchId",
+    "kind",
+    "referenceId",
+    "quantity",
+    "unit"
+  ],
+  "batchCosts": [
+    "id",
+    "batchId",
+    "category",
+    "amount",
+    "currency",
+    "evidence"
+  ],
+  "sales": [
+    "id",
+    "batchId",
+    "channel",
+    "quantity",
+    "unit",
+    "revenue",
+    "currency",
+    "periodStart",
+    "periodEnd",
+    "feesComplete",
+    "revenueBasis"
+  ],
+  "fees": [
+    "id",
+    "saleId",
+    "category",
+    "kind",
+    "amount",
+    "ratePercent",
+    "currency",
+    "evidence",
+    "treatment",
+    "rateBase"
+  ]
+}

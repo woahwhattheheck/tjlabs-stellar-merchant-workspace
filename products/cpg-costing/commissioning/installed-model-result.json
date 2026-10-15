@@ -1,0 +1,61 @@
+{
+  "schema": "stellar-forge.costing-managed-model-course.v1",
+  "runtime": "Production JavaScript in V8",
+  "checks": [
+    "Complete incoming session reopens with exact original domain and drafts",
+    "Original selected request replays after later session save without replacing newer drafts",
+    "Stale request retains complete definitive rejection; no draft is lost",
+    "Original costing review applies through same writer while retaining complete unfinished editor state",
+    "Exact original source intake uses costing add-source contract",
+    "Exact baseline 440/3 and corrected 132 contribution retained through installed writer operations"
+  ],
+  "sequence": 4,
+  "workspaceRoot": "423541e52f7aed32148bf632e47fc9e2c1a0829c89192c7ec5c7d81e293b6ec0",
+  "originals": 3,
+  "editions": 2,
+  "reviews": 2,
+  "records": [
+    {
+      "recordSha256": "a4f66229e079334617de5f91dff765da22f7b82a70b703345d7c2b8fdc95d8a3",
+      "kind": "PREPARED_SUCCESSOR"
+    },
+    {
+      "recordSha256": "3805f236a4895a1f6d43a8d94e45ca0a064185fbbef7bd03b3295e779d5f9315",
+      "kind": "PREPARED_SUCCESSOR"
+    },
+    {
+      "recordSha256": "f4566a37f034a58d38413b202caf6e3965720d7b28e410564635425c94f47abf",
+      "kind": "PREPARED_REJECTION"
+    },
+    {
+      "recordSha256": "dc6f8547a3ead141e60f7c3504247d57734ead2e9c7a7f372da1dcccf581606f",
+      "kind": "PREPARED_SUCCESSOR"
+    },
+    {
+      "recordSha256": "e81f92c6a408c1165c6f269797f1c7de094891d9d2f2badde0a300f2add3ae8c",
+      "kind": "PREPARED_SUCCESSOR"
+    }
+  ],
+  "sources": [
+    {
+      "path": "runtime.mjs",
+      "sha256": "c4faa107f90fba03fdb0557639d220993053f24953317342071c3d27006e8ecd"
+    },
+    {
+      "path": "host/model.cjs",
+      "sha256": "67c4073cc28bc003d0e2af7a7e07c8ae1c21fbd274f81091224e68fba61f6a12"
+    },
+    {
+      "path": "operator/session.mjs",
+      "sha256": "d8d70fc9c486b756bd667185b0284152bb671b480741e95396a8ec44aca6f3ee"
+    },
+    {
+      "path": "costing/core.mjs",
+      "sha256": "ef00c259b6f2d125dcf5a646ca589f7ba80da73259c9fa309357df8534ee5081"
+    },
+    {
+      "path": "commissioning/installed-model-course.cjs",
+      "sha256": "ea4793609c8dc4e35b1c426fa9b3886d562b61f798bf6e67295b0f205cd86a0d"
+    }
+  ]
+}
