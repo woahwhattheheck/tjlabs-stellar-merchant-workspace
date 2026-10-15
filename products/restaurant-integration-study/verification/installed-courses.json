@@ -1,0 +1,731 @@
+{
+  "browser": {
+    "schema": "restaurant.installed-portable-course/v1",
+    "surface": "Actual assembled production HTML and handlers, injected DOM and atomic IndexedDB",
+    "checks": [
+      "All twelve ordinary sections render through assembled production handlers",
+      "Complete pending CSV retains BOM and CRLF",
+      "Actual mapped import retains original",
+      "Exact source-bound prepared request is retained and downloaded",
+      "Complete native journal intake retains original BOM and CRLF before ingest",
+      "Complete native journal bytes survive installed ingest and recovery",
+      "Whole eligible population, explicit verdict/adoption, actual dispatches and complete recurring work survive installation",
+      "Ordinary visible-explanation correction retains exact selected preimage",
+      "Binary source bytes remain exact",
+      "Exact source-document digest helper retains complete draft binding",
+      "Document chronology correction retains prior metadata",
+      "Competing complete saved head detected",
+      "Explicit adoption retains complete competing preimage",
+      "Continued editing and portable actor/session reopen"
+    ],
+    "durationMs": 281925
+  },
+  "merchant": {
+    "schema": "restaurant.installed-host-course/v1",
+    "surface": "Actual Merchant dispatch, exact declared reads and complete production model in V8; filesystem/listener injected",
+    "checks": [
+      "Declared complete products input",
+      "Declared complete people input",
+      "Declared complete places input",
+      "Declared complete profiles input",
+      "Declared complete cases input",
+      "Declared complete requests input",
+      "Declared complete attempts input",
+      "Declared complete selections input",
+      "Declared complete mappings input",
+      "Declared complete adoptions input",
+      "Declared complete evaluations input",
+      "Declared complete corpus_snapshots input",
+      "Declared complete corpus_members input",
+      "Declared complete change_pages input",
+      "Declared complete usage_observations input",
+      "Declared complete price_rules input",
+      "Declared complete effort input",
+      "Declared complete reports input",
+      "Declared complete report_inputs input",
+      "Declared complete source_documents input",
+      "Declared complete report_reviews input",
+      "Declared exact binary original",
+      "restaurant-plan",
+      "review",
+      "Complete incoming carrier and original editor actor retained with separate receiving attribution",
+      "Original exact request recovers after later work",
+      "Stale complete request retained without replacing selected work",
+      "Complete native journal intake retains original and derives exact attempts",
+      "Exact prepared provider request preview",
+      "Prepared provider request retained through same private writer",
+      "Read original prepared provider operation for native runner",
+      "Pinned restaurant observations and all twenty-one contributing versioned raw families"
+    ],
+    "durationMs": 333883,
+    "requests": 28,
+    "editions": 29,
+    "operationTimings": [
+      {
+        "operation": "connect:null:null",
+        "count": 1,
+        "totalMs": 1,
+        "minMs": 1,
+        "maxMs": 1
+      },
+      {
+        "operation": "ingest:null:products",
+        "count": 1,
+        "totalMs": 4672,
+        "minMs": 4672,
+        "maxMs": 4672
+      },
+      {
+        "operation": "ingest:null:people",
+        "count": 1,
+        "totalMs": 5208,
+        "minMs": 5208,
+        "maxMs": 5208
+      },
+      {
+        "operation": "ingest:null:places",
+        "count": 1,
+        "totalMs": 5299,
+        "minMs": 5299,
+        "maxMs": 5299
+      },
+      {
+        "operation": "ingest:null:profiles",
+        "count": 1,
+        "totalMs": 5424,
+        "minMs": 5424,
+        "maxMs": 5424
+      },
+      {
+        "operation": "ingest:null:cases",
+        "count": 1,
+        "totalMs": 5537,
+        "minMs": 5537,
+        "maxMs": 5537
+      },
+      {
+        "operation": "ingest:null:requests",
+        "count": 1,
+        "totalMs": 5753,
+        "minMs": 5753,
+        "maxMs": 5753
+      },
+      {
+        "operation": "ingest:null:attempts",
+        "count": 1,
+        "totalMs": 5871,
+        "minMs": 5871,
+        "maxMs": 5871
+      },
+      {
+        "operation": "ingest:null:selections",
+        "count": 1,
+        "totalMs": 6013,
+        "minMs": 6013,
+        "maxMs": 6013
+      },
+      {
+        "operation": "ingest:null:mappings",
+        "count": 1,
+        "totalMs": 6233,
+        "minMs": 6233,
+        "maxMs": 6233
+      },
+      {
+        "operation": "ingest:null:adoptions",
+        "count": 1,
+        "totalMs": 6284,
+        "minMs": 6284,
+        "maxMs": 6284
+      },
+      {
+        "operation": "ingest:null:evaluations",
+        "count": 1,
+        "totalMs": 6435,
+        "minMs": 6435,
+        "maxMs": 6435
+      },
+      {
+        "operation": "ingest:null:corpus_snapshots",
+        "count": 1,
+        "totalMs": 6572,
+        "minMs": 6572,
+        "maxMs": 6572
+      },
+      {
+        "operation": "ingest:null:corpus_members",
+        "count": 1,
+        "totalMs": 6688,
+        "minMs": 6688,
+        "maxMs": 6688
+      },
+      {
+        "operation": "ingest:null:change_pages",
+        "count": 1,
+        "totalMs": 6830,
+        "minMs": 6830,
+        "maxMs": 6830
+      },
+      {
+        "operation": "ingest:null:usage_observations",
+        "count": 1,
+        "totalMs": 7004,
+        "minMs": 7004,
+        "maxMs": 7004
+      },
+      {
+        "operation": "ingest:null:price_rules",
+        "count": 1,
+        "totalMs": 7102,
+        "minMs": 7102,
+        "maxMs": 7102
+      },
+      {
+        "operation": "ingest:null:effort",
+        "count": 1,
+        "totalMs": 7456,
+        "minMs": 7456,
+        "maxMs": 7456
+      },
+      {
+        "operation": "ingest:null:reports",
+        "count": 1,
+        "totalMs": 7650,
+        "minMs": 7650,
+        "maxMs": 7650
+      },
+      {
+        "operation": "ingest:null:report_inputs",
+        "count": 1,
+        "totalMs": 8103,
+        "minMs": 8103,
+        "maxMs": 8103
+      },
+      {
+        "operation": "ingest:null:source_documents",
+        "count": 1,
+        "totalMs": 8349,
+        "minMs": 8349,
+        "maxMs": 8349
+      },
+      {
+        "operation": "ingest:null:report_reviews",
+        "count": 1,
+        "totalMs": 8513,
+        "minMs": 8513,
+        "maxMs": 8513
+      },
+      {
+        "operation": "ingest:null:document",
+        "count": 1,
+        "totalMs": 8697,
+        "minMs": 8697,
+        "maxMs": 8697
+      },
+      {
+        "operation": "action:null:restaurant-plan",
+        "count": 1,
+        "totalMs": 8468,
+        "minMs": 8468,
+        "maxMs": 8468
+      },
+      {
+        "operation": "action:null:review",
+        "count": 1,
+        "totalMs": 9431,
+        "minMs": 9431,
+        "maxMs": 9431
+      },
+      {
+        "operation": "receive:null:working",
+        "count": 1,
+        "totalMs": 12250,
+        "minMs": 12250,
+        "maxMs": 12250
+      },
+      {
+        "operation": "inspect:originals:null",
+        "count": 2,
+        "totalMs": 3706,
+        "minMs": 1215,
+        "maxMs": 2491
+      },
+      {
+        "operation": "inspect:extracts:null",
+        "count": 2,
+        "totalMs": 2326,
+        "minMs": 1160,
+        "maxMs": 1166
+      },
+      {
+        "operation": "inspect:crosswalks:null",
+        "count": 5,
+        "totalMs": 5875,
+        "minMs": 1165,
+        "maxMs": 1202
+      },
+      {
+        "operation": "inspect:reviews:null",
+        "count": 1,
+        "totalMs": 1164,
+        "minMs": 1164,
+        "maxMs": 1164
+      },
+      {
+        "operation": "inspect:documents:null",
+        "count": 1,
+        "totalMs": 1166,
+        "minMs": 1166,
+        "maxMs": 1166
+      },
+      {
+        "operation": "inspect:documentLinks:null",
+        "count": 1,
+        "totalMs": 1168,
+        "minMs": 1168,
+        "maxMs": 1168
+      },
+      {
+        "operation": "inspect:backups:null",
+        "count": 1,
+        "totalMs": 1190,
+        "minMs": 1190,
+        "maxMs": 1190
+      },
+      {
+        "operation": "inspect:history:null",
+        "count": 1,
+        "totalMs": 1222,
+        "minMs": 1222,
+        "maxMs": 1222
+      },
+      {
+        "operation": "inspect:draft:null",
+        "count": 1,
+        "totalMs": 1212,
+        "minMs": 1212,
+        "maxMs": 1212
+      },
+      {
+        "operation": "inspect:requests:null",
+        "count": 1,
+        "totalMs": 1169,
+        "minMs": 1169,
+        "maxMs": 1169
+      },
+      {
+        "operation": "inspect:availability:null",
+        "count": 1,
+        "totalMs": 1228,
+        "minMs": 1228,
+        "maxMs": 1228
+      },
+      {
+        "operation": "inspect:findings:null",
+        "count": 1,
+        "totalMs": 3603,
+        "minMs": 3603,
+        "maxMs": 3603
+      },
+      {
+        "operation": "inspect:documentComparisons:null",
+        "count": 5,
+        "totalMs": 5892,
+        "minMs": 1172,
+        "maxMs": 1186
+      },
+      {
+        "operation": "inspect:assessment:null",
+        "count": 1,
+        "totalMs": 1236,
+        "minMs": 1236,
+        "maxMs": 1236
+      },
+      {
+        "operation": "inspect:plan:null",
+        "count": 1,
+        "totalMs": 1223,
+        "minMs": 1223,
+        "maxMs": 1223
+      },
+      {
+        "operation": "inspect:summary:null",
+        "count": 1,
+        "totalMs": 1239,
+        "minMs": 1239,
+        "maxMs": 1239
+      },
+      {
+        "operation": "inspect:cases:null",
+        "count": 1,
+        "totalMs": 1212,
+        "minMs": 1212,
+        "maxMs": 1212
+      },
+      {
+        "operation": "inspect:requestJournals:null",
+        "count": 1,
+        "totalMs": 1252,
+        "minMs": 1252,
+        "maxMs": 1252
+      },
+      {
+        "operation": "inspect:selections:null",
+        "count": 1,
+        "totalMs": 1233,
+        "minMs": 1233,
+        "maxMs": 1233
+      },
+      {
+        "operation": "inspect:mappings:null",
+        "count": 1,
+        "totalMs": 1238,
+        "minMs": 1238,
+        "maxMs": 1238
+      },
+      {
+        "operation": "inspect:adoptions:null",
+        "count": 1,
+        "totalMs": 1277,
+        "minMs": 1277,
+        "maxMs": 1277
+      },
+      {
+        "operation": "inspect:evaluations:null",
+        "count": 1,
+        "totalMs": 1260,
+        "minMs": 1260,
+        "maxMs": 1260
+      },
+      {
+        "operation": "inspect:corpusSnapshots:null",
+        "count": 1,
+        "totalMs": 1249,
+        "minMs": 1249,
+        "maxMs": 1249
+      },
+      {
+        "operation": "inspect:changePages:null",
+        "count": 1,
+        "totalMs": 1191,
+        "minMs": 1191,
+        "maxMs": 1191
+      },
+      {
+        "operation": "inspect:changeRuns:null",
+        "count": 1,
+        "totalMs": 1233,
+        "minMs": 1233,
+        "maxMs": 1233
+      },
+      {
+        "operation": "inspect:dispatchEstimates:null",
+        "count": 1,
+        "totalMs": 1317,
+        "minMs": 1317,
+        "maxMs": 1317
+      },
+      {
+        "operation": "inspect:usageAccounts:null",
+        "count": 1,
+        "totalMs": 1196,
+        "minMs": 1196,
+        "maxMs": 1196
+      },
+      {
+        "operation": "inspect:unknownPrices:null",
+        "count": 1,
+        "totalMs": 1172,
+        "minMs": 1172,
+        "maxMs": 1172
+      },
+      {
+        "operation": "inspect:usageObservations:null",
+        "count": 1,
+        "totalMs": 1175,
+        "minMs": 1175,
+        "maxMs": 1175
+      },
+      {
+        "operation": "inspect:actualLedger:null",
+        "count": 1,
+        "totalMs": 1233,
+        "minMs": 1233,
+        "maxMs": 1233
+      },
+      {
+        "operation": "inspect:effort:null",
+        "count": 2,
+        "totalMs": 2399,
+        "minMs": 1181,
+        "maxMs": 1218
+      },
+      {
+        "operation": "inspect:effortGroups:null",
+        "count": 1,
+        "totalMs": 1189,
+        "minMs": 1189,
+        "maxMs": 1189
+      },
+      {
+        "operation": "inspect:reports:null",
+        "count": 1,
+        "totalMs": 1237,
+        "minMs": 1237,
+        "maxMs": 1237
+      },
+      {
+        "operation": "inspect:issues:null",
+        "count": 1,
+        "totalMs": 1171,
+        "minMs": 1171,
+        "maxMs": 1171
+      },
+      {
+        "operation": "inspect:rows:products",
+        "count": 1,
+        "totalMs": 1286,
+        "minMs": 1286,
+        "maxMs": 1286
+      },
+      {
+        "operation": "inspect:rows:people",
+        "count": 1,
+        "totalMs": 1171,
+        "minMs": 1171,
+        "maxMs": 1171
+      },
+      {
+        "operation": "inspect:rows:places",
+        "count": 1,
+        "totalMs": 1175,
+        "minMs": 1175,
+        "maxMs": 1175
+      },
+      {
+        "operation": "inspect:rows:profiles",
+        "count": 1,
+        "totalMs": 1192,
+        "minMs": 1192,
+        "maxMs": 1192
+      },
+      {
+        "operation": "inspect:rows:cases",
+        "count": 1,
+        "totalMs": 1181,
+        "minMs": 1181,
+        "maxMs": 1181
+      },
+      {
+        "operation": "inspect:rows:requests",
+        "count": 1,
+        "totalMs": 1170,
+        "minMs": 1170,
+        "maxMs": 1170
+      },
+      {
+        "operation": "inspect:rows:attempts",
+        "count": 1,
+        "totalMs": 1173,
+        "minMs": 1173,
+        "maxMs": 1173
+      },
+      {
+        "operation": "inspect:rows:selections",
+        "count": 1,
+        "totalMs": 1175,
+        "minMs": 1175,
+        "maxMs": 1175
+      },
+      {
+        "operation": "inspect:rows:mappings",
+        "count": 1,
+        "totalMs": 1243,
+        "minMs": 1243,
+        "maxMs": 1243
+      },
+      {
+        "operation": "inspect:rows:adoptions",
+        "count": 1,
+        "totalMs": 1170,
+        "minMs": 1170,
+        "maxMs": 1170
+      },
+      {
+        "operation": "inspect:rows:evaluations",
+        "count": 1,
+        "totalMs": 1172,
+        "minMs": 1172,
+        "maxMs": 1172
+      },
+      {
+        "operation": "inspect:rows:corpus_snapshots",
+        "count": 1,
+        "totalMs": 1174,
+        "minMs": 1174,
+        "maxMs": 1174
+      },
+      {
+        "operation": "inspect:rows:corpus_members",
+        "count": 1,
+        "totalMs": 1181,
+        "minMs": 1181,
+        "maxMs": 1181
+      },
+      {
+        "operation": "inspect:rows:change_pages",
+        "count": 1,
+        "totalMs": 1176,
+        "minMs": 1176,
+        "maxMs": 1176
+      },
+      {
+        "operation": "inspect:rows:usage_observations",
+        "count": 1,
+        "totalMs": 1174,
+        "minMs": 1174,
+        "maxMs": 1174
+      },
+      {
+        "operation": "inspect:rows:price_rules",
+        "count": 1,
+        "totalMs": 1241,
+        "minMs": 1241,
+        "maxMs": 1241
+      },
+      {
+        "operation": "inspect:rows:effort",
+        "count": 1,
+        "totalMs": 1176,
+        "minMs": 1176,
+        "maxMs": 1176
+      },
+      {
+        "operation": "inspect:rows:reports",
+        "count": 1,
+        "totalMs": 1177,
+        "minMs": 1177,
+        "maxMs": 1177
+      },
+      {
+        "operation": "inspect:rows:report_inputs",
+        "count": 1,
+        "totalMs": 1169,
+        "minMs": 1169,
+        "maxMs": 1169
+      },
+      {
+        "operation": "inspect:rows:source_documents",
+        "count": 1,
+        "totalMs": 1207,
+        "minMs": 1207,
+        "maxMs": 1207
+      },
+      {
+        "operation": "inspect:rows:report_reviews",
+        "count": 1,
+        "totalMs": 1256,
+        "minMs": 1256,
+        "maxMs": 1256
+      },
+      {
+        "operation": "inspect:journal:null",
+        "count": 1,
+        "totalMs": 1170,
+        "minMs": 1170,
+        "maxMs": 1170
+      },
+      {
+        "operation": "inspect:journalEvents:null",
+        "count": 1,
+        "totalMs": 1171,
+        "minMs": 1171,
+        "maxMs": 1171
+      },
+      {
+        "operation": "inspect:journalAttempts:null",
+        "count": 1,
+        "totalMs": 1173,
+        "minMs": 1173,
+        "maxMs": 1173
+      },
+      {
+        "operation": "inspect:caseEvaluations:null",
+        "count": 1,
+        "totalMs": 1169,
+        "minMs": 1169,
+        "maxMs": 1169
+      },
+      {
+        "operation": "inspect:corpusMembers:null",
+        "count": 1,
+        "totalMs": 1227,
+        "minMs": 1227,
+        "maxMs": 1227
+      },
+      {
+        "operation": "inspect:changedMappings:null",
+        "count": 1,
+        "totalMs": 1171,
+        "minMs": 1171,
+        "maxMs": 1171
+      },
+      {
+        "operation": "inspect:pageChanges:null",
+        "count": 1,
+        "totalMs": 1168,
+        "minMs": 1168,
+        "maxMs": 1168
+      },
+      {
+        "operation": "inspect:runChanges:null",
+        "count": 1,
+        "totalMs": 1209,
+        "minMs": 1209,
+        "maxMs": 1209
+      },
+      {
+        "operation": "inspect:reportInputs:null",
+        "count": 1,
+        "totalMs": 1247,
+        "minMs": 1247,
+        "maxMs": 1247
+      },
+      {
+        "operation": "inspect:reportReviews:null",
+        "count": 1,
+        "totalMs": 1179,
+        "minMs": 1179,
+        "maxMs": 1179
+      },
+      {
+        "operation": "ingest:null:journal",
+        "count": 1,
+        "totalMs": 12366,
+        "minMs": 12366,
+        "maxMs": 12366
+      },
+      {
+        "operation": "preview:null:prepare-request",
+        "count": 1,
+        "totalMs": 2790,
+        "minMs": 2790,
+        "maxMs": 2790
+      },
+      {
+        "operation": "action:null:prepare-request",
+        "count": 1,
+        "totalMs": 8809,
+        "minMs": 8809,
+        "maxMs": 8809
+      },
+      {
+        "operation": "inspect:preparedRequests:null",
+        "count": 1,
+        "totalMs": 2644,
+        "minMs": 2644,
+        "maxMs": 2644
+      }
+    ]
+  }
+}

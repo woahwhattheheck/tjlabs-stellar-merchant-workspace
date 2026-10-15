@@ -1,0 +1,40 @@
+{
+  "schema": "compass.native-source-check/v1",
+  "runtime": "Connected V8; Node modules substituted only to load source and execute pure CLI parsing",
+  "native_filesystem_execution": "Assigned to existing equipped receiver using native/verify-journal.cjs",
+  "syntax_files": [
+    "native/compass-journal.cjs",
+    "native/compass-call.cjs",
+    "native/verify-journal.cjs"
+  ],
+  "checks": [
+    {
+      "name": "Help parses",
+      "passed": true
+    },
+    {
+      "name": "Exact run options",
+      "passed": true
+    },
+    {
+      "name": "Selection requires explicit profile identity",
+      "passed": true
+    },
+    {
+      "name": "Invalid declared CLI input rejected 3",
+      "passed": true
+    },
+    {
+      "name": "Invalid declared CLI input rejected 4",
+      "passed": true
+    },
+    {
+      "name": "Invalid declared CLI input rejected 5",
+      "passed": true
+    },
+    {
+      "name": "Invalid declared CLI input rejected 6",
+      "passed": true
+    }
+  ]
+}

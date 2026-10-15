@@ -1,0 +1,13 @@
+{
+  "rawms": 2109,
+  "firstms": 2052,
+  "hitms": 1,
+  "changedms": 2053,
+  "completeInput": 440320,
+  "output": 194670,
+  "checks": [
+    "Exact successful source analysis equals uncached result",
+    "Returned mutation cannot alter cache",
+    "Complete input change recomputes"
+  ]
+}
