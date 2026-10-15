@@ -17,7 +17,7 @@ export function buildWaterOperationsStudyExport(files,state,records=[],editions=
  for(const [p,t]of Object.entries(files))add('source/'+p,t);
  add('working/Water_Operations_Study_Working.json',state.carrier);add('working/Managed_Edition.json',state);add('working/Water_Operations_Study_Original_Session.json',w);add('working/Water_Operations_Study_Editable.html',buildDesk(files,{carrier:state.carrier}));
  const original=(prefix,items)=>{for(const e of items)add(prefix+e.path,e.content===undefined?Uint8Array.from(e.bytes):e.content);};
- original('current/',M.exports(w));add('working/emergency.json',{schema:'water-operations.source-emergency/v1',session:w,pending_forms:s.emergency.drafts,pending_imports:s.emergency.imports,reason:s.emergency.reason});add('working/retained-emergencies.json',s.retainedEmergency);
+ original('current/',M.exports(w));add('working/emergency.json',{schema:'water-operations.emergency-recovery/v1',session:w,pending_forms:s.emergency.drafts,pending_imports:s.emergency.imports,reason:s.emergency.reason});add('working/retained-emergencies.json',s.retainedEmergency);
  const studies=new Map(),historyRoots=new Set(),addHistory=(session,h)=>{if(historyRoots.has(h.study_ref))return;const study=M.historyStudy(session,h);historyRoots.add(h.study_ref);studies.set(core.hash(study),study);};studies.set(core.hash(w.study),w.study);for(const h of w.history)addHistory(w,h);
  for(const b of w.backups){const branch=M.branchSession(w,b);add('working/prior/'+b.hash+'.json',branch);studies.set(core.hash(branch.study),branch.study);for(const h of branch.history)addHistory(branch,h);}
  for(const [hash,study]of studies)original('editions/'+hash+'/',core.exports(study));

@@ -1,0 +1,52 @@
+{
+  "schema": "water-operations.installed-receiving/v1",
+  "domainSource": {
+    "edition": "whole-ui-native-review-20261015",
+    "bytes": 3417888,
+    "sha256": "74b10ca3a3ff6a278cf692d2e05a376b525a618c4019c0418fd1a9b1fe2c0a88"
+  },
+  "focusedDomain": [
+    {
+      "case": "waterLaterCancellationPeer",
+      "passed": true
+    },
+    {
+      "case": "waterPartialAssetPeriodPeer",
+      "passed": true
+    },
+    {
+      "case": "waterReportTaskPeer",
+      "passed": true
+    }
+  ],
+  "sourceBytes": {
+    "checks": [
+      {
+        "name": "original original reconstructed from bounded two-byte ranges",
+        "passed": true,
+        "bytes": 31
+      },
+      {
+        "name": "document original reconstructed from bounded two-byte ranges",
+        "passed": true,
+        "bytes": 7
+      },
+      {
+        "name": "Historical extract rows retain current selected successor",
+        "passed": true
+      }
+    ]
+  },
+  "assembledBrowser": {
+    "status": "running",
+    "surface": "Production assembled HTML and handlers with supplied DOM and atomic IndexedDB adapters"
+  },
+  "merchant": {
+    "status": "running",
+    "surface": "Production Merchant dispatch and complete model with supplied filesystem and transport"
+  },
+  "native": {
+    "command": "node native/receive-installed.mjs",
+    "surface": "Actual OS, private filesystem and listener receiving through existing equipped operation"
+  }
+}

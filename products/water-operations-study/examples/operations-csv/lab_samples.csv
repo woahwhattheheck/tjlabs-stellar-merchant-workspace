@@ -1,0 +1,7 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,sample_id,order_record_id,system_id,location_id,purpose,collected_at,collector_id,container_id
+S-A1,S-A1,1,,active,2026-10-15T08:30:00Z,2026-10-15T08:30:00Z,document-3481b293df215b178c6be29dc8e3f874,Authored water handover course / S-A1,S-A1,ORDER-A,SYS-A,LOC-SYS-A,drinking-water,2026-10-15T08:30:00Z,COLLECTOR,BOTTLE-S-A1
+S-A2,S-A2,1,,active,2026-10-15T08:32:00Z,2026-10-15T08:32:00Z,document-20d0f722ab885265a2cc51197409f62d,Authored water handover course / S-A2,S-A2,ORDER-A,SYS-A,LOC-SYS-A,drinking-water,2026-10-15T08:32:00Z,COLLECTOR,BOTTLE-S-A2
+S-A3,S-A3,1,,active,2026-10-15T08:34:00Z,2026-10-15T08:34:00Z,document-674fb36f534c1faa4bcc308fa72b7fd7,Authored water handover course / S-A3,S-A3,ORDER-A,SYS-A,LOC-SYS-A,drinking-water,2026-10-15T08:34:00Z,COLLECTOR,BOTTLE-S-A3
+S-A4,S-A4,1,,active,2026-10-15T09:20:00Z,2026-10-15T09:20:00Z,document-a6e1c6c2face4da2ffffe00bfa8c846c,Authored water handover course / S-A4,S-A4,ORDER-A,SYS-A,LOC-SYS-A,drinking-water,2026-10-15T09:20:00Z,COLLECTOR,BOTTLE-S-A4
+S-B1,S-B1,1,,active,2026-10-15T08:36:00Z,2026-10-15T08:36:00Z,document-c22bb22ac71bcecd1102c564650758c8,Authored water handover course / S-B1,S-B1,ORDER-B,SYS-B,LOC-SYS-B,drinking-water,2026-10-15T08:36:00Z,COLLECTOR,BOTTLE-S-B1
+S-C1,S-C1,1,,active,2026-10-15T09:00:00Z,2026-10-15T09:00:00Z,document-49c2e9bdbf6dec20e6c24fbfbf05612b,Authored water handover course / S-C1,S-C1,ORDER-C,SYS-C,LOC-SYS-C,drinking-water,2026-10-15T09:00:00Z,COLLECTOR,BOTTLE-S-C1

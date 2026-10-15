@@ -1,0 +1,33 @@
+{
+  "execution": "Actual generated offline HTML handlers with injected DOM and IndexedDB services; no rendered browser claim",
+  "checks": [
+    "Generated operator starts with an empty water-operations study",
+    "Actual study handler renders empty state",
+    "Actual intake handler renders empty state",
+    "Actual selection handler renders empty state",
+    "Actual records handler renders empty state",
+    "Actual crosswalks handler renders empty state",
+    "Actual documents handler renders empty state",
+    "Actual plan handler renders empty state",
+    "Actual laboratory handler renders empty state",
+    "Actual operations handler renders empty state",
+    "Actual compare handler renders empty state",
+    "Actual reviews handler renders empty state",
+    "Actual recovery handler renders empty state",
+    "Actual authored workflow opens all nine scheduled occurrences",
+    "Ordinary plan includes exact laboratory source counts",
+    "Actual record editor opens the complete supplied field reading",
+    "Starting another record retains the full preceding draft",
+    "Actual schedule helper binds the exact supplied approved schedule",
+    "Actual laboratory review helper binds the exact result row",
+    "Actual report helper binds complete source list, population and roles",
+    "Actual handover helper binds complete responsibility packet",
+    "Actual laboratory view explains current and historical amendments",
+    "Actual operations view retains distinct reporting delivery events",
+    "Stale actual review is rejected after study change",
+    "Complete session, maintained source and study exports execute",
+    "Cold instance reopens every unfinished form",
+    "Cross-tab save preserves competing branch",
+    "Explicit branch adoption resumes normal complete saving"
+  ]
+}

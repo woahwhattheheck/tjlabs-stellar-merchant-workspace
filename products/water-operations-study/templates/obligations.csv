@@ -1,0 +1,1 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,obligation_id,system_id,location_id,schedule_record_id,schedule_sha256,activity,window_start,window_end,due_at,required_record_kind,parameter,unit,cancelled_at,cancellation_authorised_by,cancellation_reason

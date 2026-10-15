@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,organisation_id,name,kind,valid_from,valid_to
+ORG,ORG,1,,active,2026-10-01T00:00:00.000Z,2026-10-01T00:00:00.000Z,document-7888f139ddd1c770778025614b6ffcac,Authored complete water operations workflow / ORG,ORG,Authored regional water organisation,fictional operator,2026-10-01T00:00:00.000Z,2026-11-01T00:00:00.000Z
