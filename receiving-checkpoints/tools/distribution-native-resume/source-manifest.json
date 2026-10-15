@@ -1,0 +1,26 @@
+{
+  "schema": "commons.source-manifest/v1",
+  "operation": "A74F-DISTRIBUTION-COMPLETE-NATIVE-RESUME-20261015",
+  "files": [
+    {
+      "path": "resume-core.cjs",
+      "bytes": 4129,
+      "sha256": "5d1b5af10cf6c1719956b1e18e05e17039df84bdac4092fb96e792b6b3e3d47d"
+    },
+    {
+      "path": "resume-complete-course.cjs",
+      "bytes": 5544,
+      "sha256": "832354e5ca6a45da29bd153a7fc76e847c9c6398e230860fc072137c37d6655b"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3797,
+      "sha256": "acde8db0e738719462f01c91616c2f3d59b61c3ddc0f1e5522d674c8ad606724"
+    },
+    {
+      "path": "focused-result.json",
+      "bytes": 2045,
+      "sha256": "fb0b175afadea73b0dab5bbb236f8070abca6faa7ac05bd9b090e88af55f7d5b"
+    }
+  ]
+}

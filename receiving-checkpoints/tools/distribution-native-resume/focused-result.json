@@ -1,0 +1,61 @@
+{
+  "schema": "distribution.complete-course-recovery-check/v1",
+  "sourceVersion": "9b2453fe855ce3ad9fa8d057a1649265809ce7ee",
+  "inputEnvelope": {
+    "bytes": 22577506,
+    "sha256": "a184947dff348a5cff15b3a97e05c6644ede45ee4525535c635a2cbd63f48e14"
+  },
+  "originalCompletePrefix": {
+    "phase": "imports-24",
+    "requests": 24,
+    "editions": 25,
+    "nodes": 13129,
+    "checkpoint": {
+      "bytes": 7860014,
+      "sha256": "5705dfa94dd22f40296ca6aa9fc78d7a05148b26b913d9c8be59aa48f0417ddd"
+    },
+    "stateSha256": "0ce2816537a43e898163863ab6cee2743cb21b4a5dd00e1f64012678d9fcc640"
+  },
+  "exactOriginalGraphNodesAndRoot": true,
+  "restore": {
+    "schema": "distribution.native-course-checkpoint/v2",
+    "sourceVersion": "9b2453fe855ce3ad9fa8d057a1649265809ce7ee",
+    "originalPrefixSource": "710bfa6703031892daed620b1fd880aa6c124f81",
+    "inputBytes": 22577506,
+    "inputSha256": "a184947dff348a5cff15b3a97e05c6644ede45ee4525535c635a2cbd63f48e14",
+    "phase": "imports-24",
+    "checkpoint": {
+      "path": "imports-24.5705dfa94dd22f40296ca6aa9fc78d7a05148b26b913d9c8be59aa48f0417ddd.checkpoint.json",
+      "bytes": 7860014,
+      "sha256": "5705dfa94dd22f40296ca6aa9fc78d7a05148b26b913d9c8be59aa48f0417ddd"
+    },
+    "requests": 24,
+    "editions": 25,
+    "checks": 24,
+    "sequence": 24,
+    "stateSha256": "0ce2816537a43e898163863ab6cee2743cb21b4a5dd00e1f64012678d9fcc640"
+  },
+  "rejected": [
+    {
+      "case": "different envelope source",
+      "message": "Original complete course sources differ"
+    },
+    {
+      "case": "checkpoint receipt byte identity",
+      "message": "Saved checkpoint receipt differs from its exact input and complete state"
+    },
+    {
+      "case": "checkpoint source binding",
+      "message": "Saved checkpoint receipt differs from its exact input and complete state"
+    },
+    {
+      "case": "forward graph reference",
+      "message": "Forward node"
+    },
+    {
+      "case": "cycle during compaction",
+      "message": "Checkpoint contains a cycle"
+    }
+  ],
+  "ms": 5998
+}
