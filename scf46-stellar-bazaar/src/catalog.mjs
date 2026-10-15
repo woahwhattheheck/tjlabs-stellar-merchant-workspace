@@ -6,6 +6,7 @@ import { validateCatalogEntryProjection, sanitizeResourceSearchMetadata } from '
 import { sanitizeBazaarPricing, parseAtomicBudget, describeCatalogPricing } from './pricing.mjs';
 
 const ALLOWED = new Set(['type','payTo','network','scheme','asset','extensions']);
+const DISCOVERY_RESOURCE_FIELDS = ['description','mimeType','serviceName','tags','iconUrl'];
 
 export function isValidRouteTemplate(template) {
   // Reuse SF28 multi-decode path validation at the actual catalog boundary.
@@ -61,16 +62,44 @@ const asInteger = (v, fallback, max, min = 0) => {
   return Number(v);
 };
 
+function discoveryTimestamp(value) {
+  if (typeof value !== 'string') throw new TypeError('Trusted catalog observation time required');
+  const instant = new Date(value);
+  if (!Number.isFinite(instant.getTime())) throw new TypeError('Invalid catalog observation time');
+  return instant.toISOString();
+}
+
+function discoveryRow(entry, lastUpdated) {
+  const input = entry.extensions?.bazaar?.info?.input;
+  if (!input || !['http','mcp'].includes(input.type))
+    throw new TypeError('Valid HTTP or MCP Bazaar info required');
+  const row = {
+    resource: entry.resource.url,
+    type: input.type,
+    x402Version: 2,
+    accepts: structuredClone(entry.accepts),
+    lastUpdated: discoveryTimestamp(lastUpdated),
+  };
+  for (const field of DISCOVERY_RESOURCE_FIELDS)
+    if (Object.hasOwn(entry.resource, field)) row[field] = structuredClone(entry.resource[field]);
+  if (entry.extensions !== undefined) row.extensions = structuredClone(entry.extensions);
+  return row;
+}
+
 export class BazaarCatalog {
   #entries = new Map(); #version = 0;
+  #lastUpdated = new Map();
   #queries = new CatalogQueryIndex(this.#entries);
   // Call only from a trusted post-verification facilitator hook AFTER checking the
   // settlement, seller/recipient binding, and JSON Schema Draft 2020-12. NEVER
   // route this method directly to an unauthenticated HTTP client or payment payload.
-  insertValidated(entry) {
+  insertValidated(entry, { lastUpdated } = {}) {
     const { id, entry: sanitized } = validateCatalogEntry(entry);
     const previous = this.#entries.get(id);
+    const timestamp = lastUpdated === undefined ? this.#lastUpdated.get(id) : discoveryTimestamp(lastUpdated);
     this.#entries.set(id, sanitized); this.#version++;
+    if (timestamp === undefined) this.#lastUpdated.delete(id);
+    else this.#lastUpdated.set(id, timestamp);
     this.#queries.changed(id, previous, sanitized);
     return id;
   }
@@ -79,13 +108,14 @@ export class BazaarCatalog {
     if (typeof id !== 'string') throw new TypeError('Catalog key required');
     const previous = this.#entries.get(id);
     const removed = this.#entries.delete(id);
-    if (removed) { this.#version++; this.#queries.changed(id, previous, undefined); }
+    if (removed) { this.#lastUpdated.delete(id); this.#version++; this.#queries.changed(id, previous, undefined); }
     return removed;
   }
   /** Stage an isolated transaction while preserving the cursor generation. */
   clone() {
     const copy = new BazaarCatalog();
     copy.#entries = new Map([...this.#entries].map(([key, value]) => [key, structuredClone(value)]));
+    copy.#lastUpdated = new Map(this.#lastUpdated);
     copy.#version = this.#version;
     copy.#queries = new CatalogQueryIndex(copy.#entries);
     return copy;
@@ -116,6 +146,23 @@ export class BazaarCatalog {
     const page = ranked.slice(at,at+limit).map(row => structuredClone(row));
     const next = at+limit < ranked.length ? encode({v:this.#version,h:digest,at:at+limit}) : null;
     return { resources:page,partialResults:next !== null,pagination:{limit:page.length,cursor:next} };
+  }
+  /** Official x402 Bazaar list envelope. Internal list() remains unchanged. */
+  listDiscovery(params = new URLSearchParams()) {
+    const page = this.list(params);
+    return { x402Version: 2,
+      items: page.resources.map(entry => discoveryRow(entry,
+        this.#lastUpdated.get(validateCatalogEntryProjection(entry).id))),
+      pagination: page.pagination };
+  }
+  /** Official x402 Bazaar search envelope. Internal search() remains unchanged. */
+  searchDiscovery(params = new URLSearchParams()) {
+    const page = this.search(params);
+    return { x402Version: 2,
+      resources: page.resources.map(entry => discoveryRow(entry,
+        this.#lastUpdated.get(validateCatalogEntryProjection(entry).id))),
+      partialResults: page.partialResults,
+      pagination: page.pagination };
   }
   /**
    * Opt-in buyer-facing discovery. Never silently drop metered routes whose
@@ -150,13 +197,16 @@ export class BazaarCatalog {
 }
 
 export function createDiscoveryServer(catalog) {
+  if (!catalog || typeof catalog.listDiscovery !== 'function' ||
+      typeof catalog.searchDiscovery !== 'function')
+    throw new TypeError('Official Bazaar discovery catalog required');
   // Read-only HTTP API. No endpoint permits client-injected catalog records.
   return async function handler(req,res) {
     try {
       const u = new URL(req.url,'http://localhost');
       if (req.method !== 'GET') {res.writeHead(405,{'content-type':'application/json'});res.end(JSON.stringify({error:'METHOD_NOT_ALLOWED',reason:'GET only'}));return;}
-      const data = u.pathname === '/discovery/resources' ? catalog.list(u.searchParams)
-        : u.pathname === '/discovery/search' ? catalog.search(u.searchParams)
+      const data = u.pathname === '/discovery/resources' ? catalog.listDiscovery(u.searchParams)
+        : u.pathname === '/discovery/search' ? catalog.searchDiscovery(u.searchParams)
         : u.pathname === '/discovery/pricing' ? catalog.pricing(u.searchParams) : null;
       if (!data) {res.writeHead(404,{'content-type':'application/json'});res.end(JSON.stringify({error:'NOT_FOUND',reason:'Unknown endpoint'}));return;}
       res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});

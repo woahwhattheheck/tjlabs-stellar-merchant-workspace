@@ -68,6 +68,8 @@ export class PaymentAutoCatalog {
 
   list(params = new URLSearchParams()) { return this.#catalog.list(params); }
   search(params = new URLSearchParams()) { return this.#catalog.search(params); }
+  listDiscovery(params = new URLSearchParams()) { return this.#catalog.listDiscovery(params); }
+  searchDiscovery(params = new URLSearchParams()) { return this.#catalog.searchDiscovery(params); }
   get size() { return this.#catalog.size; }
   get version() { return this.#catalog.version; }
 }

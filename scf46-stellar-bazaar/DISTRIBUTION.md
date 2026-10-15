@@ -111,9 +111,24 @@ Use network and asset values from the original listing. Payment filters apply
 together to an offered option, so terms from different options do not combine
 into a new offer.
 
-The HTTP search route is `GET /discovery/search`. Both interfaces return
-`resources` and `pagination.cursor`. Retain the original query and every filter
-when following that cursor. A changed catalog generation requires a fresh search.
+The HTTP search route is `GET /discovery/search`. Its pagination object returns
+the opaque `cursor`. Retain the original query and every filter when following
+that cursor. A changed catalog generation requires a fresh search.
+
+The public HTTP routes use the official x402 v2 Bazaar wire envelopes. Resource
+listing returns `{x402Version: 2, items, pagination}`; search returns
+`{x402Version: 2, resources, partialResults, pagination}`. Each wire row flattens
+the canonical resource URL into `resource`, declares `type` and `x402Version`,
+and carries `lastUpdated` from the accepted source observation. The server never
+uses request time or a client-supplied clock. Internal `BazaarCatalog.list()`,
+`search()` and `pricing()` retain their original nested catalog rows for Atlas,
+ranking and operator consumers.
+
+Run the focused offline compatibility probe with:
+
+```sh
+node scf46-stellar-bazaar/DISCOVERY_WIRE_CONTRACT.mjs
+```
 
 Atlas uses those same resources for selection and buyer preparation. Reopen the
 saved original selection to continue a customer request after later catalog

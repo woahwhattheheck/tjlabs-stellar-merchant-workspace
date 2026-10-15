@@ -102,6 +102,8 @@ export async function openNativeSettlementCatalog(input) {
           },
           list:params => journal.list(nativeParams(params)),
           search:params => journal.search(nativeParams(params)),
+          listDiscovery:params => journal.listDiscovery(nativeParams(params)),
+          searchDiscovery:params => journal.searchDiscovery(nativeParams(params)),
           get size() {return journal.size;},
           get version() {return journal.version;},
         };
@@ -133,6 +135,8 @@ export async function openNativeSettlementCatalog(input) {
     process:record,
     list:params => journal.list(nativeParams(params)),
     search:params => journal.search(nativeParams(params)),
+    listDiscovery:params => journal.listDiscovery(nativeParams(params)),
+    searchDiscovery:params => journal.searchDiscovery(nativeParams(params)),
     status,
     close:() => closing ??= (async () => {
       await queue.close();
