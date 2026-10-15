@@ -1,0 +1,30 @@
+{
+  "schema": "installed-complete-course-checkpoint/v1",
+  "sourceHead": "93ae8ec38279cf0286d00bdeb5b276cc88e43ac5",
+  "phase": "imports-24",
+  "checks": 24,
+  "requests": 24,
+  "editions": 25,
+  "bytes": 1965503,
+  "sha256": "54ce6a56e8a487d4adb9df6af0dacc0ce9991aa0930282510ff9e6170f5bd2a4",
+  "expandedBytes": 43293977,
+  "expandedSha256": "8874a7746ad676f934276b574b02920d8e6ce3b6fe2d0a8c4e646d1231d35b51",
+  "parts": [
+    {
+      "path": "receiving-checkpoints/fleet-availability-study/imports-24/part-000.jsonpart",
+      "blob": "33ceaa2be34ee240f9de4926fe975650d2e9e820"
+    },
+    {
+      "path": "receiving-checkpoints/fleet-availability-study/imports-24/part-001.jsonpart",
+      "blob": "283ae9ef09da6c57d5f12c836e67f7ebe1f4f792"
+    },
+    {
+      "path": "receiving-checkpoints/fleet-availability-study/imports-24/part-002.jsonpart",
+      "blob": "2f3993cb799e6b7173f04b62a5d4a4823d8df645"
+    },
+    {
+      "path": "receiving-checkpoints/fleet-availability-study/imports-24/part-003.jsonpart",
+      "blob": "d16b977322634e6e7fd60737c56a7802d0061f6b"
+    }
+  ]
+}
