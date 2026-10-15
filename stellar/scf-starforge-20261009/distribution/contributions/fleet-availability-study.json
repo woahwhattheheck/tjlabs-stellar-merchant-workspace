@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "fleet-availability-study",
+  "description": "Complete physical-fleet availability study with actual workshop and parts history, named safety releases, observed duties and substitutions, exact costs and whole-population recurring effort.",
+  "components": [
+    "products/fleet-availability-study"
+  ],
+  "commands": {
+    "fleet-availability-study-workspace": "products/fleet-availability-study/installed-cli.mjs",
+    "fleet-availability-study-managed": "products/fleet-availability-study/managed.mjs"
+  },
+  "commandDescriptions": {
+    "fleet-availability-study-workspace": "Create, receive and export complete Fleet Availability Study sessions",
+    "fleet-availability-study-managed": "Open the complete fleet availability study through Applications"
+  },
+  "exports": {
+    "./products/fleet-availability-study": "./source/products/fleet-availability-study/runtime.mjs",
+    "./products/fleet-availability-study/client": "./source/products/fleet-availability-study/host/client.mjs",
+    "./products/fleet-availability-study/server": "./source/products/fleet-availability-study/host/server.mjs"
+  },
+  "applicationProviders": {
+    "fleet-availability-study": "products/fleet-availability-study/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "fleet-availability-study": "products/fleet-availability-study/merchant-provider.mjs"
+  }
+}

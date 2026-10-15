@@ -1,0 +1,5 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,vehicle_id,operator_id,physical_key,registration,vehicle_class,seats,valid_from,valid_to
+V1,V1,1,,active,2026-09-01T00:00:00Z,2026-09-01T00:00:00Z,document-93d99a24e1459888cb2afe401adb9d16,authored/vehicles/V1,V1,OP,FICTIONAL-CHASSIS-1,COURSE-1,single_deck,45,2026-09-01T00:00:00Z,
+V2,V2,1,,active,2026-09-01T00:00:00Z,2026-09-01T00:00:00Z,document-9ca81e24b7fc158cd5fbf0cae65f0517,authored/vehicles/V2,V2,OP,FICTIONAL-CHASSIS-2,COURSE-2,single_deck,45,2026-09-01T00:00:00Z,
+V3,V3,1,,active,2026-09-01T00:00:00Z,2026-09-01T00:00:00Z,document-ff98cfb10611be3a056b0ac1c3b14710,authored/vehicles/V3,V3,OP,FICTIONAL-CHASSIS-3,COURSE-3,single_deck,45,2026-09-01T00:00:00Z,
+V4,V4,1,,active,2026-09-01T00:00:00Z,2026-09-01T00:00:00Z,document-2bf4feba3b9c9f7470aacde8b19a00dc,authored/vehicles/V4,V4,OP,FICTIONAL-CHASSIS-4,COURSE-4,single_deck,45,2026-09-01T00:00:00Z,

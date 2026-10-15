@@ -1,0 +1,4 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,supplier_event_id,supplier_job_record_id,event_at,state,actor_id,supplier_ref
+SUPPLY-V1-ACCEPT,SUPPLY-V1-ACCEPT,1,,active,2026-10-01T07:10:00Z,2026-10-01T07:10:00Z,document-ad38411377334ce917acdc17df91662d,authored/supplier_events/SUPPLY-V1-ACCEPT,SUPPLY-V1-ACCEPT,SUPPLY-V1,2026-10-01T07:10:00Z,accepted,SUPPLIER,AUTHORED-SUPPLIER-ACK
+SUPPLY-V1-WAIT,SUPPLY-V1-WAIT,1,,active,2026-10-01T07:20:00Z,2026-10-01T07:20:00Z,document-289d4d83a2fcf25ed03f14a0a114897c,authored/supplier_events/SUPPLY-V1-WAIT,SUPPLY-V1-WAIT,SUPPLY-V1,2026-10-01T07:20:00Z,waiting,SUPPLIER,AUTHORED-SUPPLIER-QUEUE
+SUPPLY-V1-DONE,SUPPLY-V1-DONE,1,,active,2026-10-01T09:45:00Z,2026-10-01T09:45:00Z,document-9a62fe512c55820954bc56f50d4bda70,authored/supplier_events/SUPPLY-V1-DONE,SUPPLY-V1-DONE,SUPPLY-V1,2026-10-01T09:45:00Z,completed,SUPPLIER,AUTHORED-SUPPLIER-COMPLETE

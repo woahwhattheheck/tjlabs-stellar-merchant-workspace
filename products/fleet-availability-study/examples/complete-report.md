@@ -1,0 +1,267 @@
+# Four physical buses: parts, external service, release, substitute duty and unresolved readiness
+
+Data class: authored_course
+
+Source scope: Fictional original depot records for four physical vehicles; complete consecutive depot population and all declared source families.
+
+Returned scope: Fictional receiving projection of the same exact source records, documents and historical identities.
+
+Selected edition: ff70d0806cf8b809a32272e263b383784571405bc9eeeb17a29db4fa8a729aa5
+
+Comparison: selected_fields_match; review: unreviewed
+
+| Kind | Original rows | Returned rows |
+|---|---:|---:|
+| operators | 1 | 1 |
+| depots | 1 | 1 |
+| vehicles | 4 | 4 |
+| people | 7 | 7 |
+| suppliers | 1 | 1 |
+| authorities | 9 | 9 |
+| fleet_assignments | 4 | 4 |
+| availability_events | 7 | 7 |
+| faults | 3 | 3 |
+| fault_events | 3 | 3 |
+| work_orders | 2 | 2 |
+| work_events | 6 | 6 |
+| part_requests | 2 | 2 |
+| part_receipts | 1 | 1 |
+| part_installations | 1 | 1 |
+| supplier_jobs | 1 | 1 |
+| supplier_events | 3 | 3 |
+| safety_cases | 2 | 2 |
+| safety_events | 3 | 3 |
+| release_cases | 1 | 1 |
+| release_requirements | 5 | 5 |
+| release_inputs | 5 | 5 |
+| release_reviews | 2 | 2 |
+| duty_requirements | 2 | 2 |
+| duty_assignments | 3 | 3 |
+| duty_events | 7 | 7 |
+| cost_entries | 3 | 3 |
+| population_members | 4 | 4 |
+| effort | 64 | 64 |
+
+## Differences
+
+Every selected canonical field matches through the explicit identity maps.
+
+## Retained photo and document bytes
+
+operators: OP → OP: exact_bytes_match; original a18996e27af5ef65f82c08995a719ca8cf739ba3a1f8cbedf8c76f356d816436; returned a18996e27af5ef65f82c08995a719ca8cf739ba3a1f8cbedf8c76f356d816436
+depots: DEPOT → DEPOT: exact_bytes_match; original bbeb004e9cab10ac36918b4b17f050548337b39e47e64b041d056946336fa67c; returned bbeb004e9cab10ac36918b4b17f050548337b39e47e64b041d056946336fa67c
+vehicles: V1 → V1: exact_bytes_match; original ca223411cad4ef8439c11dc0cb2c4b8262087811499e342eed61e78ac83ca414; returned ca223411cad4ef8439c11dc0cb2c4b8262087811499e342eed61e78ac83ca414
+vehicles: V2 → V2: exact_bytes_match; original 5f3937577589591093a4dbc8f60d1ab60eca6bf565c93662d6f10d2712789d8a; returned 5f3937577589591093a4dbc8f60d1ab60eca6bf565c93662d6f10d2712789d8a
+vehicles: V3 → V3: exact_bytes_match; original c69fad0f707fa7f5ed36680eb38d56f92f5187ce502dac1d3b688d1ea288cfe1; returned c69fad0f707fa7f5ed36680eb38d56f92f5187ce502dac1d3b688d1ea288cfe1
+vehicles: V4 → V4: exact_bytes_match; original 30b2a91daf60351b57afe3425d79a3b0433dde52adcd1d1ba903147d9dc09266; returned 30b2a91daf60351b57afe3425d79a3b0433dde52adcd1d1ba903147d9dc09266
+people: MANAGER → MANAGER: exact_bytes_match; original aa7654fa14300ab35a52d3d3a735d114fb8fb16c5be4f2b13ba03a4234be1221; returned aa7654fa14300ab35a52d3d3a735d114fb8fb16c5be4f2b13ba03a4234be1221
+people: OPS → OPS: exact_bytes_match; original 24562104ae66e2816dee73287235005c18425c43803ce7a26361e788d8e5fe92; returned 24562104ae66e2816dee73287235005c18425c43803ce7a26361e788d8e5fe92
+people: TECH → TECH: exact_bytes_match; original 0d01b4ab3105b2925b0f8ac5a8fa84fe49492e96647c7dab023290f80ca4f5ad; returned 0d01b4ab3105b2925b0f8ac5a8fa84fe49492e96647c7dab023290f80ca4f5ad
+people: PARTS → PARTS: exact_bytes_match; original fdbc706fee0006ea7b65f0b58ffa3d1d7c0495b4cc21411192efd6b4ce7190e8; returned fdbc706fee0006ea7b65f0b58ffa3d1d7c0495b4cc21411192efd6b4ce7190e8
+people: SUPPLIER → SUPPLIER: exact_bytes_match; original eb9ef3149a109a9fa3eab05616c7cbd78cb48f8306b879080be121dbc8ae4961; returned eb9ef3149a109a9fa3eab05616c7cbd78cb48f8306b879080be121dbc8ae4961
+people: SAFETY → SAFETY: exact_bytes_match; original db4599659d67bd226690080c725e5cb7fd60d2727fe1d295a2e3476c2d545181; returned db4599659d67bd226690080c725e5cb7fd60d2727fe1d295a2e3476c2d545181
+people: FINANCE → FINANCE: exact_bytes_match; original e4d0749c63dcfc8fce010a098303569d136aa8c9a285d2c9404cf9828e46e0d6; returned e4d0749c63dcfc8fce010a098303569d136aa8c9a285d2c9404cf9828e46e0d6
+suppliers: OUTSIDE → OUTSIDE: exact_bytes_match; original b4725c5409bea70d25e1fbb916d1e1969fc3a13a1614688c357158a0190f58b7; returned b4725c5409bea70d25e1fbb916d1e1969fc3a13a1614688c357158a0190f58b7
+authorities: AUTH-OPS-operations → AUTH-OPS-operations: exact_bytes_match; original 82703481db247fc79f866af8e257660b742a7828c1237fc21aa5abe5e1137d06; returned 82703481db247fc79f866af8e257660b742a7828c1237fc21aa5abe5e1137d06
+authorities: AUTH-OPS-safety → AUTH-OPS-safety: exact_bytes_match; original a7775704099e88d2ac911b8ea103a14ceff02ac9a2204cfb04d1366cfc6627b0; returned a7775704099e88d2ac911b8ea103a14ceff02ac9a2204cfb04d1366cfc6627b0
+authorities: AUTH-OPS-fault-report → AUTH-OPS-fault-report: exact_bytes_match; original 657803035e5247608023300d4136c2ae1decbd6ea12173dacb5ed98c5b3f58e1; returned 657803035e5247608023300d4136c2ae1decbd6ea12173dacb5ed98c5b3f58e1
+authorities: AUTH-TECH-maintenance → AUTH-TECH-maintenance: exact_bytes_match; original ddcfeabc983bfcd8eca822d30877d22781f2e9060c5009defa9b72e8fab1dc93; returned ddcfeabc983bfcd8eca822d30877d22781f2e9060c5009defa9b72e8fab1dc93
+authorities: AUTH-TECH-fault-report → AUTH-TECH-fault-report: exact_bytes_match; original 1c38f7e4752e4029fa25c01f89b80ae71abb1bbbfb51af0b14c827b232e2473c; returned 1c38f7e4752e4029fa25c01f89b80ae71abb1bbbfb51af0b14c827b232e2473c
+authorities: AUTH-PARTS-parts → AUTH-PARTS-parts: exact_bytes_match; original d9f995bf37685fb66b5da36d18b0b15d8ec1e9224ac3841f2bfd5879fe6cddff; returned d9f995bf37685fb66b5da36d18b0b15d8ec1e9224ac3841f2bfd5879fe6cddff
+authorities: AUTH-SUPPLIER-supplier-coordination → AUTH-SUPPLIER-supplier-coordination: exact_bytes_match; original eeb1fb851e1ed21924b595bdff0523d8547b3aed3bd3b64564822017d93df015; returned eeb1fb851e1ed21924b595bdff0523d8547b3aed3bd3b64564822017d93df015
+authorities: AUTH-SAFETY-safety → AUTH-SAFETY-safety: exact_bytes_match; original e2c6296ca46d1c72c8e1d1f4bd61e0cb1a5044244a52d9f495041e4aaa72bc1e; returned e2c6296ca46d1c72c8e1d1f4bd61e0cb1a5044244a52d9f495041e4aaa72bc1e
+authorities: AUTH-FINANCE-finance → AUTH-FINANCE-finance: exact_bytes_match; original 66f82a9a057b6a9aa91e09e79c9c5280a579541f4a8de145698635e36e32853d; returned 66f82a9a057b6a9aa91e09e79c9c5280a579541f4a8de145698635e36e32853d
+fleet_assignments: MEMBERSHIP-V1 → MEMBERSHIP-V1: exact_bytes_match; original efef9ac7fc94f6b181f44b193f18315188a049b8256a716a8f11c64ea54edfec; returned efef9ac7fc94f6b181f44b193f18315188a049b8256a716a8f11c64ea54edfec
+fleet_assignments: MEMBERSHIP-V2 → MEMBERSHIP-V2: exact_bytes_match; original 36108f6372ff504222647ef1c63d7fa0e6499cc570f3a1abe8cda425d9973092; returned 36108f6372ff504222647ef1c63d7fa0e6499cc570f3a1abe8cda425d9973092
+fleet_assignments: MEMBERSHIP-V3 → MEMBERSHIP-V3: exact_bytes_match; original 65212534768c1d10504df94237d44fc1bf5b400c537c7265dd324a049f644361; returned 65212534768c1d10504df94237d44fc1bf5b400c537c7265dd324a049f644361
+fleet_assignments: MEMBERSHIP-V4 → MEMBERSHIP-V4: exact_bytes_match; original 2a89443db51feb085297935716ee2c3bd43ada35d9379b4193ab6f1304a89c9b; returned 2a89443db51feb085297935716ee2c3bd43ada35d9379b4193ab6f1304a89c9b
+availability_events: OPENING-V1 → OPENING-V1: exact_bytes_match; original d377c3510f907a26f411efbb21e93064df44be9cb1481634b08b5c0dca8414be; returned d377c3510f907a26f411efbb21e93064df44be9cb1481634b08b5c0dca8414be
+availability_events: OPENING-V2 → OPENING-V2: exact_bytes_match; original 1de3baf852c4786dbaea5b2b5cb894783dfcb73aad0ad976e5f2c6bc5b8dafa5; returned 1de3baf852c4786dbaea5b2b5cb894783dfcb73aad0ad976e5f2c6bc5b8dafa5
+availability_events: OPENING-V3 → OPENING-V3: exact_bytes_match; original 4852f068f334d33354ddf5146eb2281530f0027161f65916f871273fb29b08f5; returned 4852f068f334d33354ddf5146eb2281530f0027161f65916f871273fb29b08f5
+availability_events: OPENING-V4 → OPENING-V4: exact_bytes_match; original 1ceb2baf6b1632eaa5c84cbb661acad8bffede6fc9e3d9da8a1b71780acd9930; returned 1ceb2baf6b1632eaa5c84cbb661acad8bffede6fc9e3d9da8a1b71780acd9930
+availability_events: DOWN-V1 → DOWN-V1: exact_bytes_match; original c37daec85a8f7d43601acf0efb2b74e0a0850cd3d7d5ca509c6214eb35115db0; returned c37daec85a8f7d43601acf0efb2b74e0a0850cd3d7d5ca509c6214eb35115db0
+availability_events: READY-V1 → READY-V1: exact_bytes_match; original 830854baaacf9a4a4460513cf7dc2f2ad0af60b4e19a0199eec911d19c179ca0; returned 830854baaacf9a4a4460513cf7dc2f2ad0af60b4e19a0199eec911d19c179ca0
+availability_events: DOWN-V2 → DOWN-V2: exact_bytes_match; original 036c041aeabc786a2603b92d01daa739ae8628cbbcb4f42af2a28773d80e1188; returned 036c041aeabc786a2603b92d01daa739ae8628cbbcb4f42af2a28773d80e1188
+faults: FAULT-V1 → FAULT-V1: exact_bytes_match; original 0ceeb3cd505400dfd60840f2d760a907fd5e49ea44f642e8927c4c84d3488144; returned 0ceeb3cd505400dfd60840f2d760a907fd5e49ea44f642e8927c4c84d3488144
+faults: FAULT-V2 → FAULT-V2: exact_bytes_match; original 4a37301eeb3e0097bbd376bf90683c789737fd4ffe34a43bcd09769cb95a7d84; returned 4a37301eeb3e0097bbd376bf90683c789737fd4ffe34a43bcd09769cb95a7d84
+faults: FAULT-V2-LATER → FAULT-V2-LATER: exact_bytes_match; original ed360258fa60f889d01dd0ef1cc9df3b67925087a8c473ef61a7382ab52b9f72; returned ed360258fa60f889d01dd0ef1cc9df3b67925087a8c473ef61a7382ab52b9f72
+fault_events: FAULT-V1-OPEN → FAULT-V1-OPEN: exact_bytes_match; original 2fe32f8021c782470bec55d0f086644c4f732563e527015b7533ef8f4ed5f1c2; returned 2fe32f8021c782470bec55d0f086644c4f732563e527015b7533ef8f4ed5f1c2
+fault_events: FAULT-V1-DONE → FAULT-V1-DONE: exact_bytes_match; original 10a958f124e4bb2daf14ae6416b90951de1f24df8845a700e9f99763e337b794; returned 10a958f124e4bb2daf14ae6416b90951de1f24df8845a700e9f99763e337b794
+fault_events: FAULT-V2-OPEN → FAULT-V2-OPEN: exact_bytes_match; original 74ba22a8c133b5c2f5e6dc9d72600ba55dfcb50c77938de2a413c2063b318faf; returned 74ba22a8c133b5c2f5e6dc9d72600ba55dfcb50c77938de2a413c2063b318faf
+work_orders: WORK-V1 → WORK-V1: exact_bytes_match; original f8a303318416ca1de0302e9791a4bce5c10b12868f6b629b0c4d596f60c9d89b; returned f8a303318416ca1de0302e9791a4bce5c10b12868f6b629b0c4d596f60c9d89b
+work_orders: WORK-V2 → WORK-V2: exact_bytes_match; original ed3d4f3a3bba27abb3d3fa5c967c03f46b41ccd1b6587e0db8f8903824557a8e; returned ed3d4f3a3bba27abb3d3fa5c967c03f46b41ccd1b6587e0db8f8903824557a8e
+work_events: WORK-V1-START → WORK-V1-START: exact_bytes_match; original 4232f386bd8c974b8ed2d1dd4a9a391f36ae969fa5084f5f2976264d10d28f2b; returned 4232f386bd8c974b8ed2d1dd4a9a391f36ae969fa5084f5f2976264d10d28f2b
+work_events: WORK-V1-WAIT → WORK-V1-WAIT: exact_bytes_match; original af4a2ab811e3e72379f25883ef0b71ed12c9c695353974637e6b27605dc371b7; returned af4a2ab811e3e72379f25883ef0b71ed12c9c695353974637e6b27605dc371b7
+work_events: WORK-V1-RESUME → WORK-V1-RESUME: exact_bytes_match; original 43d7469104257643c5cc289c77cf9d3606a8b24c8c10f79cc04355b476d345ac; returned 43d7469104257643c5cc289c77cf9d3606a8b24c8c10f79cc04355b476d345ac
+work_events: WORK-V1-DONE → WORK-V1-DONE: exact_bytes_match; original d3d0b884ccad6da0afbb357ebfb5d61d6fa30796a80e05d8d87d946d814a33fe; returned d3d0b884ccad6da0afbb357ebfb5d61d6fa30796a80e05d8d87d946d814a33fe
+work_events: WORK-V2-START → WORK-V2-START: exact_bytes_match; original c45f98db1c9f74c98a9338b357562db6f122a97236b13e2fe82ff6a803c72983; returned c45f98db1c9f74c98a9338b357562db6f122a97236b13e2fe82ff6a803c72983
+work_events: WORK-V2-WAIT → WORK-V2-WAIT: exact_bytes_match; original b6af1a7fa56bfd8824a007ef46de2008221e9855efa6f58d5cb342b27bcb3d6b; returned b6af1a7fa56bfd8824a007ef46de2008221e9855efa6f58d5cb342b27bcb3d6b
+part_requests: PART-V1 → PART-V1: exact_bytes_match; original b32e29e5bd8a5eaead9ad531612d96d119378746ed4fce3eb675f7bba1d5e2d8; returned b32e29e5bd8a5eaead9ad531612d96d119378746ed4fce3eb675f7bba1d5e2d8
+part_requests: PART-V2 → PART-V2: exact_bytes_match; original 9c6adafed7b8e4d8318c2980f531fa2bb65464bfd40059d2f9cafa75911c9150; returned 9c6adafed7b8e4d8318c2980f531fa2bb65464bfd40059d2f9cafa75911c9150
+part_receipts: RECEIPT-V1 → RECEIPT-V1: exact_bytes_match; original 6636b3a078866760332c4ce7cad8f2d2e911a70451c277b2f940b04f48150fc9; returned 6636b3a078866760332c4ce7cad8f2d2e911a70451c277b2f940b04f48150fc9
+part_installations: INSTALL-V1 → INSTALL-V1: exact_bytes_match; original 28d79758d067a0ca193ea98c039f50d74417f1e554a43535d03f14506f7a2ec2; returned 28d79758d067a0ca193ea98c039f50d74417f1e554a43535d03f14506f7a2ec2
+supplier_jobs: SUPPLY-V1 → SUPPLY-V1: exact_bytes_match; original 5f8abeefbfd88df362e8483e1537c908cf166502ca2bf06533c7c75f01d165d8; returned 5f8abeefbfd88df362e8483e1537c908cf166502ca2bf06533c7c75f01d165d8
+supplier_events: SUPPLY-V1-ACCEPT → SUPPLY-V1-ACCEPT: exact_bytes_match; original 1ed117a577628d9ee95ed8f99bbbd3d91e8246650d5e2d4f560bb14a403249f3; returned 1ed117a577628d9ee95ed8f99bbbd3d91e8246650d5e2d4f560bb14a403249f3
+supplier_events: SUPPLY-V1-WAIT → SUPPLY-V1-WAIT: exact_bytes_match; original 700835c6c055bb50325db1e772bcaed29f6d35c2dfc0d2d2a7c62e0ca100d94f; returned 700835c6c055bb50325db1e772bcaed29f6d35c2dfc0d2d2a7c62e0ca100d94f
+supplier_events: SUPPLY-V1-DONE → SUPPLY-V1-DONE: exact_bytes_match; original 6b1d003d2290e24067c7384d55418e7653f592414409f6e8bc26f9e771f3a38b; returned 6b1d003d2290e24067c7384d55418e7653f592414409f6e8bc26f9e771f3a38b
+safety_cases: SAFETY-V1 → SAFETY-V1: exact_bytes_match; original 2399a2f79675bbd2387192c6c8bd9b260ae5c1564424a4942d00edf74d31d12c; returned 2399a2f79675bbd2387192c6c8bd9b260ae5c1564424a4942d00edf74d31d12c
+safety_cases: SAFETY-V2 → SAFETY-V2: exact_bytes_match; original c14053e95f792fdb54d45f683380e69b2d58d1239ac455293ffb83fe6f6a9c3d; returned c14053e95f792fdb54d45f683380e69b2d58d1239ac455293ffb83fe6f6a9c3d
+safety_events: SAFETY-V1-HOLD → SAFETY-V1-HOLD: exact_bytes_match; original d9e364397f03d17791ee748aa2ea5d7d3fc6fc0c7f5b7ebb036d65c65da0d427; returned d9e364397f03d17791ee748aa2ea5d7d3fc6fc0c7f5b7ebb036d65c65da0d427
+safety_events: SAFETY-V1-CLEAR → SAFETY-V1-CLEAR: exact_bytes_match; original 88e8983a42c5039f26f537e1944fcb6c2c5fc677444fa6a8bac391bdfa6e136f; returned 88e8983a42c5039f26f537e1944fcb6c2c5fc677444fa6a8bac391bdfa6e136f
+safety_events: SAFETY-V2-HOLD → SAFETY-V2-HOLD: exact_bytes_match; original c2d665ac27268a8c1778d9f144920abcc1feb224432255b5ae4bda8eca0d2d45; returned c2d665ac27268a8c1778d9f144920abcc1feb224432255b5ae4bda8eca0d2d45
+release_cases: RELEASE-V1 → RELEASE-V1: exact_bytes_match; original ee747fba2e322e627e131007953b79011b182a4e836f15ec8c2fe984a8d0938b; returned ee747fba2e322e627e131007953b79011b182a4e836f15ec8c2fe984a8d0938b
+release_requirements: REQUIREMENT-V1-1 → REQUIREMENT-V1-1: exact_bytes_match; original 5616ae3afdcc8d97bfddd0c0c2154c3308f1caf8c1264e1aecb1700260a1b6e3; returned 5616ae3afdcc8d97bfddd0c0c2154c3308f1caf8c1264e1aecb1700260a1b6e3
+release_requirements: REQUIREMENT-V1-2 → REQUIREMENT-V1-2: exact_bytes_match; original 876cf523b4dd3455d716d67921ee340c0c4632509f32ae452ada8a6c95bf9e6f; returned 876cf523b4dd3455d716d67921ee340c0c4632509f32ae452ada8a6c95bf9e6f
+release_requirements: REQUIREMENT-V1-3 → REQUIREMENT-V1-3: exact_bytes_match; original d63acf740dcd046e6dc7404d69a72072527c7fedbb1998710498d9de396f2af8; returned d63acf740dcd046e6dc7404d69a72072527c7fedbb1998710498d9de396f2af8
+release_requirements: REQUIREMENT-V1-4 → REQUIREMENT-V1-4: exact_bytes_match; original f024fcaf3acefc3e4329e421de525131a27a5cf0e5837332d1129ef40cd7c15a; returned f024fcaf3acefc3e4329e421de525131a27a5cf0e5837332d1129ef40cd7c15a
+release_requirements: REQUIREMENT-V1-5 → REQUIREMENT-V1-5: exact_bytes_match; original 25864534778b884345a6f85e4b2982c6b445abe60b66bafcb36854ad5ae39dad; returned 25864534778b884345a6f85e4b2982c6b445abe60b66bafcb36854ad5ae39dad
+release_inputs: INPUT-V1-1 → INPUT-V1-1: exact_bytes_match; original c007c3c42fb541ab37d97722db2d5e17ff10899e633afbe0df949ace955946f4; returned c007c3c42fb541ab37d97722db2d5e17ff10899e633afbe0df949ace955946f4
+release_inputs: INPUT-V1-2 → INPUT-V1-2: exact_bytes_match; original e524b07028706c67b476859944472a7e1897a4534742f76314bb8aaa5242ed12; returned e524b07028706c67b476859944472a7e1897a4534742f76314bb8aaa5242ed12
+release_inputs: INPUT-V1-3 → INPUT-V1-3: exact_bytes_match; original 7598836bd9ce2f03a2da07524322ff14750abaf5aeefb447c7033f9b44ad8507; returned 7598836bd9ce2f03a2da07524322ff14750abaf5aeefb447c7033f9b44ad8507
+release_inputs: INPUT-V1-4 → INPUT-V1-4: exact_bytes_match; original 55b083c819f9b958af853d683ffb04d78d5820a5019e9c4fafe04a0ce69f323e; returned 55b083c819f9b958af853d683ffb04d78d5820a5019e9c4fafe04a0ce69f323e
+release_inputs: INPUT-V1-5 → INPUT-V1-5: exact_bytes_match; original 50f2f6fb3a9d82a22cf65deb6024ddd14ecdb57f8a5c89bd0dc01b5055f1a2a1; returned 50f2f6fb3a9d82a22cf65deb6024ddd14ecdb57f8a5c89bd0dc01b5055f1a2a1
+release_reviews: REVIEW-V1-SAFETY → REVIEW-V1-SAFETY: exact_bytes_match; original d6214d14cb8ada6dfa48a50cba905007004b3d5ada1ff3b86da0c374fd3d93da; returned d6214d14cb8ada6dfa48a50cba905007004b3d5ada1ff3b86da0c374fd3d93da
+release_reviews: REVIEW-V1-OPERATIONS → REVIEW-V1-OPERATIONS: exact_bytes_match; original a959079a807666fb9a853e268546be3cd81c479ef8bd40dfe2d8409ccf6700dc; returned a959079a807666fb9a853e268546be3cd81c479ef8bd40dfe2d8409ccf6700dc
+duty_requirements: DUTY-MORNING → DUTY-MORNING: exact_bytes_match; original c25d63ed39b17fe51eef229b64ebc8b6f9403fdaeeecf7c3d80eb5431b48b333; returned c25d63ed39b17fe51eef229b64ebc8b6f9403fdaeeecf7c3d80eb5431b48b333
+duty_requirements: DUTY-AFTER-REPAIR → DUTY-AFTER-REPAIR: exact_bytes_match; original 81d80974d6cc26de3f8e9a215f8bb724b2cbc5b4677c0beb27d209f073c3d0fc; returned 81d80974d6cc26de3f8e9a215f8bb724b2cbc5b4677c0beb27d209f073c3d0fc
+duty_assignments: ASSIGN-V2 → ASSIGN-V2: exact_bytes_match; original f9ec58fbb431f3084fdd59e1613168050f5befb702b915fa27373c65b6230011; returned f9ec58fbb431f3084fdd59e1613168050f5befb702b915fa27373c65b6230011
+duty_assignments: ASSIGN-V3 → ASSIGN-V3: exact_bytes_match; original 3180e46d4e44760e06ba263b5027e44a822607f17c0e761950e0eeb0a1ff43f9; returned 3180e46d4e44760e06ba263b5027e44a822607f17c0e761950e0eeb0a1ff43f9
+duty_assignments: ASSIGN-V1 → ASSIGN-V1: exact_bytes_match; original 9f57404b64cc1aec561734d67168ce488a746fcebf98101e8a91a1bdd86b49a2; returned 9f57404b64cc1aec561734d67168ce488a746fcebf98101e8a91a1bdd86b49a2
+duty_events: CANCEL-V2 → CANCEL-V2: exact_bytes_match; original da4e329682754d05be8292c2af66a9ca777ffa93a45c909d6f869422c5745f4f; returned da4e329682754d05be8292c2af66a9ca777ffa93a45c909d6f869422c5745f4f
+duty_events: ASSIGN-V3-departed → ASSIGN-V3-departed: exact_bytes_match; original 6618090733285c6e38a9f7a13184a8f0fc074ebbdb92dd6bacf9914bd3d0daf5; returned 6618090733285c6e38a9f7a13184a8f0fc074ebbdb92dd6bacf9914bd3d0daf5
+duty_events: ASSIGN-V3-completed → ASSIGN-V3-completed: exact_bytes_match; original fda56552cb6d85c59571cd5a6633d5ea23bf7b6b071f24b2aef71e49a66fc5a1; returned fda56552cb6d85c59571cd5a6633d5ea23bf7b6b071f24b2aef71e49a66fc5a1
+duty_events: ASSIGN-V3-returned → ASSIGN-V3-returned: exact_bytes_match; original 70a37eb7956327074ac6dce0e1191bc64f9f7690f7fe7c1eba271b71ad8b58d9; returned 70a37eb7956327074ac6dce0e1191bc64f9f7690f7fe7c1eba271b71ad8b58d9
+duty_events: ASSIGN-V1-departed → ASSIGN-V1-departed: exact_bytes_match; original 9ed6d91b0c2a2535b06fde409a2ab3ad789f63b8f27172c8923768ff904944de; returned 9ed6d91b0c2a2535b06fde409a2ab3ad789f63b8f27172c8923768ff904944de
+duty_events: ASSIGN-V1-completed → ASSIGN-V1-completed: exact_bytes_match; original abfd8b2371f6894b2e32d15a9cfb3828d1c5f26198789605578d64bfa169476c; returned abfd8b2371f6894b2e32d15a9cfb3828d1c5f26198789605578d64bfa169476c
+duty_events: ASSIGN-V1-returned → ASSIGN-V1-returned: exact_bytes_match; original 3e63bd74f8736fe5639ca335fcf408380d1e898c929e5da70ca6c7b0c9bcd35d; returned 3e63bd74f8736fe5639ca335fcf408380d1e898c929e5da70ca6c7b0c9bcd35d
+cost_entries: COST-SUPPLIER → COST-SUPPLIER: exact_bytes_match; original 97205821ac3a9eb5e2cae3b260bad1fc3ffd4e45debd8463e8f4c2cf1176f534; returned 97205821ac3a9eb5e2cae3b260bad1fc3ffd4e45debd8463e8f4c2cf1176f534
+cost_entries: CREDIT-SUPPLIER → CREDIT-SUPPLIER: exact_bytes_match; original 67e430d02f0a994f1be52dabe7b942f7e595e194e9af0cf6ed95bf3730b8c928; returned 67e430d02f0a994f1be52dabe7b942f7e595e194e9af0cf6ed95bf3730b8c928
+cost_entries: COST-PART → COST-PART: exact_bytes_match; original 8c870048d2ff102056c37660857822486f8e7108fc1ccd0471bb26ec7feba74e; returned 8c870048d2ff102056c37660857822486f8e7108fc1ccd0471bb26ec7feba74e
+population_members: MEMBER-V1 → MEMBER-V1: exact_bytes_match; original 0490eaba805c0050c40b6ac65fede8bc06328e903827d933c8a4caf582fcb09a; returned 0490eaba805c0050c40b6ac65fede8bc06328e903827d933c8a4caf582fcb09a
+population_members: MEMBER-V2 → MEMBER-V2: exact_bytes_match; original c1067890cd12c55286c626f9dfe492bb50ed39582d55cec905c78759e125dde1; returned c1067890cd12c55286c626f9dfe492bb50ed39582d55cec905c78759e125dde1
+population_members: MEMBER-V3 → MEMBER-V3: exact_bytes_match; original 84ef21c2a0c2526d51ca07ffd31583318284cc95d1c7aa307ed3dd83612aebd1; returned 84ef21c2a0c2526d51ca07ffd31583318284cc95d1c7aa307ed3dd83612aebd1
+population_members: MEMBER-V4 → MEMBER-V4: exact_bytes_match; original 63648dd79017f2543ff7f0075fe50de744a855f417648abf1385ffcb1522b836; returned 63648dd79017f2543ff7f0075fe50de744a855f417648abf1385ffcb1522b836
+effort: EFFORT-1 → EFFORT-1: exact_bytes_match; original 729527f2445c55dd9be0f8e22285914ac7007df57b23a707f57317475a47ba56; returned 729527f2445c55dd9be0f8e22285914ac7007df57b23a707f57317475a47ba56
+effort: EFFORT-2 → EFFORT-2: exact_bytes_match; original 4e820f6ebc1344d26f1363bc987a1645cb2e2a9f7edc6f83843692f8bc331aa3; returned 4e820f6ebc1344d26f1363bc987a1645cb2e2a9f7edc6f83843692f8bc331aa3
+effort: EFFORT-3 → EFFORT-3: exact_bytes_match; original cd4bd719010a7a5270ef640af70fc6c58baca7420ef3303008749ac7f24e4a84; returned cd4bd719010a7a5270ef640af70fc6c58baca7420ef3303008749ac7f24e4a84
+effort: EFFORT-4 → EFFORT-4: exact_bytes_match; original 693e3ff169c7d9a151a9f324b00dd7da1e9c4f171b6e77b473798c3e1404cea0; returned 693e3ff169c7d9a151a9f324b00dd7da1e9c4f171b6e77b473798c3e1404cea0
+effort: EFFORT-5 → EFFORT-5: exact_bytes_match; original 65ca395d4ac145be099c2f773b339a6aa91f2d8c33f71dbbebb903be311ee506; returned 65ca395d4ac145be099c2f773b339a6aa91f2d8c33f71dbbebb903be311ee506
+effort: EFFORT-6 → EFFORT-6: exact_bytes_match; original 1d03aee8454c6df35a479b710b946ec3990744008de8c0a4370b7c3a07d0c47b; returned 1d03aee8454c6df35a479b710b946ec3990744008de8c0a4370b7c3a07d0c47b
+effort: EFFORT-7 → EFFORT-7: exact_bytes_match; original 05255a1270278879261eb18bd5ca0df7f8ddce530982ceb0dc3023d4fa2e156a; returned 05255a1270278879261eb18bd5ca0df7f8ddce530982ceb0dc3023d4fa2e156a
+effort: EFFORT-8 → EFFORT-8: exact_bytes_match; original eb95cf9fe3076bbfde04a4a40db9c720bde31c29cf69170ef86b9d4a6e0bea96; returned eb95cf9fe3076bbfde04a4a40db9c720bde31c29cf69170ef86b9d4a6e0bea96
+effort: EFFORT-9 → EFFORT-9: exact_bytes_match; original beb29ef6d95aec5407925b68ba073ee29b050152139d23426d443da3a62ae173; returned beb29ef6d95aec5407925b68ba073ee29b050152139d23426d443da3a62ae173
+effort: EFFORT-10 → EFFORT-10: exact_bytes_match; original 7b8647f872311e1363f2210317b36acfcb0b06b54d9a42cb285b1c2518e99c2e; returned 7b8647f872311e1363f2210317b36acfcb0b06b54d9a42cb285b1c2518e99c2e
+effort: EFFORT-11 → EFFORT-11: exact_bytes_match; original add4c2e772d9c2db43bdf38327157a0edb9cffdf8aa64ed496032679a62ee4fc; returned add4c2e772d9c2db43bdf38327157a0edb9cffdf8aa64ed496032679a62ee4fc
+effort: EFFORT-12 → EFFORT-12: exact_bytes_match; original 708bfd17c7a0f7c26d3e82eafb2c390a39e4d1e120d6d57d7d0d3cdf911a21b3; returned 708bfd17c7a0f7c26d3e82eafb2c390a39e4d1e120d6d57d7d0d3cdf911a21b3
+effort: EFFORT-13 → EFFORT-13: exact_bytes_match; original 9d8e652202df03f169ce0af50f500bad85ef4e9bff9be5d6beb9025e37578fd9; returned 9d8e652202df03f169ce0af50f500bad85ef4e9bff9be5d6beb9025e37578fd9
+effort: EFFORT-14 → EFFORT-14: exact_bytes_match; original bfd57768c68417b8dc99404898cd37df29a4f4c88b7c3058a6ce3d1f9e24729c; returned bfd57768c68417b8dc99404898cd37df29a4f4c88b7c3058a6ce3d1f9e24729c
+effort: EFFORT-15 → EFFORT-15: exact_bytes_match; original 62be586dab873faedc39184aaee126ebfd50a6c3e257354979a7ae1614620178; returned 62be586dab873faedc39184aaee126ebfd50a6c3e257354979a7ae1614620178
+effort: EFFORT-16 → EFFORT-16: exact_bytes_match; original 9ebb0a836d941ad67c76de443a6ff9c02322625c5b14febe4bf101876c3990ca; returned 9ebb0a836d941ad67c76de443a6ff9c02322625c5b14febe4bf101876c3990ca
+effort: EFFORT-17 → EFFORT-17: exact_bytes_match; original 5d16fb895abfc4936eb3c29127f55035d15f464f3c1821d5c0aa04ac96f5c904; returned 5d16fb895abfc4936eb3c29127f55035d15f464f3c1821d5c0aa04ac96f5c904
+effort: EFFORT-18 → EFFORT-18: exact_bytes_match; original f73d7c45f294655022aea2b7c3b108eba22f3536d043b58042fcf47a3bd46f06; returned f73d7c45f294655022aea2b7c3b108eba22f3536d043b58042fcf47a3bd46f06
+effort: EFFORT-19 → EFFORT-19: exact_bytes_match; original d88a9c292d93fd9a8917c8c6cc5213c83032934cfee4d6e8f06e8ccb77a97c2d; returned d88a9c292d93fd9a8917c8c6cc5213c83032934cfee4d6e8f06e8ccb77a97c2d
+effort: EFFORT-20 → EFFORT-20: exact_bytes_match; original 0a7e1d4e2d464f167a91ac57128bd24be0df093efbf082af2f6c01c47ffaca24; returned 0a7e1d4e2d464f167a91ac57128bd24be0df093efbf082af2f6c01c47ffaca24
+effort: EFFORT-21 → EFFORT-21: exact_bytes_match; original 2cb2431298655a82010f835c42e21af4b2b5d059d2803192811f29674f7755d0; returned 2cb2431298655a82010f835c42e21af4b2b5d059d2803192811f29674f7755d0
+effort: EFFORT-22 → EFFORT-22: exact_bytes_match; original bd5fd9f5fea07279b9c8b384c26b15b58430a2ac64b237c4ff6e4c9ceab8116b; returned bd5fd9f5fea07279b9c8b384c26b15b58430a2ac64b237c4ff6e4c9ceab8116b
+effort: EFFORT-23 → EFFORT-23: exact_bytes_match; original 339ba9ff874687631ac9320d261b59cd78532ee8fa69ad8c232ca8b175dd9761; returned 339ba9ff874687631ac9320d261b59cd78532ee8fa69ad8c232ca8b175dd9761
+effort: EFFORT-24 → EFFORT-24: exact_bytes_match; original 1e312c69effba1ab20aa7ee9c74e8a14a618a6829c462d23a04a3fd5825bbb23; returned 1e312c69effba1ab20aa7ee9c74e8a14a618a6829c462d23a04a3fd5825bbb23
+effort: EFFORT-25 → EFFORT-25: exact_bytes_match; original 87e84fac4e5799e5667ed84483571165c8a9e4bc7fd4007746daeeb560e87ccc; returned 87e84fac4e5799e5667ed84483571165c8a9e4bc7fd4007746daeeb560e87ccc
+effort: EFFORT-26 → EFFORT-26: exact_bytes_match; original d52aa19d826f61ba3512963e82186f480c020c49cd2c50d28ded59b28d15febb; returned d52aa19d826f61ba3512963e82186f480c020c49cd2c50d28ded59b28d15febb
+effort: EFFORT-27 → EFFORT-27: exact_bytes_match; original 8141666c0a2f0717eca996e314647ce38ccc1273b84018856930168d41c905a8; returned 8141666c0a2f0717eca996e314647ce38ccc1273b84018856930168d41c905a8
+effort: EFFORT-28 → EFFORT-28: exact_bytes_match; original 3156ce8a3476ef8f4dcef02e28faef608ec4867cdd8b97700c6735535ef9297d; returned 3156ce8a3476ef8f4dcef02e28faef608ec4867cdd8b97700c6735535ef9297d
+effort: EFFORT-29 → EFFORT-29: exact_bytes_match; original e4cd4e8884bfb39f0a5333aca223590507df5617aa90d5b02b8121a0928d5bf6; returned e4cd4e8884bfb39f0a5333aca223590507df5617aa90d5b02b8121a0928d5bf6
+effort: EFFORT-30 → EFFORT-30: exact_bytes_match; original 246b96fec4ffd00ae63dd30127394ef9451404fa145c842328321c1c3976c474; returned 246b96fec4ffd00ae63dd30127394ef9451404fa145c842328321c1c3976c474
+effort: EFFORT-31 → EFFORT-31: exact_bytes_match; original 97a44c98e8232b9ba3c083bf67101aeff558a54c21a4892dbf40527d0f05f434; returned 97a44c98e8232b9ba3c083bf67101aeff558a54c21a4892dbf40527d0f05f434
+effort: EFFORT-32 → EFFORT-32: exact_bytes_match; original 702fec431f77f7622c83a79606500976e008ad8ec19fc454ef723755733574c0; returned 702fec431f77f7622c83a79606500976e008ad8ec19fc454ef723755733574c0
+effort: EFFORT-33 → EFFORT-33: exact_bytes_match; original e12bffc61db37cea143e4558ff32e0d0e5938ed3b35289c7dfe0c65d06c4eb2c; returned e12bffc61db37cea143e4558ff32e0d0e5938ed3b35289c7dfe0c65d06c4eb2c
+effort: EFFORT-34 → EFFORT-34: exact_bytes_match; original 9ca4783957b1b900265b970f739b83c5883dc841a360a07bebc48592eb11e9b1; returned 9ca4783957b1b900265b970f739b83c5883dc841a360a07bebc48592eb11e9b1
+effort: EFFORT-35 → EFFORT-35: exact_bytes_match; original 462d09702e4328726c4eaf33314def643626fb2e06a0d5ccb48f6d2f492d20b1; returned 462d09702e4328726c4eaf33314def643626fb2e06a0d5ccb48f6d2f492d20b1
+effort: EFFORT-36 → EFFORT-36: exact_bytes_match; original ac028459bc4a7565210ac24214380692b3104fb59cede4f0386a10cba7d9361d; returned ac028459bc4a7565210ac24214380692b3104fb59cede4f0386a10cba7d9361d
+effort: EFFORT-37 → EFFORT-37: exact_bytes_match; original eb51e4a8ae92f2431ab33c0cf044bd9351760d2e4daf85bf94ebf90e79f5961f; returned eb51e4a8ae92f2431ab33c0cf044bd9351760d2e4daf85bf94ebf90e79f5961f
+effort: EFFORT-38 → EFFORT-38: exact_bytes_match; original c31a923cd6dae33d3b3e426361d84e8bce420b6deb58132b2dcaf72593becc1c; returned c31a923cd6dae33d3b3e426361d84e8bce420b6deb58132b2dcaf72593becc1c
+effort: EFFORT-39 → EFFORT-39: exact_bytes_match; original 664118c5222ee9b361a638d2edc71b621d6e7ea3cbc3b195d748761cbea9a210; returned 664118c5222ee9b361a638d2edc71b621d6e7ea3cbc3b195d748761cbea9a210
+effort: EFFORT-40 → EFFORT-40: exact_bytes_match; original 0386db8be283b8db94a347ed06bceb12f56235396df928214f00e1d3530abad1; returned 0386db8be283b8db94a347ed06bceb12f56235396df928214f00e1d3530abad1
+effort: EFFORT-41 → EFFORT-41: exact_bytes_match; original 36034571353787b600f6e951ff7becb8fc6512c56ec5e310c511903a8b6ce1cb; returned 36034571353787b600f6e951ff7becb8fc6512c56ec5e310c511903a8b6ce1cb
+effort: EFFORT-42 → EFFORT-42: exact_bytes_match; original ce6cbce8aa25d4f83553b290a360fd2a720ee69df90d884d50efdc4df11d577e; returned ce6cbce8aa25d4f83553b290a360fd2a720ee69df90d884d50efdc4df11d577e
+effort: EFFORT-43 → EFFORT-43: exact_bytes_match; original 5dc074bde168c570b2cc9b8bf01ad4a89ea44688738ed58badaaa72aba5ce42a; returned 5dc074bde168c570b2cc9b8bf01ad4a89ea44688738ed58badaaa72aba5ce42a
+effort: EFFORT-44 → EFFORT-44: exact_bytes_match; original 6a0b38a98c01310c207ac2e0910b50b00df17b34306ca0dc98d9d5768aeed97e; returned 6a0b38a98c01310c207ac2e0910b50b00df17b34306ca0dc98d9d5768aeed97e
+effort: EFFORT-45 → EFFORT-45: exact_bytes_match; original e5cc14b751f37fdc4fc2440744cdb00b8047186a516890f9c32bd0b966cb517b; returned e5cc14b751f37fdc4fc2440744cdb00b8047186a516890f9c32bd0b966cb517b
+effort: EFFORT-46 → EFFORT-46: exact_bytes_match; original df6339dcb0404a8b3f3f2e6b631e256bef8a0105413b03837056390b603d78f2; returned df6339dcb0404a8b3f3f2e6b631e256bef8a0105413b03837056390b603d78f2
+effort: EFFORT-47 → EFFORT-47: exact_bytes_match; original cbc1c1c030a9d048db099736a6b36be347f8063b9a03a2042f78bccdd0fdab70; returned cbc1c1c030a9d048db099736a6b36be347f8063b9a03a2042f78bccdd0fdab70
+effort: EFFORT-48 → EFFORT-48: exact_bytes_match; original bc4f83ab3cab40c4173bdf057699da9552788e01848a1a8e93b50fd485f7b9a3; returned bc4f83ab3cab40c4173bdf057699da9552788e01848a1a8e93b50fd485f7b9a3
+effort: EFFORT-49 → EFFORT-49: exact_bytes_match; original b2c3601794e0117377b8eb20de882afb0689c5b38c5fbe2b26b59fa5aefe9dbd; returned b2c3601794e0117377b8eb20de882afb0689c5b38c5fbe2b26b59fa5aefe9dbd
+effort: EFFORT-50 → EFFORT-50: exact_bytes_match; original 95029a03f442fef3cb2f426a15d0fe6d46fa9b810744b17ebbbdc16ae766957c; returned 95029a03f442fef3cb2f426a15d0fe6d46fa9b810744b17ebbbdc16ae766957c
+effort: EFFORT-51 → EFFORT-51: exact_bytes_match; original f74e4028a5821b9969744b037aedfc1f958c5ed57e592009931dabddddecb707; returned f74e4028a5821b9969744b037aedfc1f958c5ed57e592009931dabddddecb707
+effort: EFFORT-52 → EFFORT-52: exact_bytes_match; original f26cb63b223af75bb126cc292479a2ffaf41dae40086b41f049a2ee140cf2156; returned f26cb63b223af75bb126cc292479a2ffaf41dae40086b41f049a2ee140cf2156
+effort: EFFORT-53 → EFFORT-53: exact_bytes_match; original 041ae43e4029694c64a57a55e1780bae7e02b91251e776cdf0ff7f44d8c5b45b; returned 041ae43e4029694c64a57a55e1780bae7e02b91251e776cdf0ff7f44d8c5b45b
+effort: EFFORT-54 → EFFORT-54: exact_bytes_match; original 2fc1fedd36961a7f9a052cd5880e8f2921569e533c042ae68fbd72caff3971f2; returned 2fc1fedd36961a7f9a052cd5880e8f2921569e533c042ae68fbd72caff3971f2
+effort: EFFORT-55 → EFFORT-55: exact_bytes_match; original 0c8e146fd655db22c734a3d67c9cb9e8e60755c71d1bc4d212e0b8231f9695c5; returned 0c8e146fd655db22c734a3d67c9cb9e8e60755c71d1bc4d212e0b8231f9695c5
+effort: EFFORT-56 → EFFORT-56: exact_bytes_match; original 92ce806d59bd079c558c96d7fe20ab08007e915d007a2780a09cfda858305268; returned 92ce806d59bd079c558c96d7fe20ab08007e915d007a2780a09cfda858305268
+effort: EFFORT-57 → EFFORT-57: exact_bytes_match; original ca232d1f908c50bb9321dd7ae54d76881b86293403cce1792305b5ab2c27bea2; returned ca232d1f908c50bb9321dd7ae54d76881b86293403cce1792305b5ab2c27bea2
+effort: EFFORT-58 → EFFORT-58: exact_bytes_match; original 910eb56d8d8668396a51fc1c1a0441c3de9f5665f1320f79903b8c70a4f79bf4; returned 910eb56d8d8668396a51fc1c1a0441c3de9f5665f1320f79903b8c70a4f79bf4
+effort: EFFORT-59 → EFFORT-59: exact_bytes_match; original 4c833661fed14e233da3d9fc8ec55ead00ebcbccee04c8c2c866042343806519; returned 4c833661fed14e233da3d9fc8ec55ead00ebcbccee04c8c2c866042343806519
+effort: EFFORT-60 → EFFORT-60: exact_bytes_match; original 5b13c8f44ef390669f82a8ce82348a2fb57887663489127c6fe5e872dc574652; returned 5b13c8f44ef390669f82a8ce82348a2fb57887663489127c6fe5e872dc574652
+effort: EFFORT-61 → EFFORT-61: exact_bytes_match; original b901f18984d9523f68da61345285b547565247493af190a2278597fd55b769b2; returned b901f18984d9523f68da61345285b547565247493af190a2278597fd55b769b2
+effort: EFFORT-62 → EFFORT-62: exact_bytes_match; original 122a6167993585b22432a6f414d8c1515cebcebaaf9eecc522be746b42a6aca8; returned 122a6167993585b22432a6f414d8c1515cebcebaaf9eecc522be746b42a6aca8
+effort: EFFORT-63 → EFFORT-63: exact_bytes_match; original 897921328c9b0a02b63d3e9b65a19b7a3369e40bae91fd0caf88a07f3cd6fe1d; returned 897921328c9b0a02b63d3e9b65a19b7a3369e40bae91fd0caf88a07f3cd6fe1d
+effort: EFFORT-64 → EFFORT-64: exact_bytes_match; original c2b1cbfd42f79a86c107b124c1a3b65be82afab01fd581a77172c96f331d1670; returned c2b1cbfd42f79a86c107b124c1a3b65be82afab01fd581a77172c96f331d1670
+
+0 mapped record pairs have no retained attachment bytes on either side; the complete per-record inventory is included in comparison.json.
+
+Unobserved means neither side supplied retained attachment bytes. Matching record references do not establish matching photo or document contents.
+
+## Operator review
+
+No review recorded for this edition.
+
+# Fleet Availability Study
+
+Source state: complete_source_population.
+
+## Complete physical fleet population
+
+Observed 4; included 4; excluded 0; unresolved 0; expected 4. Complete: true.
+
+## Actual readiness and elapsed time
+
+Observed readiness within unioned in-fleet intervals; overlapping restrictions do not add elapsed time. Unknown time remains visible.
+
+Eligible vehicle-minutes 2880; available 1245; unavailable 915; unknown 720. Complete availability fraction unresolved.
+
+| Physical vehicle | Eligible minutes | Available | Unavailable | Unknown |
+| --- | --- | --- | --- | --- |
+| FICTIONAL-CHASSIS-1 | 720 | 465 | 255 | 0 |
+| FICTIONAL-CHASSIS-2 | 720 | 60 | 660 | 0 |
+| FICTIONAL-CHASSIS-3 | 720 | 720 | 0 | 0 |
+| FICTIONAL-CHASSIS-4 | 720 | 0 | 0 | 720 |
+
+## Actual duty execution
+
+| Duty | Required vehicles | Observed departures | Completed physical vehicles | Complete fulfilment |
+| --- | --- | --- | --- | --- |
+| DUTY-MORNING | 1 | 1 | 1 | true |
+| DUTY-AFTER-REPAIR | 1 | 1 | 1 | true |
+
+## Observed fault recovery
+
+Fault episodes beginning within the measured physical-fleet window; carry-in episodes and complete source history are retained separately.
+
+Completed episodes 1; open episodes 1; unresolved episodes 0. Mean duration among completed episodes 215 minutes. Open and unresolved episodes remain visible in the full analysis.
+
+## Recorded release decisions and actual commercial postings
+
+- RELEASE-V1: valid complete release true; observed release 2026-10-01T10:42:00.000Z.
+- invoice:GBP: 250.
+- credit:GBP: 25.
+- actual_cost:GBP: 80.
+
+## Complete recurring work
+
+Complete comparison true. Baseline 192 active person-minutes; current 128; signed current-minus-baseline −64. All current effort and incomplete matched members remain in the analysis.
+
+## Source issues
+
+No unresolved source issue in this selected scope.
+
+
+Supplied depot membership, readiness, fault, workshop, parts, supplier, safety-release and duty records. Actual service and posted commercial amounts remain distinct from proposed recovery actions.

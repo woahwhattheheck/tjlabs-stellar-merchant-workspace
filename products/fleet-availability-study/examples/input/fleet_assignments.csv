@@ -1,0 +1,5 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,assignment_id,vehicle_id,depot_id,entered_at,left_at
+MEMBERSHIP-V1,MEMBERSHIP-V1,1,,active,2026-10-01T05:00:00Z,2026-10-01T05:00:00Z,document-e3193633302dae4ee01428a79693e92c,authored/fleet_assignments/MEMBERSHIP-V1,MEMBERSHIP-V1,V1,DEPOT,2026-10-01T05:00:00Z,
+MEMBERSHIP-V2,MEMBERSHIP-V2,1,,active,2026-10-01T05:00:00Z,2026-10-01T05:00:00Z,document-796dd00ba9a55ff82e810b880a864159,authored/fleet_assignments/MEMBERSHIP-V2,MEMBERSHIP-V2,V2,DEPOT,2026-10-01T05:00:00Z,
+MEMBERSHIP-V3,MEMBERSHIP-V3,1,,active,2026-10-01T05:00:00Z,2026-10-01T05:00:00Z,document-17e6d988a10342e72cffee6b878cee72,authored/fleet_assignments/MEMBERSHIP-V3,MEMBERSHIP-V3,V3,DEPOT,2026-10-01T05:00:00Z,
+MEMBERSHIP-V4,MEMBERSHIP-V4,1,,active,2026-10-01T05:00:00Z,2026-10-01T05:00:00Z,document-97ae66e8f117da7ce04acd6d0186b3b4,authored/fleet_assignments/MEMBERSHIP-V4,MEMBERSHIP-V4,V4,DEPOT,2026-10-01T05:00:00Z,

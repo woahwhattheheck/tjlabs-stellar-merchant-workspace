@@ -1,0 +1,4 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,duty_assignment_id,duty_record_id,vehicle_id,assigned_at,substitutes_assignment_record_id,assigned_by
+ASSIGN-V2,ASSIGN-V2,1,,active,2026-10-01T06:10:00Z,2026-10-01T06:10:00Z,document-8618f8c50637079d5778993b741e46b4,authored/duty_assignments/ASSIGN-V2,ASSIGN-V2,DUTY-MORNING,V2,2026-10-01T06:10:00Z,,OPS
+ASSIGN-V3,ASSIGN-V3,1,,active,2026-10-01T07:15:00Z,2026-10-01T07:15:00Z,document-40eb1dd7e1927c5b2ccd9204621e4e51,authored/duty_assignments/ASSIGN-V3,ASSIGN-V3,DUTY-MORNING,V3,2026-10-01T07:15:00Z,ASSIGN-V2,OPS
+ASSIGN-V1,ASSIGN-V1,1,,active,2026-10-01T10:50:00Z,2026-10-01T10:50:00Z,document-7bfa2ecaa847337f4414e2b0c28cbabb,authored/duty_assignments/ASSIGN-V1,ASSIGN-V1,DUTY-AFTER-REPAIR,V1,2026-10-01T10:50:00Z,,OPS

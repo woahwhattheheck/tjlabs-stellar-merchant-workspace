@@ -1,0 +1,3 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,work_order_id,vehicle_id,fault_record_id,opened_at,required_for_release,description,owner_id
+WORK-V1,WORK-V1,1,,active,2026-10-01T06:35:00Z,2026-10-01T06:35:00Z,document-aa6ef8bf8c63b3bc4697ba4e6a5b5ef9,authored/work_orders/WORK-V1,WORK-V1,V1,FAULT-V1,2026-10-01T06:35:00Z,true,Inspect and replace the supplied component using the approved local method.,TECH
+WORK-V2,WORK-V2,1,,active,2026-10-01T07:10:00Z,2026-10-01T07:10:00Z,document-46eadf4c23dd1a7055d8e81a9e02eab3,authored/work_orders/WORK-V2,WORK-V2,V2,FAULT-V2,2026-10-01T07:10:00Z,true,Authored unresolved diagnosis with a required part still absent.,TECH

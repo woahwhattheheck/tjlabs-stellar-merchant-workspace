@@ -1,0 +1,3 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,safety_case_id,vehicle_id,raised_at,blocks_service,method_document_id,description,raised_by
+SAFETY-V1,SAFETY-V1,1,,active,2026-10-01T06:35:00Z,2026-10-01T06:35:00Z,document-7831575a8e67c42e5ece32eb4c8a6e0a,authored/safety_cases/SAFETY-V1,SAFETY-V1,V1,2026-10-01T06:35:00Z,true,document-a02855aedeff52f913899745a58d3e54,Independent safety hold remains until a named authorized review.,SAFETY
+SAFETY-V2,SAFETY-V2,1,,active,2026-10-01T07:05:00Z,2026-10-01T07:05:00Z,document-a976dce5f1338d70a0d25461c8004829,authored/safety_cases/SAFETY-V2,SAFETY-V2,V2,2026-10-01T07:05:00Z,true,document-a02855aedeff52f913899745a58d3e54,Authored safety case still open at cutoff.,SAFETY

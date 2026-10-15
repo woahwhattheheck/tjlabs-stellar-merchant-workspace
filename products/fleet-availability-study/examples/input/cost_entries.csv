@@ -1,0 +1,4 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,cost_id,vehicle_id,work_order_record_id,posted_at,kind,amount,currency,external_ref,posted_by
+COST-SUPPLIER,COST-SUPPLIER,1,,active,2026-10-01T14:00:00Z,2026-10-01T14:00:00Z,document-045a74f70833a4981a2981edc2994d71,authored/cost_entries/COST-SUPPLIER,COST-SUPPLIER,V1,WORK-V1,2026-10-01T14:00:00Z,invoice,250.00,GBP,AUTHORED-INVOICE-001,FINANCE
+CREDIT-SUPPLIER,CREDIT-SUPPLIER,1,,active,2026-10-01T14:10:00Z,2026-10-01T14:10:00Z,document-c32f7cffd635571c63a6a23e45a97a7d,authored/cost_entries/CREDIT-SUPPLIER,CREDIT-SUPPLIER,V1,WORK-V1,2026-10-01T14:10:00Z,credit,25.00,GBP,AUTHORED-CREDIT-001,FINANCE
+COST-PART,COST-PART,1,,active,2026-10-01T14:20:00Z,2026-10-01T14:20:00Z,document-3cc6b5f6cf977493330c87bc5dcd80b8,authored/cost_entries/COST-PART,COST-PART,V1,WORK-V1,2026-10-01T14:20:00Z,actual_cost,80.00,GBP,AUTHORED-STORES-ISSUE-001,FINANCE

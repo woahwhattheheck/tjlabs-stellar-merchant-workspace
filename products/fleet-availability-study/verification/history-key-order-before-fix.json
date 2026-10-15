@@ -1,0 +1,28 @@
+{
+  "before": "c1db9554c5509aa25d66baf103fd678046e5ff2bc17805e7247188087930cba4",
+  "restored": "ac30245b64ea289201059df509ae5162af5370aea2c52e3edb81586089db57b3",
+  "originalKeys": [
+    "schema",
+    "id",
+    "config",
+    "originals",
+    "documents",
+    "document_links",
+    "extracts",
+    "crosswalks",
+    "reviews",
+    "notes"
+  ],
+  "restoredKeys": [
+    "schema",
+    "id",
+    "config",
+    "notes",
+    "originals",
+    "documents",
+    "document_links",
+    "extracts",
+    "crosswalks",
+    "reviews"
+  ]
+}

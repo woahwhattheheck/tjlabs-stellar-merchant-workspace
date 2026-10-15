@@ -1,0 +1,13 @@
+{
+  "execution": "Actual production Water model/session/core in V8 on complete 42-request retained state",
+  "checks": [
+    "Equal complete carrier copies reuse successful validation and return identical complete views",
+    "Returned mutable views are isolated from the validated source and cache",
+    "Changed complete carrier is independently rejected on attempt 1",
+    "Changed complete carrier is independently rejected on attempt 2",
+    "Rejected carrier validation is never cached",
+    "Unchanged valid carrier never bypasses current outer request-history validation",
+    "A valid changed carrier is fully revalidated and becomes the exact new successful cache entry"
+  ],
+  "receive_calls": 4
+}

@@ -1,0 +1,176 @@
+{
+  "baseline": {
+    "population": true,
+    "eligible_minutes": {
+      "numerator": "2880",
+      "denominator": "1",
+      "decimal": "2880"
+    },
+    "available_minutes": {
+      "numerator": "1245",
+      "denominator": "1",
+      "decimal": "1245"
+    },
+    "unavailable_minutes": {
+      "numerator": "915",
+      "denominator": "1",
+      "decimal": "915"
+    },
+    "unknown_minutes": {
+      "numerator": "720",
+      "denominator": "1",
+      "decimal": "720"
+    },
+    "availability_fraction": null,
+    "effort_baseline": {
+      "numerator": "192",
+      "denominator": "1",
+      "decimal": "192"
+    },
+    "effort_current": {
+      "numerator": "128",
+      "denominator": "1",
+      "decimal": "128"
+    },
+    "effort_change": {
+      "numerator": "-64",
+      "denominator": "1",
+      "decimal": "−64"
+    },
+    "issues": []
+  },
+  "checks": [
+    {
+      "name": "Later descriptive revision preserves actual earlier closed fault and completed duty",
+      "pass": false,
+      "actual": {
+        "available_minutes": {
+          "numerator": "30",
+          "denominator": "1",
+          "decimal": "30"
+        },
+        "fault_metrics": {
+          "completed_episodes": 0,
+          "open_episodes": 2,
+          "unresolved_episodes": 0,
+          "mean_completed_recovery_minutes": null
+        },
+        "duty": {
+          "duty_record_id": "DUTY-AFTER-REPAIR",
+          "valid": true,
+          "required_vehicles": 1,
+          "assignments": [
+            {
+              "assignment_record_id": "ASSIGN-V1",
+              "vehicle_id": "V1",
+              "physical_key": "FICTIONAL-CHASSIS-1",
+              "valid": true,
+              "departure_observed": true,
+              "departed_at": "2026-10-01T11:00:00Z",
+              "completion_observed": true,
+              "returned_at": "2026-10-01T13:10:00Z",
+              "cancelled": false,
+              "execution_complete": true,
+              "readiness_at_departure": "unavailable",
+              "source_event_ids": [
+                "ASSIGN-V1-departed",
+                "ASSIGN-V1-completed",
+                "ASSIGN-V1-returned"
+              ],
+              "substitutes_assignment_record_id": ""
+            }
+          ],
+          "observed_departures": 1,
+          "completed_physical_vehicles": 1,
+          "fulfilment_complete": false
+        },
+        "current_release": [
+          {
+            "release_case_record_id": "RELEASE-V1",
+            "vehicle_id": "V1",
+            "valid": false,
+            "released_at": null
+          }
+        ],
+        "issues": []
+      }
+    },
+    {
+      "name": "Same external invoice observation cannot double recorded money",
+      "pass": false,
+      "actual": {
+        "money": {
+          "invoice:GBP": {
+            "numerator": "500",
+            "denominator": "1",
+            "decimal": "500"
+          },
+          "credit:GBP": {
+            "numerator": "25",
+            "denominator": "1",
+            "decimal": "25"
+          },
+          "actual_cost:GBP": {
+            "numerator": "80",
+            "denominator": "1",
+            "decimal": "80"
+          }
+        },
+        "issues": []
+      }
+    },
+    {
+      "name": "Actual trip wholly outside the required duty window remains observed without fulfilling that window",
+      "pass": false,
+      "actual": {
+        "duty": {
+          "duty_record_id": "DUTY-MORNING",
+          "valid": true,
+          "required_vehicles": 1,
+          "assignments": [
+            {
+              "assignment_record_id": "ASSIGN-V2",
+              "vehicle_id": "V2",
+              "physical_key": "FICTIONAL-CHASSIS-2",
+              "valid": true,
+              "departure_observed": false,
+              "departed_at": null,
+              "completion_observed": false,
+              "returned_at": null,
+              "cancelled": true,
+              "execution_complete": false,
+              "readiness_at_departure": "unobserved",
+              "source_event_ids": [
+                "CANCEL-V2"
+              ],
+              "substitutes_assignment_record_id": ""
+            },
+            {
+              "assignment_record_id": "ASSIGN-V3",
+              "vehicle_id": "V3",
+              "physical_key": "FICTIONAL-CHASSIS-3",
+              "valid": true,
+              "departure_observed": true,
+              "departed_at": "2026-10-01T17:00:00Z",
+              "completion_observed": true,
+              "returned_at": "2026-10-01T17:15:00Z",
+              "cancelled": false,
+              "execution_complete": true,
+              "readiness_at_departure": "available",
+              "source_event_ids": [
+                "ASSIGN-V3-departed",
+                "ASSIGN-V3-completed",
+                "ASSIGN-V3-returned"
+              ],
+              "substitutes_assignment_record_id": "ASSIGN-V2"
+            }
+          ],
+          "observed_departures": 1,
+          "completed_physical_vehicles": 1,
+          "fulfilment_complete": true
+        },
+        "issues": []
+      }
+    }
+  ]
+}

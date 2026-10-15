@@ -1,0 +1,4 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,fault_event_id,fault_record_id,event_at,state,actor_id,notes
+FAULT-V1-OPEN,FAULT-V1-OPEN,1,,active,2026-10-01T06:30:00Z,2026-10-01T06:30:00Z,document-145461019e84033d3bdd462038904a6d,authored/fault_events/FAULT-V1-OPEN,FAULT-V1-OPEN,FAULT-V1,2026-10-01T06:30:00Z,open,TECH,Reported restriction retained.
+FAULT-V1-DONE,FAULT-V1-DONE,1,,active,2026-10-01T10:05:00Z,2026-10-01T10:05:00Z,document-be363f3752c6861610770549d1728593,authored/fault_events/FAULT-V1-DONE,FAULT-V1-DONE,FAULT-V1,2026-10-01T10:05:00Z,resolved,TECH,Actual fault closure retained separately from safety and operations acceptance.
+FAULT-V2-OPEN,FAULT-V2-OPEN,1,,active,2026-10-01T07:00:00Z,2026-10-01T07:00:00Z,document-7afa5b393d17fb1310039634fa6fdb40,authored/fault_events/FAULT-V2-OPEN,FAULT-V2-OPEN,FAULT-V2,2026-10-01T07:00:00Z,open,TECH,"Open episode, not omitted from recovery population."
