@@ -1,0 +1,59 @@
+{
+  "schema": "commons.native-streaming-source-closure.v1",
+  "sourceFiles": 236,
+  "defaultCompressionReadAndRestoreExact": true,
+  "defaultCompressedMembers": 2,
+  "nativeModuleSourcesMatchesEmbeddedBank": true,
+  "upperMembers": 234,
+  "lowerMembers": 235,
+  "html": {
+    "bytes": 4917015,
+    "sha256": "41d529b1d358dc57e70657040d2a510872d4eb302fbca3445c03cf0ebf31001f"
+  },
+  "gzip": {
+    "bytes": 47127,
+    "sha256": "1fc9f3b218c60d029c96bf9f1c1e4de5fcb86918ed5a0570586dc81488440119"
+  },
+  "sourceSha256": "c3e565cf412f7cac041330bdfd0365eeabaa7a0afc00fabb234515a53db9eeae",
+  "execution": "Actual default ZIP APIs and production source reader with supplied filesystem; declared native dependency closure and maintained streaming helper installed",
+  "declaredRelativeDependencyClosure": {
+    "roots": [
+      "native/receive-installed.mjs",
+      "native/finish-prepared.mjs",
+      "receiving/run-resumable-export.mjs",
+      "application-provider.mjs",
+      "merchant-provider.mjs"
+    ],
+    "visited": 52,
+    "missing": 0,
+    "hostIntegration": [
+      {
+        "path": "setup.mjs",
+        "purpose": "Merchant initialize hook requires surrounding host release store and configuration"
+      }
+    ]
+  },
+  "sharedSupportPin": "b2c216f07468f7fa32d96423ddacab904bd99bdb",
+  "sharedSupport": [
+    {
+      "path": "vendor/merchant-shared/operations/history.mjs",
+      "bytes": 42366,
+      "sha256": "5928c1243549c7db21942bb6ce7188060b32e5e75d4690374a88fe7b2ed96de5"
+    },
+    {
+      "path": "vendor/merchant-shared/runtime-workspace/application-provider.mjs",
+      "bytes": 9395,
+      "sha256": "0f638caeeaa5c78560ebd262c0e410cb0dfd4fcd886748f5136cd08755e019c9"
+    },
+    {
+      "path": "vendor/merchant-shared/runtime-workspace/storage.mjs",
+      "bytes": 23911,
+      "sha256": "d42495664abaf6f43d1ce4d92ba7cbcbe07c554310f1c2f58d068c208fcc57fa"
+    },
+    {
+      "path": "vendor/merchant-shared/merchant/provider-contract.mjs",
+      "bytes": 6260,
+      "sha256": "abbc3a9f344f7e1be07f3085e6554f2c0ce1ccf131338d7ffa36f5694628394b"
+    }
+  ]
+}

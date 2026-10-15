@@ -1,5 +1,5 @@
 // MIT. Source-owned Merchant customer-agent lifecycle.
-import {defineMerchantProvider,MERCHANT_PROVIDER_SCHEMA} from '../../stellar-forge/mcp-merchant-operator/provider-contract.mjs';
+import {defineMerchantProvider,MERCHANT_PROVIDER_SCHEMA} from './vendor/merchant-shared/merchant/provider-contract.mjs';
 import {fleetAvailabilityTools} from './tools.mjs';
 export default defineMerchantProvider({schema:MERCHANT_PROVIDER_SCHEMA,id:'fleet-availability-study',family:'fleetAvailabilityStudy',title:'Fleet Availability Study Desk',order:1410,catalogOrder:1410,configKey:'fleetAvailabilityStudy',summary:true,dependencies:[],
  configuration:{input:'fleetAvailabilityStudyConnection',privateExports:true,read:async(value,{hostPath})=>(await import('./mcp.mjs')).readFleetAvailabilityStudyConfiguration(hostPath(value))},

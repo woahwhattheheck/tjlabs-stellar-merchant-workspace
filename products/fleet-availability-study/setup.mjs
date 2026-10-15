@@ -1,7 +1,7 @@
 // MIT. Initialize the maintained Merchant host around declared Fleet Availability Study Desk workspaces.
 import {dirname,join,resolve} from 'node:path';
 import {lstat} from 'node:fs/promises';
-import {acquirePrivateDirectoryWriter} from '../../stellar/scf-starforge-20261009/sf30-seller-sdk/operations/history.mjs';
+import {acquirePrivateDirectoryWriter} from './vendor/merchant-shared/operations/history.mjs';
 import {initReleaseStore,readReleaseState} from '../../stellar/scf-starforge-20261009/sf82-seller-pilot/releases.mjs';
 import {privateDirectory,readJSON,writeJSON,need} from './host/io.mjs';
 import {readFleetAvailabilityStudyConfiguration} from './mcp.mjs';
