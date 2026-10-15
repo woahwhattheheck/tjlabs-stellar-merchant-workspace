@@ -2798,8 +2798,8 @@
     },
     {
       "path": "INSTALLED_RECEIVING.md",
-      "bytes": 1035,
-      "sha256": "bff28a085e543fbaecd829e4f1f44789e03cdbbd457cb42b7ad6daa08af8474c"
+      "bytes": 2246,
+      "sha256": "0b26cfbbe3fec0686589bcf84540824218e7b462f7201a99d72dbe64cad1be2c"
     },
     {
       "path": "installed-cli.mjs",
@@ -2825,6 +2825,11 @@
       "path": "NATIVE.md",
       "bytes": 5706,
       "sha256": "c5f018ad06878138b09d036f778b4792cc768d0cc00b94e33d977c09d67c480e"
+    },
+    {
+      "path": "native/finish-prepared.mjs",
+      "bytes": 3201,
+      "sha256": "afca8b17478ef73ce369ba300b2eea03ec9d251774d0e60ae34b839eaed6b86a"
     },
     {
       "path": "native/procurement-desk.cjs",
@@ -2907,14 +2912,19 @@
       "sha256": "5462f986efb7e334528003fa2f81d1687dd6ad8d41388a3ad2ccca5eaeaeff97"
     },
     {
+      "path": "receiving/checkpoint-storage.cjs",
+      "bytes": 3625,
+      "sha256": "403ca13288daadd4a3e791e4c9a34644a97d2cec243b49d6a21b9bbabf88b375"
+    },
+    {
       "path": "receiving/checkpoint-writer.cjs",
       "bytes": 449,
       "sha256": "ab0e5eff51be205927896dfe786a2af2b6fbd473ed984d124994e53c8faacd0a"
     },
     {
       "path": "receiving/complete-archive-readback.cjs",
-      "bytes": 5631,
-      "sha256": "fa2dbde604ff7471adb88e623cd484e3999e7f5afb07272f73c104478f97c8ad"
+      "bytes": 5665,
+      "sha256": "ba82a260a3d7c6dcfae6d551732eea0aecda36765563e1bd4c2163d471899b50"
     },
     {
       "path": "receiving/host-course.cjs",
@@ -2923,8 +2933,18 @@
     },
     {
       "path": "receiving/portable-course.cjs",
-      "bytes": 11498,
-      "sha256": "501285460a7a57d67946b182133088c16698531bd0f15bab5b32385f16036437"
+      "bytes": 11696,
+      "sha256": "0196fa6b3712bc0cde164faf6221ee80ca03045a9d1410de4f7c026272849ecd"
+    },
+    {
+      "path": "receiving/prepared-stream.cjs",
+      "bytes": 16041,
+      "sha256": "1b19289347d8f6e4306afff632abc88e3bf8e36171a32b731426257671741f55"
+    },
+    {
+      "path": "receiving/resumable-archive.cjs",
+      "bytes": 1183,
+      "sha256": "83d7c5b15d33e7c0be4c14a747f7953056b48db916563bceb4471f3cabc8427e"
     },
     {
       "path": "receiving/source-bytes-course.cjs",
@@ -2983,8 +3003,8 @@
     },
     {
       "path": "src/connected_zip.cjs",
-      "bytes": 22223,
-      "sha256": "751354cbfe55450be53689de23631900f3b1661063c7974e46f99fa2413cbc1f"
+      "bytes": 22417,
+      "sha256": "78cc84089aa4aad4303888b6ca0156df258ab19ac0ca2aca1aeffd9674d1fb6a"
     },
     {
       "path": "src/core-cache.cjs",
@@ -3242,9 +3262,14 @@
       "sha256": "d7fc807b01fb9bbc028ddf30a7b31ca045bcf3e77362cdcfd97c5ce27aaf92d4"
     },
     {
+      "path": "verification/installed-portable-result.json",
+      "bytes": 1353,
+      "sha256": "d511b9a1bbbeb826ed4e407d216c677574cacab4b4cb7a7bbf913f6dfb5841c7"
+    },
+    {
       "path": "verification/installed-source-join.json",
-      "bytes": 2111,
-      "sha256": "c51b49c3f0ba285d5078093b17644445a37aa6d7a9318703735a4faab8c0a814"
+      "bytes": 2803,
+      "sha256": "27fdcb78efe97b122db12d18402ae1e8e2f45b85a4401c0a36ee71bdfa6d0366"
     },
     {
       "path": "verification/model-course-result.json",

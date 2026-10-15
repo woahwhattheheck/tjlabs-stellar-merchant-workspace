@@ -36,14 +36,19 @@
     "managed.mjs",
     "mcp.mjs",
     "merchant-provider.mjs",
+    "native/finish-prepared.mjs",
     "native/receive-installed.mjs",
     "operator/installed-desk.js",
     "package.json",
     "receiving/bootstrap.cjs",
     "receiving/checkpoint-reader.cjs",
+    "receiving/checkpoint-storage.cjs",
+    "receiving/checkpoint-writer.cjs",
     "receiving/complete-archive-readback.cjs",
     "receiving/host-course.cjs",
     "receiving/portable-course.cjs",
+    "receiving/prepared-stream.cjs",
+    "receiving/resumable-archive.cjs",
     "receiving/source-bytes-course.cjs",
     "runtime.mjs",
     "setup.mjs",
@@ -55,7 +60,16 @@
     "src/managed.js",
     "src/session-cache.cjs",
     "src/session.mjs",
-    "tools.mjs"
+    "src/sha-cache.cjs",
+    "tools.mjs",
+    "verification/installed-cache-and-configure.json",
+    "verification/installed-portable-result.json"
   ],
-  "installed_digest_cache": "Existing exact immutable text strategy from Distribution; original SHA source unchanged, misses delegated, 16 MiB / 4,096 entry bound, fresh result records"
+  "installed_digest_cache": "Existing exact immutable text strategy from Distribution; original SHA source unchanged, misses delegated, 16 MiB / 4,096 entry bound, fresh result records",
+  "prepared_export": {
+    "snapshot_cache_commit": "4319b2d0674f2d053fd426dc8d20c78dfb128648",
+    "streaming_receiver_commit": "9299dc7f39987e412c5f32b0cfd331ee2e9e5c4e",
+    "metadata_fragments": "Preserve supplementary Unicode pairs",
+    "complete_history": "Complete compact original workload, prepared whole source groups and atomically finished complete ZIP"
+  }
 }
