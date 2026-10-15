@@ -134,6 +134,14 @@ one internal row is missing that provenance or cannot be projected; keep the
 public discovery route out of service and repair the original ingestion source.
 An empty catalog is wire-ready and reports zero resources.
 
+The server applies that aggregate gate to `GET /discovery/resources` and
+`GET /discovery/search` as well as the readiness endpoint itself. Until the
+whole catalog is ready, both public discovery routes return HTTP 503 with only
+the aggregate readiness fields and `DISCOVERY_NOT_READY`; they return no rows,
+payment terms or query text. A filter, search expression, limit or offset cannot
+hide an incomplete row and expose a partial catalog as protocol-ready. Internal
+`list()`, `search()` and `pricing()` remain available for repair and operation.
+
 Run the focused offline compatibility probe with:
 
 ```sh

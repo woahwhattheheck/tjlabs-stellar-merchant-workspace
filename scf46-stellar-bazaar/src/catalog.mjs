@@ -233,12 +233,20 @@ export function createDiscoveryServer(catalog) {
       const u = new URL(req.url,'http://localhost');
       if (req.method !== 'GET') {res.writeHead(405,{'content-type':'application/json'});res.end(JSON.stringify({error:'METHOD_NOT_ALLOWED',reason:'GET only'}));return;}
       let status = 200;
-      const data = u.pathname === '/discovery/resources' ? catalog.listDiscovery(u.searchParams)
+      const publicDiscovery = u.pathname === '/discovery/resources' || u.pathname === '/discovery/search';
+      const readiness = publicDiscovery ? catalog.discoveryReadiness() : null;
+      // Readiness is enforced at the public wire boundary, not merely exposed
+      // as an advisory endpoint. Page filters must never hide an unprojectable
+      // row and make an incomplete catalog appear protocol-ready.
+      const data = publicDiscovery && !readiness.ready
+        ? { error: 'DISCOVERY_NOT_READY', reason: 'Complete x402 v2 discovery rows unavailable', ...readiness }
+        : u.pathname === '/discovery/resources' ? catalog.listDiscovery(u.searchParams)
         : u.pathname === '/discovery/search' ? catalog.searchDiscovery(u.searchParams)
         : u.pathname === '/discovery/pricing' ? catalog.pricing(u.searchParams)
         : u.pathname === '/discovery/readiness' ? catalog.discoveryReadiness() : null;
       if (!data) {res.writeHead(404,{'content-type':'application/json'});res.end(JSON.stringify({error:'NOT_FOUND',reason:'Unknown endpoint'}));return;}
-      if (u.pathname === '/discovery/readiness' && !data.ready) status = 503;
+      if ((u.pathname === '/discovery/readiness' && !data.ready) ||
+          (publicDiscovery && !readiness.ready)) status = 503;
       res.writeHead(status,{'content-type':'application/json','cache-control':'no-store'});
       res.end(JSON.stringify(data));
     } catch(e) {
