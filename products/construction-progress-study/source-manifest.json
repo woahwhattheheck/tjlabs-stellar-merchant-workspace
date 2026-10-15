@@ -13,8 +13,8 @@
     },
     {
       "path": "Construction_Progress_Study_Desk.html",
-      "bytes": 1527914,
-      "sha256": "f90bec434fcb6e3bc4d37e64e727b59ef47fb142bef83a6cc4bcb7d7f55b3441"
+      "bytes": 1530378,
+      "sha256": "ffe457804068e8baafe95f04a8a416eb1530573f657ec21bce77df6a0aa2d704"
     },
     {
       "path": "construction-history.cjs",
@@ -433,8 +433,8 @@
     },
     {
       "path": "SOURCE_MANIFEST.json",
-      "bytes": 20838,
-      "sha256": "44455194e4335e51793f6286e466daf4da52ba0eb5b6a370188e819507174230"
+      "bytes": 21012,
+      "sha256": "42903b0cb067b2cab6c38378bbb815330612a732a59165d8559bd3fb17e55322"
     },
     {
       "path": "src/archive.mjs",
@@ -650,6 +650,11 @@
       "path": "verification/installed-browser-course.json",
       "bytes": 999,
       "sha256": "0889a54db7b970543d9caf48a7ea3edae28087b7bf7d97a693b21fa90f17a1ad"
+    },
+    {
+      "path": "verification/installed-host-course.json",
+      "bytes": 2072,
+      "sha256": "6a1dc645d7135764899d9eccd8f8e08af33be419ac68dbcedc29757a2ae4cc55"
     },
     {
       "path": "verification/model-course.json",

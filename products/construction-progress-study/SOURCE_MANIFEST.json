@@ -642,6 +642,11 @@
       "sha256": "0889a54db7b970543d9caf48a7ea3edae28087b7bf7d97a693b21fa90f17a1ad"
     },
     {
+      "path": "verification/installed-host-course.json",
+      "bytes": 2072,
+      "sha256": "6a1dc645d7135764899d9eccd8f8e08af33be419ac68dbcedc29757a2ae4cc55"
+    },
+    {
       "path": "verification/model-course.json",
       "bytes": 2616,
       "sha256": "8104298415702d0e8cd78c12b3d344cd013a518c2e438393056a319f4ec17d2c"
