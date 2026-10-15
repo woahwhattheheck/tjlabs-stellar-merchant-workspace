@@ -64,9 +64,20 @@ assert.deepEqual(rejected, {
 });
 assert.deepEqual(decode(encodeBazaarExtensionResponses(rejected).value), { bazaar: rejected });
 
+const rejectedWithoutReason = bazaarExtensionResponse('rejected');
+assert.deepEqual(rejectedWithoutReason, { status: 'rejected' });
+assert.deepEqual(decode(encodeBazaarExtensionResponses(rejectedWithoutReason).value), {
+  bazaar: { status: 'rejected' },
+});
+assert.deepEqual(bazaarExtensionResponse('rejected', ''), {
+  status: 'rejected',
+  rejectedReason: '',
+});
+assert.throws(() => bazaarExtensionResponse('rejected', null), /string when present/);
+assert.throws(() => bazaarExtensionResponse('rejected', 7), /string when present/);
+
 assert.deepEqual(bazaarExtensionResponse('processing'), { status: 'processing' });
 assert.throws(() => bazaarExtensionResponse('success', 'not allowed'), /only valid/);
-assert.throws(() => bazaarExtensionResponse('rejected'), /non-empty string/);
 assert.throws(() => bazaarExtensionResponse('queued'), /Invalid Bazaar/);
 assert.throws(() => catalogResultToBazaarExtensionResponse({ decision: 'unknown' }), /Unsupported/);
 assert.throws(() => composeBazaarExtensionResponses(success, null), /keyed object/);
@@ -110,6 +121,9 @@ console.log(JSON.stringify({
   success: decode(successHeader.value).bazaar.status,
   processing: bazaarExtensionResponse('processing').status,
   rejectionReason: rejected.rejectedReason,
+  rejectedWithoutReason: decode(
+    encodeBazaarExtensionResponses(rejectedWithoutReason).value,
+  ).bazaar,
+  emptyReason: bazaarExtensionResponse('rejected', '').rejectedReason,
   buyerForwarding: 'not_performed',
 }));
-
