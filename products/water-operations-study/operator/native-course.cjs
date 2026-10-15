@@ -1,5 +1,7 @@
 'use strict';
 module.exports=function nativeCourse(bundle,utf8Encode,utf8Decode){
+// The injected manifest indexes substantive source once, even when the caller supplies the delivered manifest.
+bundle=bundle.filter(x=>x.path!=='SOURCE_MANIFEST.json');
 const files=Object.fromEntries(bundle.map(x=>[x.path,x.content])),cache={};function req(p){if(cache[p])return cache[p];const m={exports:{}};const dir=p.split("/").slice(0,-1);Function("module","exports","require",files[p])(m,m.exports,n=>{const a=[];for(const v of [...dir,...n.split("/")])if(v==="..")a.pop();else if(v&&v!==".")a.push(v);return req(a.join("/"));});return cache[p]=m.exports;}
 const SHA=req("sha256.cjs"),M=req("session.cjs"),store=new Map(),dirs=new Set(["/app","/app/native"]),checks=[];let uid=0,manifestReads=0;
 class B extends Uint8Array{static from(x){return new B(typeof x==="string"?utf8Encode(x):x);}equals(other){return this.length===other.length&&this.every((x,i)=>x===other[i]);}toString(){return utf8Decode(this);}}

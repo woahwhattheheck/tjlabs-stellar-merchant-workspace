@@ -1,9 +1,10 @@
 {
   "schema": "water-operations.installed-receiving/v1",
   "domainSource": {
-    "edition": "whole-ui-native-review-20261015",
-    "bytes": 3417888,
-    "sha256": "74b10ca3a3ff6a278cf692d2e05a376b525a618c4019c0418fd1a9b1fe2c0a88"
+    "edition": "complete-operator-final-20261015",
+    "files": 145,
+    "bytes": 8301382,
+    "sha256": "cddc102051850c2823d3821b7d98b1e21e8770b775be20a712a3c4c14749c2dc"
   },
   "focusedDomain": [
     {
@@ -38,8 +39,23 @@
     ]
   },
   "assembledBrowser": {
-    "status": "running",
-    "surface": "Production assembled HTML and handlers with supplied DOM and atomic IndexedDB adapters"
+    "status": "passed",
+    "checks": [
+      "Every ordinary water and laboratory section renders through assembled production handlers",
+      "Complete authored water, laboratory and report chronology and recurring work results remain exact",
+      "Complete pending asset CSV retains BOM and CRLF",
+      "Actual mapped unit import retains the entire original",
+      "Ordinary laboratory input correction retains the exact whole laboratory report-input preimage",
+      "Binary supporting source bytes remain exact",
+      "Exact source-document digest helper retains its complete draft",
+      "Document chronology correction retains prior metadata",
+      "Current configured operator or board review binds the exact source",
+      "Competing complete saved head detected",
+      "Explicit adoption retains complete competing water and laboratory preimage",
+      "Continued editing and portable actor/session reopen"
+    ],
+    "surface": "Actual assembled production HTML and handlers, injected DOM and atomic IndexedDB",
+    "elapsedMs": 343143
   },
   "merchant": {
     "status": "running",
@@ -48,5 +64,10 @@
   "native": {
     "command": "node native/receive-installed.mjs",
     "surface": "Actual OS, private filesystem and listener receiving through existing equipped operation"
+  },
+  "completeExport": {
+    "maxEntries": 60000,
+    "reason": "Retained full36-family import history with486ordinary source/export paths per study",
+    "status": "awaiting full managed workload"
   }
 }

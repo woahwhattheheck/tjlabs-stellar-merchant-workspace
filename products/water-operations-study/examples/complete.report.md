@@ -104,6 +104,21 @@ Valid collected samples 6; accepted accessions 4; rejected 1; effective usable r
 - SEND-A / sent / 2026-10-15T10:40:00.000Z: actual event binding supported.
 - RECEIVE-A / received / 2026-10-15T10:45:00.000Z: actual event binding supported.
 
+## Field observations and assigned work
+
+| Reading | System | Observed | Value | Unit | Usable | Issues |
+| --- | --- | --- | --- | --- | --- | --- |
+| READ-SYS-A | SYS-A | 2026-10-15T08:46:00.000Z | eq 0.6 | mg/L | true |  |
+| READ-SYS-B | SYS-B | 2026-10-15T08:47:00.000Z | eq 0.5 | mg/L | true |  |
+| READ-SYS-C | SYS-C | 2026-10-15T08:48:00.000Z | eq 0 | mg/L | true |  |
+
+- TASK-C / SYS-C: blocked; due 2026-10-15T12:00:00.000Z; overdue true. 
+- TASK-A / SYS-A: completed; due 2026-10-15T12:00:00.000Z; overdue false. 
+
+## Board and operator handover
+
+- HANDOVER-A / SYS-A: PREPARER to BOARD; prepared 2026-10-15T13:00:00.000Z; effective 2026-10-15T14:00:00.000Z; complete true. 
+
 ## Active recurring work
 
 Whole-population comparison complete: true. Baseline 432 person-minutes; current 315; signed current-minus-baseline −117. Matched subset and unpaired work remain separate in the full analysis. There is no capacity-to-cash extrapolation.

@@ -24,7 +24,7 @@ function evaluator(w,rows,selected,ctx,p,evidence,populationAt){
  const results=inputs.map(x=>{const q=x.values,r=boundInput(q,cut,known,'report');if(q.role!==ROLES[q.family]||!ROLES[q.family])r.issues.push('REPORT_SOURCE_ROLE_UNRESOLVED');
  if(r.row){if(r.row.system_id&&r.row.system_id!==z.system_id)r.issues.push('REPORT_WRONG_SYSTEM');const observed=time(r.row.observed_at||r.row.collected_at||r.row.analysed_at||r.row.scheduled_at||r.row.interval_start||'');if(observed!==null&&(observed<a||observed>=b)&&!q.period_exception_reason)r.issues.push('REPORT_PERIOD_CONTEXT_REQUIRED');}
  r.valid=!r.issues.length;return r;});
- const pop=cut===null||a===null||b===null?{members:[],complete:false}:populationAt(cut,a,b,z.system_id,z.population_complete==='true',expected);
+ const pop=cut===null||cut>at||a===null||b===null?{members:[],complete:false}:populationAt(cut,a,b,z.system_id,z.population_complete==='true',expected);
  const popBound=pop.complete&&pop.members.every(x=>results.some(r=>r.valid&&r.family==='population_members'&&r.record_id===x.id));
  if(!popBound)es.push('REPORT_POPULATION_UNRECONCILED');
  if(!inputs.length||results.some(x=>!x.valid)||new Set(inputs.map(x=>x.values.family+'\0'+x.values.record_id)).size!==inputs.length)es.push('REPORT_INPUT_BINDINGS_UNRESOLVED');
@@ -34,7 +34,7 @@ function evaluator(w,rows,selected,ctx,p,evidence,populationAt){
  out.push({...z,complete:!es.length,input_bindings_complete:results.length>0&&results.every(x=>x.valid),population_complete:popBound,observed_members:pop.members.length,review_complete:reviewComplete,report_basis_sha256:digest,inputs:results,reviews,role_reviews:roleReviews,issues:uniq(es)});}
  caches.set(at,out);return out;}
  function dispatches(at){const v=ctx.view(at),out=[];
- for(const rr of v.current.dispatch_events){const z=rr.values,e=ctx.rowIssues(rr,at),t=time(z.effective_at),r=t===null?null:reports(t).find(x=>x.report_id===z.report_id),allowed=['sent','received','rejected','withdrawn','published'];
+ for(const rr of v.current.dispatch_events){const z=rr.values,e=ctx.rowIssues(rr,at),t=time(z.effective_at),r=t===null||t>at?null:reports(t).find(x=>x.report_id===z.report_id),allowed=['sent','received','rejected','withdrawn','published'];
  if(t===null||t>at||t>time(z.recorded_at)||!ctx.authority(z.actor_id,'report-dispatcher',z.system_id,t))e.push('DISPATCH_TIME_OR_AUTHORITY');
  if(!allowed.includes(z.event)||!r||r.system_id!==z.system_id||!z.recipient||!z.channel||!z.external_ref)e.push('DISPATCH_CONTEXT_UNRESOLVED');
  if(z.document_id!==r?.document_id||!ctx.doc(z.document_id,t))e.push('DISPATCH_REPORT_BYTES_UNRESOLVED');

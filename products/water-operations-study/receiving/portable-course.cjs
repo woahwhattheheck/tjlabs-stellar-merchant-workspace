@@ -1,6 +1,6 @@
 'use strict';
 // Assembled production browser/controller course with explicit DOM and atomic IndexedDB adapters.
-module.exports=async function installedCourse(files){
+module.exports=async function installedCourse(files,{progress=()=>{}}={}){
 const B=(()=>{const f=files,cache={};function req(path,from=""){if(path.startsWith(".")){const a=from.split("/");a.pop();for(const p of path.split("/"))if(p==="..")a.pop();else if(p!==".")a.push(p);path=a.join("/");}if(cache[path])return cache[path].exports;if(typeof f[path]!=="string")throw Error("Missing module "+path);const m={exports:{}};cache[path]=m;Function("module","exports","require",f[path])(m,m.exports,p=>req(p,path));return m.exports;}
 const strip=s=>s.replace(/^import .*;\s*$/gm,'').replace(/^export /gm,''),C=Function(strip(f["host/codec.mjs"])+";return {utf8Encode,utf8Decode,sha256Bytes,hashText,toBase64,fromBase64,gzipBytes,inflateGzip};")(),core=req("src/core-cache.cjs"),M=req("src/session-cache.cjs");
 const sessionFactory=Function(strip(f["src/session.mjs"])+";return createWaterOperationsStudySessionAPI;")(),sessions=sessionFactory(core,M,C),runtime=strip(f["runtime.mjs"]).replace(/^const core=[^\n]+$/m,'').replace(/^export \{[^\n]+$/m,'').replace(/^\{core,originalSessions,sessions,codec\};$/m,'');
@@ -30,14 +30,14 @@ async function loadFile(text,name,kind){await emit("change",{target:{dataset:{fi
 function formFor(key,base,kind,values){const fields=Object.entries(values).map(([path,value])=>({dataset:{path},value,multiple:false}));const form={dataset:{key,base:JSON.stringify(base),kind},querySelectorAll:()=>fields};for(const field of fields)field.closest=()=>form;return{form,fields};}
 async function submit(form){await emit("submit",{target:{closest:()=>form},preventDefault(){}});}
 await settle();return {B,window,document,nodes,handlers,downloads,memory,settle,emit,click,loadFile,formFor,submit,File};}
-const a=await boot(),checks=[],check=(v,name)=>{if(!v)throw Error(name);checks.push(name);};
+const a=await boot(),checks=[],check=(v,name)=>{if(!v)throw Error(name);checks.push(name);progress({check:name,count:checks.length});};
 await a.click({action:"course",course:"complete"});
 const authored=JSON.parse(files["examples/complete.study.json"]),baseline=B.core.analyze(authored).water;
 for(const view of JSON.parse(files["operator/desk.js"].match(/const views=(\[.*\]);/)[1]).map(x=>x[0])){await a.click({view});if(a.nodes.main.innerHTML.length<60)throw Error("View "+view);}check(true,"Every ordinary water and laboratory section renders through assembled production handlers");
 check(JSON.stringify(a.window.WaterDesk.assessment().result.water)===JSON.stringify(baseline),"Complete authored water, laboratory and report chronology and recurring work results remain exact");
 a.nodes["installed-actor"].value="Authored water operations operator";a.nodes["installed-actor"].oninput();await a.settle();
 const kind="assets",side="source",selectedSource=B.core.selected(a.window.WaterDesk.getSession().study,kind,side),sourceOriginal=a.window.WaterDesk.getSession().study.originals.find(x=>x.id===selectedSource.original_id),raw="\ufeff"+sourceOriginal.content.replace(/\r?\n/g,"\r\n"),key="intake:"+kind+":"+side;await a.loadFile(raw,"original-assets.csv","csv:"+kind+":"+side);check(a.window.WaterDesk.getSession().drafts[key].content===raw,"Complete pending asset CSV retains BOM and CRLF");
-let form=a.formFor(key,{},"intake",{available_at:selectedSource.available_at,label:"Known original unit source"});await a.submit(form.form);check(a.window.WaterDesk.getSession().study.originals.some(x=>x.content===raw),"Actual mapped unit import retains the entire original");
+let form=a.formFor(key,{},"intake",{available_at:selectedSource.available_at,label:"Known original unit source"});await a.submit(form.form);check(a.window.WaterDesk.getSession().study.originals.some(x=>x.content===raw),"Actual mapped asset import retains the entire original");
 await a.click({action:"course",course:"complete"});
 await a.click({view:"records"});await a.click({action:"record-kind",kind:"lab_report_inputs"});await a.click({action:"edit-record",index:"0"});let originalDraft=a.window.WaterDesk.getSession().drafts["record:lab_report_inputs:returned"],priorExtract=originalDraft.expected_extract_id;
 form=a.formFor("record:lab_report_inputs:returned",{},"record",{reason:"Exact original laboratory report-input retained before authored correction",at:"2026-10-15T14:00:00Z"});await a.emit("input",{target:form.fields[0]});await a.submit(form.form);

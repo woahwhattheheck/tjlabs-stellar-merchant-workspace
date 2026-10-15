@@ -17,5 +17,6 @@
     "Native and reversed source order reproduce identical HTML",
     "Native exports whole maintained source"
   ],
-  "output_count": 501
+  "output_count": 501,
+  "manifest_input": "Delivered manifest included; course excludes self-indexing when constructing its injected source manifest"
 }

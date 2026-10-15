@@ -1,5 +1,5 @@
 {
-  "execution": "Actual maintained full 24-path course plus the two retained final source-identity countercases executed on corrected modules",
+  "execution": "Actual maintained full 24-path course plus four retained final source-identity and chronology countercases executed on corrected modules",
   "checks": [
     {
       "name": "All36 source and returned families retain exact matched rows",
@@ -99,6 +99,14 @@
     },
     {
       "name": "Unresolved later task source cannot disappear behind an earlier completed state",
+      "passed": true
+    },
+    {
+      "name": "Invalid future dispatch timing remains an unresolved source record without crashing analysis",
+      "passed": true
+    },
+    {
+      "name": "Invalid future report cutoff remains incomplete without crashing historical population",
       "passed": true
     },
     {

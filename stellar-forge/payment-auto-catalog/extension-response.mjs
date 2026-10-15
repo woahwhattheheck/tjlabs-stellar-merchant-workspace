@@ -4,6 +4,7 @@
 // transport header by itself.
 
 export const EXTENSION_RESPONSES_HEADER = 'EXTENSION-RESPONSES';
+export const MAX_EXTENSION_RESPONSES_HEADER_BYTES = 16 * 1024;
 
 const STATUSES = new Set(['success', 'processing', 'rejected']);
 
@@ -58,6 +59,35 @@ function cloneJsonValue(value, ancestors = new WeakSet()) {
   } finally {
     ancestors.delete(value);
   }
+}
+
+function cloneJsonObjectWithout(value, omittedKey) {
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null)
+    throw new TypeError('Facilitator result must contain JSON values');
+  if (Object.getOwnPropertySymbols(value).length > 0)
+    throw new TypeError('Facilitator result must contain JSON values');
+
+  const ancestors = new WeakSet([value]);
+  const clone = {};
+  for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(value))) {
+    if (key === omittedKey) continue;
+    if (!descriptor.enumerable || !Object.hasOwn(descriptor, 'value'))
+      throw new TypeError('Facilitator result must contain JSON values');
+    Object.defineProperty(clone, key, {
+      configurable: true,
+      enumerable: true,
+      value: cloneJsonValue(descriptor.value, ancestors),
+      writable: true,
+    });
+  }
+  return clone;
+}
+
+function checkedMaxHeaderBytes(value) {
+  if (!Number.isSafeInteger(value) || value < 1)
+    throw new TypeError('maxHeaderBytes must be a positive safe integer');
+  return value;
 }
 
 function checkedReason(value) {
@@ -115,11 +145,84 @@ export function composeBazaarExtensionResponses(response, existingResponses = {}
 }
 
 /** Encode the complete keyed sidechannel object for an HTTP response header. */
-export function encodeBazaarExtensionResponses(response, existingResponses = {}) {
+export function encodeBazaarExtensionResponses(
+  response,
+  existingResponses = {},
+  { maxHeaderBytes = MAX_EXTENSION_RESPONSES_HEADER_BYTES } = {},
+) {
   const responses = composeBazaarExtensionResponses(response, existingResponses);
+  const value = Buffer.from(JSON.stringify(responses), 'utf8').toString('base64');
+  if (Buffer.byteLength(value, 'utf8') > checkedMaxHeaderBytes(maxHeaderBytes))
+    throw new RangeError('Encoded EXTENSION-RESPONSES exceeds maxHeaderBytes');
   return {
     name: EXTENSION_RESPONSES_HEADER,
-    value: Buffer.from(JSON.stringify(responses), 'utf8').toString('base64'),
+    value,
   };
+}
+
+function strictBase64Bytes(value) {
+  if (
+    value.length === 0 ||
+    value.length % 4 !== 0 ||
+    !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(value)
+  ) return undefined;
+  const bytes = Buffer.from(value, 'base64');
+  return bytes.toString('base64') === value ? bytes : undefined;
+}
+
+/**
+ * Decode the server-internal x402 facilitator sidechannel. A malformed or
+ * oversized header is transport metadata failure, not payment failure, so it
+ * is ignored exactly like a missing header.
+ */
+export function decodeExtensionResponsesHeader(
+  value,
+  { maxHeaderBytes = MAX_EXTENSION_RESPONSES_HEADER_BYTES } = {},
+) {
+  if (typeof value !== 'string') return undefined;
+  if (Buffer.byteLength(value, 'utf8') > checkedMaxHeaderBytes(maxHeaderBytes)) return undefined;
+
+  const bytes = strictBase64Bytes(value);
+  if (bytes === undefined) return undefined;
+  let parsed;
+  try {
+    const json = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    parsed = JSON.parse(json);
+  } catch {
+    return undefined;
+  }
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) return undefined;
+  try {
+    return cloneJsonValue(parsed);
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * Attach a decoded sidechannel to a verify or settle result without trusting
+ * an identically named response-body member or merging body `extensions`.
+ */
+export function attachFacilitatorExtensionResponses(result, headerValue, options) {
+  if (result === null || typeof result !== 'object' || Array.isArray(result))
+    throw new TypeError('Facilitator result must be a keyed object');
+  const attached = cloneJsonObjectWithout(result, 'extensionResponses');
+  const extensionResponses = decodeExtensionResponsesHeader(headerValue, options);
+  if (extensionResponses !== undefined) {
+    Object.defineProperty(attached, 'extensionResponses', {
+      configurable: true,
+      enumerable: true,
+      value: extensionResponses,
+      writable: true,
+    });
+  }
+  return attached;
+}
+
+/** Remove server-internal facilitator metadata before buyer serialization. */
+export function facilitatorResultForBuyer(result) {
+  if (result === null || typeof result !== 'object' || Array.isArray(result))
+    throw new TypeError('Facilitator result must be a keyed object');
+  return cloneJsonObjectWithout(result, 'extensionResponses');
 }
 
