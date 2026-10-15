@@ -48,15 +48,19 @@ for (const method of METHODS) {
   }
 }
 
-const invalidBodies = ['plain text', [], null];
+const invalidBodies = ['plain text', 0, false, [], null];
 const rejectedRuntime = [];
 for (const body of invalidBodies) {
-  const schema = typeof body === 'string' ? { type: 'string' } : Array.isArray(body) ? { type: 'array' } : { type: 'null' };
+  const schema = body === null
+    ? { type: 'null' }
+    : Array.isArray(body)
+      ? { type: 'array' }
+      : { type: typeof body };
   const result = validateBazaarExtension(extension({ body, bodySchema: schema }));
   assert.equal(result.ok, false);
   assert.equal(result.reason, 'BAZAAR_SCHEMA_CONTRACT_MISMATCH');
   assert.deepEqual(result.errors, ['INFO_HTTP_BODY_INVALID']);
-  rejectedRuntime.push(body === null ? 'null' : Array.isArray(body) ? 'array' : 'string');
+  rejectedRuntime.push(body === null ? 'null' : Array.isArray(body) ? 'array' : typeof body);
 }
 
 const permissive = validateBazaarExtension(extension({ bodySchema: {} }));
@@ -64,9 +68,21 @@ assert.equal(permissive.ok, false);
 assert.equal(permissive.reason, 'BAZAAR_SCHEMA_CONTRACT_MISMATCH');
 assert.deepEqual(permissive.errors, ['SCHEMA_HTTP_BODY_NOT_CONSTRAINED']);
 
+const mixedSchemaErrors = [];
+for (const type of ['number', 'boolean']) {
+  const mixed = validateBazaarExtension(extension({
+    bodySchema: { anyOf: [{ type: 'object' }, { type }] },
+  }));
+  assert.equal(mixed.ok, false);
+  assert.equal(mixed.reason, 'BAZAAR_SCHEMA_CONTRACT_MISMATCH');
+  assert.deepEqual(mixed.errors, ['SCHEMA_HTTP_BODY_NOT_CONSTRAINED']);
+  mixedSchemaErrors.push(type);
+}
+
 console.log(JSON.stringify({
   source: 'x402-foundation/x402@faa1c694c66a3732aaabbce93bdae140e521a67d',
   accepted,
   rejectedRuntime,
   rejectedSchema: permissive.errors[0],
+  rejectedMixedSchemas: mixedSchemaErrors,
 }));
