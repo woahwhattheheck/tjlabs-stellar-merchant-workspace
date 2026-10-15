@@ -1,7 +1,7 @@
 /* MIT. Offline production operator; pure domain API is the sole calculator. */
 (function(){"use strict";
 const C=globalThis.PlanningCodec,api=cachePlanningValidation(createPlanningAPI({encode:C.utf8Encode,decode:C.utf8Decode,sha256:t=>C.sha256Bytes(typeof t==="string"?C.utf8Encode(t):t),toBase64:C.toBase64,fromBase64:C.fromBase64}));
-const runtime={encode:C.utf8Encode,sha256:t=>C.sha256Bytes(typeof t==="string"?C.utf8Encode(t):t)},A=createArchiveAPI(api,runtime),baseSession=createSessionAPI(api,runtime),P=createOperatorArchive(baseSession,createArchiveAPI,api,runtime),S={...baseSession,receive:cachePlanningReceive(baseSession,P.receive)},repository=createPlanningStore(baseSession,A,runtime),V={esc,pretty,label,table,options,field,area,dataView,recordCSV,sourceTable};
+const runtime={encode:C.utf8Encode,sha256:t=>C.sha256Bytes(typeof t==="string"?C.utf8Encode(t):t)},archiveFactory=cachedPlanningArchiveFactory(createArchiveAPI),A=archiveFactory(api,runtime),baseSession=createSessionAPI(api,runtime),P=createOperatorArchive(baseSession,archiveFactory,api,runtime),S={...baseSession,receive:cachePlanningReceive(baseSession,P.receive)},repository=createPlanningStore(baseSession,A,runtime),V={esc,pretty,label,table,options,field,area,dataView,recordCSV,sourceTable};
 const $=id=>document.getElementById(id),now=()=>new Date().toISOString(),uid=()=>crypto.randomUUID(),clone=x=>JSON.parse(JSON.stringify(x));
 const sourceEnvelope=JSON.parse($("source-bank").textContent),sourceBytes=C.inflateGzip(C.fromBase64(sourceEnvelope.content_base64));
 if(sourceBytes.length!==sourceEnvelope.bytes||C.sha256Bytes(sourceBytes)!==sourceEnvelope.sha256)throw Error("Application source identity changed");

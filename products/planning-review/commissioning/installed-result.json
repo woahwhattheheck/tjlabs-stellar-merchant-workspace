@@ -1,6 +1,6 @@
 {
   "schema": "stellar-forge.planning-installed-receiving.v1",
-  "runtime": "Actual production source in V8 with explicit DOM/storage/byte/download adapters",
+  "runtime": "Actual maintained production source in V8 with explicit DOM, IndexedDB, byte and download adapters",
   "originalDomainChecks": 17,
   "model": {
     "originalChecks": 17,
@@ -15,6 +15,33 @@
     ],
     "originalRetry": true
   },
+  "controller": {
+    "productionControllerSource": true,
+    "fullPriorSessions": 5,
+    "sources": 12,
+    "editions": 4,
+    "proposals": 2,
+    "reviews": 4,
+    "unfinishedFieldsExact": true,
+    "allOriginalsExact": true,
+    "actualColdBootExact": true,
+    "zipMembers": 139,
+    "zipBytes": 5268123,
+    "zipSha256": "a1d99be57d0dc0b7ff2490b7079d9239907208d49c0a31cad21b2b7ad990f75c"
+  },
+  "rejectedCapacity": {
+    "capacity": 10000,
+    "originalIntakeBytes": 15000,
+    "wholePriorEditorUnchanged": true,
+    "displayRestored": true,
+    "originalSourceRejectedBeforeSelection": true
+  },
+  "finalAssembly": {
+    "exactCurrentSource": true,
+    "blankReady": true,
+    "cacheAndArchiveModulesAssembled": true,
+    "workingExport": true
+  },
   "capacityDomain": {
     "jobs": 250,
     "operations": 500,
@@ -23,6 +50,82 @@
     "sha256": "207d7f349731a83bbbe97709bca51a99aaab55f3207eda933e93d1386572acda",
     "rootSha256": "582c7b62cc380b8f1660f2b7d6527ee58bd9923f14e59880cd220b2dd19f196f"
   },
-  "originalControllerCourse": "Active complete original workflow through installed source",
-  "equippedReceiving": "D0BRUS0L36G/1792023737.575689"
+  "capacityRecoveryBefore": {
+    "jobs": 250,
+    "operations": 500,
+    "domainBytes": 6253645,
+    "domainSha256": "207d7f349731a83bbbe97709bca51a99aaab55f3207eda933e93d1386572acda",
+    "expandedRecoveryBytes": 31273950,
+    "proposalMetadataBytes": 7003,
+    "sharedOriginalObjects": 1,
+    "objectBytes": 1856986,
+    "pendingOriginalExact": true,
+    "conflictingProposalRetained": true,
+    "elapsedMs": 409661
+  },
+  "capacityRecoveryV2": {
+    "jobs": 250,
+    "operations": 500,
+    "perActionMs": {
+      "validate500Workspace": 9446,
+      "packBase": 8337,
+      "packPending": 15615,
+      "initialBrowserSave": 14766,
+      "samePageBrowserRead": 4039,
+      "newPageBrowserRead": 8171,
+      "competingBrowserSave": 4439,
+      "recoverSelectedHead": 228,
+      "openCompetingProposal": 220
+    },
+    "totalMs": 72683,
+    "sharedOriginalObjects": 1,
+    "objectBytes": 1856986,
+    "proposalMetadataBytes": 28853,
+    "expandedRecoveryBytes": 31295879,
+    "pendingOriginalExact": true,
+    "conflictingProposalRetained": true,
+    "coldRecoveryExact": true
+  },
+  "recoveryMigration": {
+    "legacyIdentityUntilPublication": true,
+    "oldRecordRetained": true,
+    "originalObjectsRetained": true,
+    "priorWriterRejectsUnknownV2": true,
+    "coldV2IdentityExact": true,
+    "legacyProposalReopenedExact": true,
+    "changedSourceRejected": true
+  },
+  "identityReuse": {
+    "digestBoundaryBytes": [
+      0,
+      55,
+      56,
+      63,
+      64,
+      65,
+      16384,
+      65537
+    ],
+    "mutatedByteInputRejected": true,
+    "changedArchiveObjectRejected": true,
+    "changedRecoveryRecordRejected": true,
+    "exactExpansionRetained": true
+  },
+  "capacityFullExport": {
+    "jobs": 250,
+    "operations": 500,
+    "sourceRoot": "582c7b62cc380b8f1660f2b7d6527ee58bd9923f14e59880cd220b2dd19f196f",
+    "productionControllerMeasure": true,
+    "priorFullSessions": 1,
+    "zipMembers": 127,
+    "zipBytes": 58043919,
+    "zipSha256": "609c549066fc7e44628fee534545815b8648372068fc10afc96eca6164f8b836",
+    "allOriginalsExact": true,
+    "fullWorkingAndEditableReopen": true,
+    "initialMeasureMs": 104408,
+    "repeatedMeasureMs": 54214,
+    "transportAndReopenMs": 118677,
+    "totalMs": 295246
+  },
+  "finalCapacityMeasure": "Final enlarged exact-byte-cache measurement in progress"
 }

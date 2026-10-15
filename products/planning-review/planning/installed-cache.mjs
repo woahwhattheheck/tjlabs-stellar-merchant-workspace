@@ -13,7 +13,7 @@ export function cachePlanningValidation(original,{maxBytes=32*1024*1024,maxEntri
   const key=JSON.stringify(w),entry=cache.get(key);if(entry){cache.delete(key);cache.set(key,entry);return entry.workspace;}
   return remember(original.validateWorkspace(w),key);
  }
- const api={...original,createWorkspace:(...a)=>remember(original.createWorkspace(...a)),validateWorkspace:checked,importWorkspace:raw=>remember(original.importWorkspace(raw))};
+ const api={...original,createWorkspace:(...a)=>remember(original.createWorkspace(...a)),validateWorkspace:checked,importWorkspace:raw=>{if(typeof raw==='string'){const key=raw.endsWith('\n')?raw.slice(0,-1):raw,entry=cache.get(key);if(entry){cache.delete(key);cache.set(key,entry);return entry.workspace;}}return remember(original.importWorkspace(raw));}};
  for(const name of ['addSource','saveEdition','propose'])api[name]=(w,...a)=>{const out=original[name](checked(w),...a);remember(out.workspace);return out;};
  api.review=(w,...a)=>remember(original.review(checked(w),...a));
  for(const name of ['readSource','inspectSource','mapRows','compare','proposalStatus','handoff','exportWorkspace'])api[name]=(w,...a)=>original[name](checked(w),...a);

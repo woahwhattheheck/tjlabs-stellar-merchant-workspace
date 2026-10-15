@@ -46,7 +46,7 @@ function createManagedSession({C,S,config,getSession,setSession,render,notice,do
   if(result.conflict)throw Error('Another opening saved the browser head. This complete proposal is independently retained below; explicitly select this branch or receive the saved recovery.');
   lastStored=result.sha256;
  }
- function persist(){if(!ready)return Promise.resolve();dirtyPersistence=true;const work=tail.then(async()=>{const value=shell();await savedDB(value);dirtyPersistence=hash(shell())!==hash(value);status();});tail=work.catch(()=>{});return work.catch(e=>{status('Complete session remains in this tab; browser persistence needs attention: '+e.message);throw e;});}
+ function persist(){if(!ready)return Promise.resolve();dirtyPersistence=true;const work=tail.then(async()=>{const value=shell();await savedDB(value);dirtyPersistence=JSON.stringify(shell())!==JSON.stringify(value);status();});tail=work.catch(()=>{});return work.catch(e=>{status('Complete session remains in this tab; browser persistence needs attention: '+e.message);throw e;});}
  async function finish(result){
   if(!['COMMITTED','REJECTED_NOT_COMMITTED'].includes(result.outcome))throw Error('Original request remains unresolved');
   if(result.record.requestSha256!==hash(pending)||JSON.stringify(result.record.request)!==JSON.stringify(pending))throw Error('Original request outcome identity differs');
@@ -78,7 +78,7 @@ function createManagedSession({C,S,config,getSession,setSession,render,notice,do
   db=await recoveryStorage.open();
   const selected=await recoveryStorage.read(db,key),prior=selected.value;proposals=await recoveryStorage.list(db,key);
   const current=await api('/api/state');if(current.installationId!==key)throw Error('The managed installation identity changed');
-  lastStored=prior?hash(prior):null;
+  lastStored=selected.sha256;
   if(prior){validateRecovery(prior);state=prior.baseState;pending=prior.pending;history=prior.history;branches=prior.branches||[];needsRefresh=!!prior.needsRefresh;setSession(S.receive(JSON.stringify(prior.carrier)));if(!pending&&state.sha256!==current.sha256)needsRefresh=true;}
   else{state=current;setSession(S.receive(JSON.stringify(current.carrier)));}
   ready=true;render();status();if(pending)notice('An exact original request is pending. Recover it with the current listener.');

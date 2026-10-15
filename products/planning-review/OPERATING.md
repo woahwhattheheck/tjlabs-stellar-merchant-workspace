@@ -55,3 +55,9 @@ Distribution selection planning-review installs both planning-workspace and plan
 ## Repeated validation
 
 The installed adapter reuses only immutable workspaces produced by the unchanged domain engine, keyed by complete serialized content, within 32 MiB/24 entries. Complete-carrier receive uses an additional bounded 64 MiB/eight-entry exact-content cache; it returns the original session copy semantics, preserving immutable workspace/backup originals and independent mutable drafts. Modified input selects a different key and undergoes original validation. These caches serve repeated reads and recovery without changing calculations or request authority.
+
+## Complete recovery and repeat-operation cost
+
+Internal browser proposals use a v2 content-bound record: the complete editable metadata and every immutable original workspace identity determine the selected head. Original v1 rows keep their existing identity until a successful atomic successor publication, and stay independently reopenable. An earlier binary rejects an unknown v2 record. Full recovery JSON, saved requests and external working/session formats retain all originals and fields.
+
+Archive reuse compares complete input JSON, digest reuse compares every byte, and reopened object reuse compares complete archive content and metadata. These caches have fixed memory limits; mutable input changes miss the cache and receive original validation. Complete source bank assembly includes the validation and archive adapters before the operator controller. Source and editable exports retain all maintained files, including the preceding codec.
