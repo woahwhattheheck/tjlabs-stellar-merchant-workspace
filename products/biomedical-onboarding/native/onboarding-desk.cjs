@@ -1,0 +1,36 @@
+#!/usr/bin/env node
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+const Core=require('../core.cjs'),M=require('../session.cjs'),ZIP=require('../zip.cjs'),CSV=require('../csv.cjs'),Migrate=require('../migrate.cjs');
+const root=path.resolve(__dirname,'..'),args=process.argv.slice(2),command=args.shift(),opts={};
+while(args.length){const k=args.shift();if(!k.startsWith('--')||!args.length)throw Error('Use --key value options');opts[k.slice(2)]=args.shift();}
+const required=k=>{if(!opts[k])throw Error('Missing --'+k);return opts[k];};
+const read=p=>new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(fs.readFileSync(p));
+const parseText=text=>JSON.parse(text.charCodeAt(0)===0xfeff?text.slice(1):text),parse=p=>parseText(read(p));
+function load(){const x=parse(required('in'));if(x.schema==='biomed.onboarding-study/v1'||x.schema==='biomed.onboarding-session/v1')throw Error('Use migrate-v1 explicitly; the exact prior file will be retained.');return x.schema===M.SCHEMA?M.validate(x):M.create(Core.validate(x));}
+function write(p,data){const dest=path.resolve(p);fs.mkdirSync(path.dirname(dest),{recursive:true});const b=Buffer.from(data);if(fs.existsSync(dest)){if(fs.readFileSync(dest).equals(b))return;throw Error('Refusing to replace an existing different file: '+dest);}const tmp=dest+'.partial-'+crypto.randomUUID();fs.writeFileSync(tmp,b,{flag:'wx'});try{fs.linkSync(tmp,dest);}finally{fs.unlinkSync(tmp);}}
+function save(s){M.validate(s);write(required('out'),Core.json(s));process.stdout.write(Core.json({session_id:s.id,revision:s.revision,study_id:s.study.id,sha256:M.hash(s),output:path.resolve(opts.out)}));}
+function sourceFiles(){const manifest=parse(path.join(root,'SOURCE_MANIFEST.json'));return manifest.files.map(x=>{const p=path.resolve(root,x.path);if(!p.startsWith(root+path.sep))throw Error('Unsafe source path');const content=read(p),sha=crypto.createHash('sha256').update(content).digest('hex');if(sha!==x.sha256)throw Error('Source changed: '+x.path);return{path:x.path,content};}).concat([{path:'SOURCE_MANIFEST.json',content:read(path.join(root,'SOURCE_MANIFEST.json'))}]);}
+try{
+ if(command==='new')save(M.create(Core.empty(opts.label||'New onboarding study')));
+ else if(command==='course'){const kind=required('kind');if(!['first','corrected'].includes(kind))throw Error('Choose first or corrected');save(M.create(parse(path.join(root,'examples',kind+'.study.json'))));}
+ else if(command==='inspect'){const s=load();process.stdout.write(Core.json({session_id:s.id,revision:s.revision,unfinished_forms:Object.keys(s.drafts),retained_branches:s.backups.length,comparison:Core.analyze(s.study)}));}
+ else if(command==='set-config'){const s=load(),st=Core.clone(s.study),key=required('field');if(!['label','data_class','source_scope','returned_scope','authority_notes'].includes(key))throw Error('Unknown editable configuration field');st.config[key]=required('value');save(M.checkpoint(s,st,'CLI scope '+key));}
+ else if(command==='import-csv'){const s=load(),p=required('file'),kind=required('kind'),side=required('side'),content=read(p),mapping=opts.mapping?parse(opts.mapping):Object.fromEntries((Core.FIELDS[kind]||[]).map(k=>[k,Core.inspectCSV(content).header.includes(k)?k:'']));save(M.checkpoint(s,Core.importExtract(s.study,{kind,side,name:path.basename(p),content,mapping,label:opts.label||path.basename(p),at:opts.at||new Date().toISOString()}),'CLI original CSV and mapping'));}
+ else if(command==='select'){const s=load();save(M.checkpoint(s,Core.choose(s.study,required('kind'),required('side'),required('extract')),'CLI selected extract'));}
+ else if(command==='crosswalk'){const s=load(),t=CSV.table(read(required('file')));for(const k of ['source_id','target_id'])if(!t.header.includes(k))throw Error('Crosswalk CSV requires '+k);const si=t.header.indexOf('source_id'),ti=t.header.indexOf('target_id');save(M.checkpoint(s,Core.crosswalk(s.study,required('kind'),t.rows.map(r=>({source_id:r.values[si],target_id:r.values[ti]}))),'CLI explicit identity map'));}
+ else if(command==='match-ids'){const s=load();save(M.checkpoint(s,Core.matchIds(s.study,required('kind')),'CLI add unique exact-ID maps'));}
+ else if(command==='add-document'){const s=load(),p=required('file');save(M.checkpoint(s,Core.addDocument(s.study,{name:path.basename(p),media_type:opts.type||'application/octet-stream',bytes:new Uint8Array(fs.readFileSync(p)),at:opts.at||new Date().toISOString(),notes:opts.notes||''}),'CLI retain exact document'));}
+ else if(command==='link-document'){const s=load();save(M.checkpoint(s,Core.linkDocument(s.study,{side:required('side'),report_id:required('report'),document_id:required('document'),notes:opts.notes||''}),'CLI report-document identity'));}
+ else if(command==='unlink-document'){const s=load();save(M.checkpoint(s,Core.unlinkDocument(s.study,{side:required('side'),report_id:required('report'),document_id:required('document')}),'CLI remove exact report-document link'));}
+ else if(command==='review'){const s=load();save(M.recordReview(s,{study_sha256:required('digest'),reviewer:required('reviewer'),at:opts.at||new Date().toISOString(),decision:required('decision'),notes:opts.notes||''}));}
+ else if(command==='import-session'){const s=load(),x=parse(required('file'));save(x.schema===M.SCHEMA?M.takeSession(s,M.validate(x),'CLI complete session replacement'):M.use(s,Core.validate(x),'CLI study replacement'));}
+ else if(command==='migrate-v1'){const p=required('file'),text=read(p);save(Migrate.migrate(parseText(text),text,path.basename(p),opts.at||new Date().toISOString()));}
+ else if(command==='restore-edition'){const s=load(),h=s.history[Number(required('index'))];if(!h)throw Error('Unknown study edition');save(M.use(s,M.historyStudy(s,h),'CLI restore prior study'));}
+ else if(command==='open-branch'){const s=load(),b=s.backups.find(x=>x.hash===required('hash'));if(!b)throw Error('Unknown retained branch');save(M.takeSession(s,M.branchSession(s,b),'CLI open prior complete branch'));}
+ else if(command==='export'){const s=load(),files=M.exports(s);write(required('out'),ZIP.write(files));process.stdout.write(Core.json({output:path.resolve(opts.out),files:files.map(x=>x.path),comparison:Core.analyze(s.study).comparison_state}));}
+ else if(command==='export-directory'){const s=load(),dest=path.resolve(required('out'));if(fs.existsSync(dest))throw Error('Choose a new export directory');fs.mkdirSync(dest,{recursive:true});for(const x of M.exports(s))write(path.join(dest,x.path),x.bytes===undefined?x.content:new Uint8Array(x.bytes));process.stdout.write(dest+'\n');}
+ else if(command==='build-html'){write(required('out'),require('../operator/render-desk.cjs').renderDesk(sourceFiles()));process.stdout.write(path.resolve(opts.out)+'\n');}
+ else if(command==='source-zip')write(required('out'),ZIP.write(sourceFiles()));
+ else {process.stdout.write('Biomedical Onboarding Desk — Node 18+\nCommands: new, course, inspect, set-config, import-csv, select, crosswalk, match-ids, add-document, link-document, unlink-document, review, import-session, migrate-v1, restore-edition, open-branch, export, export-directory, build-html, source-zip. See NATIVE.md.\n');if(command)process.exitCode=2;}
+}catch(e){process.stderr.write(e.message+'\n');process.exitCode=1;}

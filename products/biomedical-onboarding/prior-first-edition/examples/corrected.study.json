@@ -1,0 +1,281 @@
+{
+  "schema": "biomed.onboarding-study/v1",
+  "id": "authored-biomed-course",
+  "config": {
+    "label": "Authored onboarding course — repair, loaner and repeat visit",
+    "data_class": "authored_course",
+    "source_scope": "Two fictional facilities, three fictional assets, three recorded administrative events. No clinical readings or real maintenance decisions.",
+    "returned_scope": "Corrected authored edition of the same two facilities, three assets and three events; all originals and first returned editions retained.",
+    "authority_notes": "Authored data exercise. Literal status/due-date values are comparison fixtures, not maintenance recommendations.",
+    "selection": {
+      "source": {
+        "facilities": "extract-a0ea3ccfcd8c46bf551151795ccfa5ec",
+        "assets": "extract-faa2f5e5ba2659de3e8610366717d2e1",
+        "events": "extract-a65a114d57c74a658dfd1e8e90c95911"
+      },
+      "returned": {
+        "facilities": "extract-0a9f8493d662db963ba841afa83741f7",
+        "assets": "extract-7bd10c6bea51324b91559dd1f6c0e076",
+        "events": "extract-5f027cdf19c5debef3f3cd2ab24f8f9a"
+      }
+    }
+  },
+  "originals": [
+    {
+      "id": "original-1743d848edec50cea1beb49ea13495ea",
+      "name": "authored-source-facilities.csv",
+      "content": "﻿id,name,address\r\nF1,Example outpatient site,Example North\r\nF2,Example depot,Example South\r\n",
+      "sha256": "0be23c074c9e7d2f665029109dc8529e509af08115b5d253bcd31de08f7379fc",
+      "captured_at": "2026-10-15T00:00:00Z"
+    },
+    {
+      "id": "original-d724ca5b3426e0fffd9a9b0d78edeab1",
+      "name": "authored-source-assets.csv",
+      "content": "﻿id,facility_id,tag,serial,manufacturer,model,status,next_due,procedure_ref\r\nA1,F1,FAC-001,SER-001,Example maker,Model-X,recorded_active,2027-01-09,PROC-SOURCE-A\r\nA2,F1,FAC-002,SER-002,Example maker,Model-Y,recorded_in_service,2027-02-10,PROC-SOURCE-B\r\nL1,F2,LOAN-001,LOAN-SER-1,Example maker,Model-Z,recorded_loaner,2027-03-11,PROC-SOURCE-C\r\n",
+      "sha256": "348fd15e895efe31a8a9cede104f462def94afcc79779b64b5fc2b30093b6190",
+      "captured_at": "2026-10-15T00:00:00Z"
+    },
+    {
+      "id": "original-0c3c05e4717e212acf042b6fc29d3814",
+      "name": "authored-source-events.csv",
+      "content": "﻿id,asset_id,event_type,performed_at,recorded_due,status,report_ref,procedure_ref,findings_text,technician_ref\r\nE1,A1,recorded_visit,2026-09-10,2027-01-09,recorded_complete,REPORT-1,PROC-SOURCE-A,Recorded administrative note only; see original report.,TECH-A\r\nE2,A2,recorded_repair,2026-09-11,2027-02-10,recorded_follow_up,REPORT-2,PROC-SOURCE-B,Parts follow-up recorded by source.,TECH-B\r\nE3,A2,recorded_return_visit,2026-09-13,2027-02-10,recorded_complete,REPORT-3,PROC-SOURCE-B,Return visit exists as a separate source event.,TECH-B\r\n",
+      "sha256": "05dabfecb232e3d7241ef7cb0c7bb8ada41b62537fe598abbc006397f3d9eaf3",
+      "captured_at": "2026-10-15T00:00:00Z"
+    },
+    {
+      "id": "original-97b522aceb94fdc8e41519ab1c3a6401",
+      "name": "authored-first-returned-facilities.csv",
+      "content": "id,name,address\r\nRF1,Example outpatient site,Example North\r\nRF2,Example depot,Example South\r\n",
+      "sha256": "9092f35580658d9490afff0138eecee57ac909e5c40f0d7e091ab19b5e06dfd1",
+      "captured_at": "2026-10-15T00:01:00Z"
+    },
+    {
+      "id": "original-a927e4c849cf3c7088a53efb5f00e4d0",
+      "name": "authored-first-returned-assets.csv",
+      "content": "id,facility_id,tag,serial,manufacturer,model,status,next_due,procedure_ref\r\nRA1,RF1,FAC-001,SER-001,Example maker,Model-X,recorded_active,2027-01-09,PROC-SOURCE-A\r\nRA2,RF2,FAC-002,SER-002-changed,Example maker,Model-Y,recorded_in_service,2027-02-10,PROC-SOURCE-B\r\nRL1,RF2,LOAN-001,LOAN-SER-1,Example maker,Model-Z,recorded_loaner,2027-03-11,PROC-SOURCE-C\r\n",
+      "sha256": "27751d5f895a04c2016a1d05c5fcb545c9e72dcbaace14cc0a3b691368af5825",
+      "captured_at": "2026-10-15T00:01:00Z"
+    },
+    {
+      "id": "original-abe455f16508dc2aa9ccb04beeb098e4",
+      "name": "authored-first-returned-events.csv",
+      "content": "id,asset_id,event_type,performed_at,recorded_due,status,report_ref,procedure_ref,findings_text,technician_ref\r\nRE1,RA1,recorded_visit,2026-09-10,2027-01-09,recorded_complete,REPORT-1,PROC-SOURCE-A,Recorded administrative note only; see original report.,TECH-A\r\nRE2,RL1,recorded_repair,2026-09-11,2027-02-10,recorded_follow_up,REPORT-2,PROC-SOURCE-B,Parts follow-up recorded by source.,TECH-B\r\nRE3,RA2,recorded_return_visit,2026-09-14,2027-02-10,recorded_complete,,PROC-SOURCE-B,Return visit exists as a separate source event.,TECH-B\r\n",
+      "sha256": "8bd344cc2b13c2bf467dbad0dccc8a84d91baa685c593cc872a0f1c2a4fa4189",
+      "captured_at": "2026-10-15T00:01:00Z"
+    },
+    {
+      "id": "original-04b8529640b3733c3d893a6232cc5845",
+      "name": "authored-corrected-returned-facilities.csv",
+      "content": "id,name,address\r\nRF1,Example outpatient site,Example North\r\nRF2,Example depot,Example South\r\n",
+      "sha256": "9092f35580658d9490afff0138eecee57ac909e5c40f0d7e091ab19b5e06dfd1",
+      "captured_at": "2026-10-15T00:02:00Z"
+    },
+    {
+      "id": "original-e6019862e7d2301e0681ecd8dcc45762",
+      "name": "authored-corrected-returned-assets.csv",
+      "content": "id,facility_id,tag,serial,manufacturer,model,status,next_due,procedure_ref\r\nRA1,RF1,FAC-001,SER-001,Example maker,Model-X,recorded_active,2027-01-09,PROC-SOURCE-A\r\nRA2,RF1,FAC-002,SER-002,Example maker,Model-Y,recorded_in_service,2027-02-10,PROC-SOURCE-B\r\nRL1,RF2,LOAN-001,LOAN-SER-1,Example maker,Model-Z,recorded_loaner,2027-03-11,PROC-SOURCE-C\r\n",
+      "sha256": "ceff9ffc08f093b277f86a9d56c970019ff221ecd74ac80134c5da6a3464f771",
+      "captured_at": "2026-10-15T00:02:00Z"
+    },
+    {
+      "id": "original-06521a062ec3cc7c33f4fff2028554ac",
+      "name": "authored-corrected-returned-events.csv",
+      "content": "id,asset_id,event_type,performed_at,recorded_due,status,report_ref,procedure_ref,findings_text,technician_ref\r\nRE1,RA1,recorded_visit,2026-09-10,2027-01-09,recorded_complete,REPORT-1,PROC-SOURCE-A,Recorded administrative note only; see original report.,TECH-A\r\nRE2,RA2,recorded_repair,2026-09-11,2027-02-10,recorded_follow_up,REPORT-2,PROC-SOURCE-B,Parts follow-up recorded by source.,TECH-B\r\nRE3,RA2,recorded_return_visit,2026-09-13,2027-02-10,recorded_complete,REPORT-3,PROC-SOURCE-B,Return visit exists as a separate source event.,TECH-B\r\n",
+      "sha256": "153a7d09b262a6528f4adf1df02f800fc151c54f8ab0ec53f2f9ea5fb38d647f",
+      "captured_at": "2026-10-15T00:02:00Z"
+    }
+  ],
+  "extracts": [
+    {
+      "id": "extract-a0ea3ccfcd8c46bf551151795ccfa5ec",
+      "kind": "facilities",
+      "side": "source",
+      "original_id": "original-1743d848edec50cea1beb49ea13495ea",
+      "mapping": {
+        "id": "id",
+        "name": "name",
+        "address": "address"
+      },
+      "label": "authored-source-facilities.csv"
+    },
+    {
+      "id": "extract-faa2f5e5ba2659de3e8610366717d2e1",
+      "kind": "assets",
+      "side": "source",
+      "original_id": "original-d724ca5b3426e0fffd9a9b0d78edeab1",
+      "mapping": {
+        "id": "id",
+        "facility_id": "facility_id",
+        "tag": "tag",
+        "serial": "serial",
+        "manufacturer": "manufacturer",
+        "model": "model",
+        "status": "status",
+        "next_due": "next_due",
+        "procedure_ref": "procedure_ref"
+      },
+      "label": "authored-source-assets.csv"
+    },
+    {
+      "id": "extract-a65a114d57c74a658dfd1e8e90c95911",
+      "kind": "events",
+      "side": "source",
+      "original_id": "original-0c3c05e4717e212acf042b6fc29d3814",
+      "mapping": {
+        "id": "id",
+        "asset_id": "asset_id",
+        "event_type": "event_type",
+        "performed_at": "performed_at",
+        "recorded_due": "recorded_due",
+        "status": "status",
+        "report_ref": "report_ref",
+        "procedure_ref": "procedure_ref",
+        "findings_text": "findings_text",
+        "technician_ref": "technician_ref"
+      },
+      "label": "authored-source-events.csv"
+    },
+    {
+      "id": "extract-b1a094f071cd0e7a57bd1c756d1803cc",
+      "kind": "facilities",
+      "side": "returned",
+      "original_id": "original-97b522aceb94fdc8e41519ab1c3a6401",
+      "mapping": {
+        "id": "id",
+        "name": "name",
+        "address": "address"
+      },
+      "label": "authored-first-returned-facilities.csv"
+    },
+    {
+      "id": "extract-7a7d24286d0a52851c4c9d2023d15547",
+      "kind": "assets",
+      "side": "returned",
+      "original_id": "original-a927e4c849cf3c7088a53efb5f00e4d0",
+      "mapping": {
+        "id": "id",
+        "facility_id": "facility_id",
+        "tag": "tag",
+        "serial": "serial",
+        "manufacturer": "manufacturer",
+        "model": "model",
+        "status": "status",
+        "next_due": "next_due",
+        "procedure_ref": "procedure_ref"
+      },
+      "label": "authored-first-returned-assets.csv"
+    },
+    {
+      "id": "extract-b883af79990f5ae619d30da3be835794",
+      "kind": "events",
+      "side": "returned",
+      "original_id": "original-abe455f16508dc2aa9ccb04beeb098e4",
+      "mapping": {
+        "id": "id",
+        "asset_id": "asset_id",
+        "event_type": "event_type",
+        "performed_at": "performed_at",
+        "recorded_due": "recorded_due",
+        "status": "status",
+        "report_ref": "report_ref",
+        "procedure_ref": "procedure_ref",
+        "findings_text": "findings_text",
+        "technician_ref": "technician_ref"
+      },
+      "label": "authored-first-returned-events.csv"
+    },
+    {
+      "id": "extract-0a9f8493d662db963ba841afa83741f7",
+      "kind": "facilities",
+      "side": "returned",
+      "original_id": "original-04b8529640b3733c3d893a6232cc5845",
+      "mapping": {
+        "id": "id",
+        "name": "name",
+        "address": "address"
+      },
+      "label": "authored-corrected-returned-facilities.csv"
+    },
+    {
+      "id": "extract-7bd10c6bea51324b91559dd1f6c0e076",
+      "kind": "assets",
+      "side": "returned",
+      "original_id": "original-e6019862e7d2301e0681ecd8dcc45762",
+      "mapping": {
+        "id": "id",
+        "facility_id": "facility_id",
+        "tag": "tag",
+        "serial": "serial",
+        "manufacturer": "manufacturer",
+        "model": "model",
+        "status": "status",
+        "next_due": "next_due",
+        "procedure_ref": "procedure_ref"
+      },
+      "label": "authored-corrected-returned-assets.csv"
+    },
+    {
+      "id": "extract-5f027cdf19c5debef3f3cd2ab24f8f9a",
+      "kind": "events",
+      "side": "returned",
+      "original_id": "original-06521a062ec3cc7c33f4fff2028554ac",
+      "mapping": {
+        "id": "id",
+        "asset_id": "asset_id",
+        "event_type": "event_type",
+        "performed_at": "performed_at",
+        "recorded_due": "recorded_due",
+        "status": "status",
+        "report_ref": "report_ref",
+        "procedure_ref": "procedure_ref",
+        "findings_text": "findings_text",
+        "technician_ref": "technician_ref"
+      },
+      "label": "authored-corrected-returned-events.csv"
+    }
+  ],
+  "crosswalks": [
+    {
+      "kind": "facilities",
+      "source_id": "F1",
+      "target_id": "RF1"
+    },
+    {
+      "kind": "facilities",
+      "source_id": "F2",
+      "target_id": "RF2"
+    },
+    {
+      "kind": "assets",
+      "source_id": "A1",
+      "target_id": "RA1"
+    },
+    {
+      "kind": "assets",
+      "source_id": "A2",
+      "target_id": "RA2"
+    },
+    {
+      "kind": "assets",
+      "source_id": "L1",
+      "target_id": "RL1"
+    },
+    {
+      "kind": "events",
+      "source_id": "E1",
+      "target_id": "RE1"
+    },
+    {
+      "kind": "events",
+      "source_id": "E2",
+      "target_id": "RE2"
+    },
+    {
+      "kind": "events",
+      "source_id": "E3",
+      "target_id": "RE3"
+    }
+  ],
+  "reviews": [],
+  "notes": ""
+}

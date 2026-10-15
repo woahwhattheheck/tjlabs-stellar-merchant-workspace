@@ -1,0 +1,93 @@
+{
+  "schema": "biomedical.installed-receiving.v1",
+  "runtime": "Actual production modules and assembled controller through explicit DOM/IndexedDB adapters",
+  "original": {
+    "schema": "biomed.complete-course/v1",
+    "checks": 16,
+    "passed": [
+      "Equal row counts expose nine real field/link changes",
+      "Corrected fields and linked attachment bytes agree",
+      "All three rounds of eight originals and three authored documents retained",
+      "Moved equipment preserves historical location and observed blank serial",
+      "Changed returned attachment is compared by retained SHA sets",
+      "No attachment bytes on either side remains visibly unobserved",
+      "Complete pending mappings and independent prior branch survive serialization",
+      "A pending earlier-digest review cannot sign a later study",
+      "Latest same-digest revision request supersedes acceptance",
+      "Explicit v1 migration retains complete forms/branches and leaves new kinds unselected",
+      "Migrated history retains exact original reason, timestamp and study pairing",
+      "Exact original v1 envelope survives migration unchanged",
+      "Quoted CR and CRLF source spans count accurately without changing text",
+      "Complete export includes availability manifest and exact binary documents",
+      "Migration explicitly distinguishes unobserved added columns from observed blank cells",
+      "Full replacement retains prior current session and migrated original"
+    ],
+    "initial_differences": 9,
+    "corrected_differences": 0,
+    "export_files": 53,
+    "zip_bytes": 195293,
+    "session_bytes": 73595
+  },
+  "model": {
+    "schema": "biomedical.installed-model-course.v1",
+    "checks": [
+      "Source-bound review and exact binary document use original full-chain core",
+      "Native actions retain unfinished original forms and emergency-only input",
+      "Original request retry preserves later selected full session",
+      "Complete pinned domain read surface preserves exact row lineage and report-byte findings",
+      "New study retains complete prior compact session and its emergency-only forms"
+    ],
+    "sequence": 2,
+    "originals": 16
+  },
+  "controller": {
+    "schema": "biomedical.installed-controller-course.v1",
+    "checks": [
+      "Assembled original first course shows nine source/relationship differences",
+      "Invalid original CSV is retained without selecting a partial study",
+      "BOM, quoted values and CRLF remain exact in the unfinished source mapping",
+      "Applied browser intake retains exact original bytes through the shared core",
+      "Corrected complete course retains all eight record families and exact report-byte agreement",
+      "Browser retains arbitrary binary report bytes exactly",
+      "Source-bound operator review uses the original full study digest",
+      "Unfinished form strings remain complete",
+      "Installed working export retains unfinished original forms and compact history",
+      "New study retains complete previous editor",
+      "Complete installed carrier reopens original binary files and unfinished forms",
+      "Actual installed local recovery reopens selected complete working state"
+    ],
+    "originals": 24,
+    "documents": 4,
+    "backups": 8
+  },
+  "capacity": {
+    "schema": "biomedical.installed-capacity-course.v1",
+    "maxBytes": 107542,
+    "completeEditorBytes": 107030,
+    "selectedStudyPreserved": true,
+    "completeIncomingFilePreserved": true,
+    "completeEmergencyExport": "Biomedical_Onboarding_Complete_Emergency.json",
+    "productionInstalledLimit": 134217728,
+    "originalSessionLimit": 41943040
+  },
+  "recovery": {
+    "schema": "biomedical.installed-recovery-course.v1",
+    "proposals": 3,
+    "objects": 1,
+    "checks": [
+      "Complete pending request and compact original session reopen exactly",
+      "Competing proposal retained without changing selected head",
+      "Explicit adoption retains complete previous recovery",
+      "Explicit native v1 migration retains exact BOM-bearing original and displaced session"
+    ]
+  },
+  "mcp": {
+    "schema": "biomedical.installed-mcp-course.v1",
+    "declaredExactInputs": 16,
+    "recordFamilies": 8,
+    "commands": 24,
+    "findings": 0,
+    "pagedSourceRows": true,
+    "completeOriginals": 16
+  }
+}

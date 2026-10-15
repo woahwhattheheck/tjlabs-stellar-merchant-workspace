@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "biomedical-onboarding",
+  "description": "Complete administrative source/return comparison with eight record families, exact report files, named reviews and recoverable editable sessions",
+  "components": [
+    "products/biomedical-onboarding"
+  ],
+  "commands": {
+    "biomedical-workspace": "products/biomedical-onboarding/installed-cli.mjs",
+    "biomedical-managed": "products/biomedical-onboarding/managed.mjs"
+  },
+  "commandDescriptions": {
+    "biomedical-workspace": "Create, receive and export complete Biomedical Onboarding sessions",
+    "biomedical-managed": "Open the managed Biomedical Onboarding operator through Applications"
+  },
+  "exports": {
+    "./products/biomedical": "./source/products/biomedical-onboarding/runtime.mjs",
+    "./products/biomedical/client": "./source/products/biomedical-onboarding/host/client.mjs",
+    "./products/biomedical/server": "./source/products/biomedical-onboarding/host/server.mjs"
+  },
+  "applicationProviders": {
+    "biomedical-onboarding": "products/biomedical-onboarding/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "biomedical-onboarding": "products/biomedical-onboarding/merchant-provider.mjs"
+  }
+}
