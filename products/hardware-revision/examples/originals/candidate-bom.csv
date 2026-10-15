@@ -1,6 +1,0 @@
-child_part_number,qty,uom,refdes,notes
-AUTH-MCU-001,1,each,U1,Authored only
-AUTH-CONN-4,1,each,J1,
-AUTH-R-10K,2,each,"R101,R2",Two per assembly
-AUTH-C-220N,1,each,C1,
-AUTH-DUAL-001,1,each,U2,Two schematic units in one package

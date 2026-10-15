@@ -1,2 +1,0 @@
-cost_payment_id,project_id,cost_invoice_id,external_transaction_id,processor,event_type,amount,currency,effective_at,recorded_at,available_at,reverses_id,allocation_group,source_ref,transaction_amount
-CP1,P1,CI1,supplier-bank-1,authored-bank,payment,500,EUR,2026-08-10T12:00:00Z,2026-08-10T12:00:00Z,2026-08-10T12:00:00Z,,,authored/cost_payments/CP1,500

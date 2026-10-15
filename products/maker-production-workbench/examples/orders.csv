@@ -1,3 +1,0 @@
-order_id,product_id,quantity,due_date,due_basis,transit_days,source_ref
-O-MUG,MUG,12,2026-11-02,delivery,2,Authored accepted order not a public lead-time promise
-O-PLATE,PLATE,8,2026-10-29,ship,0,Authored accepted ship date

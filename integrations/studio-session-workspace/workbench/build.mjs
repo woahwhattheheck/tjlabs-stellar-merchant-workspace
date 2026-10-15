@@ -1,5 +1,0 @@
-function buildStudioSessionDesk({files,workspace}){
- const tokens={"__STYLE__":files["workbench/style.css"],"__WORKSPACE_JSON__":JSON.stringify(workspace).replace(/</g,"\\u003c"),"__RUNTIME__":[files["vendor/archive-codec.js"],files["studio-session-core.js"],files["workbench/studio-workspace.js"],files["workbench/browser-store.js"],files["workbench/operator.js"],"const codec=createArchiveCodec();const api=createStudioSessionCore({codec});const model=createStudioSessionWorkspace(api,codec);const initial=JSON.parse(document.getElementById('workspace-data').textContent);const store=createStudioCopyStore(globalThis.indexedDB,'StudioSession');globalThis.studioSessionDesk=mountStudioSessionDesk({api,codec,model,store,initial});"].join("\n").replace(/<\/script/gi,"<\\/script")};
- let html=files["workbench/shell.template.html"];for(const [key,value]of Object.entries(tokens)){if(html.split(key).length!==2)throw Error("Unexpected template token "+key);html=html.replace(key,()=>value)}return html;
-}
-export { buildStudioSessionDesk };

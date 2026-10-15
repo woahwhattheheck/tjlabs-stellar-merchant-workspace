@@ -1,4 +1,0 @@
-id,site_id,period_id,economic_pool_id,kind,amount,currency,capacity_quantity,capacity_unit,status,accepted_by,accepted_at,independence_basis,source_ref
-potential-1,A,P1,proposed-opportunity,potential,500,USD,,,declared,,,Authored declared opportunity only,authored/example-source
-realised-1,A,P1,accepted-specific-invoice-credit,realised_cash,75,USD,,,finance_accepted,Authored finance owner,2026-10-14T18:00:00Z,"Separate actual invoice credit; no benchmark-derived labour, yield or COGS claim added",authored/example-source
-capacity-1,A,P1,observed-hours-capacity,unmonetized_capacity,,,2,person_hours,observed,,,Authored observed capacity; no cash amount,authored/example-source

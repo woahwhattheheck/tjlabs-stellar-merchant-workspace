@@ -1,3 +1,0 @@
-line_id,invoice_id,session_id,payer_id,category,amount_minor,currency,reference
-LINE-1,INVOICE-LABEL,SESSION-1,LABEL-1,base,72000,USD,Authored invoice base
-LINE-2,INVOICE-ARTIST,SESSION-1,ARTIST-1,overtime,12000,USD,Authored invoice omits one overtime hour

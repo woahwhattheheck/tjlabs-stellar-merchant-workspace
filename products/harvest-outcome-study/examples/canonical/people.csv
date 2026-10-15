@@ -1,5 +1,0 @@
-id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,person_id,grower_id,name,role_description,valid_from,valid_to
-CTX-WAREHOUSE,CTX-WAREHOUSE,1,,active,2026-09-29T00:00:00.000Z,2026-09-29T00:00:00.000Z,document-380fef820ef9897d1a0e009d499781d7,Authored complete harvest operations source / CTX-WAREHOUSE,WAREHOUSE,GROWER,Authored WAREHOUSE,,2026-09-29T00:00:00.000Z,
-CTX-ASSESSOR,CTX-ASSESSOR,1,,active,2026-09-29T00:00:00.000Z,2026-09-29T00:00:00.000Z,document-0dfe631d22a910a38e8d4a1c4f827b3f,Authored complete harvest operations source / CTX-ASSESSOR,ASSESSOR,GROWER,Authored ASSESSOR,,2026-09-29T00:00:00.000Z,
-CTX-PLANNER,CTX-PLANNER,1,,active,2026-09-29T00:00:00.000Z,2026-09-29T00:00:00.000Z,document-401393faf382dc9ba4ed9f8c911a1c85,Authored complete harvest operations source / CTX-PLANNER,PLANNER,GROWER,Authored PLANNER,,2026-09-29T00:00:00.000Z,
-CTX-FINANCE,CTX-FINANCE,1,,active,2026-09-29T00:00:00.000Z,2026-09-29T00:00:00.000Z,document-4a8f3f4cea4ff5bfee387cc43f6ad1ba,Authored complete harvest operations source / CTX-FINANCE,FINANCE,GROWER,Authored FINANCE,,2026-09-29T00:00:00.000Z,

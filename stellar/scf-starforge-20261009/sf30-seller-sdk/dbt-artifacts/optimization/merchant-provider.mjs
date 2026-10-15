@@ -1,8 +1,0 @@
-// MIT. Additive source-owned provider; existing host configuration and shutdown.
-import {defineMerchantProvider,MERCHANT_PROVIDER_SCHEMA} from '../../../../../stellar-forge/mcp-merchant-operator/provider-contract.mjs';
-import {dbtOptimizationTools} from './mcp-tools.mjs';
-export default defineMerchantProvider({schema:MERCHANT_PROVIDER_SCHEMA,id:'dbt-optimization',family:'dbtOptimization',title:'dbt run optimization',order:414,catalogOrder:414,configKey:'dbtOptimization',summary:true,dependencies:[],concurrency:'host',concurrentTools:[],shutdown:'provider',maxRequestBytes:131072,
- configuration:{input:'dbtOptimizationConnection',privateExports:true,read:async(value,{hostPath})=>(await import('../client.mjs')).readDbtProjectConfiguration(hostPath(value))},
- tools:dbtOptimizationTools,load:()=>import('./mcp.mjs'),create:(module,config)=>new module.MerchantDbtOptimization(config),
- instructions:[{prefix:'merchant_dbt_opt_',order:414,text:'Select one original run artifact in an explicit retained edition. Keep invocation elapsed time, summed node work and timestamp overlap distinct. Compare the entire observed population and preserve missing, failed, skipped and repeated-ID outcomes. Estimated reductions are operator proposals. Save complete improvement plans with expected revision and the original request ID; follow-up timing does not establish causality. Read all pages or receive the complete digest-addressed JSON/CSV/HTML report. Complete native project exports preserve every original artifact and review revision. Keys and filesystem locations stay in the host configuration. Shutdown drains the retained native clients.'}]
-});

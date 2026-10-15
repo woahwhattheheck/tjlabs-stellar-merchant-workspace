@@ -1,3 +1,0 @@
-id,sku,unit,effectiveFrom,effectiveTo,idealCycleSeconds,standardCycleSeconds,standardCrew
-A-v1,SKU-A,each,2026-10-01T00:00:00Z,,10,12,2
-B-v1,SKU-B,each,2026-10-01T00:00:00Z,,10,12,1.5

@@ -1,3 +1,0 @@
-id,label,starts_at,ends_at,calendar_basis,external_ref
-P0,Reference fiscal week,2026-09-28T00:00:00Z,2026-10-05T00:00:00Z,"Authored Monday fiscal week, UTC boundaries",authored/example-source
-P1,Current fiscal week,2026-10-05T00:00:00Z,2026-10-12T00:00:00Z,"Authored Monday fiscal week, UTC boundaries",authored/example-source

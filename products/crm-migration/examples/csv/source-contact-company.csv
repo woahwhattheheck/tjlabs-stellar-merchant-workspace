@@ -1,5 +1,0 @@
-from_id,to_id,relation
-C001,AC01,primary
-C002,AC02,primary
-C003,AC03,primary
-C004,AC01,billing

@@ -1,3 +1,0 @@
-observation_id,job_id,status,crew_id,truck_id,started_at,finished_at,observed_at,authorization,reference
-OBS-A,JOB-A,completed,CREW-A,TRUCK-A,2026-10-20T10:40:00-04:00,2026-10-20T11:40:00-04:00,2026-10-20T12:30:00-04:00,Crew reported actual visit,Authored field completion
-OBS-B,JOB-B,in_progress,CREW-A,TRUCK-A,2026-10-20T11:35:00-04:00,,2026-10-20T12:20:00-04:00,Crew current observation,Authored current field update

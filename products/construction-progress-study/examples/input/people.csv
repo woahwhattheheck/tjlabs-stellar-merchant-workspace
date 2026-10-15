@@ -1,4 +1,0 @@
-person_id,organisation_id,name,role,source_ref
-OWNER,CLIENT,Authored client representative,project owner,authored/people/OWNER
-OPS,BUILDER,Authored site manager,operations,authored/people/OPS
-FIN,BUILDER,Authored finance reviewer,finance,authored/people/FIN

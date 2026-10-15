@@ -1,6 +1,0 @@
-export type EcondbAction='receive-source'|'analyze'|'project-build'|'project-import'|'publication-build'|'merchant-prepare'|'buyer-export';
-export interface EcondbCommand { id:string; expectedRevision:number; action:EcondbAction; input:Record<string,unknown> }
-export interface EcondbRecord { id:string; action:EcondbAction; revision:number; kind:string; title:string; directory:string; requestSha256:string; [key:string]:unknown }
-export interface EcondbState { schema:'econdb.operator-workspace.v1'; workspace:{id:string;title:string;createdAt:string;engine:Record<string,string>}; revision:number; records:EcondbRecord[]; pending:null|{id:string;action:EcondbAction;requestSha256:string}; capabilities:Record<string,unknown>;limits:Record<string,number> }
-export interface EcondbResult {record:EcondbRecord;revision:number;replayed:boolean}
-export declare function createEcondbClient(options:{url:string;capability?:string;fetchImpl?:typeof fetch}):Readonly<{state():Promise<EcondbState>;request(id:string):Promise<EcondbCommand>;command(request:EcondbCommand):Promise<EcondbResult>;files(id:string):Promise<{record:EcondbRecord;files:{path:string;bytes:number}[]}>;preserveFailed(input:{id:string;expectedRevision:number;note:string}):Promise<EcondbResult>}>;

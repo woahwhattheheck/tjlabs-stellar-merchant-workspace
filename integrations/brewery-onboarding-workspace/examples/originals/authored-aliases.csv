@@ -1,9 +1,0 @@
-source_system,source_item_id,item_id
-erp,MALT,MALT
-erp,HOPS,HOPS
-erp,HOPSNEW,HOPS
-erp,WHEAT,WHEAT
-erp,BEER,BEER
-pos,DRAFTIPA,BEER
-wholesale,KEGHALF,KEG-HALF
-wholesale,CASE12,CASE-12

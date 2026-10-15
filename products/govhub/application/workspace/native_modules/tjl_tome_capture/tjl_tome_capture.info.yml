@@ -1,8 +1,0 @@
-name: 'Tome build receiving'
-type: module
-description: 'Observe original Tome generation for retained release receiving.'
-core_version_requirement: ^10 || ^11
-package: Tome
-version: '1.0.0'
-dependencies:
-  - tome:tome_static

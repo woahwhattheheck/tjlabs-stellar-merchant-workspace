@@ -1,2 +1,0 @@
-table,key,firstSourceRow,duplicateSourceRow,disposition
-movements,"[""pos"",""tap-draw""]",8,9,identical row counted once

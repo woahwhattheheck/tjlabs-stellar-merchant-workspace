@@ -1,4 +1,0 @@
-claim_line_id,claim_id,scope_key,contract_line_id,variation_line_id,measurement_ids,quantity_mode,quantity,unit,unit_price,prior_certified_net,claimed_net,tax_code,tax_rate,discount_kind,discount_value,source_ref,milestone_id
-CL1,C1,walls,SCOPE1,,M1,cumulative,40,m2,100,0,4000,actual-standard,21,none,,authored/claim_lines/CL1,
-CL2,C2,walls,SCOPE1,,M1;M2,cumulative,60,m2,100,4000,6000,actual-standard,21,none,,authored/claim_lines/CL2,
-CL3,C2,approved-extra,,VL2,M3,period,5,m2,50,0,250,actual-standard,21,none,,authored/claim_lines/CL3,

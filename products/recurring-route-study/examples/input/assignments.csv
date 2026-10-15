@@ -1,9 +1,0 @@
-id,stop_id,route_id,supersedes_id,technician_id,requirement_id,dispatch_at,effective_from,effective_until,recorded_at,reason,source_ref
-AS1,S1,ROUTE,,TECH,REQ1,2026-10-12T08:00:00Z,2026-10-12T08:00:00Z,,2026-10-12T07:55:00Z,Actual planned dispatch,authored/dispatch/S1
-AS2,S2,ROUTE,,TECH,REQ1,2026-10-12T08:00:00Z,2026-10-12T08:00:00Z,,2026-10-12T07:55:00Z,Actual planned dispatch,authored/dispatch/S2
-AS3,S3,ROUTE,,TECH,REQ1,2026-10-12T08:00:00Z,2026-10-12T08:00:00Z,,2026-10-12T07:55:00Z,Actual planned dispatch,authored/dispatch/S3
-AS4,S4,ROUTE,,TECH,REQ1,2026-10-12T08:00:00Z,2026-10-12T08:00:00Z,,2026-10-12T07:55:00Z,Actual planned dispatch,authored/dispatch/S4
-AS5,S5,ROUTE,,TECH,REQ1,2026-10-12T08:00:00Z,2026-10-12T08:00:00Z,,2026-10-12T07:55:00Z,Actual planned dispatch,authored/dispatch/S5
-AS6,S6,ROUTE,,TECH,REQ1,2026-10-12T08:00:00Z,2026-10-12T08:00:00Z,,2026-10-12T07:55:00Z,Actual planned dispatch,authored/dispatch/S6
-AS7,S7,ROUTE,,TECH,REQ1,2026-10-12T08:00:00Z,2026-10-12T08:00:00Z,,2026-10-12T07:55:00Z,Actual planned dispatch,authored/dispatch/S7
-AS8,S8,ROUTE,,TECH,REQ1,2026-10-12T08:00:00Z,2026-10-12T08:00:00Z,,2026-10-12T07:55:00Z,Actual planned dispatch,authored/dispatch/S8

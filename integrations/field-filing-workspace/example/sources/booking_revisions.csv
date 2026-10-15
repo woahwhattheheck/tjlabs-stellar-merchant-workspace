@@ -1,6 +1,0 @@
-revision_id,job_id,revision,recorded_at,status,customer_id,system_id,location_id,crew_id,truck_id,start_at,end_at,crew_before_minutes,crew_after_minutes,truck_before_minutes,truck_after_minutes,promise_id,currency,authorization,reference
-A1,JOB-A,1,2026-10-19T09:00:00-04:00,confirmed,CUSTOMER-A,SYS-A,PROPERTY-A,CREW-A,TRUCK-A,2026-10-20T09:00:00-04:00,2026-10-20T11:00:00-04:00,15,15,10,10,PROMISE-A,USD,Original service accepted,Authored booking
-A2,JOB-A,2,2026-10-19T10:00:00-04:00,confirmed,CUSTOMER-A,SYS-A,PROPERTY-A,CREW-A,TRUCK-A,2026-10-20T10:30:00-04:00,2026-10-20T12:00:00-04:00,15,15,10,10,PROMISE-A,USD,Office moved planned service; original arrival agreement retained,Authored booking
-B1,JOB-B,1,2026-10-19T11:00:00-04:00,confirmed,CUSTOMER-B,SYS-B,PROPERTY-B,CREW-A,TRUCK-A,2026-10-20T11:45:00-04:00,2026-10-20T13:30:00-04:00,15,15,10,10,PROMISE-B,USD,Accepted service,Authored booking
-C1,JOB-C,1,2026-10-19T12:00:00-04:00,confirmed,CUSTOMER-C,SYS-C,PROPERTY-C,CREW-A,TRUCK-A,2026-10-20T15:00:00-04:00,2026-10-20T17:00:00-04:00,15,15,10,10,PROMISE-C,USD,Accepted service,Authored booking
-C2,JOB-C,2,2026-10-20T07:00:00-04:00,postponed,CUSTOMER-C,SYS-C,PROPERTY-C,CREW-A,TRUCK-A,2026-10-20T15:00:00-04:00,2026-10-20T17:00:00-04:00,15,15,10,10,PROMISE-C,USD,Weather postponement; original deposit remains until rebooking instruction,Authored booking

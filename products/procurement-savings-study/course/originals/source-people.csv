@@ -1,4 +1,0 @@
-id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,person_id,operator_id,name,valid_from,valid_to
-PROC,PROC,1,,active,2026-08-01T09:00:00Z,2026-08-01T09:00:00Z,document-74c30e48c17417a8856a43fc99ef4005,authored/people/PROC,PROC,OP,Pat Morgan,2026-08-01T09:00:00Z,
-FIN,FIN,1,,active,2026-08-01T09:00:00Z,2026-08-01T09:00:00Z,document-0d99acc10ad295f7e23812acda144e8c,authored/people/FIN,FIN,OP,Alex Chen,2026-08-01T09:00:00Z,
-DATA,DATA,1,,active,2026-08-01T09:00:00Z,2026-08-01T09:00:00Z,document-f9de543d0552c2e59c6363005818031a,authored/people/DATA,DATA,OP,Sam Reed,2026-08-01T09:00:00Z,

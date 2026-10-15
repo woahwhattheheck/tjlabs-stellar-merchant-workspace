@@ -1,6 +1,0 @@
-id,edition_id,payload_sha256,authority_id,reviewer_id,decision,effective_at,recorded_at,supersedes_id,reason,source_ref
-APPROVAL-Q1,Q1,c1431a86c2657ec9a8889b8f69252188d203d44a573dbecbb9258b63a5fa6a0b,APPROVE,OFFICE,approved,2026-10-08T10:16:00Z,2026-10-08T10:16:00Z,,Authored scope and price review,authored/approval/Q1
-APPROVAL-Q2B,Q2B,4436f7663d396a309c872df24b758c30cabfb04deb9f31dafaf6d926b4a2588a,APPROVE,OFFICE,approved,2026-10-08T10:42:00Z,2026-10-08T10:42:00Z,,Authored scope and price review,authored/approval/Q2B
-APPROVAL-Q4A,Q4A,de244720440521e65d2ad8313df8a33e1629cf0978d18ea0053014c70b3ef21e,APPROVE,OFFICE,approved,2026-10-08T10:16:00Z,2026-10-08T10:16:00Z,,Authored scope and price review,authored/approval/Q4A
-APPROVAL-Q6,Q6,989529cc33d8ef8bf18601bc7e00d67b2eb387d435e289816adaf038e416a66c,APPROVE,OFFICE,approved,2026-10-08T10:16:00Z,2026-10-08T10:16:00Z,,Authored scope and price review,authored/approval/Q6
-APPROVAL-Q7,Q7,05f04b0e3fc5f03f922305ee761763482e69f858375d611b2164f8af5020d543,APPROVE,OFFICE,approved,2026-10-08T10:16:00Z,2026-10-08T10:16:00Z,,Authored scope and price review,authored/approval/Q7

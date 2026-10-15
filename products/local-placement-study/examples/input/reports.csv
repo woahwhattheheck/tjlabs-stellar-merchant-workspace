@@ -1,3 +1,0 @@
-id,campaign_id,version,supersedes_id,generated_at,published_at,recorded_at,payload_sha256,source_ref
-R1,C1,1,,2026-10-12T12:20:00Z,2026-10-12T12:21:00Z,2026-10-12T12:21:00Z,e51800d0d327e1aa40ee475e5a153a6d01c13e371e2eba7884ee7d5058629863,authored/report/R1
-R2,C1,2,R1,2026-10-12T12:35:00Z,2026-10-12T12:36:00Z,2026-10-12T12:36:00Z,05d31538ca02258b97e5187ab2cc8fb33df0d4a847d5b2a0a2dbd23bafbeebbb,authored/report/R2

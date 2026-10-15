@@ -1,4 +1,0 @@
-id,name,allocation_mode,base_availability_percent,home_site_id,code,capacity,is_physical,meta.spindle_speed,meta.active,meta.serial,notes,cross_site_allowed
-original-r1, Mill A ,Exclusive,100,11111111-1111-4111-8111-111111111111,M1,1,false,12000,true,00123,,
-original-r2,Gauge,Fractional,50,,,,,,,00007,"Store, return
-inspect",false

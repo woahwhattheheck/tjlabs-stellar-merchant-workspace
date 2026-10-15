@@ -1,5 +1,0 @@
-function buildRepairQueueApps(files){
- const safe=x=>JSON.stringify(x).replace(/</g,"\\u003c").replace(/\u2028/g,"\\u2028").replace(/\u2029/g,"\\u2029"),runtime=files["archive-codec.js"]+"\n"+files["repair-queue-core.js"]+"\n"+files["workbench/browser-store.js"]+"\n"+files["workbench/operator.js"]+'\nconst repairQueueCodec=createArchiveCodec();mountRepairQueueWorkbench(document.getElementById("desk"),JSON.parse(document.getElementById("initial-data").textContent),createRepairQueueCore(repairQueueCodec),repairQueueCodec,createRepairQueueCopyStore(globalThis.indexedDB),JSON.parse(document.getElementById("authored-sample").textContent));';
- function make(workspace){return files["workbench/template.html"].replace("__STYLE__",()=>files["workbench/style.css"]).replace("__INITIAL__",()=>safe(workspace)).replace("__SAMPLE__",()=>safe(JSON.parse(files["examples/intake.json"]))).replace("__RUNTIME__",()=>runtime.replace(/<\/script/gi,"<\\/script"))}
- return {"Repair_Queue_Workbench.html":make(JSON.parse(files["examples/workbench-empty-workspace.json"])),"Repair_Queue_Worked_Example.html":make(JSON.parse(files["examples/workbench-complete-workspace.json"]))};
-}

@@ -1,3 +1,0 @@
-observation_id,job_id,status,technician_id,bay_id,started_at,finished_at,observed_at,authorization,reference
-CA,JOB-A,completed,TECH-A,,2026-10-20T09:40:00-06:00,2026-10-20T11:50:00-06:00,2026-10-20T11:55:00-06:00,Observed actual times,Technician completion
-CB,JOB-B,in_progress,TECH-A,,2026-10-20T11:45:00-06:00,,2026-10-20T12:15:00-06:00,Status snapshot,Current field update

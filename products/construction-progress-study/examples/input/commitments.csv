@@ -1,2 +1,0 @@
-commitment_id,project_id,supplier_id,commitment_number,commitment_type,issued_at,accepted_at,currency,status,supersedes_id,recorded_at,available_at,source_ref
-PO1,P1,SUPPLIER,PO1,materials,2026-08-01T12:00:00Z,2026-08-02T12:00:00Z,EUR,accepted,,2026-08-02T12:00:00Z,2026-08-02T12:00:00Z,authored/commitments/PO1

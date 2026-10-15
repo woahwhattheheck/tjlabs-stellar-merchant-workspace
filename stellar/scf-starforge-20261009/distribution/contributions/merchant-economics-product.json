@@ -1,8 +1,0 @@
-{
-  "schema": "stellar-forge.merchant-distribution-contribution.v1",
-  "id": "merchant-economics-product",
-  "description": "Complete merchant economics operating entry: original supplier sources, route allocation, pricing, agent operation and retained workspace receiving.",
-  "supportFiles": [
-    "products/merchant-economics/OPERATING.md"
-  ]
-}

@@ -1,2 +1,0 @@
-id,campaign_id,event,external_ref,effective_at,recorded_at,attribution_method,source_ref
-RESPONSE1,C1,enquiry,authored-enquiry-1,2026-10-12T12:00:00Z,2026-10-12T12:01:00Z,Customer supplied response source; no causal inference,authored/response

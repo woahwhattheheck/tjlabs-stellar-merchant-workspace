@@ -1,2 +1,0 @@
-id,campaign_id,number,currency,issued_at,recorded_at,total,payload_sha256,source_ref
-INV1,C1,AUTH-001,USD,2026-10-03T00:00:00Z,2026-10-03T00:00:00Z,249.00,05b0ad79175cad89cf19cde702d9e09388a12ae90048d28ca9b913f5ec22101b,authored/invoice

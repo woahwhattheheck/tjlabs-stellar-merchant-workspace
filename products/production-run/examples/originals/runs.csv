@@ -1,3 +1,0 @@
-id,lineId,sku,start,end,standardId,unit,currency,revenuePerGood,requiredCostCategories,timeComplete,outputComplete,laborComplete,costComplete,goodBasis
-RUN-A,LINE-1,SKU-A,2026-10-14T08:00:00Z,2026-10-14T12:00:00Z,A-v1,each,USD,1,material|other,true,true,true,true,first-pass
-RUN-B,LINE-2,SKU-B,2026-10-14T08:00:00Z,2026-10-14T12:00:00Z,B-v1,each,USD,1,material|other,true,true,true,true,first-pass

@@ -1,4 +1,0 @@
-attempt_id,instance_id,submitted_at,observed_at,channel,destination,authorization,reference
-FILE-A1,FORM-A1,2026-10-20T12:50:00-04:00,2026-10-20T12:55:00-04:00,Recorded email delivery,Authored jurisdiction filing desk,Office authorized original filed form,Original filing
-FILE-A1-REPEAT,FORM-A1,2026-10-20T13:10:00-04:00,2026-10-20T13:12:00-04:00,Recorded email delivery,Authored jurisdiction filing desk,Office recorded repeated attempt,Repeated filing
-FILE-B1,FORM-B1,2026-10-20T13:00:00-04:00,2026-10-20T13:05:00-04:00,Recorded portal submission,Authored jurisdiction draft desk,Office submitted exact draft artifact,Draft filing retained

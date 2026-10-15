@@ -1,8 +1,0 @@
-item_id,name,kind,base_unit
-MALT,Pale malt,ingredient,kg
-HOPS,Cascade hops,ingredient,g
-BEER,IPA bulk,finished-beer,L
-KEG-HALF,IPA half-barrel keg SKU,packaged-beer,each
-CASE-12,IPA twelve-can case SKU,packaged-beer,each
-CANS,Empty cans,packaging,each
-WHEAT,Wheat malt,ingredient,kg

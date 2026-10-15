@@ -1,7 +1,0 @@
-{
-  "operationId": "my-subscription-applications-receiving",
-  "runtimeDirectory": "/private/ready-runtime",
-  "workspaceDirectory": "/private/completed-customer/odata-workspace",
-  "subscriptionConnection": "/private/completed-customer/Subscription_Connection.json",
-  "outputDirectory": "/private/managed-subscription-receiving"
-}

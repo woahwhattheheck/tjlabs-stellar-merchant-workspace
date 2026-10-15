@@ -1,4 +1,0 @@
-id,exception_id,supersedes_id,decision,followup_attempt_id,decided_at,recorded_at,actor_id,reason,source_ref
-DS-EX2,EX2,,revisit,A2R,2026-10-12T09:15:00Z,2026-10-12T09:16:00Z,OFFICE,Authored owner disposition,authored/disposition/EX2
-DS-EX3,EX3,,open,,2026-10-12T09:15:00Z,2026-10-12T09:16:00Z,OFFICE,Authored owner disposition,authored/disposition/EX3
-DS-EX4,EX4,,cancelled,,2026-10-12T09:15:00Z,2026-10-12T09:16:00Z,OFFICE,Authored owner disposition,authored/disposition/EX4

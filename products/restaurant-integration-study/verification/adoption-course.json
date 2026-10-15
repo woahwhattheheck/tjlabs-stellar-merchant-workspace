@@ -1,8 +1,0 @@
-{
-  "execution": "Actual generated offline HTML handlers with injected DOM and IndexedDB services",
-  "checks": [
-    "Reordered historical profile rows preserve the actual valid Decide request",
-    "Actual adoption helper uses the exact request profile despite newest-first source order"
-  ],
-  "profile_sha256": "b9766aa555bee8c3406eb449c6f738e67e0121c8b6e5ac0701b93eea08db9fce"
-}

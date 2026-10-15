@@ -1,7 +1,0 @@
-id,site_id,period_id,economic_pool_id,net_sales,cogs,currency,accounting_basis,included,exclusion_reason,source_ref
-finAP0,A,P0,ledger-A,10000,7000,USD,accrual,true,,authored/example-source
-finAP1,A,P1,ledger-A,10000,7000,USD,accrual,true,,authored/example-source
-finBP0,B,P0,ledger-B,10000,7000,USD,accrual,true,,authored/example-source
-finBP1,B,P1,ledger-B,10000,7000,USD,accrual,true,,authored/example-source
-finCP0,C,P0,ledger-C,10000,7000,USD,accrual,true,,authored/example-source
-finCP1,C,P1,ledger-C,10000,7000,USD,accrual,true,,authored/example-source

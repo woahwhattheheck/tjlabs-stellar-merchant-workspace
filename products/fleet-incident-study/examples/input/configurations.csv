@@ -1,4 +1,0 @@
-id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,configuration_id,asset_id,valid_from,valid_to,attachment,fuel_type,capacity_value,capacity_unit,capacity_basis,configuration_json
-CFG1,CFG1,1,,active,2026-10-01T09:00:00Z,2026-10-01T09:00:00Z,,Authored configurations/CFG1,CFG1,A1,2026-10-01T09:00:00Z,,standard forks,electric,2000,kg,Declared nameplate at source load centre,"{""fork_length_mm"":1200}"
-CFG2,CFG2,1,,active,2026-10-01T09:00:00Z,2026-10-01T09:00:00Z,,Authored configurations/CFG2,CFG2,A2,2026-10-01T09:00:00Z,,standard forks,electric,2000,kg,Declared nameplate at source load centre,"{""fork_length_mm"":1200}"
-CFG3,CFG3,1,,active,2026-10-01T09:00:00Z,2026-10-01T09:00:00Z,,Authored configurations/CFG3,CFG3,A3,2026-10-01T09:00:00Z,,standard forks,electric,2000,kg,Declared nameplate at source load centre,"{""fork_length_mm"":1200}"

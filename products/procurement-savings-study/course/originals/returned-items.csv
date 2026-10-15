@@ -1,4 +1,0 @@
-id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,item_id,operator_id,name,specification,base_unit,valid_from,valid_to
-ITEM1,ITEM1,1,,active,2026-08-01T09:00:00Z,2026-08-01T09:00:00Z,document-cad212e70895f12e71e3edb8b6d732eb,authored/items/ITEM1,ITEM1,OP,ITEM1,spec-A,each,2026-08-01T09:00:00Z,
-ITEM2,ITEM2,1,,active,2026-08-01T09:00:00Z,2026-08-01T09:00:00Z,document-e8edf33508d8f608543804a238426880,authored/items/ITEM2,ITEM2,OP,ITEM2,grade-B,kg,2026-08-01T09:00:00Z,
-ITEM3,ITEM3,1,,active,2026-08-01T09:00:00Z,2026-08-01T09:00:00Z,document-a330500949e5c4e1f32bd1597ebc689d,authored/items/ITEM3,ITEM3,OP,ITEM3,new-service,each,2026-08-01T09:00:00Z,

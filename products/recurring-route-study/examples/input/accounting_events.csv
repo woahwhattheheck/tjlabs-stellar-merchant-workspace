@@ -1,2 +1,0 @@
-id,invoice_id,event,amount,currency,effective_at,recorded_at,external_ref,source_ref
-PAY1,INV1,payment,100,USD,2026-10-12T13:05:00Z,2026-10-12T13:06:00Z,authored-payment-001,authored/accounting

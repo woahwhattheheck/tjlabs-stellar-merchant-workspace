@@ -1,2 +1,0 @@
-id,incident_id,knowledge_id,step_ref,status,effective_at,recorded_at,technician,outcome,source_ref
-A1,I1,K1,external-approved-step-reference,recorded_attempt,2026-10-12T08:20:00Z,2026-10-12T08:21:00Z,Authored technician B,Authored source outcome retained,authored/source

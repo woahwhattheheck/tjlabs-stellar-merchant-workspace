@@ -1,4 +1,0 @@
-policy_id,service_id,label,notice_basis,notice_minutes,recorded_at,terms,reference
-POL-24,GROOM,Original 24-hour policy,elapsed_minutes,1440,2026-10-01T09:00:00-04:00,The accepted policy requests 24 elapsed hours. Any fee or transfer follows the actual recorded operator decision.,Authored accepted terms
-POL-48,GROOM,New 48-hour policy,elapsed_minutes,2880,2026-10-30T09:00:00-04:00,New policy edition. It does not replace an earlier appointment's accepted policy.,Authored accepted terms
-POL-BIZ,GROOM,Business-hours policy,business_hours,,2026-10-01T09:00:00-04:00,The business requests 24 business hours' notice. Its actual opening calendar and operator decision control interpretation.,Authored accepted terms

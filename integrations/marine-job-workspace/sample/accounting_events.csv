@@ -1,7 +1,0 @@
-event_id,request_id,kind,external_id,occurred_at,observed_at,evidence_reference,reference
-XI-UNKNOWN,REQ-INVOICE,unknown,,2026-10-20T14:01:00+13:00,2026-10-20T14:02:00+13:00,Authored actual-outcome example XI-UNKNOWN,Authored marine operating example; no customer operating record
-XI-SUCCESS,REQ-INVOICE,succeeded,AUTHORED-XERO-INVOICE-A,2026-10-20T14:40:00+13:00,2026-10-20T14:41:00+13:00,Authored actual-outcome example XI-SUCCESS,Authored marine operating example; no customer operating record
-XI-LATE-UNKNOWN,REQ-INVOICE,unknown,,2026-10-20T14:01:00+13:00,2026-10-20T15:10:00+13:00,Authored actual-outcome example XI-LATE-UNKNOWN,Authored marine operating example; no customer operating record
-XW1-SUCCESS,REQ-WEEK-ORIGINAL,succeeded,AUTHORED-XERO-WEEK-A1,2026-10-20T12:20:00+13:00,2026-10-20T12:20:00+13:00,Authored actual-outcome example XW1-SUCCESS,Authored marine operating example; no customer operating record
-XW2-UNKNOWN,REQ-WEEK-CORRECTED,unknown,,2026-10-20T13:47:00+13:00,2026-10-20T13:48:00+13:00,Authored actual-outcome example XW2-UNKNOWN,Authored marine operating example; no customer operating record
-XW2-SUCCESS,REQ-WEEK-CORRECTED,succeeded,AUTHORED-XERO-WEEK-A2,2026-10-20T14:50:00+13:00,2026-10-20T14:51:00+13:00,Authored actual-outcome example XW2-SUCCESS,Authored marine operating example; no customer operating record

@@ -1,8 +1,0 @@
-﻿row_id,item_id,lot_id,location,quantity,unit
-o-m,MALT,malt-1,grain,100,kg
-o-h,HOPS,hop-1,cold,5000,g
-o-b,BEER,brew-17,tank,200,L
-o-k,KEG-HALF,brew-17,packaged,10,each
-o-c,CASE-12,brew-17,packaged,20,each
-o-e,CANS,can-1,dry,100,each
-o-w,WHEAT,wheat-1,grain,5,kg

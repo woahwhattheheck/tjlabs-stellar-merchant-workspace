@@ -1,2 +1,0 @@
-id,company_id,version,before_photos,after_photos,signature_required,position_required,note_required,geofence_radius_m,max_position_age_seconds,effective_from,effective_until,recorded_at,source_ref
-REQ1,CO,1,1,1,yes,yes,no,50,120,2026-10-01T00:00:00Z,,2026-10-01T00:00:00Z,authored/approved-service-proof-rule

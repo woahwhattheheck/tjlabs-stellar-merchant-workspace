@@ -1,8 +1,0 @@
-{
-  "schema": "compass.request/v1",
-  "id": "public-metadata-20261015",
-  "account_alias": "public-metadata",
-  "prepared_at": "2026-10-15T11:35:00Z",
-  "endpoint": "metadata",
-  "notes": "Public metadata request prepared with this source edition; choose a new ID and actual preparation time for a new observation."
-}

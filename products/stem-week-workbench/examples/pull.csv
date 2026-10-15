@@ -1,7 +1,0 @@
-"week","basis","commitment_id","channel","recipe_id","pieces","priority","variety_id","crop","variety","base_stems","buffer_stems","required_stems","allocated_stems","short_stems","source_ref"
-"2026-10-19","actual","W01","wedding","WEDDING","2","0","ROSE","rose","White O'Hara","16","2","18","18","0","Authored agreed wedding recipe"
-"2026-10-19","actual","W01","wedding","WEDDING","2","0","ZIN","zinnia","Benary White","6","1","7","0","7","Authored agreed wedding recipe"
-"2026-10-19","actual","C01","csa","CSA","3","1","ROSE","rose","White O'Hara","12","0","12","12","0","Authored scheduled three-share pickup"
-"2026-10-19","actual","C01","csa","CSA","3","1","ZIN","zinnia","Benary White","6","0","6","0","6","Authored scheduled three-share pickup"
-"2026-10-19","actual","C01","csa","CSA","3","1","BAS","basil","Cinnamon","3","0","3","","","Authored scheduled three-share pickup"
-"2026-10-19","actual","M01","market","MARKET","1","2","ROSE","rose","White O'Hara","10","0","10","4","6","Authored firm market preparation"

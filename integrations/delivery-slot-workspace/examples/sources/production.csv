@@ -1,3 +1,0 @@
-observation_id,slot_id,product_id,quantity,unit,observed_at,coverage,reference
-PROD-W,S24,WHITE,12,loaf,2026-10-24T05:30:00+01:00,complete,Authored independent count
-PROD-C,S24,CROISSANT,22,piece,2026-10-24T05:30:00+01:00,complete,Authored independent count

@@ -1,3 +1,0 @@
-media_id,service_version_id,source_reference,artifact_sha256,captured_at,observed_at,caption,reference
-MEDIA-A1,SERVICE-A1,sample/artifacts/MEDIA-A1.svg,27bdbde44d7e7fd302a2733c0e5f9332f0ee8f3a476f3913695ec5eee5598929,2026-10-20T10:30:00-05:00,2026-10-20T12:30:00-05:00,Original authored service illustration,Authored operating-course source
-MEDIA-A2,SERVICE-A2,sample/artifacts/MEDIA-A2.svg,38bc304ecfb3769c842b6ce7a20adcd19706efa53f97ec54034f498e3a18fc66,2026-10-20T10:30:00-05:00,2026-10-20T12:50:00-05:00,"Same visit, explicitly retained in corrected service version",Authored operating-course source

@@ -1,3 +1,0 @@
-id,venue_id,version,supersedes_id,signer_person_id,authority_id,signed_at,effective_from,effective_until,recorded_at,notice_days,notice_earliest_at,payload_sha256,source_ref
-H-V1,V1,1,,HOST-MGR,AUTH-H,2026-10-01T00:00:00Z,2026-10-01T00:00:00Z,2027-10-01T00:00:00Z,2026-10-01T00:00:00Z,30,2026-10-01T00:00:00Z,a8cfbb66ff61597d2cc4508f1014363210af47af85ba9a3d6a768bd46f10a037,authored/agreement/V1
-H-V2,V2,1,,HOST-MGR,AUTH-H,2026-10-01T00:00:00Z,2026-10-01T00:00:00Z,2027-10-01T00:00:00Z,2026-10-01T00:00:00Z,30,2026-10-01T00:00:00Z,c1ef1e8cd97a40cbf1b61c70e623b25de26d5aad4cd9fa6db43570cbc8bff63b,authored/agreement/V2

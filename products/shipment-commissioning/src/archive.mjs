@@ -1,2 +1,0 @@
-// MIT. Immutable complete original journal for managed recovery objects.
-export function createShipmentCommissioningArchive(S,C){return {serialize(w){S.checkWorkspace(w);const content=JSON.stringify(w),sha256=C.hashText(content);return {content,bytes:C.utf8Encode(content).length,sha256,workspace:{sha256}};},receive(content){const w=JSON.parse(content);S.checkWorkspace(w);if(JSON.stringify(w)!==content)throw Error('Recovered original journal differs');return w;}};}

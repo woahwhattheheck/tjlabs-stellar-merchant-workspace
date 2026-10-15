@@ -1,4 +1,0 @@
-system_id,customer_id,property_id,parcel_id,jurisdiction_id,source_system,source_id,recorded_at,reference
-SYS-A,CUSTOMER-A,PROPERTY-A,PARCEL-A,JURISDICTION-EXAMPLE,Original register,REGISTER-A,2026-10-19T08:00:00-04:00,Authored system record; no real property
-SYS-B,CUSTOMER-B,PROPERTY-B,PARCEL-B,JURISDICTION-EXAMPLE,Original register,REGISTER-B,2026-10-19T08:00:00-04:00,Authored system record; no real property
-SYS-C,CUSTOMER-C,PROPERTY-C,PARCEL-C,JURISDICTION-EXAMPLE,Original register,REGISTER-C,2026-10-19T08:00:00-04:00,Authored system record; no real property

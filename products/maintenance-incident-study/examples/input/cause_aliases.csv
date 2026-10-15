@@ -1,2 +1,0 @@
-id,type_id,source_system,source_code,cause_id,effective_from,effective_until,recorded_at,source_ref
-AL1,T1,authored-output,fault-A,C1,2026-10-01T08:00:00Z,,2026-10-01T08:00:00Z,authored/source

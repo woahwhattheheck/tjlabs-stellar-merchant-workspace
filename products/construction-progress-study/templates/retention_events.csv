@@ -1,1 +1,0 @@
-retention_event_id,project_id,claim_id,certification_id,invoice_id,event_type,amount,currency,effective_at,due_at,condition_ref,approved_by,approved_at,accounting_event_id,reverses_id,recorded_at,available_at,source_ref

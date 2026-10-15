@@ -1,5 +1,0 @@
-id,runId,category,quantity,quantityUnit,unitCost,amount,currency,note
-A-material,RUN-A,material,900,each,0.2,180,USD,Explicit consumption cost for all total output
-A-other,RUN-A,other,,,,20,USD,Owner-declared remaining cost scope
-B-material,RUN-B,material,1000,each,0.2,200,USD,Explicit consumption cost
-B-other,RUN-B,other,,,,20,USD,Owner-declared remaining cost scope

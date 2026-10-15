@@ -1,2 +1,0 @@
-id,customer_id,site_key,name,latitude,longitude,coordinate_uncertainty_m,effective_from,recorded_at,source_ref
-SITE-V1,CUSTOMER,SITE,Authored service site,40,-75,5,2026-10-01T00:00:00Z,2026-10-01T00:00:00Z,authored/surveyed-site

@@ -1,8 +1,0 @@
-{
-  "schema": "stellar-forge.merchant-distribution-contribution.v1",
-  "id": "merchant-provider-ocds-workspaces",
-  "description": "Original OCDS procurement workspace MCP provider",
-  "merchantProviders": {
-    "ocds-workspaces": "stellar-forge/mcp-merchant-operator/providers/ocds-workspaces.mjs"
-  }
-}

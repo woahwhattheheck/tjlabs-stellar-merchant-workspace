@@ -1,4 +1,0 @@
-observation_id,job_id,status,technician_id,vehicle_id,started_at,finished_at,observed_at,authorization,reference
-OBS-JOB-A,JOB-A,completed,TECH-A,,2026-10-20T08:00:00+13:00,2026-10-20T11:30:00+13:00,2026-10-20T11:40:00+13:00,Authored physical completion observation,Authored marine operating example; no customer operating record
-OBS-JOB-B,JOB-B,completed,TECH-B,,2026-10-20T08:30:00+13:00,2026-10-20T10:30:00+13:00,2026-10-20T10:40:00+13:00,Authored physical completion observation,Authored marine operating example; no customer operating record
-OBS-JOB-C,JOB-C,in_progress,TECH-A,,2026-10-20T14:00:00+13:00,,2026-10-20T14:05:00+13:00,Authored physical completion observation,Authored marine operating example; no customer operating record

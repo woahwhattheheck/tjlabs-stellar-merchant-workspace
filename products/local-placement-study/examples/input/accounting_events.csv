@@ -1,2 +1,0 @@
-id,invoice_id,event,amount,currency,effective_at,recorded_at,external_ref,source_ref
-PAY1,INV1,payment_cleared,249.00,USD,2026-10-04T00:00:00Z,2026-10-04T00:01:00Z,actual-payment-001,authored/clearing

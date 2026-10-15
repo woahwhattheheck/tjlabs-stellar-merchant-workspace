@@ -1,5 +1,0 @@
-function buildBreweryDesk({coreSource,controllerSource,storeSource,operatorSource,style,template,workspace,fragment=false}){
-const safe=x=>JSON.stringify(x).replace(/</g,"\\u003c").replace(/\u2028/g,"\\u2028").replace(/\u2029/g,"\\u2029");
-const content='<div id="brewery-desk"><style>'+style+'</style>'+template+'</div><script>'+coreSource+'\n'+controllerSource+'\n'+storeSource+'\n'+operatorSource+'\nmountBreweryDesk(document.getElementById("brewery-desk"),'+safe(workspace)+',createBreweryCore(),createBreweryStore(globalThis.indexedDB),createBreweryDeskController(createBreweryCore()));\n<\/script>';
-return fragment?content:'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Brewery onboarding desk</title></head><body>'+content+'</body></html>';
-}

@@ -1,5 +1,0 @@
-id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,member_id,family,record_id,operator_id,site_id,population_key,included,exclusion_reason
-MEM1,MEM1,1,,active,2026-09-01T09:00:00Z,2026-09-01T09:00:00Z,document-5ae8b3f33262c9201ffff8aad974a5a9,authored/population_members/MEM1,MEM1,initiatives,I1,OP,SITE,weekly-reconciliation,true,
-MEM2,MEM2,1,,active,2026-09-01T09:00:00Z,2026-09-01T09:00:00Z,document-2956d5545cfd7934e2aff6e55b62cadd,authored/population_members/MEM2,MEM2,initiatives,I2,OP,SITE,weekly-reconciliation,true,
-MEM3,MEM3,1,,active,2026-09-01T09:00:00Z,2026-09-01T09:00:00Z,document-b949c6a2ada2bc93b91927c924bd154c,authored/population_members/MEM3,MEM3,initiatives,I3,OP,SITE,weekly-reconciliation,true,
-MEM4,MEM4,1,,active,2026-09-01T09:00:00Z,2026-09-01T09:00:00Z,document-a1168e2b9fd362b341a8c9370bdab6b2,authored/population_members/MEM4,MEM4,initiatives,I4,OP,SITE,weekly-reconciliation,true,

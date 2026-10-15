@@ -1,3 +1,0 @@
-id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,disposition_id,batch_record_id,quantity,unit,event_at,event_type,actor_id
-DISPOSE-D,DISPOSE-D,1,,active,2026-10-01T10:00:00.000Z,2026-10-01T10:00:00.000Z,document-533961a630667ccc2cfaa4265ca4c7bc,Complete authored harvest/forecast/outcome course / DISPOSE-D,DISPOSE-D,D,5,kg,2026-10-01T10:00:00.000Z,waste,WAREHOUSE
-SAMPLE-D,SAMPLE-D,1,,active,2026-10-01T10:00:00.000Z,2026-10-01T10:00:00.000Z,document-20fe2be24b7879c61f10bd0cb77b0eb6,Complete authored harvest/forecast/outcome course / SAMPLE-D,SAMPLE-D,D,2,kg,2026-10-01T10:00:00.000Z,sample,WAREHOUSE

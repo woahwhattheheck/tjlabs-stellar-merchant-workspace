@@ -1,2 +1,0 @@
-id,type_id,scope_kind,config_id,cause_id,version,title,content,content_sha256,effective_at,recorded_at,supersedes_id,source_ref
-K1,T1,machine_type,,C1,authored-1,Authored reviewed knowledge reference,Fictional knowledge excerpt for provenance testing. No equipment procedure is provided.,91c42a6c27b2e5b3a12d3fcad425cb7bbfb0e58547c3f0fe05542f7660856952,2026-10-01T08:00:00Z,2026-10-01T08:00:00Z,,authored/source

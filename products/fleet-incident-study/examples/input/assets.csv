@@ -1,4 +1,0 @@
-id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,asset_id,organisation_id,asset_class,manufacturer,model,serial_number,fleet_number,in_service_from,retired_at
-AS1,AS1,1,,active,2026-10-01T09:00:00Z,2026-10-01T09:00:00Z,,Authored assets/AS1,A1,OP,forklift,Authored,F1,SERIAL-1,FLEET-1,2026-10-01T09:00:00Z,
-AS2,AS2,1,,active,2026-10-01T09:00:00Z,2026-10-01T09:00:00Z,,Authored assets/AS2,A2,OP,forklift,Authored,F2,SERIAL-2,FLEET-2,2026-10-01T09:00:00Z,
-AS3,AS3,1,,active,2026-10-01T09:00:00Z,2026-10-01T09:00:00Z,,Authored assets/AS3,A3,OP,forklift,Authored,F3,SERIAL-3,FLEET-3,2026-10-01T09:00:00Z,

@@ -1,3 +1,0 @@
-media_id,job_id,revision_id,source_reference,artifact_sha256,captured_at,observed_at,caption,reference
-MEDIA-A-CUSTOMER,JOB-A,A2,sample/artifacts/MEDIA-A-CUSTOMER.svg,4c3b1e1318570a7435dbeef5084b716be943b87aa8f9223854e6102bac3786f1,2026-10-20T11:20:00+13:00,2026-10-20T11:45:00+13:00,Authored installed-part diagram selected for customer,Authored marine operating example; no customer operating record
-MEDIA-A-INTERNAL,JOB-A,A2,sample/artifacts/MEDIA-A-INTERNAL.svg,6213261b6c82bda262cf4c5c8ad34121f9b6f6907c4d26a266dc45dc47ae4a64,2026-10-20T11:20:00+13:00,2026-10-20T11:45:00+13:00,Authored internal bench note not selected for customer,Authored marine operating example; no customer operating record

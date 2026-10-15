@@ -1,4 +1,0 @@
-"source_id","name","amount","stage","pipeline","owner"
-"D1","Claim One","100.00","proposal","claims","Mia"
-"D2","Claim Two","50.00","proposal","claims","Noah"
-"D3","Large exact decimal","9007199254740993.01","proposal","claims","Mia"

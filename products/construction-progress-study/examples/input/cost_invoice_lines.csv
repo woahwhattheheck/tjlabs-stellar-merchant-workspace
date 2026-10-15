@@ -1,2 +1,0 @@
-cost_invoice_line_id,cost_invoice_id,commitment_line_id,delivery_ids,scope_key,quantity,unit,unit_price,net,tax_code,tax_rate,tax,gross,source_ref
-CIL1,CI1,POL1,DEL1,tiles,6,pack,110,660,actual-standard,21,138.6,798.6,authored/cost_invoice_lines/CIL1

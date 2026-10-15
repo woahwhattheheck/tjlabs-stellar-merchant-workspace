@@ -1,2 +1,0 @@
-id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,adjustment_id,spend_record_id,source_system,external_transaction_ref,external_line_ref,posted_at,kind,quantity_delta,amount_delta,unit,currency,reason
-CREDIT1,CREDIT1,1,,active,2026-10-06T10:00:00Z,2026-10-06T10:00:00Z,document-89522d6819e0ec46fdad379af7f4e7f8,authored/spend_adjustments/CREDIT1,CREDIT1,SP1,AP,CN-001,1,2026-10-06T10:00:00Z,return,-100,-9200,each,USD,Actual returned 100 components

@@ -1,2 +1,0 @@
-cost_invoice_id,project_id,supplier_id,invoice_number,invoice_type,original_invoice_id,issued_at,due_at,currency,net,tax,gross,status,recorded_at,available_at,source_ref
-CI1,P1,SUPPLIER,SUP1,invoice,,2026-08-06T12:00:00Z,2026-08-28T12:00:00Z,EUR,660,138.6,798.6,issued,2026-08-06T12:00:00Z,2026-08-06T12:00:00Z,authored/cost_invoices/CI1

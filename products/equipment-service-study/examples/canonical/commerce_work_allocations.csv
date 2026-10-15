@@ -1,2 +1,0 @@
-"id","record_key","revision","supersedes_id","record_status","recorded_at","available_at","source_document_id","source_ref","allocation_id","approval_record_id","work_id","case_id","asset_id","action","quantity","unit","performed_at"
-"alloc1","alloc1","1","","active","2026-10-02T08:30:00.000Z","2026-10-02T08:30:00.000Z","","Authored complete service-commerce course / alloc1","ALLOC1","ap1","W-REPAIR","CASE-REPAIR","HOIST","repair","2","hour","2026-10-02T08:30:00.000Z"

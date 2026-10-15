@@ -1,5 +1,0 @@
-accounting_event_id,project_id,invoice_id,external_transaction_id,processor,event_type,amount,currency,effective_at,recorded_at,available_at,reverses_id,allocation_group,source_ref,transaction_amount
-PAY-D1,P1,D1,bank-PAY-D1,authored-bank,receipt,605,EUR,2026-08-05T10:00:00Z,2026-08-05T10:01:00Z,2026-08-05T10:02:00Z,,,authored/accounting_events/PAY-D1,605
-PAY-I1,P1,I1,bank-PAY-I1,authored-bank,receipt,3993,EUR,2026-09-10T10:00:00Z,2026-09-10T10:01:00Z,2026-09-10T10:02:00Z,,,authored/accounting_events/PAY-I1,3993
-PAY-P2,P2,P2-I1,bank-PAY-P2,authored-bank,receipt,605,EUR,2026-08-05T10:00:00Z,2026-08-05T10:01:00Z,2026-08-05T10:02:00Z,,,authored/accounting_events/PAY-P2,605
-APPLY-D1,P1,I1,deposit-apply-1,authored-ledger,deposit_application,605,EUR,2026-09-04T12:30:00Z,2026-09-04T12:31:00Z,2026-09-04T12:32:00Z,PAY-D1,,authored/accounting_events/APPLY-D1,605

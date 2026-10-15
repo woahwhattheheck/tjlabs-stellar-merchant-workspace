@@ -1,3 +1,0 @@
-id,company_id,name,role,source_ref
-TECH,CO,Authored technician,technician,authored/people
-OFFICE,CO,Authored office reviewer,operations,authored/people

@@ -1,3 +1,0 @@
-allocation_id,payment_id,appointment_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference
-AL-A,PAY-A,VISIT-A,INV-A,deposit,2500,2026-11-02T11:30:00-05:00,Apply recorded deposit to this original invoice,Authored allocation
-AL-C,PAY-C,VISIT-C,,deposit,4000,2026-10-15T12:05:00-04:00,Retain original deposit pending actual reschedule,Authored allocation

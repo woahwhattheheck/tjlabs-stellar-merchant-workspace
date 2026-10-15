@@ -1,5 +1,0 @@
-id,asset_id,slot_key,face,capacity_seconds,loop_seconds,effective_from,effective_until,recorded_at,source_ref
-SL1,SCREEN,rotation-1,screen-front,20,120,2026-10-01T00:00:00Z,,2026-10-01T00:00:00Z,authored/slot-1
-SL2,SCREEN,rotation-2,screen-front,20,120,2026-10-01T00:00:00Z,,2026-10-01T00:00:00Z,authored/slot-2
-SLB,BENCH,bench,back,1,1,2026-10-01T00:00:00Z,,2026-10-01T00:00:00Z,authored/bench-face
-SLP,PLANTER,north-face,north,1,1,2026-10-01T00:00:00Z,,2026-10-01T00:00:00Z,authored/planter-face

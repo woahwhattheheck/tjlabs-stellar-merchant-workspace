@@ -1,5 +1,0 @@
-id,report_id,kind,record_id,payload_sha256,source_ref
-R1-PLAY1,R1,play_events,PLAY1,afced761c42692699a5671aa6f4b48700a18d1cd4778005f10feee6e280ba051,authored/report-input
-R1-PLAY5,R1,play_events,PLAY5,afced761c42692699a5671aa6f4b48700a18d1cd4778005f10feee6e280ba051,authored/report-input
-R2-PLAY1,R2,play_events,PLAY1,afced761c42692699a5671aa6f4b48700a18d1cd4778005f10feee6e280ba051,authored/report-input
-R2-PLAY5,R2,play_events,PLAY5,afced761c42692699a5671aa6f4b48700a18d1cd4778005f10feee6e280ba051,authored/report-input

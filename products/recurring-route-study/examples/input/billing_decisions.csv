@@ -1,4 +1,0 @@
-id,stop_id,report_id,supersedes_id,decision,effective_at,recorded_at,actor_id,reason,source_ref
-BD1,S1,R1,,ready,2026-10-12T09:25:00Z,2026-10-12T09:25:00Z,OFFICE,Actual owner invoice-ready observation,authored/billing/BD1
-BD2,S2,R2,,ready,2026-10-12T10:25:00Z,2026-10-12T10:25:00Z,OFFICE,Actual owner invoice-ready observation,authored/billing/BD2
-BD5,S5,R5B,,ready,2026-10-12T12:10:00Z,2026-10-12T12:10:00Z,OFFICE,Actual owner invoice-ready observation,authored/billing/BD5

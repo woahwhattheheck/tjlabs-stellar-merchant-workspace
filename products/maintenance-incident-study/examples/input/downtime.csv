@@ -1,4 +1,0 @@
-id,incident_id,machine_id,event_key,started_at,ended_at,recorded_at,scope,source_ref
-DT1,I1,M1,DT1,2026-10-12T08:00:00Z,2026-10-12T08:20:00Z,2026-10-12T10:30:00Z,production_stopped,authored/source
-DT2,I3,M1,DT2,2026-10-12T08:10:00Z,2026-10-12T08:30:00Z,2026-10-12T10:30:00Z,production_stopped,authored/source
-DT3,I2,M2,DT3,2026-10-12T08:00:00Z,2026-10-12T08:15:00Z,2026-10-12T10:30:00Z,production_stopped,authored/source

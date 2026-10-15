@@ -1,9 +1,0 @@
-id,edition_id,item_code,description,quantity,unit,unit_price,discount,net,tax,total,source_ref
-LINE-Q1,Q1,WORK,Authored scoped service,2,unit,45.125,0,90.25,9.75,100,authored/line/Q1
-LINE-Q2A,Q2A,WORK,Authored scoped service,2,unit,45.125,0,90.25,9.75,100,authored/line/Q2A
-LINE-Q2B,Q2B,WORK,Authored scoped service,2,unit,45.125,0,90.25,9.75,100,authored/line/Q2B
-LINE-Q4A,Q4A,WORK,Authored scoped service,2,unit,45.125,0,90.25,9.75,100,authored/line/Q4A
-LINE-Q4B,Q4B,WORK,Authored scoped service,2,unit,45.125,0,90.25,9.75,100,authored/line/Q4B
-LINE-Q5,Q5,WORK,Authored scoped service,2,unit,45.125,0,90.25,9.75,100,authored/line/Q5
-LINE-Q6,Q6,WORK,Authored scoped service,2,unit,45.125,0,90.25,9.75,100,authored/line/Q6
-LINE-Q7,Q7,WORK,Authored scoped service,2,unit,45.125,0,90.25,9.75,100,authored/line/Q7

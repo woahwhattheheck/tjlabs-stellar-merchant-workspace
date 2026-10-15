@@ -1,5 +1,0 @@
-# Complete installed receiving
-
-From this product directory run `node native/receive-installed.mjs`. The command creates a private workspace, opens its sole writer and loopback listener, saves complete pending and emergency input, applies a named source review, recovers the original request after later work, refuses a stale replacement, retrieves every complete export byte, restarts the listener and verifies the retained original outcome. A successful run removes its authored temporary workspace; a failure prints the retained physical directory.
-
-Run the ordinary authored browser/native commands in RECEIVING.md for the full domain operator. The maintained receiving/portable-course.cjs executes the actual assembled installed scripts with supplied DOM and atomic IndexedDB adapters; receiving/host-course.cjs executes actual Merchant dispatch and the complete managed model with supplied filesystem/transport adapters. Actual OS and rendered-browser receiving is a distinct run of the same maintained source.

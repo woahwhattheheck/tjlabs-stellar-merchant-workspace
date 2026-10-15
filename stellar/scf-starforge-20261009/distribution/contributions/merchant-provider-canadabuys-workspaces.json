@@ -1,8 +1,0 @@
-{
-  "schema": "stellar-forge.merchant-distribution-contribution.v1",
-  "id": "merchant-provider-canadabuys-workspaces",
-  "description": "CanadaBuys procurement workspace MCP provider",
-  "merchantProviders": {
-    "canadabuys-workspaces": "stellar-forge/mcp-merchant-operator/providers/canadabuys-workspaces.mjs"
-  }
-}

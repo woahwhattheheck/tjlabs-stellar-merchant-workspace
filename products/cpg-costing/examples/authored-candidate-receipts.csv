@@ -1,3 +1,0 @@
-id,itemId,receivedDate,quantity,unit,invoiceAmount,currency,chargesComplete,evidence
-oats-r1,oats,2026-10-01,100,lb,220,USD,yes,confirmed
-bags-r1,bags,2026-10-01,200,each,20,USD,yes,confirmed

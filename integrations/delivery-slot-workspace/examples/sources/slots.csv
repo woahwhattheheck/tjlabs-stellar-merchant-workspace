@@ -1,2 +1,0 @@
-slot_id,name,cutoff_at,cutoff_boundary,fulfilment_at,reference
-S24,Saturday trade,2026-10-22T08:00:00+01:00,before,2026-10-24T08:00:00+01:00,Authored cutoff example

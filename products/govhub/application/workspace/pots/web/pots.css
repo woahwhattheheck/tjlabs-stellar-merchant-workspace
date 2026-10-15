@@ -1,8 +1,0 @@
-.pots-tabs{display:flex;gap:.5rem;flex-wrap:wrap;border-bottom:1px solid #b8b8b8;margin:0 0 1.25rem;padding:.25rem 0}
-.pots-tabs a{color:inherit;padding:.65rem .9rem;text-decoration:none;border:1px solid transparent}
-.pots-tabs a.current{border-color:#8b8b8b;border-bottom:3px solid #333;font-weight:650}
-.pots-code{max-height:36rem;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;background:#f3f3f3;color:#202020;border:1px solid #ccc;padding:1rem;font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace}
-.pots-observations{padding-left:1.3rem}
-.pots-observations li{margin:.4rem 0}
-#pots-upload-progress{overflow-wrap:anywhere}
-@media(max-width:700px){.pots-tabs a{padding:.6rem}.pots-code{max-height:26rem;font-size:12px}}

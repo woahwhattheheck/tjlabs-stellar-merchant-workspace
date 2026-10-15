@@ -1,9 +1,0 @@
-id,company_id,site_id,technician_id,service_kind,opened_at,recorded_at,included,exclusion_reason,source_ref
-V1,CO,SITE,TECH,repair,2026-10-08T10:00:00Z,2026-10-08T10:00:00Z,true,,authored/visit/V1
-V2,CO,SITE,TECH,repair,2026-10-08T10:00:00Z,2026-10-08T10:00:00Z,true,,authored/visit/V2
-V3,CO,SITE,TECH,repair,2026-10-08T10:00:00Z,2026-10-08T10:00:00Z,true,,authored/visit/V3
-V4,CO,SITE,TECH,repair,2026-10-08T10:00:00Z,2026-10-08T10:00:00Z,true,,authored/visit/V4
-V5,CO,SITE,TECH,repair,2026-10-08T10:00:00Z,2026-10-08T10:00:00Z,true,,authored/visit/V5
-V6,CO,SITE,TECH,repair,2026-10-08T10:00:00Z,2026-10-08T10:00:00Z,true,,authored/visit/V6
-V7,CO,SITE,TECH,repair,2026-10-08T10:00:00Z,2026-10-08T10:00:00Z,true,,authored/visit/V7
-V8,CO,SITE,TECH,repair,2026-10-08T10:00:00Z,2026-10-08T10:00:00Z,true,,authored/visit/V8

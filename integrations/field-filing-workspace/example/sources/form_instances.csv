@@ -1,4 +1,0 @@
-instance_id,job_id,field_version_id,form_version_id,artifact_sha256,created_at,observed_at,reference
-FORM-A1,JOB-A,FIELD-A1,TEMPLATE-A1,c822242fbc69dc2ed67fcaed5b63610216f9164f55f650c36c6c899f7b2462c0,2026-10-20T11:45:00-04:00,2026-10-20T12:35:00-04:00,Original authored artifact identity
-FORM-A2,JOB-A,FIELD-A2,TEMPLATE-A1,3ac37ce2c0872282a7c0f3e8d1c687d6b6ce3afb3e6a585cf55adc8ad9b82ab3,2026-10-20T13:15:00-04:00,2026-10-20T13:16:00-04:00,Corrected authored artifact identity
-FORM-B1,JOB-B,FIELD-B1,TEMPLATE-B1,416fe7c6db6f7f4e7371be50d7a6728c324345a2a0b96857a38aa12c84cbf755,2026-10-20T12:26:00-04:00,2026-10-20T12:27:00-04:00,Draft authored artifact identity

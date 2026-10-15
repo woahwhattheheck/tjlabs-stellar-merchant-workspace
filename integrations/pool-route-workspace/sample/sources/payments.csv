@@ -1,3 +1,0 @@
-payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference
-PA,received,,USD,2000,2026-10-20T08:00:00-05:00,Authored recorded customer payment,Authored operating-course source
-PC,received,,USD,1500,2026-10-20T08:05:00-05:00,Authored recorded customer payment,Authored operating-course source

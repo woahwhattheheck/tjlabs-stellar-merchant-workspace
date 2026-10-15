@@ -1,6 +1,0 @@
-id,runId,start,end,kind,reason
-A-break,RUN-A,2026-10-14T10:00:00Z,2026-10-14T10:15:00Z,excluded,Owner-declared unpaid production break
-A-stop1,RUN-A,2026-10-14T09:00:00Z,2026-10-14T09:30:00Z,stop,Material wait
-A-stop2,RUN-A,2026-10-14T09:20:00Z,2026-10-14T09:50:00Z,stop,Maintenance record overlapping same wait
-B-break,RUN-B,2026-10-14T08:30:00Z,2026-10-14T08:45:00Z,excluded,Owner-declared no-production break
-B-stop,RUN-B,2026-10-14T09:00:00Z,2026-10-14T09:20:00Z,stop,Changeover; remains stop time

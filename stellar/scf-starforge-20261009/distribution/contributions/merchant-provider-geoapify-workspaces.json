@@ -1,8 +1,0 @@
-{
-  "schema": "stellar-forge.merchant-distribution-contribution.v1",
-  "id": "merchant-provider-geoapify-workspaces",
-  "description": "Geoapify source, batch jobs, address review and customer dataset operator",
-  "merchantProviders": {
-    "geoapify-workspaces": "stellar-forge/mcp-merchant-operator/providers/geoapify-workspaces.mjs"
-  }
-}

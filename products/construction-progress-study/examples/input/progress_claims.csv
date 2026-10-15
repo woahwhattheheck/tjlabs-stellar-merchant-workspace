@@ -1,3 +1,0 @@
-claim_id,project_id,contract_version_id,claim_number,period_from,period_until,valuation_at,prepared_at,submitted_at,status,supersedes_id,currency,recorded_at,available_at,source_ref
-C1,P1,CV1,1,2026-08-01T00:00:00Z,2026-09-01T00:00:00Z,2026-09-01T10:00:00Z,2026-09-01T11:00:00Z,2026-09-02T09:00:00Z,submitted,,EUR,2026-09-02T09:01:00Z,2026-09-02T09:02:00Z,authored/progress_claims/C1
-C2,P1,CV1,2,2026-09-01T00:00:00Z,2026-10-01T00:00:00Z,2026-10-01T10:00:00Z,2026-10-01T11:00:00Z,2026-10-02T09:00:00Z,submitted,,EUR,2026-10-02T09:01:00Z,2026-10-02T09:02:00Z,authored/progress_claims/C2

@@ -1,1 +1,0 @@
-invoice_id,project_id,client_id,invoice_number,invoice_type,original_invoice_id,claim_id,certification_id,issued_at,due_at,period_from,period_until,currency,net,tax,gross,status,recorded_at,available_at,source_ref

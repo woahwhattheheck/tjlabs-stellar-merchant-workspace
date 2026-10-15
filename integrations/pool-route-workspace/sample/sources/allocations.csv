@@ -1,3 +1,0 @@
-allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference
-ALA,PA,JOB-A,INV-A,deposit,2000,2026-10-20T12:45:00-05:00,Authored explicit application to INV-A,Authored operating-course source
-ALC,PC,JOB-C,,deposit,1500,2026-10-20T08:10:00-05:00,Authored retained booking credit; no customer invoice supplied,Authored operating-course source

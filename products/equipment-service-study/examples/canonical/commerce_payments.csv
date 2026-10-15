@@ -1,2 +1,0 @@
-"id","record_key","revision","supersedes_id","record_status","recorded_at","available_at","source_document_id","source_ref","payment_id","invoice_id","customer_id","currency","amount","payment_type","paid_at","provider_transaction_id","payment_document_id"
-"payment1","payment1","1","","active","2026-10-02T13:00:00.000Z","2026-10-02T13:00:00.000Z","","Authored complete service-commerce course / payment1","PAY1","INV-REPAIR","C1","CAD","88","receipt","2026-10-02T13:00:00.000Z","AUTHORED-TX1","payment-original"

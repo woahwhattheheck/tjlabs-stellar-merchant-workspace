@@ -1,2 +1,0 @@
-id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,credit_id,outcome_record_id,invoice_line_id,posted_at,amount,currency,posted_by
-CREDIT-A2,CREDIT-A2,1,,active,2026-10-01T17:00:00.000Z,2026-10-01T17:00:00.000Z,document-a3dafab5b1d3f2a88e8fe14eebc520da,Complete authored harvest/forecast/outcome course / CREDIT-A2,CREDIT-A2,OUT-A2-RETURN,INV-DIST,2026-10-01T17:00:00.000Z,20,USD,FINANCE

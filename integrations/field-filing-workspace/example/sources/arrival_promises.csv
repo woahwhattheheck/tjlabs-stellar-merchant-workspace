@@ -1,4 +1,0 @@
-promise_id,job_id,window_start_at,window_end_at,accepted_at,authorization,reference
-PROMISE-A,JOB-A,2026-10-20T09:00:00-04:00,2026-10-20T10:00:00-04:00,2026-10-19T08:30:00-04:00,Customer accepted original 09:00–10:00 arrival,Authored agreement
-PROMISE-B,JOB-B,2026-10-20T11:30:00-04:00,2026-10-20T12:30:00-04:00,2026-10-19T10:30:00-04:00,Customer accepted 11:30–12:30 arrival,Authored agreement
-PROMISE-C,JOB-C,2026-10-20T15:00:00-04:00,2026-10-20T16:00:00-04:00,2026-10-19T11:30:00-04:00,Original accepted arrival,Authored agreement

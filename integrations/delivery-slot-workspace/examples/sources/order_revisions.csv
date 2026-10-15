@@ -1,7 +1,0 @@
-revision_id,slot_id,order_id,line_id,revision,buyer_id,product_id,status,quantity,unit,submitted_at,reference
-A1,S24,ORDER-A,L1,1,A,WHITE,confirmed,10,loaf,2026-10-22T07:00:00+01:00,Authored first request
-A2,S24,ORDER-A,L1,2,A,WHITE,confirmed,12,loaf,2026-10-22T07:30:00+01:00,Authored replacement
-A3,S24,ORDER-A,L1,3,A,WHITE,confirmed,20,loaf,2026-10-22T08:05:00+01:00,Authored late replacement
-B1,S24,ORDER-B,L1,1,B,CROISSANT,confirmed,2,dozen,2026-10-22T07:15:00+01:00,Authored pack quantity
-C1,S24,ORDER-C,L1,1,C,WHITE,confirmed,6,loaf,2026-10-22T07:00:00+01:00,Authored request
-C2,S24,ORDER-C,L1,2,C,WHITE,cancelled,0,loaf,2026-10-22T07:45:00+01:00,Authored cancellation

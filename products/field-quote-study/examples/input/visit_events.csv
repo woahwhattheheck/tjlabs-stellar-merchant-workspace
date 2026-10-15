@@ -1,9 +1,0 @@
-id,visit_id,event,effective_at,recorded_at,actor_id,reason,source_ref
-DEPART1,V1,departed,2026-10-08T10:30:00Z,2026-10-08T10:30:00Z,TECH,Actual authored departure,authored/departure/V1
-DEPART2,V2,departed,2026-10-08T10:30:00Z,2026-10-08T10:30:00Z,TECH,Actual authored departure,authored/departure/V2
-DEPART3,V3,departed,2026-10-08T10:30:00Z,2026-10-08T10:30:00Z,TECH,Actual authored departure,authored/departure/V3
-DEPART4,V4,departed,2026-10-08T10:30:00Z,2026-10-08T10:30:00Z,TECH,Actual authored departure,authored/departure/V4
-DEPART5,V5,departed,2026-10-08T10:30:00Z,2026-10-08T10:30:00Z,TECH,Actual authored departure,authored/departure/V5
-DEPART6,V6,departed,2026-10-08T10:30:00Z,2026-10-08T10:30:00Z,TECH,Actual authored departure,authored/departure/V6
-DEPART7,V7,departed,2026-10-08T10:30:00Z,2026-10-08T10:30:00Z,TECH,Actual authored departure,authored/departure/V7
-DEPART8,V8,departed,2026-10-08T10:30:00Z,2026-10-08T10:30:00Z,TECH,Actual authored departure,authored/departure/V8

@@ -1,4 +1,0 @@
-id,name,system_label,currency,external_ref
-A,Authored North plant,Authored mapped ERP/HRIS extracts,USD,authored/example-source
-B,Authored South plant,Authored mapped ERP/HRIS extracts,USD,authored/example-source
-C,Authored Cooked plant,Authored mapped ERP/HRIS extracts,USD,authored/example-source

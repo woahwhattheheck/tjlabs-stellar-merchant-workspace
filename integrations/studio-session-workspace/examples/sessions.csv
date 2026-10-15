@@ -1,2 +1,0 @@
-session_id,room_id,artist_id,booked_start,booked_end,actual_start,actual_end,status,billing_mode,hourly_rate_minor,package_minor,overtime_rate_minor,increment_minutes,currency,quote_reference
-SESSION-1,ROOM-A,ARTIST-1,2026-10-15T18:00:00-04:00,2026-10-16T00:00:00-04:00,2026-10-15T18:00:00-04:00,2026-10-16T02:00:00-04:00,completed,booked,12000,0,12000,15,USD,Authored accepted six-hour quote

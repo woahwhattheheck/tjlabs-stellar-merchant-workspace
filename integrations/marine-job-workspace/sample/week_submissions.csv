@@ -1,4 +1,0 @@
-submission_id,week_id,time_version_ids_json,submitted_at,observed_at,authorization,reference
-SUBMISSION-A1,WEEK-TECH-A,"[""TIME-A1""]",2026-10-20T12:15:00+13:00,2026-10-20T12:15:00+13:00,Authored technician submission snapshot,Authored marine operating example; no customer operating record
-SUBMISSION-A2,WEEK-TECH-A,"[""TIME-A2""]",2026-10-20T13:40:00+13:00,2026-10-20T13:40:00+13:00,Authored technician submission snapshot,Authored marine operating example; no customer operating record
-SUBMISSION-B1,WEEK-TECH-B,"[""TIME-B1""]",2026-10-20T11:15:00+13:00,2026-10-20T11:15:00+13:00,Authored technician submission snapshot,Authored marine operating example; no customer operating record

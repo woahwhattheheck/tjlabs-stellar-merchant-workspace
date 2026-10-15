@@ -1,1 +1,0 @@
-Operator lifecycle derived from the maintained source-preserving costing and telemetry desks. The complete unchanged MIT UTF-8/hash/Base64/gzip codec, STORE ZIP implementation and source materializer are included with their original notices. Domain authority belongs to hardware/core.mjs; this operator does not independently infer CAD, BOM or firmware meaning.

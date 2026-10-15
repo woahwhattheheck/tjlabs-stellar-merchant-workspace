@@ -1,2 +1,0 @@
-line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference
-IL-A,INV-A,JOB-A,USD,45000,Agreed inspection and service,2026-10-20T12:45:00-04:00,Original invoice

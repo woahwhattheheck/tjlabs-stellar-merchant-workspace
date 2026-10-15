@@ -1,3 +1,0 @@
-﻿vessel_id,customer_id,label,source_system,source_id,recorded_at,reference
-VESSEL-A,CUSTOMER-A,Authored vessel Rimu,Authored yard register,HULL-A,2026-10-19T08:00:00+13:00,Authored marine operating example; no customer operating record
-VESSEL-B,CUSTOMER-B,Authored vessel Kea,Authored yard register,HULL-B,2026-10-19T08:00:00+13:00,Authored marine operating example; no customer operating record

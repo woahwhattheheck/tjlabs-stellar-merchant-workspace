@@ -1,4 +1,0 @@
-id,edition_id,payload_sha256,event,effective_at,recorded_at,customer_ref,source_ref
-CUSTOMER-Q1,Q1,c1431a86c2657ec9a8889b8f69252188d203d44a573dbecbb9258b63a5fa6a0b,accepted,2026-10-08T11:05:00Z,2026-10-08T11:05:00Z,CUSTOMER,authored/customer/Q1
-CUSTOMER-Q2B,Q2B,4436f7663d396a309c872df24b758c30cabfb04deb9f31dafaf6d926b4a2588a,viewed,2026-10-08T11:06:00Z,2026-10-08T11:06:00Z,CUSTOMER,authored/customer/Q2B
-CUSTOMER-Q6,Q6,989529cc33d8ef8bf18601bc7e00d67b2eb387d435e289816adaf038e416a66c,rejected,2026-10-08T11:07:00Z,2026-10-08T11:07:00Z,CUSTOMER,authored/customer/Q6

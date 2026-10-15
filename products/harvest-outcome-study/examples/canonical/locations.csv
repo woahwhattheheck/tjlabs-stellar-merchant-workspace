@@ -1,2 +1,0 @@
-id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,location_id,site_id,name,valid_from,valid_to
-CTX-COLD-ROOM,CTX-COLD-ROOM,1,,active,2026-09-29T00:00:00.000Z,2026-09-29T00:00:00.000Z,document-e6c5a671493db91231ee4c88cc232dc2,Authored complete harvest operations source / CTX-COLD-ROOM,COLD-ROOM,SITE,Authored COLD-ROOM,2026-09-29T00:00:00.000Z,

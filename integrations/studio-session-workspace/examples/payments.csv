@@ -1,2 +1,0 @@
-payment_id,invoice_id,kind,amount_minor,currency,reference
-PAY-1,INVOICE-LABEL,receipt,36000,USD,Authored deposit already applied once

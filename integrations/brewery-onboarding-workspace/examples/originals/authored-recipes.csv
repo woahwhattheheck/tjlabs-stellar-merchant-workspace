@@ -1,5 +1,0 @@
-recipe_id,version,ingredient_item_id,quantity,unit,target_yield,target_unit
-IPA,1,MALT,20,kg,100,L
-IPA,1,HOPS,100,g,100,L
-IPA,2,MALT,22,kg,100,L
-IPA,2,HOPS,110,g,100,L

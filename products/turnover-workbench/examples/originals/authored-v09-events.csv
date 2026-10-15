@@ -1,9 +1,0 @@
-event_id,clip_id,track,record_in,record_out,source_in,source_out,use_id,label
-new-A,camera-A,V1,0,100,0,100,use-A,new-A
-new-B,camera-B,V1,148,248,0,100,,new-B
-new-C,camera-C,V1,300,380,220,300,,new-C
-new-D1,camera-D,V1,400,500,0,100,,new-D1
-new-D2,camera-D,V1,500,600,0,100,,new-D2
-new-F,camera-F,V1,600,650,200,250,use-F,new-F
-new-G,camera-G,V2,650,700,0,50,use-G,new-G
-new-H,camera-H,V1,700,750,0,50,,new-H

@@ -1,3 +1,0 @@
-lineId,accountId,accountName,itemId,itemName,originalQuantity,originalUnit,baseUnit,quantity,status,inventoryTreatment
-ORDER-1-L1,ACCT-1,Authored local wholesale account,KEG-HALF,IPA half-barrel keg SKU,2,each,each,2,open,retained order reference; no inventory subtraction
-ORDER-2-L1,ACCT-1,Authored local wholesale account,CASE-12,IPA twelve-can case SKU,1,each,each,1,cancelled,retained order reference; no inventory subtraction

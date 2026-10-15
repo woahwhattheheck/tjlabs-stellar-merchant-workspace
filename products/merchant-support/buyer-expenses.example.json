@@ -1,9 +1,0 @@
-{
-  "schema": "stellar-forge.buyer-expense-connection.v1",
-  "workspaces": {
-    "buyer": {
-      "directory": "/absolute/private/buyer-expenses",
-      "python": "python3"
-    }
-  }
-}

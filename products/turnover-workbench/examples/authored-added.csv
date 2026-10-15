@@ -1,3 +1,0 @@
-new_event_id,clip_id,track,record_in,record_out,source_in,source_out,reason
-new-F,camera-F,V1,600,650,200,250,persistent occurrence replaced its source
-new-H,camera-H,V1,700,750,0,50,no overlapping old source occurrence

@@ -1,2 +1,0 @@
-id,invoice_id,stop_id,billing_decision_id,amount,source_ref
-IL1,INV1,S1,BD1,100,authored/invoice-line

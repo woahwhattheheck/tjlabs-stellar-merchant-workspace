@@ -1,2 +1,0 @@
-line_id,invoice_id,appointment_id,currency,amount_minor,description,issued_at,reference
-IL-A,INV-A,VISIT-A,USD,9500,Recorded invoice including separately observed addition,2026-11-02T11:30:00-05:00,Authored original invoice

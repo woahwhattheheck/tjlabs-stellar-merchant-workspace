@@ -1,3 +1,0 @@
-authority_id,person_id,organisation_id,project_id,permission,valid_from,valid_until,revoked_at,recorded_at,available_at,source_ref
-AUTH-OWNER,OWNER,CLIENT,,accept_contract;instruct_variation;approve_quantity;approve_price;approve_measurement;certify_work;release_retention;approve_milestone;accept_delivery,2026-07-01T12:00:00Z,2027-01-01T12:00:00Z,,2026-07-01T12:00:00Z,2026-07-01T12:00:00Z,authored/authorities/AUTH-OWNER
-AUTH-OPS,OPS,BUILDER,,accept_contract;instruct_variation;approve_quantity;approve_price;approve_measurement;certify_work;release_retention;approve_milestone;accept_delivery,2026-07-01T12:00:00Z,2027-01-01T12:00:00Z,,2026-07-01T12:00:00Z,2026-07-01T12:00:00Z,authored/authorities/AUTH-OPS

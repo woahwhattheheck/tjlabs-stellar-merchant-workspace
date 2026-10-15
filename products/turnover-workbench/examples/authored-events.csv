@@ -1,9 +1,0 @@
-old_event_id,clip_id,use_id,status,candidate_new_event_ids,reasons
-A,camera-A,use-A,unchanged,"[""new-A""]",
-B,camera-B,,moved,"[""new-B""]",
-C,camera-C,,trimmed-or-extended,"[""new-C""]",
-D1,camera-D,,ambiguous,"[""new-D1"",""new-D2""]",Repeated or overlapping use of this source has more than one old/new occurrence.
-D2,camera-D,,ambiguous,"[""new-D1"",""new-D2""]",Repeated or overlapping use of this source has more than one old/new occurrence.
-E,camera-E,,removed,[],
-F,camera-F,use-F,source-replaced,[],The same persistent use now refers to a different clip or a nonoverlapping source range.
-G,camera-G,use-G,moved,"[""new-G""]",

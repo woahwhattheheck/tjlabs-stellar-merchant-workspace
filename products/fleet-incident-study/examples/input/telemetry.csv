@@ -1,2 +1,0 @@
-id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,observation_id,asset_id,assignment_id,metric,value,unit,source_system,source_event_id,source_timestamp,observed_at,clock_id,quality_status,interval_start,interval_end,aggregation_method,coverage_complete
-T1,T1,1,,active,2026-10-12T08:21:00Z,2026-10-12T08:21:00Z,,Authored telemetry/T1,TEMP1,A1,JOB1,motor_temperature,68,degC,authored_logger,temp-1,2026-10-12T08:20:00Z,2026-10-12T08:20:00Z,LOGGER,accepted,,,instant,false

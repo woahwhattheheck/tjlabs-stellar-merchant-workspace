@@ -1,2 +1,0 @@
-id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,accounting_event_id,cost_id,asset_id,assignment_id,event_type,effective_at,currency,amount,processor,external_transaction_id,transaction_amount,allocation_complete,reverses_event_id,economic_basis
-PAY1,PAY1,1,,active,2026-10-12T16:35:00Z,2026-10-12T16:35:00Z,,Authored accounting_events/PAY1,PAY1,COST1,A1,JOB1,payment,2026-10-12T16:30:00Z,USD,1000,authored_bank,bank-001,1000,true,,operator_expense

@@ -1,2 +1,0 @@
-id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,conversion_id,item_id,unit,base_unit,factor_to_base,basis_document_id,valid_from,valid_to
-PACK,PACK,1,,active,2026-08-01T09:00:00Z,2026-08-01T09:00:00Z,document-e605953ee320be635d031959206d4a17,authored/unit_conversions/PACK,PACK,ITEM2,pack,kg,10,document-9503c028c4d2d4aa02c3090997427760,2026-08-01T09:00:00Z,

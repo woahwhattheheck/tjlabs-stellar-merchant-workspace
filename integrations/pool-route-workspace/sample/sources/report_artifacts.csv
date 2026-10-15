@@ -1,3 +1,0 @@
-report_id,job_id,service_version_id,reading_ids_json,media_ids_json,artifact_sha256,created_at,observed_at,reference
-REPORT-A1,JOB-A,SERVICE-A1,"[""READ-A1""]","[""MEDIA-A1""]",1f0085b4decc801bad8b4332ceb6f647d0a837d9b4bad4cc24cae8ffcd64d96d,2026-10-20T10:40:00-05:00,2026-10-20T12:35:00-05:00,sample/artifacts/REPORT-A1.html
-REPORT-A2,JOB-A,SERVICE-A2,"[""READ-A2"",""READ-A2-CL""]","[""MEDIA-A2""]",f4062740c3574c4499bd011c797f2d974442f035773bb2158f91b3c6f89f96eb,2026-10-20T12:55:00-05:00,2026-10-20T13:00:00-05:00,sample/artifacts/REPORT-A2.html

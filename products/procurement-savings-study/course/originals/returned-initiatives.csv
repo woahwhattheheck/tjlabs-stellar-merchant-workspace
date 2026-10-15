@@ -1,5 +1,0 @@
-id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,initiative_id,operator_id,site_id,owner_id,description,category,started_at,ended_at,policy_record_id
-I1,I1,1,,active,2026-09-01T09:00:00Z,2026-09-01T09:00:00Z,document-158fb5042af0045981dfd265e657e041,authored/initiatives/I1,I1,OP,SITE,PROC,Component purchase price,ITEM1,2026-09-01T09:00:00Z,,POL
-I2,I2,1,,active,2026-09-01T09:00:00Z,2026-09-01T09:00:00Z,document-9735f9fcbc040bff89cc1be5ec785649,authored/initiatives/I2,I2,OP,SITE,PROC,Imported grade-B terms,ITEM2,2026-09-01T09:00:00Z,,POL
-I3,I3,1,,active,2026-09-01T09:00:00Z,2026-09-01T09:00:00Z,document-1e5faf9fa0940e2b50b60246f4cac58a,authored/initiatives/I3,I3,OP,SITE,PROC,Service scope normalization,ITEM3,2026-09-01T09:00:00Z,,POL
-I4,I4,1,,active,2026-09-01T09:00:00Z,2026-09-01T09:00:00Z,document-af330720bb294f1c5d8d9287d909b240,authored/initiatives/I4,I4,OP,SITE,PROC,Paused secondary allocation,ITEM3,2026-09-01T09:00:00Z,,POL

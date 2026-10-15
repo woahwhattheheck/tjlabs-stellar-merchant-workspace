@@ -1,8 +1,0 @@
-id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,storage_id,batch_record_id,location_id,entered_at,left_at,quantity,unit
-ST-A,ST-A,1,,active,2026-10-01T07:00:00.000Z,2026-10-01T07:00:00.000Z,document-9f977c48436ddad1f1603420c2806816,Complete authored harvest/forecast/outcome course / ST-A,ST-A,A,COLD-ROOM,2026-10-01T07:00:00.000Z,,100,kg
-ST-A-CLOSED,ST-A,2,ST-A,active,2026-10-01T08:00:00.000Z,2026-10-01T08:00:00.000Z,document-2cc0560d4a1ee40ebe421745e423d2f2,Complete authored harvest/forecast/outcome course / ST-A,ST-A,A,COLD-ROOM,2026-10-01T07:00:00.000Z,2026-10-01T08:00:00.000Z,100,kg
-ST-A1,ST-A1,1,,active,2026-10-01T08:00:00.000Z,2026-10-01T08:00:00.000Z,document-fff044707100c37d915c67d1acd9f0ac,Complete authored harvest/forecast/outcome course / ST-A1,ST-A1,A1,COLD-ROOM,2026-10-01T08:00:00.000Z,,60,kg
-ST-A2,ST-A2,1,,active,2026-10-01T08:00:00.000Z,2026-10-01T08:00:00.000Z,document-9e54a3faac32097068fd55818f7c848f,Complete authored harvest/forecast/outcome course / ST-A2,ST-A2,A2,COLD-ROOM,2026-10-01T08:00:00.000Z,,40,kg
-ST-B,ST-B,1,,active,2026-10-01T07:00:00.000Z,2026-10-01T07:00:00.000Z,document-9b31e06263601d84fb9c45a29947b7f3,Complete authored harvest/forecast/outcome course / ST-B,ST-B,B,COLD-ROOM,2026-10-01T07:00:00.000Z,,80,kg
-ST-C,ST-C,1,,active,2026-10-01T07:00:00.000Z,2026-10-01T07:00:00.000Z,document-1315fa8d9560de151768a0c3de3e1ab8,Complete authored harvest/forecast/outcome course / ST-C,ST-C,C,COLD-ROOM,2026-10-01T07:00:00.000Z,,50,kg
-ST-D,ST-D,1,,active,2026-10-01T07:00:00.000Z,2026-10-01T07:00:00.000Z,document-1129b1ef2e4b3980bccafc77c437a1aa,Complete authored harvest/forecast/outcome course / ST-D,ST-D,D,COLD-ROOM,2026-10-01T07:00:00.000Z,,30,kg

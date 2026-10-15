@@ -1,7 +1,0 @@
-event_id,delivery_id,kind,occurred_at,observed_at,evidence_reference,reference
-EVENT-A1-SENT,DELIVERY-A1,sent,2026-10-20T12:38:00-05:00,2026-10-20T12:38:00-05:00,Authored provider event EVENT-A1-SENT,Authored operating-course source
-EVENT-A1-DELIVERED,DELIVERY-A1,delivered,2026-10-20T12:39:00-05:00,2026-10-20T12:40:00-05:00,Authored provider event EVENT-A1-DELIVERED,Authored operating-course source
-EVENT-A1-BOUNCED,DELIVERY-A1,bounced,2026-10-20T13:05:00-05:00,2026-10-20T13:06:00-05:00,Authored provider event EVENT-A1-BOUNCED,Authored operating-course source
-EVENT-A1-LATE-DELIVERY,DELIVERY-A1,delivered,2026-10-20T12:39:00-05:00,2026-10-20T13:45:00-05:00,Authored provider event EVENT-A1-LATE-DELIVERY,Authored operating-course source
-EVENT-A2-DELIVERED,DELIVERY-A2,delivered,2026-10-20T13:12:00-05:00,2026-10-20T13:13:00-05:00,Authored provider event EVENT-A2-DELIVERED,Authored operating-course source
-EVENT-A2-ACK,DELIVERY-A2,acknowledged,2026-10-20T13:20:00-05:00,2026-10-20T13:21:00-05:00,Authored provider event EVENT-A2-ACK,Authored operating-course source
