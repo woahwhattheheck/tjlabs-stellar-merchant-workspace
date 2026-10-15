@@ -1,0 +1,5 @@
+Repair Reference,Customer Name,Customer Email,Customer Phone,Item,Make and Model,Reported Issue,Status,Customer Update,Internal Note,Estimate,Received Date,Expected Completion,Notification Preference,SMS Consent
+"JOB-001","Controlled trial","operator@example.com","+16045550101","Authored workshop item","Demo model","Authored issue","Ready for pickup","Ready","INTERNAL: technician-only information","145.00","2026-10-15","2026-10-17","Email","No"
+"JOB-002","Controlled trial","operator@example.com","+16045550101","Authored workshop item","Demo model","Authored issue","Diagnosis","Assessment continues","INTERNAL: technician-only information","145.00","2026-10-15","2026-10-17","Email","No"
+"JOB-003","Controlled trial","operator@example.com","+16045550101","Authored workshop item","Demo model","Authored issue","Waiting for parts","Waiting","INTERNAL: technician-only information","145.00","2026-10-15","2026-10-17","Email","No"
+"JOB-005","Controlled trial","operator@example.com","+16045550101","Authored workshop item","Demo model","Authored issue","Received","New job","INTERNAL: technician-only information","145.00","2026-10-15","2026-10-17","Both","Yes"

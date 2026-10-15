@@ -1,0 +1,51 @@
+{
+  "schema": "repair-queue.source-course.v1",
+  "sourceSHA": "f2bc1f6cb8db830c83aeeb0bd2f70e7831f917da386e37527e2841e700e8295e",
+  "checks": [
+    {
+      "name": "Initial import has zero notification candidates",
+      "passed": true
+    },
+    {
+      "name": "Later sync preserves exact complete cohort counts",
+      "passed": true
+    },
+    {
+      "name": "Note-only update does not create status candidate",
+      "passed": true
+    },
+    {
+      "name": "Removed row is retained as attention",
+      "passed": true
+    },
+    {
+      "name": "Review correction retains both versions without erasing discrepancy",
+      "passed": true
+    },
+    {
+      "name": "US +1 phone never establishes Canadian SMS coverage",
+      "passed": true
+    },
+    {
+      "name": "Duplicate original reference stays ambiguous and never picks one",
+      "passed": true
+    },
+    {
+      "name": "Contact identity change stops source candidate promotion",
+      "passed": true
+    },
+    {
+      "name": "Complete reopen retains BOM CRLF, histories and bytes",
+      "passed": true
+    },
+    {
+      "name": "Changed retained original is rejected",
+      "passed": true
+    },
+    {
+      "name": "Changed phone cannot inherit source-bound SMS consent/eligibility",
+      "passed": true
+    }
+  ],
+  "execution": "Actual production factory in V8 with authored controlled sources; no external application delivery"
+}

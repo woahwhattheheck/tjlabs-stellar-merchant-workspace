@@ -1,0 +1,89 @@
+{
+  "schema": "tjlabs.repair-queue-desk.v1",
+  "workspace": {
+    "schema": "tjlabs.repair-queue.v1",
+    "id": "repair-queue-workspace",
+    "label": "Workshop repair queue",
+    "editions": [],
+    "reviews": [],
+    "observations": []
+  },
+  "session": {
+    "workspaceLabel": "Workshop repair queue",
+    "editionId": "",
+    "rowKey": "",
+    "reviewId": "",
+    "observationId": "",
+    "filter": "all",
+    "query": "",
+    "page": 0,
+    "sourceDraft": {
+      "label": "",
+      "notes": "",
+      "oldEnabled": false,
+      "sources": {
+        "old": {
+          "name": "",
+          "text": "",
+          "fileReceipt": ""
+        },
+        "next": {
+          "name": "",
+          "text": "",
+          "fileReceipt": ""
+        }
+      },
+      "mapping": {
+        "reference": "Repair Reference",
+        "customerName": "Customer Name",
+        "customerEmail": "Customer Email",
+        "customerPhone": "Customer Phone",
+        "item": "Item",
+        "makeModel": "Make and Model",
+        "reportedIssue": "Reported Issue",
+        "status": "Status",
+        "customerUpdate": "Customer Update",
+        "internalNote": "Internal Note",
+        "estimate": "Estimate",
+        "receivedDate": "Received Date",
+        "expectedCompletion": "Expected Completion",
+        "notificationPreference": "Notification Preference",
+        "smsConsent": "SMS Consent",
+        "recipientCountry": ""
+      },
+      "oldMapping": {
+        "reference": "Repair Reference",
+        "customerName": "Customer Name",
+        "customerEmail": "Customer Email",
+        "customerPhone": "Customer Phone",
+        "item": "Item",
+        "makeModel": "Make and Model",
+        "reportedIssue": "Reported Issue",
+        "status": "Status",
+        "customerUpdate": "Customer Update",
+        "internalNote": "Internal Note",
+        "estimate": "Estimate",
+        "receivedDate": "Received Date",
+        "expectedCompletion": "Expected Completion",
+        "notificationPreference": "Notification Preference",
+        "smsConsent": "SMS Consent",
+        "recipientCountry": ""
+      },
+      "statusText": "original_status,workflow_label\n",
+      "settings": {
+        "mode": "initial-import",
+        "authority": "sheet-managed",
+        "emailEnabled": true,
+        "smsEnabled": false,
+        "smsCreditsConfirmed": false,
+        "defaultPreference": "",
+        "recipientCountry": "",
+        "observedAt": ""
+      }
+    },
+    "reviewDrafts": {},
+    "observationDrafts": {},
+    "originalFiles": {},
+    "fileReceipts": []
+  }
+}

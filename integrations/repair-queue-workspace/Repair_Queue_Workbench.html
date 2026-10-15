@@ -1,0 +1,534 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Repair Queue Workbench · Token Junkie Labs</title><style>:root{color-scheme:light dark;font:15px/1.5 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f4f4f4;color:#171717}*{box-sizing:border-box}body{margin:0}main{max-width:1280px;margin:auto;padding:28px}h1,h2,h3{line-height:1.2}h1{font-size:27px}h2{font-size:20px;margin:28px 0 12px}h3{font-size:16px}p{max-width:100ch}.muted,.eyebrow{color:#555}.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.06em}.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}label{display:block;font-weight:600}input,select,textarea,button{font:inherit;color:inherit;background:#fff;border:1px solid #999;border-radius:3px}input,select,textarea{display:block;width:100%;padding:8px;margin-top:5px}textarea{min-height:100px;resize:vertical;font-family:ui-monospace,monospace;font-size:13px}button{padding:9px 12px;cursor:pointer}button:hover{background:#e8e8e8}button:disabled{opacity:.5;cursor:wait}section,details{background:#fff;border:1px solid #c8c8c8;padding:18px;margin-top:14px}details>summary{font-weight:650;cursor:pointer}.notice{border-left:4px solid #555;padding:10px 14px;background:#e8e8e8;white-space:pre-wrap}.scroll{overflow:auto;max-height:420px}table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:8px;border:1px solid #bbb;vertical-align:top}th{background:#eee;position:sticky;top:0}pre{overflow:auto;white-space:pre-wrap;word-break:break-word;font-size:12px}.sources textarea{min-height:190px}.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}.pill{font-size:12px;border:1px solid #888;padding:2px 6px;border-radius:2px}a{color:inherit;text-underline-offset:3px}@media(max-width:650px){main{padding:14px}.split{grid-template-columns:1fr}.toolbar>*{width:100%}h1{font-size:24px}}@media(prefers-color-scheme:dark){:root{background:#191919;color:#eee}.muted,.eyebrow{color:#bbb}input,select,textarea,button,section,details{background:#252525;border-color:#666}button:hover,.notice,th{background:#333}td,th{border-color:#666}}@media print{.toolbar,.sources,button,input[type=file]{display:none}main{max-width:none;padding:0}section,details{break-inside:avoid}pre{white-space:pre-wrap}}
+.check{display:flex;align-items:center;gap:9px;margin:10px 0}.check input{display:inline-block;width:auto;margin:0}.muted{overflow-wrap:anywhere}th input,td input{min-width:12rem}footer{margin-top:24px}
+</style></head><body><main id="desk">
+<header><p class="eyebrow">Token Junkie Labs · Workshop operations</p><h1>Repair Queue Workbench</h1><p>Compare complete queue exports, keep stable repair references, inspect customer-update candidates and retain actual application observations.</p><p class="muted">Independent preparation workbench for the BenchPing programme. Customer records and bearer tracking links belong in the workshop's authorized workspace.</p></header>
+<p class="notice" data-id="notice" role="status" aria-live="polite"></p>
+<section><h2>Workspace and recovery</h2><div class="grid"><label>Workspace name<input data-id="workspace-label"></label><p data-id="workspace-id" class="muted"></p></div>
+<div class="toolbar"><button data-id="save">Save complete workspace</button><button data-id="json">Download complete workspace</button><label>Open complete workspace<input data-id="import" type="file" accept=".json,application/json"></label><button data-id="restore">Open saved head</button><button data-id="new-workspace">Start new workspace</button></div>
+<div class="toolbar"><label>Independently retained copies<select data-id="copies"></select></label><button data-id="refresh-copies">Refresh copies</button><button data-id="open-copy">Open selected copy</button></div></section>
+<details open><summary>Receive an original queue or later source comparison</summary><p>Keep one literal job reference per row. Required mappings are marked *. Earlier source editions and original bytes remain available when drafts change.</p>
+<div class="grid"><label>New source edition name<input data-id="edition-label"></label><label>Source / operational context<textarea data-id="source-notes" rows="3"></textarea></label></div>
+<label class="check"><input data-id="old-enabled" type="checkbox"> Include a complete previous source</label><div class="split"><details class="sources" open><summary>Current original CSV</summary><label>Original filename<input data-id="next-name"></label><label>Load complete UTF-8 CSV<input data-id="next-file" type="file" accept=".csv,text/csv"></label><p data-id="next-file-status" class="muted"></p><label>Editable source draft<textarea data-id="next-text" rows="10" spellcheck="false"></textarea></label></details><details class="sources" ><summary>Previous original CSV</summary><label>Original filename<input data-id="old-name"></label><label>Load complete UTF-8 CSV<input data-id="old-file" type="file" accept=".csv,text/csv"></label><p data-id="old-file-status" class="muted"></p><label>Editable source draft<textarea data-id="old-text" rows="10" spellcheck="false"></textarea></label></details></div>
+<details><summary>Literal original column mapping</summary><p>Enter the exact header text. Keep an optional mapping blank when the source does not supply that field; no column is guessed.</p><div class="scroll"><table><thead><tr><th>Field</th><th>Current source header</th><th>Previous source header</th></tr></thead><tbody><tr><th scope="row">Repair reference *</th><td><input data-id="mapping-reference" aria-label="Current source column for Repair reference"></td><td><input data-id="oldMapping-reference" aria-label="Previous source column for Repair reference"></td></tr><tr><th scope="row">Customer name *</th><td><input data-id="mapping-customerName" aria-label="Current source column for Customer name"></td><td><input data-id="oldMapping-customerName" aria-label="Previous source column for Customer name"></td></tr><tr><th scope="row">Customer email *</th><td><input data-id="mapping-customerEmail" aria-label="Current source column for Customer email"></td><td><input data-id="oldMapping-customerEmail" aria-label="Previous source column for Customer email"></td></tr><tr><th scope="row">Customer phone</th><td><input data-id="mapping-customerPhone" aria-label="Current source column for Customer phone"></td><td><input data-id="oldMapping-customerPhone" aria-label="Previous source column for Customer phone"></td></tr><tr><th scope="row">Item *</th><td><input data-id="mapping-item" aria-label="Current source column for Item"></td><td><input data-id="oldMapping-item" aria-label="Previous source column for Item"></td></tr><tr><th scope="row">Make and model</th><td><input data-id="mapping-makeModel" aria-label="Current source column for Make and model"></td><td><input data-id="oldMapping-makeModel" aria-label="Previous source column for Make and model"></td></tr><tr><th scope="row">Reported issue</th><td><input data-id="mapping-reportedIssue" aria-label="Current source column for Reported issue"></td><td><input data-id="oldMapping-reportedIssue" aria-label="Previous source column for Reported issue"></td></tr><tr><th scope="row">Original status</th><td><input data-id="mapping-status" aria-label="Current source column for Original status"></td><td><input data-id="oldMapping-status" aria-label="Previous source column for Original status"></td></tr><tr><th scope="row">Customer update</th><td><input data-id="mapping-customerUpdate" aria-label="Current source column for Customer update"></td><td><input data-id="oldMapping-customerUpdate" aria-label="Previous source column for Customer update"></td></tr><tr><th scope="row">Internal note</th><td><input data-id="mapping-internalNote" aria-label="Current source column for Internal note"></td><td><input data-id="oldMapping-internalNote" aria-label="Previous source column for Internal note"></td></tr><tr><th scope="row">Estimate</th><td><input data-id="mapping-estimate" aria-label="Current source column for Estimate"></td><td><input data-id="oldMapping-estimate" aria-label="Previous source column for Estimate"></td></tr><tr><th scope="row">Received date</th><td><input data-id="mapping-receivedDate" aria-label="Current source column for Received date"></td><td><input data-id="oldMapping-receivedDate" aria-label="Previous source column for Received date"></td></tr><tr><th scope="row">Expected completion</th><td><input data-id="mapping-expectedCompletion" aria-label="Current source column for Expected completion"></td><td><input data-id="oldMapping-expectedCompletion" aria-label="Previous source column for Expected completion"></td></tr><tr><th scope="row">Notification preference</th><td><input data-id="mapping-notificationPreference" aria-label="Current source column for Notification preference"></td><td><input data-id="oldMapping-notificationPreference" aria-label="Previous source column for Notification preference"></td></tr><tr><th scope="row">SMS consent</th><td><input data-id="mapping-smsConsent" aria-label="Current source column for SMS consent"></td><td><input data-id="oldMapping-smsConsent" aria-label="Previous source column for SMS consent"></td></tr><tr><th scope="row">Recipient country</th><td><input data-id="mapping-recipientCountry" aria-label="Current source column for Recipient country"></td><td><input data-id="oldMapping-recipientCountry" aria-label="Previous source column for Recipient country"></td></tr></tbody></table></div></details>
+<div class="split"><div><h3>Workflow mapping</h3><p>Map each original status to its reviewed workflow label. Retain every observed spelling explicitly.</p><label>Status map CSV<textarea data-id="status-text" rows="8" spellcheck="false"></textarea></label></div><div><h3>Source and channel configuration</h3>
+<label>Operation<select data-id="setting-mode"><option value="initial-import">Initial import</option><option value="later-sync">Later source sync</option><option value="manual-app-entry">Manual application entry</option></select></label>
+<label>Job source authority<select data-id="setting-authority"><option value="sheet-managed">Sheet-managed queue</option><option value="app-managed">Application-managed jobs</option></select></label>
+<label>Source observation time, including offset<input data-id="setting-observedAt" placeholder="2026-10-15T09:30:00Z"></label>
+<label>Default notification preference<select data-id="setting-defaultPreference"><option value="">Not declared</option><option value="Email">Email</option><option value="SMS">SMS</option><option value="Both">Email and SMS</option><option value="None">None</option></select></label>
+<label>Default recipient country<select data-id="setting-recipientCountry"><option value="">Not declared</option><option value="CA">Canada</option><option value="US">United States</option><option value="OTHER">Other</option></select></label>
+<label class="check"><input data-id="setting-emailEnabled" type="checkbox"> Email enabled in selected configuration</label><label class="check"><input data-id="setting-smsEnabled" type="checkbox"> SMS enabled in selected configuration</label><label class="check"><input data-id="setting-smsCreditsConfirmed" type="checkbox"> SMS credits confirmed</label>
+</div></div><p class="muted">Initial import establishes the queue silently. Later new jobs or status changes are candidates for configured delivery. Canadian SMS also needs explicit recipient country, consent and credits; a +1 number is not a country declaration.</p>
+<div class="toolbar"><button data-id="receive">Receive immutable source edition</button><button data-id="copy-edition">Copy selected originals into new draft</button><button data-id="load-example">Load authored controlled example</button></div></details>
+<section><h2>Queue comparison</h2><label>Retained source edition<select data-id="edition"></select></label><p data-id="edition-context" class="muted"></p><p data-id="summary" class="notice"></p>
+<div class="toolbar"><label>Show<select data-id="filter"><option value="all">All references</option><option value="attention">Source attention</option><option value="changed">Changed</option><option value="new">New</option><option value="missing">Missing from current</option><option value="ambiguous">Ambiguous references</option><option value="candidate">Notification candidates</option></select></label><label>Find reference, customer, item or status<input data-id="query" type="search"></label></div>
+<div data-id="queue" class="scroll"></div><div class="toolbar"><button data-id="previous">Previous 50</button><span data-id="range"></span><button data-id="next-page">Next 50</button></div>
+<p>Missing rows remain investigation items. An accepted review records a decision; it leaves the source comparison visible. Actual delivery observations are retained separately from channel candidates.</p>
+<div class="toolbar"><button data-id="csv">Download comparison CSV</button><button data-id="analysis-json">Download complete comparison JSON</button><button data-id="report">Download readable report</button><button data-id="next-original">Download current original</button><button data-id="old-original">Download previous original</button></div></section>
+<section><h2>Repair review and actual observations</h2><label>Exact source repair reference<select data-id="reference"></select></label><div class="split"><div><h3>Customer-visible update</h3><pre data-id="customer-note"></pre></div><div><h3>Internal note</h3><pre data-id="internal-note"></pre></div></div><details><summary>Complete source occurrences, changes and binding</summary><pre data-id="row-details"></pre></details>
+<div class="split"><section><h3>Retain a review decision</h3><label>New decision or correction<select data-id="review-id"></select></label><label>Decision<select data-id="review-decision"><option value="investigate">Investigate</option><option value="accepted_difference">Accept explained difference</option><option value="correct_in_new_source">Correct in a new source edition</option><option value="exclude_from_trial">Exclude from trial</option></select></label><label>Reviewer<input data-id="review-reviewer"></label><label>Reason<textarea data-id="review-reason"></textarea></label><label>Supporting evidence / source reference<textarea data-id="review-evidence"></textarea></label><button data-id="record-review">Retain decision revision</button><details><summary>Full decision history</summary><pre data-id="review-history"></pre></details></section>
+<section><h3>Retain an actual observation</h3><label>New observation or correction<select data-id="observation-id"></select></label><label>Actual time, including offset<input data-id="observation-occurredAt" placeholder="2026-10-15T09:45:00Z"></label><label>Observed outcome<select data-id="observation-outcome"><option value="no_message_observed">No message observed</option><option value="email_delivered">Email delivered</option><option value="sms_delivered">SMS delivered</option><option value="delivery_failed">Delivery failed</option><option value="application_mapping_checked">Application mapping checked</option><option value="source_corrected">Source corrected</option><option value="other">Other</option></select></label><label>Recorder<input data-id="observation-recorder"></label><label>Actual evidence / provider reference<textarea data-id="observation-evidence"></textarea></label><label>Observation note<textarea data-id="observation-note"></textarea></label><button data-id="record-observation">Retain actual observation revision</button><details><summary>Full observation history</summary><pre data-id="observation-history"></pre></details></section></div></section>
+<details><summary>All original imported file bytes</summary><p>Every imported file stays complete, including an undecodable UTF-8 file. Editing a draft preserves its original receipt.</p><div data-id="imported-files" class="scroll"></div><div class="toolbar"><label>Original file<select data-id="file-receipt"></select></label><button data-id="download-file">Download exact imported bytes</button></div></details>
+<footer><p class="muted">Token Junkie Labs · Repair Queue Workbench. Save the complete workspace to retain original sources, mappings, earlier editions and unfinished forms together.</p></footer></main><script id="initial-data" type="application/json">{"schema":"tjlabs.repair-queue-desk.v1","workspace":{"schema":"tjlabs.repair-queue.v1","id":"repair-queue-workspace","label":"Workshop repair queue","editions":[],"reviews":[],"observations":[]},"session":{"workspaceLabel":"Workshop repair queue","editionId":"","rowKey":"","reviewId":"","observationId":"","filter":"all","query":"","page":0,"sourceDraft":{"label":"","notes":"","oldEnabled":false,"sources":{"old":{"name":"","text":"","fileReceipt":""},"next":{"name":"","text":"","fileReceipt":""}},"mapping":{"reference":"Repair Reference","customerName":"Customer Name","customerEmail":"Customer Email","customerPhone":"Customer Phone","item":"Item","makeModel":"Make and Model","reportedIssue":"Reported Issue","status":"Status","customerUpdate":"Customer Update","internalNote":"Internal Note","estimate":"Estimate","receivedDate":"Received Date","expectedCompletion":"Expected Completion","notificationPreference":"Notification Preference","smsConsent":"SMS Consent","recipientCountry":""},"oldMapping":{"reference":"Repair Reference","customerName":"Customer Name","customerEmail":"Customer Email","customerPhone":"Customer Phone","item":"Item","makeModel":"Make and Model","reportedIssue":"Reported Issue","status":"Status","customerUpdate":"Customer Update","internalNote":"Internal Note","estimate":"Estimate","receivedDate":"Received Date","expectedCompletion":"Expected Completion","notificationPreference":"Notification Preference","smsConsent":"SMS Consent","recipientCountry":""},"statusText":"original_status,workflow_label\n","settings":{"mode":"initial-import","authority":"sheet-managed","emailEnabled":true,"smsEnabled":false,"smsCreditsConfirmed":false,"defaultPreference":"","recipientCountry":"","observedAt":""}},"reviewDrafts":{},"observationDrafts":{},"originalFiles":{},"fileReceipts":[]}}</script><script id="authored-sample" type="application/json">{"id":"later-sync-1","label":"Authored later sync with four source rows","notes":"Authored controlled example, not any shop’s customer records. Demonstrates one status change, one note-only edit, one unchanged row, one missing row and one later new row.","mapping":{"reference":"Repair Reference","customerName":"Customer Name","customerEmail":"Customer Email","customerPhone":"Customer Phone","item":"Item","makeModel":"Make and Model","reportedIssue":"Reported Issue","status":"Status","customerUpdate":"Customer Update","internalNote":"Internal Note","estimate":"Estimate","receivedDate":"Received Date","expectedCompletion":"Expected Completion","notificationPreference":"Notification Preference","smsConsent":"SMS Consent","recipientCountry":""},"statusMapping":{"Received":"Received","Diagnosis":"Diagnosis","Waiting for parts":"Waiting for parts","Ready for pickup":"Ready for pickup"},"settings":{"mode":"later-sync","authority":"sheet-managed","emailEnabled":true,"smsEnabled":true,"smsCreditsConfirmed":true,"defaultPreference":"","recipientCountry":"CA","observedAt":"2026-10-15T04:50:00Z"},"old":{"name":"authored_previous.csv","text":"﻿Repair Reference,Customer Name,Customer Email,Customer Phone,Item,Make and Model,Reported Issue,Status,Customer Update,Internal Note,Estimate,Received Date,Expected Completion,Notification Preference,SMS Consent\r\n\"JOB-001\",\"Controlled trial\",\"operator@example.com\",\"+16045550101\",\"Authored workshop item\",\"Demo model\",\"Authored issue\",\"Received\",\"Received\",\"INTERNAL: technician-only information\",\"145.00\",\"2026-10-15\",\"2026-10-17\",\"Email\",\"No\"\r\n\"JOB-002\",\"Controlled trial\",\"operator@example.com\",\"+16045550101\",\"Authored workshop item\",\"Demo model\",\"Authored issue\",\"Diagnosis\",\"Inspecting\",\"INTERNAL: technician-only information\",\"145.00\",\"2026-10-15\",\"2026-10-17\",\"Email\",\"No\"\r\n\"JOB-003\",\"Controlled trial\",\"operator@example.com\",\"+16045550101\",\"Authored workshop item\",\"Demo model\",\"Authored issue\",\"Waiting for parts\",\"Waiting\",\"INTERNAL: technician-only information\",\"145.00\",\"2026-10-15\",\"2026-10-17\",\"Email\",\"No\"\r\n\"JOB-004\",\"Controlled trial\",\"operator@example.com\",\"+16045550101\",\"Authored workshop item\",\"Demo model\",\"Authored issue\",\"Received\",\"Old reference\",\"INTERNAL: technician-only information\",\"145.00\",\"2026-10-15\",\"2026-10-17\",\"Email\",\"No\"\r\n"},"next":{"name":"authored_current.csv","text":"Repair Reference,Customer Name,Customer Email,Customer Phone,Item,Make and Model,Reported Issue,Status,Customer Update,Internal Note,Estimate,Received Date,Expected Completion,Notification Preference,SMS Consent\n\"JOB-001\",\"Controlled trial\",\"operator@example.com\",\"+16045550101\",\"Authored workshop item\",\"Demo model\",\"Authored issue\",\"Ready for pickup\",\"Ready\",\"INTERNAL: technician-only information\",\"145.00\",\"2026-10-15\",\"2026-10-17\",\"Email\",\"No\"\n\"JOB-002\",\"Controlled trial\",\"operator@example.com\",\"+16045550101\",\"Authored workshop item\",\"Demo model\",\"Authored issue\",\"Diagnosis\",\"Assessment continues\",\"INTERNAL: technician-only information\",\"145.00\",\"2026-10-15\",\"2026-10-17\",\"Email\",\"No\"\n\"JOB-003\",\"Controlled trial\",\"operator@example.com\",\"+16045550101\",\"Authored workshop item\",\"Demo model\",\"Authored issue\",\"Waiting for parts\",\"Waiting\",\"INTERNAL: technician-only information\",\"145.00\",\"2026-10-15\",\"2026-10-17\",\"Email\",\"No\"\n\"JOB-005\",\"Controlled trial\",\"operator@example.com\",\"+16045550101\",\"Authored workshop item\",\"Demo model\",\"Authored issue\",\"Received\",\"New job\",\"INTERNAL: technician-only information\",\"145.00\",\"2026-10-15\",\"2026-10-17\",\"Both\",\"Yes\"\n"}}</script><script>// Copyright TokenJunkieLabs. Pure JavaScript archive primitives; no filesystem, network or code evaluation.
+// High-level limits and portable paths are enforced by source_bank.mjs.
+function createArchiveCodec() {
+  "use strict";
+  const fail = message => { throw new Error("archive_codec: " + message); };
+  const bytes = value => value instanceof Uint8Array ? value : Uint8Array.from(value);
+  function utf8Encode(text) {
+    const out = [];
+    for (let i = 0; i < text.length; i++) {
+      let c = text.charCodeAt(i);
+      if (c >= 0xd800 && c <= 0xdbff) {
+        const low = text.charCodeAt(++i);
+        if (!(low >= 0xdc00 && low <= 0xdfff)) fail("unpaired UTF-16 surrogate");
+        c = 0x10000 + ((c - 0xd800) << 10) + low - 0xdc00;
+      } else if (c >= 0xdc00 && c <= 0xdfff) fail("unpaired UTF-16 surrogate");
+      if (c < 0x80) out.push(c);
+      else if (c < 0x800) out.push(0xc0 | (c >>> 6), 0x80 | (c & 63));
+      else if (c < 0x10000) out.push(0xe0 | (c >>> 12), 0x80 | ((c >>> 6) & 63), 0x80 | (c & 63));
+      else out.push(0xf0 | (c >>> 18), 0x80 | ((c >>> 12) & 63), 0x80 | ((c >>> 6) & 63), 0x80 | (c & 63));
+    }
+    return Uint8Array.from(out);
+  }
+  function utf8Decode(input) {
+    const a = bytes(input), chunks = [], part = [];
+    for (let i = 0; i < a.length;) {
+      const first = a[i++]; let c, count, minimum;
+      if (first < 128) { c = first; count = 0; minimum = 0; }
+      else if (first >= 0xc2 && first <= 0xdf) { c = first & 31; count = 1; minimum = 0x80; }
+      else if (first >= 0xe0 && first <= 0xef) { c = first & 15; count = 2; minimum = 0x800; }
+      else if (first >= 0xf0 && first <= 0xf4) { c = first & 7; count = 3; minimum = 0x10000; }
+      else fail("invalid UTF-8 lead byte");
+      for (let k = 0; k < count; k++) {
+        if (i >= a.length || (a[i] & 0xc0) !== 0x80) fail("invalid UTF-8 continuation");
+        c = (c << 6) | (a[i++] & 63);
+      }
+      if (c < minimum || c > 0x10ffff || (c >= 0xd800 && c <= 0xdfff)) fail("invalid UTF-8 scalar");
+      if (c <= 0xffff) part.push(c);
+      else { c -= 0x10000; part.push(0xd800 | (c >>> 10), 0xdc00 | (c & 1023)); }
+      if (part.length >= 8192) { chunks.push(String.fromCharCode(...part)); part.length = 0; }
+    }
+    if (part.length) chunks.push(String.fromCharCode(...part));
+    return chunks.join("");
+  }
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  function base64Decode(text) {
+    const s = String(text).replace(/[ \t\r\n]/g, "");
+    if (s.length % 4) fail("invalid base64 length");
+    const padding = s.endsWith("==") ? 2 : s.endsWith("=") ? 1 : 0;
+    const out = new Uint8Array(s.length / 4 * 3 - padding); let p = 0;
+    for (let i = 0; i < s.length; i += 4) {
+      const a = alphabet.indexOf(s[i]), b = alphabet.indexOf(s[i + 1]);
+      const last = i + 4 === s.length;
+      const c = s[i + 2] === "=" ? -2 : alphabet.indexOf(s[i + 2]);
+      const d = s[i + 3] === "=" ? -2 : alphabet.indexOf(s[i + 3]);
+      if (a < 0 || b < 0 || c === -1 || d === -1 ||
+          (c === -2 && (!last || d !== -2)) || (d === -2 && !last))
+        fail("invalid base64 alphabet or padding");
+      if ((c === -2 && (b & 15)) || (d === -2 && c >= 0 && (c & 3)))
+        fail("noncanonical base64 padding");
+      const v = (a << 18) | (b << 12) | (Math.max(c, 0) << 6) | Math.max(d, 0);
+      if (p < out.length) out[p++] = v >>> 16;
+      if (p < out.length) out[p++] = (v >>> 8) & 255;
+      if (p < out.length) out[p++] = v & 255;
+    }
+    return out;
+  }
+  function base64Encode(input) {
+    const a = bytes(input), chunks = []; let part = "";
+    for (let i = 0; i < a.length; i += 3) {
+      const remain = a.length - i, v = (a[i] << 16) | ((a[i + 1] || 0) << 8) | (a[i + 2] || 0);
+      part += alphabet[(v >>> 18) & 63] + alphabet[(v >>> 12) & 63] +
+        (remain > 1 ? alphabet[(v >>> 6) & 63] : "=") + (remain > 2 ? alphabet[v & 63] : "=");
+      if (part.length >= 8192) { chunks.push(part); part = ""; }
+    }
+    if (part) chunks.push(part);
+    return chunks.join("");
+  }
+  const crcTable = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let j = 0; j < 8; j++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    crcTable[i] = c >>> 0;
+  }
+  function crc32(input) {
+    let c = 0xffffffff;
+    for (const v of bytes(input)) c = crcTable[(c ^ v) & 255] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  }
+  const shaK = Uint32Array.from([
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+  ]);
+  const rotate = (x, n) => (x >>> n) | (x << (32 - n));
+  function sha256(input) {
+    const a = typeof input === "string" ? utf8Encode(input) : bytes(input);
+    const n = a.length, padded = new Uint8Array(Math.ceil((n + 9) / 64) * 64);
+    padded.set(a); padded[n] = 128;
+    const high = Math.floor(n / 0x20000000), low = (n * 8) >>> 0;
+    for (let i = 0; i < 4; i++) {
+      padded[padded.length - 8 + i] = (high >>> (24 - i * 8)) & 255;
+      padded[padded.length - 4 + i] = (low >>> (24 - i * 8)) & 255;
+    }
+    const h = Uint32Array.from([0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19]);
+    const w = new Uint32Array(64);
+    for (let offset = 0; offset < padded.length; offset += 64) {
+      for (let i = 0; i < 16; i++) {
+        const p = offset + i * 4;
+        w[i] = ((padded[p] << 24) | (padded[p + 1] << 16) | (padded[p + 2] << 8) | padded[p + 3]) >>> 0;
+      }
+      for (let i = 16; i < 64; i++) {
+        const x = w[i - 15], y = w[i - 2];
+        w[i] = ((rotate(x,7) ^ rotate(x,18) ^ (x >>> 3)) + w[i - 16] +
+                (rotate(y,17) ^ rotate(y,19) ^ (y >>> 10)) + w[i - 7]) >>> 0;
+      }
+      let [v0,v1,v2,v3,v4,v5,v6,v7] = h;
+      for (let i = 0; i < 64; i++) {
+        const t1 = (v7 + (rotate(v4,6) ^ rotate(v4,11) ^ rotate(v4,25)) +
+                    ((v4 & v5) ^ (~v4 & v6)) + shaK[i] + w[i]) >>> 0;
+        const t2 = ((rotate(v0,2) ^ rotate(v0,13) ^ rotate(v0,22)) +
+                    ((v0 & v1) ^ (v0 & v2) ^ (v1 & v2))) >>> 0;
+        v7=v6;v6=v5;v5=v4;v4=(v3+t1)>>>0;v3=v2;v2=v1;v1=v0;v0=(t1+t2)>>>0;
+      }
+      for (const [i,v] of [v0,v1,v2,v3,v4,v5,v6,v7].entries()) h[i] = (h[i] + v) >>> 0;
+    }
+    return Array.from(h, v => v.toString(16).padStart(8,"0")).join("");
+  }
+  const lengthBase = [3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258];
+  const lengthExtra = [0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0];
+  const distanceBase = [1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577];
+  const distanceExtra = [0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13];
+  function reverse(value, count) { let out=0; for(let i=0;i<count;i++){out=(out<<1)|(value&1);value>>>=1;} return out; }
+  function huffman(lengths) {
+    const count = new Uint16Array(16), next = new Uint16Array(16), maps = [], codes = [];
+    let max=0, code=0, left=1;
+    for (const length of lengths) { if(length<0 || length>15) fail("invalid Huffman length"); if(length){count[length]++;max=Math.max(max,length);} }
+    for(let n=1;n<=15;n++){left=(left<<1)-count[n];if(left<0)fail("oversubscribed Huffman tree");code=(code+count[n-1])<<1;next[n]=code;if(count[n])maps[n]=new Map();}
+    for(let symbol=0;symbol<lengths.length;symbol++){
+      const n=lengths[symbol];if(n){const rev=reverse(next[n]++,n);maps[n].set(rev,symbol);codes[symbol]=[rev,n];}
+    }
+    return {maps,max,codes};
+  }
+  const fixedLengths = Array.from({length:288},(_,i)=>i<144?8:i<256?9:i<280?7:8);
+  const fixedLiteral = huffman(fixedLengths), fixedDistance = huffman(Array(32).fill(5));
+  function inflateRaw(input, offset=0, maxOutputBytes=134217728) {
+    const a=bytes(input);
+    if (!Number.isSafeInteger(offset) || offset < 0 || offset > a.length ||
+        !Number.isSafeInteger(maxOutputBytes) || maxOutputBytes < 0 || maxOutputBytes > 0x7fffffff)
+      fail("invalid inflate offset or output limit");
+    let position=offset, buffer=0, buffered=0, output=new Uint8Array(Math.min(65536,maxOutputBytes)), used=0;
+    function read(n){while(buffered<n){if(position>=a.length)fail("truncated deflate stream");buffer|=a[position++]<<buffered;buffered+=8;}const v=buffer&((1<<n)-1);buffer>>>=n;buffered-=n;return v;}
+    function emit(v){if(used>=maxOutputBytes)fail("decompressed size exceeds maxOutputBytes");if(used===output.length){const grown=new Uint8Array(Math.min(maxOutputBytes,Math.max(1,output.length*2)));grown.set(output);output=grown;}output[used++]=v;}
+    function decode(tree){let code=0;for(let n=1;n<=tree.max;n++){code|=read(1)<<(n-1);const symbol=tree.maps[n]?.get(code);if(symbol!==undefined)return symbol;}fail("invalid Huffman code");}
+    let final=0;
+    do {
+      final=read(1);const type=read(2);
+      if(type===0){
+        buffer=0;buffered=0;
+        const size=read(16), complement=read(16);
+        if(((size^0xffff)&0xffff)!==complement)fail("invalid stored-block length");
+        for(let i=0;i<size;i++)emit(read(8));
+        continue;
+      }
+      let literal, distance;
+      if(type===1){literal=fixedLiteral;distance=fixedDistance;}
+      else if(type===2){
+        const literalCount=read(5)+257,distanceCount=read(5)+1,codeCount=read(4)+4;
+        const order=[16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15],codeLengths=Array(19).fill(0);
+        for(let i=0;i<codeCount;i++)codeLengths[order[i]]=read(3);
+        const codeTree=huffman(codeLengths),lengths=[];
+        while(lengths.length<literalCount+distanceCount){
+          const value=decode(codeTree);let repeat=1,length=value;
+          if(value===16){if(!lengths.length)fail("repeat without previous code");length=lengths[lengths.length-1];repeat=read(2)+3;}
+          else if(value===17){length=0;repeat=read(3)+3;}
+          else if(value===18){length=0;repeat=read(7)+11;}
+          else if(value>18)fail("invalid code-length symbol");
+          if(lengths.length+repeat>literalCount+distanceCount)fail("code-length repeat overflow");
+          for(let j=0;j<repeat;j++)lengths.push(length);
+        }
+        if(!lengths[256])fail("missing end-of-block code");
+        literal=huffman(lengths.slice(0,literalCount));distance=huffman(lengths.slice(literalCount));
+      } else fail("reserved deflate block type");
+      while(true){
+        const symbol=decode(literal);
+        if(symbol<256){emit(symbol);continue;}
+        if(symbol===256)break;
+        if(symbol<257 || symbol>285)fail("invalid length symbol");
+        const li=symbol-257,len=lengthBase[li]+read(lengthExtra[li]),ds=decode(distance);
+        if(ds>29)fail("invalid distance symbol");
+        const back=distanceBase[ds]+read(distanceExtra[ds]);
+        if(back>used)fail("distance precedes output");
+        for(let j=0;j<len;j++)emit(output[used-back]);
+      }
+    } while(!final);
+    return {bytes:output.slice(0,used),nextOffset:position};
+  }
+  const read32 = (a,p) => ((a[p]|(a[p+1]<<8)|(a[p+2]<<16)|(a[p+3]<<24))>>>0);
+  function gunzipDetailed(input, {maxOutputBytes=134217728,maxMembers=1024}={}) {
+    const a=bytes(input), chunks=[], members=[];let p=0,total=0;
+    if (!Number.isSafeInteger(maxOutputBytes) || maxOutputBytes < 0 || maxOutputBytes > 0x7fffffff ||
+        !Number.isSafeInteger(maxMembers) || maxMembers < 1) fail("invalid gzip limits");
+    while(p<a.length){
+      if (members.length >= maxMembers) fail("gzip member limit exceeded");
+      const start=p;
+      if(p+10>a.length || a[p]!==31 || a[p+1]!==139 || a[p+2]!==8)fail("invalid gzip header");
+      const flags=a[p+3];if(flags&0xe0)fail("reserved gzip flags");p+=10;
+      if(flags&4){if(p+2>a.length)fail("truncated gzip extra");const n=a[p]|(a[p+1]<<8);p+=2+n;if(p>a.length)fail("truncated gzip extra");}
+      for(const flag of [8,16])if(flags&flag){while(p<a.length && a[p]!==0)p++;if(p>=a.length)fail("unterminated gzip header");p++;}
+      if(flags&2){if(p+2>a.length || (crc32(a.subarray(start,p))&0xffff)!==(a[p]|(a[p+1]<<8)))fail("gzip header CRC mismatch");p+=2;}
+      const decoded=inflateRaw(a,p,maxOutputBytes-total);p=decoded.nextOffset;
+      if(p+8>a.length)fail("truncated gzip trailer");
+      const expectedCrc=read32(a,p),expectedSize=read32(a,p+4),actualCrc=crc32(decoded.bytes);
+      if(actualCrc!==expectedCrc)fail("gzip CRC32 mismatch");
+      if((decoded.bytes.length>>>0)!==expectedSize)fail("gzip ISIZE mismatch");
+      p+=8;total+=decoded.bytes.length;chunks.push(decoded.bytes);
+      members.push({start,end:p,bytes:decoded.bytes.length,crc32:actualCrc.toString(16).padStart(8,"0")});
+    }
+    if(!members.length)fail("empty gzip input");
+    const out=new Uint8Array(total);let offset=0;for(const chunk of chunks){out.set(chunk,offset);offset+=chunk.length;}
+    return {bytes:out,members};
+  }
+  function deflateRaw(input) {
+    const a=bytes(input), out=[];let buffer=0,buffered=0;
+    function write(v,n){buffer|=v<<buffered;buffered+=n;while(buffered>=8){out.push(buffer&255);buffer>>>=8;buffered-=8;}}
+    const symbol=(tree,s)=>{const pair=tree.codes[s];write(pair[0],pair[1]);};
+    write(3,3);
+    const heads=new Int32Array(65536).fill(-1),previous=new Int32Array(a.length).fill(-1);
+    const hash=p=>((a[p]*251+a[p+1])*251+a[p+2])&65535;
+    function insert(p){if(p+2<a.length){const h=hash(p);previous[p]=heads[h];heads[h]=p;}}
+    for(let p=0;p<a.length;){
+      let best=2,bestDistance=0;
+      if(p+2<a.length){
+        let candidate=heads[hash(p)],remaining=64;const maximum=Math.min(258,a.length-p);
+        while(candidate>=0 && p-candidate<=32768 && remaining--){
+          if(a[candidate]===a[p] && a[candidate+1]===a[p+1] && a[candidate+best]===a[p+best]){
+            let len=2;while(len<maximum && a[candidate+len]===a[p+len])len++;
+            if(len>best){best=len;bestDistance=p-candidate;if(len===maximum)break;}
+          }
+          candidate=previous[candidate];
+        }
+      }
+      if(bestDistance && best>=3){
+        let li=0;while(li+1<lengthBase.length && lengthBase[li+1]<=best)li++;
+        symbol(fixedLiteral,257+li);write(best-lengthBase[li],lengthExtra[li]);
+        let di=0;while(di+1<distanceBase.length && distanceBase[di+1]<=bestDistance)di++;
+        symbol(fixedDistance,di);write(bestDistance-distanceBase[di],distanceExtra[di]);
+        for(let j=0;j<best;j++)insert(p+j);p+=best;
+      }else{symbol(fixedLiteral,a[p]);insert(p);p++;}
+    }
+    symbol(fixedLiteral,256);if(buffered)out.push(buffer&255);return Uint8Array.from(out);
+  }
+  function gzip(input) {
+    const a=typeof input==="string"?utf8Encode(input):bytes(input), compressed=deflateRaw(a);
+    const out=new Uint8Array(18+compressed.length);out.set([31,139,8,0,0,0,0,0,0,255]);out.set(compressed,10);
+    const crc=crc32(a),size=a.length>>>0;for(let i=0;i<4;i++){out[out.length-8+i]=(crc>>>(8*i))&255;out[out.length-4+i]=(size>>>(8*i))&255;}
+    return out;
+  }
+  function decodeSourceBank(encoded,expectedSha256) {
+    const packed=base64Decode(encoded),decoded=gunzipDetailed(packed),digest=sha256(decoded.bytes);
+    if(expectedSha256 && digest!==expectedSha256.toLowerCase())fail("source-bank SHA256 mismatch: "+digest);
+    const text=utf8Decode(decoded.bytes),bank=JSON.parse(text);
+    return {bank,text,bytes:decoded.bytes.length,sha256:digest,gzipBase64:base64Encode(packed),gzipBytes:packed.length,gzipSha256:sha256(packed),members:decoded.members};
+  }
+  function encodeSourceBank(bankOrText) {
+    const text=typeof bankOrText==="string"?bankOrText:JSON.stringify(bankOrText),raw=utf8Encode(text),packed=gzip(raw);
+    return {text,bytes:raw.length,sha256:sha256(raw),gzipBase64:base64Encode(packed),gzipBytes:packed.length,gzipSha256:sha256(packed)};
+  }
+  return {utf8Encode,utf8Decode,base64Encode,base64Decode,crc32,sha256,inflateRaw,
+          gunzip:(input,options)=>gunzipDetailed(input,options).bytes,gunzipDetailed,deflateRaw,gzip,
+          decodeSourceBank,encodeSourceBank};
+}
+
+function createRepairQueueCore(codec){
+"use strict";
+if(!codec||typeof codec.sha256!=="function"||typeof codec.utf8Encode!=="function")throw Error("UTF-8/SHA codec required");
+const schema="tjlabs.repair-queue.v1",clone=x=>JSON.parse(JSON.stringify(x)),own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+const fields=["reference","customerName","customerEmail","customerPhone","item","makeModel","reportedIssue","status","customerUpdate","internalNote","estimate","receivedDate","expectedCompletion","notificationPreference","smsConsent","recipientCountry"];
+const required=["reference","customerName","customerEmail","item"];
+const defaultMapping={reference:"Repair Reference",customerName:"Customer Name",customerEmail:"Customer Email",customerPhone:"Customer Phone",item:"Item",makeModel:"Make and Model",reportedIssue:"Reported Issue",status:"Status",customerUpdate:"Customer Update",internalNote:"Internal Note",estimate:"Estimate",receivedDate:"Received Date",expectedCompletion:"Expected Completion",notificationPreference:"Notification Preference",smsConsent:"SMS Consent",recipientCountry:""};
+const defaultSettings={mode:"initial-import",authority:"sheet-managed",emailEnabled:true,smsEnabled:false,smsCreditsConfirmed:false,defaultPreference:"",recipientCountry:"",observedAt:""};
+const hash=x=>codec.sha256(codec.utf8Encode(typeof x==="string"?x:JSON.stringify(x)));
+const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function object(x,name){if(!x||typeof x!=="object"||Array.isArray(x))throw Error(name+" must be an object");return x}
+function text(x,name,empty=false){if(typeof x!=="string"||(!empty&&!x.trim()))throw Error(name+" must be text");return x}
+function timestamp(s){return /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/.test(s)&&Number.isFinite(Date.parse(s))&&date(s.slice(0,10))}
+function date(s){return /^\d{4}-\d{2}-\d{2}$/.test(s)&&Number.isFinite(Date.parse(s+"T00:00:00Z"))&&new Date(s+"T00:00:00Z").toISOString().slice(0,10)===s}
+function csvParse(original){
+ text(original,"CSV",true);let s=original.replace(/^\uFEFF/,""),rows=[],row=[],v="",quoted=false,closed=false;
+ for(let i=0;i<s.length;i++){const ch=s[i];if(quoted){if(ch==='"'){if(s[i+1]==='"'){v+='"';i++}else{quoted=false;closed=true}}else v+=ch;continue}
+ if(ch==='"'){if(v||closed)throw Error("CSV quote inside an unquoted field");quoted=true}
+ else if(ch===","||ch==="\n"||ch==="\r"){row.push(v);v="";closed=false;if(ch!==","){if(ch==="\r"&&s[i+1]==="\n")i++;rows.push(row);row=[]}}
+ else{if(closed)throw Error("CSV characters after closing quote");v+=ch}
+ }
+ if(quoted)throw Error("Unclosed CSV quote");if(v||closed||row.length){row.push(v);rows.push(row)}
+ if(!rows.length)throw Error("CSV header required");const headers=rows.shift();if(headers.some(h=>!h)||new Set(headers).size!==headers.length)throw Error("CSV headers must be nonempty and unique");
+ const records=[];for(let i=0;i<rows.length;i++){if(rows[i].length===1&&rows[i][0]==="")continue;if(rows[i].length!==headers.length)throw Error("CSV row "+(i+2)+" has wrong field count");records.push({occurrence:i+2,cells:rows[i]})}
+ return {headers,records};
+}
+function mapping(m,headers){object(m,"Mapping");if(Object.keys(m).some(k=>!fields.includes(k)))throw Error("Unknown mapping field");for(const k of fields){text(m[k],"Mapping "+k,true);if(m[k]&&!headers.includes(m[k]))throw Error("Mapped column missing: "+m[k]);if(required.includes(k)&&!m[k])throw Error("Required mapping "+k)}return clone(m)}
+function settings(s){object(s,"Settings");if(Object.keys(s).sort().join("|")!==Object.keys(defaultSettings).sort().join("|"))throw Error("Complete settings required");if(!["initial-import","later-sync","manual-app-entry"].includes(s.mode)||!["sheet-managed","app-managed"].includes(s.authority))throw Error("Unknown mode or authority");for(const k of ["emailEnabled","smsEnabled","smsCreditsConfirmed"])if(typeof s[k]!=="boolean")throw Error(k+" must be boolean");if(!["","Email","SMS","Both","None"].includes(s.defaultPreference)||!["","CA","US","OTHER"].includes(s.recipientCountry))throw Error("Explicit notification preference/country required");if(!timestamp(s.observedAt))throw Error("Source observation timestamp with UTC offset required");return clone(s)}
+function source(f,m){object(f,"Source");text(f.name,"Source filename");text(f.text,"Original CSV",true);const parsed=csvParse(f.text);const map=mapping(m,parsed.headers);return {name:f.name,text:f.text,bytes:codec.utf8Encode(f.text).length,sha256:hash(f.text),mapping:map,rows:parsed.records.map(r=>({occurrence:r.occurrence,values:Object.fromEntries(fields.map(k=>[k,map[k]?r.cells[parsed.headers.indexOf(map[k])]:""]))}))}}
+function sourceCheck(s){const rebuilt=source({name:s.name,text:s.text},s.mapping);if(JSON.stringify(rebuilt)!==JSON.stringify(s))throw Error("Retained original source/mapping/rows differ");return rebuilt}
+function statusMap(m){object(m,"Status mapping");if(Object.keys(m).length>1000)throw Error("Too many status mappings");for(const [k,v] of Object.entries(m)){text(k,"Original status");text(v,"Reviewed workflow label")}return clone(m)}
+function group(rows){const g=new Map();for(const r of rows){const key=r.values.reference;if(!g.has(key))g.set(key,[]);g.get(key).push(r)}return g}
+function issues(r,sm){const v=r.values,a=[];for(const k of required)if(!v[k].trim())a.push("missing_"+k);if(v.reference!==v.reference.trim())a.push("reference_surrounding_whitespace");if(v.customerEmail&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.customerEmail))a.push("email_format");if(!v.status||!own(sm,v.status))a.push("status_mapping_required");if(v.expectedCompletion&&!date(v.expectedCompletion)&&!timestamp(v.expectedCompletion))a.push("completion_date_invalid");if(v.receivedDate&&!date(v.receivedDate)&&!timestamp(v.receivedDate))a.push("received_date_invalid");if(v.estimate&&!/^\d+(?:\.\d{1,2})?$/.test(v.estimate))a.push("estimate_format");return a}
+function channels(v,s){
+ const preference=v.notificationPreference||s.defaultPreference,notes=[],eligible=[];
+ if(!["Email","SMS","Both","None"].includes(preference))notes.push("notification_preference_required");
+ if(preference==="Email"||preference==="Both"){if(s.emailEnabled&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.customerEmail))eligible.push("email");else notes.push("email_not_ready")}
+ if(preference==="SMS"||preference==="Both"){
+ const country=v.recipientCountry||s.recipientCountry;
+ if(!s.smsEnabled)notes.push("sms_disabled");
+ if(country!=="CA")notes.push(country?"sms_country_not_supported":"sms_country_not_declared");
+ if(!/^(yes|true)$/i.test(v.smsConsent))notes.push("sms_consent_not_recorded");
+ if(!s.smsCreditsConfirmed)notes.push("sms_credits_not_confirmed");
+ if(!/^\+[1-9]\d{7,14}$/.test(v.customerPhone.replace(/[\s()-]/g,"")))notes.push("sms_phone_format");
+ if(!notes.some(x=>x.startsWith("sms_")))eligible.push("sms");
+ }
+ return {preference,eligible,notes};
+}
+function analyseEdition(e){
+ const prior=group(e.old?e.old.rows:[]),next=group(e.next.rows),refs=[...new Set([...prior.keys(),...next.keys()])],rows=[];
+ for(const reference of refs){
+ const a=prior.get(reference)||[],b=next.get(reference)||[],row={reference,oldOccurrences:a.map(x=>x.occurrence),nextOccurrences:b.map(x=>x.occurrence),old:a.length===1?clone(a[0].values):null,next:b.length===1?clone(b[0].values):null,change:"",changedFields:[],attention:[],notification:{event:"none",channels:[],notes:[]},sourcePair:e.sourcePair};
+ if(a.length>1||b.length>1){row.change="ambiguous_reference";row.attention.push("duplicate_reference");row.originalOccurrences={old:clone(a),next:clone(b)};rows.push(row);continue}
+ if(!b.length){row.change="missing_from_next";row.attention.push("missing_row_is_not_deletion_or_completion");rows.push(row);continue}
+ row.attention.push(...issues(b[0],e.statusMapping));
+ if(a.length){const oldIssues=issues(a[0],e.statusMapping);row.attention.push(...oldIssues.map(x=>"prior_"+x));row.changedFields=fields.filter(k=>a[0].values[k]!==b[0].values[k]);row.change=row.changedFields.length?"changed":"unchanged";if(["customerName","customerEmail","customerPhone","item","makeModel"].some(k=>row.changedFields.includes(k)))row.attention.push("identity_or_contact_changed");
+ if(own(e.statusMapping,a[0].values.status)&&own(e.statusMapping,b[0].values.status)){row.priorStage=e.statusMapping[a[0].values.status];row.nextStage=e.statusMapping[b[0].values.status]}
+ }else row.change="new";
+ const ch=channels(b[0].values,e.settings);row.notification.notes=ch.notes;
+ if(e.settings.mode==="initial-import")row.notification.notes.push("initial_import_sends_no_customer_messages");
+ else if(e.settings.mode==="later-sync"&&e.settings.authority==="app-managed")row.notification.notes.push("sheet_sync_has_no_declared_authority_for_app_managed_job");
+ else if(!a.length)row.notification.event="new_job_candidate";
+ else if(row.changedFields.includes("status")){
+ if(row.priorStage===row.nextStage&&row.priorStage!==undefined)row.notification.notes.push("raw_status_changed_with_same_mapped_stage_requires_app_check");
+ else row.notification.event="status_change_candidate";
+ }else if(row.changedFields.includes("customerUpdate"))row.notification.notes.push("note_only_change_does_not_establish_status_notification");
+ if(row.notification.event!=="none"&&!row.attention.length)row.notification.channels=ch.eligible;
+ if(row.attention.length)row.notification.notes.push("resolve_source_attention_before_notification_test");
+ row.notification.notes.push("candidate_only_confirm_actual_application_delivery");
+ rows.push(row);
+ }
+ const summary={oldRows:e.old?.rows.length||0,nextRows:e.next.rows.length,uniqueReferences:refs.length,new:0,changed:0,unchanged:0,missing:0,ambiguous:0,attention:0,emailCandidates:0,smsCandidates:0};
+ for(const r of rows){if(r.change==="new")summary.new++;if(r.change==="changed")summary.changed++;if(r.change==="unchanged")summary.unchanged++;if(r.change==="missing_from_next")summary.missing++;if(r.change==="ambiguous_reference")summary.ambiguous++;if(r.attention.length)summary.attention++;if(r.notification.channels.includes("email"))summary.emailCandidates++;if(r.notification.channels.includes("sms"))summary.smsCandidates++}
+ return {editionId:e.id,label:e.label,sourcePair:e.sourcePair,settings:clone(e.settings),summary,rows};
+}
+function create(x){text(x.id,"Workspace ID");text(x.label,"Workspace label");return {schema,id:x.id,label:x.label,editions:[],reviews:[],observations:[]}}
+function receive(w,input){
+ const n=reopen(w);text(input.id,"Edition ID");if(n.editions.some(e=>e.id===input.id))throw Error("Edition ID already exists");text(input.label,"Edition label");text(input.notes,"Source notes",true);
+ const s=settings(input.settings),sm=statusMap(input.statusMapping),next=source(input.next,input.mapping),old=input.old?source(input.old,input.oldMapping||input.mapping):null;
+ if(s.mode==="later-sync"&&!old)throw Error("Later sync comparison requires the complete previous source");if(s.mode==="manual-app-entry"&&s.authority!=="app-managed")throw Error("Manual app entry requires app-managed authority");
+ const e={id:input.id,label:input.label,settings:s,statusMapping:sm,old,next,notes:input.notes};e.sourcePair=hash(e);n.editions.push(e);return n;
+}
+function edition(w,id){const e=w.editions.find(x=>x.id===id);if(!e)throw Error("Unknown edition");return e}
+function rowSignature(e,r){return hash({sourcePair:e.sourcePair,reference:r.reference,oldOccurrences:r.oldOccurrences,nextOccurrences:r.nextOccurrences,old:r.old,next:r.next,originalOccurrences:r.originalOccurrences||null})}
+function review(w,input){
+ const n=reopen(w),e=edition(n,input.editionId),r=analyseEdition(e).rows.find(x=>x.reference===input.reference);if(!r)throw Error("Unknown source reference");for(const k of ["id","reviewer","reason","evidence"])text(input[k],k);
+ if(!["investigate","accepted_difference","correct_in_new_source","exclude_from_trial"].includes(input.decision))throw Error("Unknown review decision");
+ const prev=n.reviews.find(x=>x.id===input.id);if(prev&&(prev.editionId!==e.id||prev.reference!==r.reference))throw Error("Review ID belongs to another source pair/reference");
+ const rec={id:input.id,revision:n.reviews.filter(x=>x.id===input.id).length+1,editionId:e.id,reference:r.reference,sourcePair:e.sourcePair,rowSignature:rowSignature(e,r),decision:input.decision,reviewer:input.reviewer,reason:input.reason,evidence:input.evidence};n.reviews.push(rec);return n;
+}
+function observe(w,input){
+ const n=reopen(w),e=edition(n,input.editionId),r=analyseEdition(e).rows.find(x=>x.reference===input.reference);if(!r)throw Error("Unknown source reference");for(const k of ["id","recorder","evidence","note"])text(input[k],k);if(!timestamp(input.occurredAt))throw Error("Actual observation timestamp required");if(!["no_message_observed","email_delivered","sms_delivered","delivery_failed","application_mapping_checked","source_corrected","other"].includes(input.outcome))throw Error("Unknown observed outcome");const prev=n.observations.find(x=>x.id===input.id);if(prev&&(prev.editionId!==e.id||prev.reference!==r.reference))throw Error("Observation ID belongs to another source pair/reference");
+ n.observations.push({id:input.id,revision:n.observations.filter(x=>x.id===input.id).length+1,editionId:e.id,reference:r.reference,sourcePair:e.sourcePair,rowSignature:rowSignature(e,r),occurredAt:input.occurredAt,outcome:input.outcome,recorder:input.recorder,evidence:input.evidence,note:input.note});return n;
+}
+function reopen(w){
+ object(w,"Workspace");if(w.schema!==schema)throw Error("Repair queue workspace required");text(w.id,"Workspace ID");text(w.label,"Workspace label");for(const k of ["editions","reviews","observations"])if(!Array.isArray(w[k]))throw Error(k+" history required");
+ const ids=new Set();for(const e of w.editions){object(e,"Edition");text(e.id,"Edition ID");text(e.label,"Edition label");text(e.notes,"Notes",true);if(ids.has(e.id))throw Error("Repeated edition");ids.add(e.id);settings(e.settings);statusMap(e.statusMapping);sourceCheck(e.next);if(e.old)sourceCheck(e.old);if(e.settings.mode==="later-sync"&&!e.old)throw Error("Later sync lacks prior original");if(e.settings.mode==="manual-app-entry"&&e.settings.authority!=="app-managed")throw Error("Manual entry authority differs");const v=clone(e);delete v.sourcePair;if(hash(v)!==e.sourcePair)throw Error("Edition original identity differs")}
+ for(const [key,method] of [["reviews",review],["observations",observe]]){const accepted=[];for(const r of w[key]){object(r,"History record");const base={schema,id:w.id,label:w.label,editions:clone(w.editions),reviews:key==="reviews"?accepted:[],observations:key==="observations"?accepted:[]};const e=edition(base,r.editionId),row=analyseEdition(e).rows.find(x=>x.reference===r.reference);if(!row||r.sourcePair!==e.sourcePair||r.rowSignature!==rowSignature(e,row))throw Error("History source binding differs");for(const k of key==="reviews"?["id","reviewer","reason","evidence"]:["id","recorder","evidence","note"])text(r[k],k);
+ const prev=accepted.filter(x=>x.id===r.id);if(r.revision!==prev.length+1||prev.some(x=>x.editionId!==r.editionId||x.reference!==r.reference))throw Error("History correction identity differs");
+ const keys=key==="reviews"?["id","revision","editionId","reference","sourcePair","rowSignature","decision","reviewer","reason","evidence"]:["id","revision","editionId","reference","sourcePair","rowSignature","occurredAt","outcome","recorder","evidence","note"];if(Object.keys(r).sort().join("|")!==keys.sort().join("|"))throw Error("Unexpected history structure");
+ if(key==="reviews"&&!["investigate","accepted_difference","correct_in_new_source","exclude_from_trial"].includes(r.decision))throw Error("Unknown retained decision");
+ if(key==="observations"&&(!timestamp(r.occurredAt)||!["no_message_observed","email_delivered","sms_delivered","delivery_failed","application_mapping_checked","source_corrected","other"].includes(r.outcome)))throw Error("Invalid observed outcome");accepted.push(clone(r))}}
+ return clone(w);
+}
+function analyse(w,id){reopen(w);const e=edition(w,id),a=analyseEdition(e);for(const r of a.rows){r.reviews=w.reviews.filter(x=>x.editionId===id&&x.reference===r.reference);r.observations=w.observations.filter(x=>x.editionId===id&&x.reference===r.reference)}return a}
+function csvCell(x){let s=String(x??"");if(/^\s*[=+@-]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'}
+function csv(w,id){const a=analyse(w,id),h=["reference","change","old_rows","next_rows","old_status","next_status","customer_update","internal_note","attention","notification_event","candidate_channels","notification_notes","source_pair","review_history","actual_observations"];return [h,...a.rows.map(r=>[r.reference,r.change,r.oldOccurrences.join("|"),r.nextOccurrences.join("|"),r.old?.status,r.next?.status,r.next?.customerUpdate,r.next?.internalNote,r.attention.join("|"),r.notification.event,r.notification.channels.join("|"),r.notification.notes.join("|"),r.sourcePair,JSON.stringify(r.reviews),JSON.stringify(r.observations)])].map(r=>r.map(csvCell).join(",")).join("\n")+"\n"}
+function report(w,id){const a=analyse(w,id),e=edition(w,id);return "<h1>Repair queue receiving · "+esc(a.label)+"</h1><p>"+esc(e.notes)+"</p><p>Mode: "+esc(e.settings.mode)+" · Authority: "+esc(e.settings.authority)+" · Observed source: "+esc(e.settings.observedAt)+"</p><p>Previous: "+esc(e.old?.name||"No previous file")+" · Current: "+esc(e.next.name)+" · Source pair "+esc(e.sourcePair)+"</p><p>"+esc(JSON.stringify(a.summary))+"</p><p>Notification candidates require actual application configuration and controlled delivery observation. Review notes preserve discrepancies. Missing rows never establish completion or deletion.</p><table><thead><tr><th>Reference / source rows</th><th>Change / status</th><th>Customer note</th><th>Internal note</th><th>Attention</th><th>Notification receiving</th><th>Retained review / observations</th></tr></thead><tbody>"+a.rows.map(r=>"<tr><td>"+esc(r.reference)+"<br>"+esc(r.oldOccurrences.join(",")+" → "+r.nextOccurrences.join(","))+"</td><td>"+esc(r.change)+"<br>"+esc((r.old?.status||"")+" → "+(r.next?.status||""))+"</td><td>"+esc(r.next?.customerUpdate)+"</td><td>"+esc(r.next?.internalNote)+"</td><td>"+esc(r.attention.join("; "))+"</td><td>"+esc(r.notification.event)+"<br>"+esc(r.notification.channels.join(", "))+"<br>"+esc(r.notification.notes.join("; "))+"</td><td><pre>"+esc(JSON.stringify({reviews:r.reviews,observations:r.observations},null,2))+"</pre></td></tr>").join("")+"</tbody></table>"}
+return {schema,fields,required,defaultMapping,defaultSettings,create,receive,reopen,analyse,review,observe,csv,report,csvParse,esc};
+}
+function createRepairQueueCopyStore(dbAPI){
+"use strict";
+const dbName="tjlabs-repair-queue-workspace-v1";let opened;
+function open(){if(!dbAPI)return Promise.reject(Error("This browser does not provide IndexedDB; use full workspace export"));return opened||=(new Promise((resolve,reject)=>{const q=dbAPI.open(dbName,1);q.onupgradeneeded=()=>{if(!q.result.objectStoreNames.contains("records"))q.result.createObjectStore("records",{keyPath:"id"})};q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error||Error("Browser storage open failed"));q.onblocked=()=>reject(Error("Close an older app tab and retry storage"))})).catch(e=>{opened=null;throw e})}
+async function read(id){const db=await open();return new Promise((resolve,reject)=>{const tx=db.transaction("records","readonly"),q=tx.objectStore("records").get(id);q.onsuccess=()=>resolve(q.result||null);q.onerror=()=>reject(q.error)})}
+async function list(){const db=await open();return new Promise((resolve,reject)=>{const q=db.transaction("records","readonly").objectStore("records").getAll();q.onsuccess=()=>resolve(q.result.filter(r=>r.id!=="head").map(({id,createdAt,title})=>({id,createdAt,title})).sort((a,b)=>b.createdAt.localeCompare(a.createdAt)));q.onerror=()=>reject(q.error)})}
+async function save(body,expectedVersion,title){if(typeof body!=="string")throw Error("Serialized workspace required");const db=await open();return new Promise((resolve,reject)=>{const tx=db.transaction("records","readwrite"),s=tx.objectStore("records"),id="copy-"+(globalThis.crypto?.randomUUID?.()||Date.now()+"-"+Math.random().toString(36).slice(2)),createdAt=new Date().toISOString();let answer;
+ const q=s.get("head");q.onsuccess=()=>{const current=q.result||null;const copy={id,body,title:String(title||""),createdAt};s.put(copy);if((current?.version||null)!==expectedVersion){answer={saved:false,proposalId:id,currentVersion:current?.version||null};return}s.put({id:"head",version:id,body,title:copy.title,createdAt});answer={saved:true,version:id,proposalId:id}};q.onerror=()=>{try{tx.abort()}catch{}};
+ tx.oncomplete=()=>resolve(answer);tx.onerror=()=>reject(tx.error||Error("Save transaction failed"));tx.onabort=()=>reject(tx.error||Error("Save transaction aborted"))})}
+async function retain(body,title){const db=await open();return new Promise((resolve,reject)=>{const tx=db.transaction("records","readwrite"),id="copy-"+(globalThis.crypto?.randomUUID?.()||Date.now()+"-"+Math.random().toString(36).slice(2));tx.objectStore("records").put({id,body,title:String(title||""),createdAt:new Date().toISOString()});tx.oncomplete=()=>resolve({id});tx.onerror=()=>reject(tx.error||Error("Recovery transaction failed"));tx.onabort=()=>reject(tx.error||Error("Recovery transaction aborted"))})}
+return {read,list,save,retain};
+}
+
+function mountRepairQueueWorkbench(root,initial,core,codec,copyStore,sample){
+"use strict";
+const q=id=>root.querySelector('[data-id="'+id+'"]'),clone=x=>JSON.parse(JSON.stringify(x)),esc=core.esc,uid=p=>p+"-"+(globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+"-"+Math.random().toString(36).slice(2));
+const reviewFields=["decision","reviewer","reason","evidence"],observationFields=["occurredAt","outcome","recorder","evidence","note"],decisions=["investigate","accepted_difference","correct_in_new_source","exclude_from_trial"],outcomes=["no_message_observed","email_delivered","sms_delivered","delivery_failed","application_mapping_checked","source_corrected","other"];
+let state,baseVersion=null,dirty=false,busy=false,lastExported="",cached=null;
+const digest=t=>codec.sha256(codec.utf8Encode(t)),keyRef=r=>JSON.stringify([r]),reference=()=>state.session.rowKey?JSON.parse(state.session.rowKey)[0]:null;
+function blankSource(){return {name:"",text:"",fileReceipt:""}}
+function sourceDraft(){return {label:"",notes:"",oldEnabled:false,sources:{old:blankSource(),next:blankSource()},mapping:clone(core.defaultMapping),oldMapping:clone(core.defaultMapping),statusText:"original_status,workflow_label\n",settings:clone(core.defaultSettings)}}
+function wrap(w){w=core.reopen(w);return {schema:"tjlabs.repair-queue-desk.v1",workspace:w,session:{workspaceLabel:w.label,editionId:w.editions.at(-1)?.id||"",rowKey:"",reviewId:"",observationId:"",filter:"all",query:"",page:0,sourceDraft:sourceDraft(),reviewDrafts:{},observationDrafts:{},originalFiles:{},fileReceipts:[]}}}
+function obj(v,name){if(!v||typeof v!=="object"||Array.isArray(v))throw Error(name+" must be an object")}
+function strings(v,keys,name){obj(v,name);if(Object.keys(v).sort().join("|")!==keys.slice().sort().join("|")||keys.some(k=>typeof v[k]!=="string"))throw Error("Complete "+name+" required")}
+function findRow(w,editionId,rowKey){if(!rowKey)return null;let r;try{r=JSON.parse(rowKey)}catch{throw Error("Invalid selected repair reference")};if(!Array.isArray(r)||r.length!==1||typeof r[0]!=="string"||JSON.stringify(r)!==rowKey)throw Error("Invalid selected repair reference");const a=core.analyse(w,editionId),row=a.rows.find(x=>x.reference===r[0]);if(!row)throw Error("Selected reference not present in its source edition");return row}
+function validate(input){
+ const n=input?.schema===core.schema?wrap(input):clone(input);if(n?.schema!=="tjlabs.repair-queue-desk.v1")throw Error("Complete repair-queue workspace required");n.workspace=core.reopen(n.workspace);const s=n.session;obj(s,"Session");
+ for(const k of ["workspaceLabel","editionId","rowKey","reviewId","observationId","filter","query"])if(typeof s[k]!=="string")throw Error("Invalid session "+k);
+ if(!["all","attention","changed","new","missing","ambiguous","candidate"].includes(s.filter)||!Number.isSafeInteger(s.page)||s.page<0)throw Error("Invalid queue view");
+ if(s.editionId){const row=findRow(n.workspace,s.editionId,s.rowKey);core.analyse(n.workspace,s.editionId);for(const[k,history]of [["reviewId","reviews"],["observationId","observations"]])if(s[k]&&!n.workspace[history].some(x=>x.id===s[k]&&x.editionId===s.editionId&&x.reference===row?.reference))throw Error("Correction selection belongs to another source/reference");}
+ else if(s.rowKey||s.reviewId||s.observationId)throw Error("Source-free workspace cannot select a repair");
+ const d=s.sourceDraft;obj(d,"Source draft");if(typeof d.oldEnabled!=="boolean"||["label","notes","statusText"].some(k=>typeof d[k]!=="string"))throw Error("Complete unfinished source fields required");
+ obj(d.sources,"Draft sources");for(const role of ["old","next"])strings(d.sources[role],["name","text","fileReceipt"],role+" source draft");for(const m of ["mapping","oldMapping"])strings(d[m],core.fields,m);
+ obj(d.settings,"Settings draft");if(Object.keys(d.settings).sort().join("|")!==Object.keys(core.defaultSettings).sort().join("|"))throw Error("Complete settings draft required");for(const k of Object.keys(core.defaultSettings))if(typeof d.settings[k]!==typeof core.defaultSettings[k])throw Error("Invalid setting draft "+k);
+ obj(s.originalFiles,"Original file bytes");for(const [hash,f]of Object.entries(s.originalFiles)){if(!/^[0-9a-f]{64}$/.test(hash)||f.sha256!==hash||!Number.isSafeInteger(f.bytes)||typeof f.base64!=="string")throw Error("Complete original file required");const bytes=codec.base64Decode(f.base64);if(bytes.length!==f.bytes||codec.sha256(bytes)!==hash)throw Error("Original imported file differs");}
+ if(!Array.isArray(s.fileReceipts))throw Error("Original file receipts required");const receipts=new Set();for(const r of s.fileReceipts){if(!r||typeof r.id!=="string"||receipts.has(r.id)||!["old","next"].includes(r.role)||typeof r.name!=="string"||typeof r.decodeError!=="string"||!s.originalFiles[r.sha256])throw Error("Invalid original file receipt");receipts.add(r.id);}for(const role of ["old","next"])if(d.sources[role].fileReceipt&&!receipts.has(d.sources[role].fileReceipt))throw Error("Draft file receipt missing");
+ for(const [name,fields,history,allowed,choice]of [["reviewDrafts",reviewFields,"reviews",decisions,"decision"],["observationDrafts",observationFields,"observations",outcomes,"outcome"]]){
+  obj(s[name],name);for(const[k,v]of Object.entries(s[name])){let a;try{a=JSON.parse(k)}catch{throw Error("Invalid source-bound draft key")};if(!Array.isArray(a)||a.length!==4||a.some(x=>typeof x!=="string")||JSON.stringify(a)!==k)throw Error("Invalid source-bound draft identity");const[e,pair,ref,id]=a,edition=n.workspace.editions.find(x=>x.id===e);if(!edition||edition.sourcePair!==pair||!core.analyse(n.workspace,e).rows.some(x=>x.reference===ref))throw Error("Unfinished draft source differs");if(id&&!n.workspace[history].some(x=>x.id===id&&x.editionId===e&&x.reference===ref))throw Error("Unfinished correction belongs to another reference");strings(v,fields,name);if(!allowed.includes(v[choice]))throw Error("Invalid unfinished selection");}
+ }
+ return n;
+}
+state=validate(initial);
+function analysis(){if(!state.session.editionId)return null;if(cached?.workspace!==state.workspace||cached.editionId!==state.session.editionId)cached={workspace:state.workspace,editionId:state.session.editionId,value:core.analyse(state.workspace,state.session.editionId)};return cached.value}
+function row(){return analysis()?.rows.find(x=>keyRef(x.reference)===state.session.rowKey)||null}
+function latest(rows){return [...new Map(rows.map(x=>[x.id,x])).values()]}
+function draftKey(kind){const r=row();return r?JSON.stringify([state.session.editionId,r.sourcePair,r.reference,kind==="review"?state.session.reviewId:state.session.observationId]):null}
+function draft(kind){const key=draftKey(kind),fields=kind==="review"?reviewFields:observationFields,collection=kind==="review"?"reviewDrafts":"observationDrafts",empty=()=>Object.fromEntries(fields.map(k=>[k,k==="decision"?"investigate":k==="outcome"?"no_message_observed":""]));if(!key)return empty();if(!Object.hasOwn(state.session[collection],key)){const id=kind==="review"?state.session.reviewId:state.session.observationId,record=latest(kind==="review"?row().reviews:row().observations).find(x=>x.id===id);state.session[collection][key]=record?Object.fromEntries(fields.map(k=>[k,record[k]])):empty()}return state.session[collection][key]}
+function captureForms(){
+ state.session.workspaceLabel=q("workspace-label").value;if(state.session.workspaceLabel.trim())state.workspace.label=state.session.workspaceLabel;const d=state.session.sourceDraft;d.label=q("edition-label").value;d.notes=q("source-notes").value;d.oldEnabled=q("old-enabled").checked;
+ for(const role of ["old","next"])d.sources[role].name=q(role+"-name").value;for(const m of ["mapping","oldMapping"])for(const f of core.fields)d[m][f]=q(m+"-"+f).value;
+ for(const k of Object.keys(core.defaultSettings))d.settings[k]=typeof core.defaultSettings[k]==="boolean"?q("setting-"+k).checked:q("setting-"+k).value;
+ if(row())for(const kind of ["review","observation"]){const v=draft(kind);for(const f of kind==="review"?reviewFields:observationFields)v[f]=q(kind+"-"+f).value;}
+}
+function body(){return JSON.stringify(state)}
+function changed(message){dirty=true;lastExported="";if(message)notice(message)}
+function notice(message){q("notice").textContent=message}
+function availability(){if(busy)return;const a=analysis(),r=row();for(const id of ["copy-edition","csv","report","analysis-json","next-original"])q(id).disabled=!a;q("old-original").disabled=!a||!state.workspace.editions.find(e=>e.id===a.editionId).old;for(const kind of ["review","observation"]){q("record-"+kind).disabled=!r;q(kind+"-id").disabled=!r;for(const f of kind==="review"?reviewFields:observationFields)q(kind+"-"+f).disabled=!r;}q("previous").disabled=state.session.page===0;q("next-page").disabled=!a||(state.session.page+50>=filtered().length);}
+function lock(value){busy=value;for(const el of root.querySelectorAll("button,input,select,textarea"))el.disabled=value;if(!value)availability()}
+async function run(fn){if(busy)return;captureForms();lock(true);try{return await fn()}catch(e){notice(e.message)}finally{lock(false)}}
+function download(name,type,content){const blob=content instanceof Blob?content:new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=String(name).replace(/[\\/\u0000-\u001f]/g,"_");root.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
+async function textFile(file){return new TextDecoder("utf-8",{fatal:true,ignoreBOM:true}).decode(await file.arrayBuffer())}
+async function listCopies(){const rows=await copyStore.list(),selected=q("copies").value;q("copies").innerHTML=rows.map(r=>"<option value='"+esc(r.id)+"'>"+esc(r.createdAt+" · "+r.title)+"</option>").join("");if(rows.some(r=>r.id===selected))q("copies").value=selected;return rows}
+function exportFull(){captureForms();const value=validate(state),text=JSON.stringify(value,null,2)+"\n";if(codec.utf8Encode(text).length>768*1024*1024)throw Error("Complete workspace exceeds 768 MiB; preserve the current saved copy before separating this operation.");download("Repair_Queue_Complete_Workspace.json","application/json",text);lastExported=body();notice("Complete workspace downloaded with all source editions, original file bytes, decisions, actual observations and unfinished forms.")}
+async function retainCurrent(){if(!dirty)return true;if(lastExported===body()&&confirm("Confirm the complete current workspace file is saved before replacing this working copy."))return true;try{await copyStore.retain(body(),state.workspace.label+" · before opening another state");await listCopies();return true}catch(e){notice("Keep this current work open. Download its complete workspace, confirm the file is saved, then retry opening. "+e.message);return false}}
+async function adopt(candidate,version){const next=validate(candidate);if(!await retainCurrent())return false;state=next;cached=null;if(version!==undefined)baseVersion=version;dirty=version===undefined;lastExported="";render();return true}
+function statusMapping(text){const p=core.csvParse(text);if(p.headers.join("|")!=="original_status|workflow_label")throw Error("Status mapping columns must be original_status,workflow_label");const m={};for(const r of p.records){if(!r.cells[0]||!r.cells[1]||Object.hasOwn(m,r.cells[0]))throw Error("Each original status needs one explicit unique workflow label");if(["__proto__","constructor","prototype"].includes(r.cells[0]))throw Error("Use an ordinary original status label");m[r.cells[0]]=r.cells[1]}return m}
+const csvCell=v=>'"'+String(v).replace(/"/g,'""')+'"',statusText=m=>"original_status,workflow_label\n"+Object.entries(m).map(r=>r.map(csvCell).join(",")).join("\n")+"\n";
+function intake(){const d=clone(state.session.sourceDraft);return {id:uid("edition"),label:d.label,notes:d.notes,mapping:d.mapping,oldMapping:d.oldMapping,statusMapping:statusMapping(d.statusText),settings:d.settings,old:d.oldEnabled?{name:d.sources.old.name,text:d.sources.old.text}:null,next:{name:d.sources.next.name,text:d.sources.next.text}}}
+function table(headers,rows){return "<table><thead><tr>"+headers.map(h=>"<th>"+esc(h)+"</th>").join("")+"</tr></thead><tbody>"+rows.map(r=>"<tr>"+r.map(x=>"<td>"+esc(x)+"</td>").join("")+"</tr>").join("")+"</tbody></table>"}
+function filtered(){const s=state.session;return (analysis()?.rows||[]).filter(r=>s.filter==="all"||s.filter==="attention"&&r.attention.length||s.filter==="candidate"&&r.notification.event!=="none"||s.filter==="missing"&&r.change==="missing_from_next"||s.filter==="ambiguous"&&r.change==="ambiguous_reference"||r.change===s.filter).filter(r=>!s.query||[r.reference,r.next?.customerName,r.next?.item,r.old?.item,r.next?.status,r.old?.status].some(v=>String(v??"").toLowerCase().includes(s.query.toLowerCase())))}
+function renderDetail(){
+ const r=row();for(const [kind,history,selected]of [["review","reviews","reviewId"],["observation","observations","observationId"]]){const records=latest(r?.[history]||[]);if(!records.some(x=>x.id===state.session[selected]))state.session[selected]="";q(kind+"-id").innerHTML="<option value=''>New "+kind+"</option>"+records.map(x=>"<option value='"+esc(x.id)+"'>"+esc(x.id+" · revision "+x.revision)+"</option>").join("");q(kind+"-id").value=state.session[selected];const d=draft(kind);for(const f of kind==="review"?reviewFields:observationFields)q(kind+"-"+f).value=d[f];q(kind+"-history").textContent=JSON.stringify(r?.[history]||[],null,2);}
+ q("row-details").textContent=r?JSON.stringify(r,null,2):"Select a repair reference. Blank or duplicated references remain visible for investigation.";
+ q("customer-note").textContent=r?.next?.customerUpdate||"";q("internal-note").textContent=r?.next?.internalNote||"";availability();
+}
+function renderAnalysis(){
+ const a=analysis(),s=state.session;q("edition").innerHTML="<option value=''>Choose retained source edition</option>"+state.workspace.editions.map(e=>"<option value='"+esc(e.id)+"'>"+esc(e.label)+"</option>").join("");q("edition").value=s.editionId;q("filter").value=s.filter;q("query").value=s.query;
+ q("summary").textContent=a?a.summary.uniqueReferences+" repair references · "+a.summary.new+" new · "+a.summary.changed+" changed · "+a.summary.missing+" missing · "+a.summary.ambiguous+" ambiguous · "+a.summary.attention+" needing source review · "+a.summary.emailCandidates+" email / "+a.summary.smsCandidates+" SMS candidates":"Receive a complete original queue to begin.";
+ q("edition-context").textContent=a?a.label+" · "+a.settings.mode+" · "+a.settings.authority+" · source observed "+a.settings.observedAt+" · "+a.sourcePair:"No source edition selected.";
+ const rows=filtered();if(s.page>=rows.length)s.page=Math.max(0,Math.floor(Math.max(0,rows.length-1)/50)*50);
+ q("range").textContent=(rows.length?s.page+1:0)+"–"+Math.min(s.page+50,rows.length)+" of "+rows.length+" matching repair references";
+ q("queue").innerHTML=table(["Reference / source rows","Change","Old → current status","Item / customer","Source attention","Notification candidate","Channel readiness"],rows.slice(s.page,s.page+50).map(r=>[(r.reference||"(blank)")+" / "+r.oldOccurrences.join(",")+" → "+r.nextOccurrences.join(","),r.change,(r.old?.status||"")+" → "+(r.next?.status||""),(r.next?.item||r.old?.item||"")+" / "+(r.next?.customerName||r.old?.customerName||""),r.attention.join("; "),r.notification.event+" / "+r.notification.channels.join(", "),r.notification.notes.join("; ")]));
+ const all=a?.rows||[];if(!all.some(r=>keyRef(r.reference)===s.rowKey)){s.rowKey=all.length?keyRef(all[0].reference):"";s.reviewId="";s.observationId="";}
+ q("reference").innerHTML="<option value=''>Select a repair</option>"+all.map(r=>"<option value='"+esc(keyRef(r.reference))+"'>"+esc((r.reference||"(blank reference)")+" · "+r.change)+"</option>").join("");q("reference").value=s.rowKey;renderDetail();
+}
+function render(){const s=state.session,d=s.sourceDraft;q("workspace-label").value=s.workspaceLabel;q("workspace-id").textContent=state.workspace.id;q("edition-label").value=d.label;q("source-notes").value=d.notes;q("old-enabled").checked=d.oldEnabled;q("status-text").value=d.statusText;
+ for(const role of ["old","next"]){q(role+"-name").value=d.sources[role].name;q(role+"-text").value=d.sources[role].text;const receipt=s.fileReceipts.find(x=>x.id===d.sources[role].fileReceipt);q(role+"-file-status").textContent=receipt?(receipt.decodeError?"Original bytes retained; UTF-8 error: "+receipt.decodeError:"Complete original retained")+" · "+receipt.name+" · "+receipt.sha256:"Original source text draft";}
+ for(const m of ["mapping","oldMapping"])for(const f of core.fields)q(m+"-"+f).value=d[m][f];for(const k of Object.keys(core.defaultSettings)){if(typeof core.defaultSettings[k]==="boolean")q("setting-"+k).checked=d.settings[k];else q("setting-"+k).value=d.settings[k];}
+ q("imported-files").innerHTML=table(["Original filename","Role","Bytes","SHA-256","Decode result"],s.fileReceipts.map(r=>[r.name,r.role,s.originalFiles[r.sha256].bytes,r.sha256,r.decodeError||"UTF-8 retained"]));q("file-receipt").innerHTML=s.fileReceipts.map(r=>"<option value='"+esc(r.id)+"'>"+esc(r.name+" · "+r.role+" · "+r.id)+"</option>").join("");renderAnalysis();
+}
+for(const id of ["workspace-label","edition-label","source-notes","old-enabled",...["mapping","oldMapping"].flatMap(m=>core.fields.map(f=>m+"-"+f)),...Object.keys(core.defaultSettings).map(k=>"setting-"+k),...["old","next"].map(k=>k+"-name")])q(id).addEventListener("input",()=>{if(busy)return;captureForms();changed("Unfinished source/mapping/configuration retained. Save or export the whole workspace.")});
+q("status-text").addEventListener("input",e=>{if(busy)return;state.session.sourceDraft.statusText=e.target.value;changed("Literal unfinished status mapping retained.")});
+for(const role of ["old","next"]){q(role+"-text").addEventListener("input",e=>{if(busy)return;state.session.sourceDraft.sources[role].text=e.target.value;changed("Edited source draft retained. Earlier original bytes remain in this workspace.")});q(role+"-file").onchange=e=>{const file=e.target.files?.[0],input=e.target;if(!file||busy)return;run(async()=>{if(file.size>256*1024*1024)throw Error("Use a complete source file up to 256 MiB.");const bytes=new Uint8Array(await file.arrayBuffer()),hash=codec.sha256(bytes),receipt={id:uid("file"),role,name:file.name,sha256:hash,decodeError:""};let decoded=null;try{decoded=new TextDecoder("utf-8",{fatal:true,ignoreBOM:true}).decode(bytes)}catch(e){receipt.decodeError=e.message}if(!await retainCurrent())return;state.session.originalFiles[hash]={bytes:bytes.length,sha256:hash,base64:codec.base64Encode(bytes)};state.session.fileReceipts.push(receipt);const draft=state.session.sourceDraft.sources[role];draft.name=file.name;draft.fileReceipt=receipt.id;if(decoded!==null)draft.text=decoded;else draft.text="";render();changed(receipt.decodeError?"Complete undecodable file retained. Correct its UTF-8 source before receiving an edition.":"Complete original file retained with BOM and line endings. Review literal column and status mappings.");input.value=""})};}
+for(const kind of ["review","observation"]){for(const f of kind==="review"?reviewFields:observationFields)q(kind+"-"+f).addEventListener("input",()=>{if(busy)return;captureForms();changed("Unfinished "+kind+" retained for this exact edition and reference.")});q(kind+"-id").onchange=()=>{if(busy)return;captureForms();state.session[kind==="review"?"reviewId":"observationId"]=q(kind+"-id").value;renderDetail();changed()};q("record-"+kind).onclick=()=>run(()=>{const r=row();if(!r)throw Error("Select a repair reference");const d=clone(draft(kind)),field=kind==="review"?"reviewId":"observationId",id=state.session[field]||uid(kind),input={id,editionId:state.session.editionId,reference:r.reference,...d};state.workspace=core[kind==="review"?"review":"observe"](state.workspace,input);state.session[field]=id;cached=null;renderAnalysis();changed("Complete "+kind+" revision retained against the original source pair. Source differences and channel candidates remain visible.")});}
+q("edition").onchange=()=>{if(busy)return;captureForms();state.session.editionId=q("edition").value;state.session.rowKey="";state.session.reviewId="";state.session.observationId="";state.session.page=0;cached=null;renderAnalysis();changed()};
+q("reference").onchange=()=>{if(busy)return;captureForms();state.session.rowKey=q("reference").value;state.session.reviewId="";state.session.observationId="";renderDetail();changed()};
+for(const k of ["filter","query"])q(k).addEventListener(k==="filter"?"change":"input",()=>{if(busy)return;captureForms();state.session[k]=q(k).value;state.session.page=0;renderAnalysis();changed()});
+for(const [id,delta]of [["previous",-50],["next-page",50]])q(id).onclick=()=>run(()=>{state.session.page=Math.max(0,state.session.page+delta);renderAnalysis();changed()});
+q("receive").onclick=()=>run(()=>{const input=intake(),next=core.receive(state.workspace,input);core.analyse(next,input.id);state.workspace=next;state.session.editionId=input.id;state.session.rowKey="";state.session.reviewId="";state.session.observationId="";state.session.page=0;cached=null;renderAnalysis();changed("Complete immutable source edition received. Inspect the queue and retain actual review or delivery observations.")});
+q("copy-edition").onclick=()=>run(async()=>{const e=state.workspace.editions.find(x=>x.id===state.session.editionId);if(!e)throw Error("Select an edition");if(!await retainCurrent())return;state.session.sourceDraft={label:e.label+" · next source",notes:e.notes,oldEnabled:!!e.old,sources:{old:e.old?{name:e.old.name,text:e.old.text,fileReceipt:""}:blankSource(),next:{name:e.next.name,text:e.next.text,fileReceipt:""}},mapping:clone(e.next.mapping),oldMapping:clone(e.old?.mapping||e.next.mapping),statusText:statusText(e.statusMapping),settings:clone(e.settings)};render();changed("Selected immutable originals copied into new source drafts; all previous source and decisions remain retained.")});
+q("load-example").onclick=()=>run(async()=>{if(!await retainCurrent())return;state.session.sourceDraft={label:sample.label,notes:sample.notes,oldEnabled:!!sample.old,sources:{old:sample.old?{...clone(sample.old),fileReceipt:""}:blankSource(),next:{...clone(sample.next),fileReceipt:""}},mapping:clone(sample.mapping),oldMapping:clone(sample.oldMapping||sample.mapping),statusText:statusText(sample.statusMapping),settings:clone(sample.settings)};render();changed("Authored controlled example loaded into drafts. Receive it to inspect the full queue comparison.")});
+q("new-workspace").onclick=()=>run(async()=>{if(await adopt(wrap(core.create({id:uid("repair-queue"),label:state.session.workspaceLabel}))))notice("New repair-queue workspace opened after retaining the prior working state.")});
+q("save").onclick=()=>run(async()=>{validate(state);const r=await copyStore.save(body(),baseVersion,state.workspace.label);if(r.saved){baseVersion=r.version;dirty=false;notice("Complete saved head and independent proposed copy retained.")}else{dirty=true;notice("Another saved head exists. Your complete proposal is retained separately; inspect the saved head or selected copy.")}await listCopies()});
+q("restore").onclick=()=>run(async()=>{const h=await copyStore.read("head");if(!h)throw Error("No saved workspace");if(await adopt(JSON.parse(h.body),h.version))notice("Saved workspace opened with complete originals and unfinished forms.")});
+q("open-copy").onclick=()=>{const id=q("copies").value;run(async()=>{if(!id)throw Error("Choose a retained copy");const r=await copyStore.read(id);if(!r)throw Error("Retained copy missing");if(await adopt(JSON.parse(r.body)))notice("Independent retained copy opened; current saved head remains separate.")})};
+q("refresh-copies").onclick=()=>run(async()=>notice((await listCopies()).length+" retained copies available."));
+q("json").onclick=()=>{if(busy)return;try{exportFull()}catch(e){notice(e.message)}};
+q("import").onchange=e=>{const file=e.target.files?.[0],input=e.target;if(!file||busy)return;run(async()=>{if(file.size>768*1024*1024)throw Error("Complete workspace exceeds 768 MiB.");const next=JSON.parse((await textFile(file)).replace(/^\uFEFF/,""));if(await adopt(next))notice("Complete workspace received. Select its edition or continue its unfinished intake.");input.value=""})};
+q("download-file").onclick=()=>run(()=>{const receipt=state.session.fileReceipts.find(r=>r.id===q("file-receipt").value);if(!receipt)throw Error("Choose an imported original file");const f=state.session.originalFiles[receipt.sha256],bytes=codec.base64Decode(f.base64);if(codec.sha256(bytes)!==receipt.sha256)throw Error("Original bytes differ");download(receipt.name,"application/octet-stream",new Blob([bytes]));notice("Exact imported original file downloaded.")});
+for(const role of ["old","next"])q(role+"-original").onclick=()=>run(()=>{const e=state.workspace.editions.find(e=>e.id===state.session.editionId),s=e?.[role];if(!s)throw Error("Selected edition has no "+role+" original");download(s.name,"text/csv;charset=utf-8",s.text);notice("Exact immutable edition source downloaded.")});
+q("csv").onclick=()=>run(()=>{if(!analysis())throw Error("Select an edition");download("Repair_Queue_Comparison.csv","text/csv;charset=utf-8",core.csv(state.workspace,state.session.editionId))});
+q("analysis-json").onclick=()=>run(()=>{if(!analysis())throw Error("Select an edition");download("Repair_Queue_Comparison.json","application/json",JSON.stringify(analysis(),null,2)+"\n")});
+q("report").onclick=()=>run(()=>{if(!analysis())throw Error("Select an edition");download("Repair_Queue_Report.html","text/html",'<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Repair queue comparison</title><style>body{font:15px/1.5 system-ui;margin:24px;color:#222}table{border-collapse:collapse;width:100%}td,th{border:1px solid #bbb;padding:8px;vertical-align:top}pre{white-space:pre-wrap;overflow-wrap:anywhere}.scroll{overflow:auto}</style></head><body><div class="scroll">'+core.report(state.workspace,state.session.editionId)+'</div></body></html>')});
+window.addEventListener("beforeunload",e=>{if(dirty){e.preventDefault();e.returnValue=""}});render();notice("Choose a complete queue source or reopen a saved workspace. All customer records stay in this local working file.");listCopies().catch(e=>notice("Browser saved copies are unavailable; complete workspace export remains available. "+e.message));
+return {getState:()=>clone(state),validate,adopt,render,captureForms,originalText:textFile,getDirty:()=>dirty};
+}
+const repairQueueCodec=createArchiveCodec();mountRepairQueueWorkbench(document.getElementById("desk"),JSON.parse(document.getElementById("initial-data").textContent),createRepairQueueCore(repairQueueCodec),repairQueueCodec,createRepairQueueCopyStore(globalThis.indexedDB),JSON.parse(document.getElementById("authored-sample").textContent));</script></body></html>
