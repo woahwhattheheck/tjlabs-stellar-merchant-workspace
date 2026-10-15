@@ -35,6 +35,8 @@ TERMINUS = {
     "license": "MIT", "runtime": "PHP >=8.2 with the original release dependencies",
 }
 REQUIRED = {
+    "workspace/target_expectations.py", "workspace/target_environment_course.py",
+    "workspace/TARGET_ENVIRONMENTS.md", "workspace/target-environment-course.example.json",
     "workspace/castor_adapter.py", "workspace/castor_source.py",
     "workspace/castor_receive.py", "workspace/CASTOR_NATIVE.md",
     "workspace/CASTOR_SOURCE.md", "workspace/CASTOR_RECEIVING.md",

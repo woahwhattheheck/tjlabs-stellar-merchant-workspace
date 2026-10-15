@@ -105,7 +105,7 @@ class DeliveryMixin:
             plan = self._plan(db, plan_id)
             snapshot_ids.update((plan["baseline_id"], plan["candidate_id"]))
             all_comparison_ids.update(plan["agency_ids"])
-            plans.append({"plan": dict(plan, **self._plan_summary(db, plan)), "versions": self._objects(db, "plan_version", plan_id), "approvals": self._objects(db, "approval", plan_id), "revocations": self._objects(db, "revocation", plan_id), "applicable_approvals": self._applicable(db, plan), "audits": self._objects(db, "audit", plan_id), "reviews": self._objects(db, "review", plan_id)})
+            plans.append({"target_expectations": self._objects(db, "target_expectation", plan_id), "target_expectation_reviews": [r for e in self._objects(db, "target_expectation", plan_id) for r in self._objects(db, "target_expectation_review", e["id"])], "plan": dict(plan, **self._plan_summary(db, plan)), "versions": self._objects(db, "plan_version", plan_id), "approvals": self._objects(db, "approval", plan_id), "revocations": self._objects(db, "revocation", plan_id), "applicable_approvals": self._applicable(db, plan), "audits": self._objects(db, "audit", plan_id), "reviews": self._objects(db, "review", plan_id)})
         all_operations = [json.loads(row[0]) for row in db.execute("SELECT data FROM govhub_operations ORDER BY rowid")]
         operation_ids = {operation["id"] for operation in all_operations if operation["plan_id"] in ids}
         for operation in all_operations:
@@ -203,7 +203,17 @@ class DeliveryMixin:
         for item in capture["operations"]:
             value = item["operation"]
             blocks.append("<tr><td>" + e(value["type"]) + "<br>" + e(value.get("native_action", "")) + "<br>" + e(value["id"]) + "</td><td>" + e(value["environment"]["data"]["name"]) + "<br>" + e(value["profile"]["config"]["environment_id"]) + "<br>" + e(value["source_snapshot_id"]) + "</td><td>" + e(value["state"]) + "<br>" + e(value["progress"]["detail"]) + "<br>" + e(value.get("actual_started_at", "")) + " — " + e(value.get("actual_finished_at", "")) + "</td></tr>")
-        blocks.append("</tbody></table><h2>Assigned corrective work</h2><table><thead><tr><th>Work</th><th>Owner and status</th><th>Actual resolution</th></tr></thead><tbody>")
+        blocks.append("</tbody></table>")
+        for item in capture["operations"]:
+            for observation in item["observations"]:
+                comparison = observation.get("target_comparison")
+                if not comparison:
+                    continue
+                blocks.append("<h3>Reviewed target comparison: " + e(item["operation"]["id"]) + "</h3><p>Expectation " + e(comparison["expectation"]["name"]) + " · reviewer " + e(comparison["review"]["author"]) + ". Original source difference status: " + e(comparison["original_source_summary"]["status"]) + ". Actual against reviewed target: " + e(observation["status"]) + ".</p><table><thead><tr><th>ID / field</th><th>Original source</th><th>Approved target expectation</th><th>Actual observation</th><th>Rule / result</th></tr></thead><tbody>")
+                for row in comparison["rows"]:
+                    blocks.append("<tr><td>" + e(row["agency_id"]) + " / " + e(row["field"]) + "</td><td>" + e(row["source"]) + "</td><td>" + e(row["expected"]) + "</td><td>" + e(row["actual"]) + "</td><td>" + e(row["rule"]) + " / " + e(row["result"]) + "</td></tr>")
+                blocks.append("</tbody></table>")
+        blocks.append("<h2>Assigned corrective work</h2><table><thead><tr><th>Work</th><th>Owner and status</th><th>Actual resolution</th></tr></thead><tbody>")
         for item in capture["records"]["migration_issues"]:
             value = item["data"]
             blocks.append("<tr><td>" + e(value["name"]) + "<br>" + e(value["description"]) + "</td><td>" + e(value["owner"]) + "<br>" + e(value["status"]) + "</td><td>" + e(value["resolution"]) + "<br>" + e(value["resolved_at"]) + "</td></tr>")
@@ -231,6 +241,14 @@ class DeliveryMixin:
         write("handover.html", self._handover_html(capture))
         write("record-history.ndjson", ("".join(packed(row) + "\n" for row in capture["record_history"])).encode("utf-8"))
         write("operations.json", (packed(capture["operations"]) + "\n").encode("utf-8"))
+        target_expectations = [e for p in capture["plans"] for e in p.get("target_expectations", [])]
+        target_reviews = [r for p in capture["plans"] for r in p.get("target_expectation_reviews", [])]
+        target_rows = [{"operation_id": item["operation"]["id"], "observation_id": observation["id"], **row}
+                       for item in capture["operations"] for observation in item["observations"]
+                       for row in observation.get("target_comparison", {}).get("rows", [])]
+        if target_expectations:
+            write("target-expectations.json", (packed({"editions": target_expectations, "reviews": target_reviews}) + "\n").encode("utf-8"))
+            write("target-reconciliation.csv", csv_bytes(target_rows, ("operation_id", "observation_id", "agency_id", "field", "source", "expected", "actual", "rule", "result", "reason")))
         if "visitor" in capture:
             from visitor_journeys.delivery import write_payload
             write_payload(write, capture)

@@ -23,7 +23,7 @@ function values(form){return Object.fromEntries(new FormData(form));}
 function notice(message,error=false){const e=document.querySelector('#notice');e.textContent=message;e.className='notice'+(error?' error':'');e.hidden=false;clearTimeout(notice.timer);if(!error)notice.timer=setTimeout(()=>e.hidden=true,9000);}
 async function api(path,payload){const response=await fetch('/api/'+path,{credentials:'same-origin',...(payload===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})});let data;try{data=await response.json();}catch{throw Error('The local service returned an unreadable response. Reopen the saved workspace.');}if(!response.ok){const e=Error(data.error||data.message||'The requested action could not complete.');e.status=response.status;e.fields=data.fields||{};throw e;}return data;}
 const ops=(operation,payload={})=>api('govhub/'+operation,payload);
-async function busy(action){if(state.busy)return;state.busy=true;main.setAttribute('aria-busy','true');document.querySelector('#notice').hidden=true;for(const b of main.querySelectorAll('button'))b.disabled=true;try{return await action();}catch(e){if(e.status===401){state.user=null;renderLogin();}else{notice(e.message,true);for(const[name,message]of Object.entries(e.fields||{})){const c=main.querySelector('[name="'+CSS.escape(name)+'"]');if(c){c.classList.add('invalid');c.setAttribute('aria-invalid','true');const note=document.createElement('small');note.className='field-error';note.textContent=message;c.parentElement.append(note);}}}throw e;}finally{state.busy=false;main.setAttribute('aria-busy','false');for(const b of main.querySelectorAll('button'))b.disabled=false;}}
+async function busy(action){if(state.busy)return;state.busy=true;main.setAttribute('aria-busy','true');document.querySelector('#notice').hidden=true;for(const b of main.querySelectorAll('button'))b.disabled=true;try{return await action();}catch(e){if(e.status===401){state.user=null;renderLogin();}else{notice(e.message,true);for(const[name,message]of Object.entries(e.fields||{})){const c=main.querySelector('[name="'+CSS.escape(name)+'"]');if(c){c.classList.add('invalid');c.setAttribute('aria-invalid','true');const note=document.createElement('small');note.className='field-error';note.textContent=message;c.parentElement.append(note);}}}throw e;}finally{state.busy=false;main.setAttribute('aria-busy','false');for(const b of main.querySelectorAll('button'))b.disabled=false;const targetDraft=main.querySelector('[data-form=target-expectation-draft]');if(targetDraft){const save=targetDraft.querySelector('[value=save]');if(save)save.disabled=!state.expectationPreview||state.expectationPreview.fingerprint!==JSON.stringify(expectationPayload(targetDraft));}}}
 function records(kind,archived=false){return(state.snapshot?.entities?.[kind]||[]).filter(r=>archived||!r.archived);}
 function schema(kind){return state.snapshot?.schemas?.[kind];}
 function recordName(kind,id){return records(kind,true).find(r=>r.id===id)?.data?.name||id||'—';}
@@ -170,8 +170,96 @@ async function renderPlan(editing=false){
   main.innerHTML=`<div class="breadcrumbs">${link('Cohort plans','plans')}<span>${esc(p.name)}</span></div>`+
     heading(p.name,p.notes||'Review the retained source pair and the exact cohort decision.',historical?badge('Historical revision'):`${button('Run source audit','audit',{id:p.id,revision:p.revision},true)}${link('Revise cohort','plan-edit',{id:p.id})}`)+
     (historical?`<div class="callout">${link('Open current cohort revision','plan',{id:p.id})}</div>`:'')+
-    `<div class="grid wide"><div>${card('Selected cohort',definition([['Baseline',link(snapshotName(p.baseline_id),'inventory',{id:p.baseline_id})],['Candidate',link(snapshotName(p.candidate_id),'inventory',{id:p.candidate_id})],['Comparison IDs',esc(p.agency_ids.join(', '))],['Minimum baseline',esc(p.min_agencies)],['Owner',esc(p.owner||'—')],['Operating window',esc(date(p.window_start))+' – '+esc(date(p.window_end))],['Rollback instruction',esc(p.rollback_reference||'—')],['Cohort revision',`<code>${esc(p.revision)}</code>`]]))}${card('Original field audit',audit?`<div class="split-heading"><div>${badge(audit.status,audit.status==='FAIL')} · ${esc(date(audit.created_at))} · ${esc(audit.author)}</div></div>${definition([['Matched sites',esc(audit.summary.matched_sites)],['Approved changes',esc(audit.summary.approved_changes)],['Open findings',esc(audit.summary.blocking_issues)]])}<h3>Exact findings</h3>${findings.length?auditTable(findings):empty('The original comparison found no differing fields or failed observations.')}${(audit.scope_issues||[]).length?card('Declared scope findings',table(['Finding'],audit.scope_issues.map(x=>[detailValue(x)]))):''}${rawDetails('Original audit inputs and structured result',audit)}`:empty('Run the source audit for this cohort revision.'))}${exact.length&&!historical&&isReviewer()?card('Review an exact field change',`<form data-form="approval">${select('Observed change','finding',exact.map((c,i)=>[String(i),c.agency_id+' · '+c.field+' · '+c.before+' → '+c.after]))}${area('Reason and approving instruction','reason','',true)}<button class="primary">Retain exact change decision</button></form>`):''}${card('Operating work',table(['Operation','Cohort','Environment','State','Progress'],opRows(result.operations||[])))}<div class="actions">${link('Start native operation','operation-new',{plan_id:p.id})}${link('Register migration issue','new',{kind:'migration_issues'})}</div></div><div>${!historical&&isReviewer()?card('Cohort reviewer decision',latest?`<form data-form="review">${definition([['Current audit',badge(latest.status)],['Audited',esc(date(latest.created_at))]])}${select('Decision','decision',[['APPROVE','Approve this successful source audit'],['RETURN','Return for work']],latest.status==='PASS'?'APPROVE':'RETURN')}${area('Decision and operating reference','reason','',true)}<button class="primary">Retain reviewer decision</button></form>`:empty('Run the cohort audit before recording its review.')):''}${card('Retained reviewer decisions',reviews.length?`<ol class="timeline">${reviews.map(r=>`<li><span class="time">${esc(date(r.created_at))} · ${esc(r.author)}</span><h3>${esc(r.decision)}</h3><p>${esc(r.reason)}</p><code>${esc(short(r.audit_id))}</code></li>`).join('')}</ol>`:empty('The reviewer decision will be retained with this source pair.'))}${card('Source change decisions',approvals.length?approvals.map(a=>`<details><summary>${esc(a.agency_id)} · ${esc(a.field)} ${a.revoked_at||a.revoked?badge('Revoked'):''}</summary>${definition([['Before',`<code>${esc(a.before)}</code>`],['After',`<code>${esc(a.after)}</code>`],['Approved by',esc(a.approved_by)],['Reason',esc(a.reason)],['Original revision',`<code>${esc(short(a.plan_revision))}</code>`]])}${isReviewer()&&!a.revoked_at&&!a.revoked?button('Revoke this decision','revoke-approval',{id:a.id}):''}</details>`).join(''):empty('Exact approved changes will appear here.'))}${card('Cohort history',(result.versions||[]).map(v=>`<p>${link(short(v.revision),'plan',{id:p.id,revision:v.revision})}<small> · ${esc(date(v.created_at||v.updated_at))} · ${esc(v.author)}</small></p>`).join(''))}${card('Audit history',audits.map(a=>`<p>${link(a.status+' · '+date(a.created_at),'plan',{id:p.id,revision:p.revision,audit:a.id})}</p>`).join('')||empty('Run the original source audit.'))}</div></div>`;
+    `<div class="grid wide"><div>${card('Selected cohort',definition([['Baseline',link(snapshotName(p.baseline_id),'inventory',{id:p.baseline_id})],['Candidate',link(snapshotName(p.candidate_id),'inventory',{id:p.candidate_id})],['Comparison IDs',esc(p.agency_ids.join(', '))],['Minimum baseline',esc(p.min_agencies)],['Owner',esc(p.owner||'—')],['Operating window',esc(date(p.window_start))+' – '+esc(date(p.window_end))],['Rollback instruction',esc(p.rollback_reference||'—')],['Cohort revision',`<code>${esc(p.revision)}</code>`]]))}${card('Original field audit',audit?`<div class="split-heading"><div>${badge(audit.status,audit.status==='FAIL')} · ${esc(date(audit.created_at))} · ${esc(audit.author)}</div></div>${definition([['Matched sites',esc(audit.summary.matched_sites)],['Approved changes',esc(audit.summary.approved_changes)],['Open findings',esc(audit.summary.blocking_issues)]])}<h3>Exact findings</h3>${findings.length?auditTable(findings):empty('The original comparison found no differing fields or failed observations.')}${(audit.scope_issues||[]).length?card('Declared scope findings',table(['Finding'],audit.scope_issues.map(x=>[detailValue(x)]))):''}${rawDetails('Original audit inputs and structured result',audit)}`:empty('Run the source audit for this cohort revision.'))}${exact.length&&!historical&&isReviewer()?card('Review an exact field change',`<form data-form="approval">${select('Observed change','finding',exact.map((c,i)=>[String(i),c.agency_id+' · '+c.field+' · '+c.before+' → '+c.after]))}${area('Reason and approving instruction','reason','',true)}<button class="primary">Retain exact change decision</button></form>`):''}${card('Operating work',table(['Operation','Cohort','Environment','State','Progress'],opRows(result.operations||[])))}<div class="actions">${link('Start native operation','operation-new',{plan_id:p.id})}${link('Review target expectations','expectations',{plan_id:p.id})}${link('Register migration issue','new',{kind:'migration_issues'})}</div></div><div>${!historical&&isReviewer()?card('Cohort reviewer decision',latest?`<form data-form="review">${definition([['Current audit',badge(latest.status)],['Audited',esc(date(latest.created_at))]])}${select('Decision','decision',[['APPROVE','Approve this successful source audit'],['RETURN','Return for work']],latest.status==='PASS'?'APPROVE':'RETURN')}${area('Decision and operating reference','reason','',true)}<button class="primary">Retain reviewer decision</button></form>`:empty('Run the cohort audit before recording its review.')):''}${card('Retained reviewer decisions',reviews.length?`<ol class="timeline">${reviews.map(r=>`<li><span class="time">${esc(date(r.created_at))} · ${esc(r.author)}</span><h3>${esc(r.decision)}</h3><p>${esc(r.reason)}</p><code>${esc(short(r.audit_id))}</code></li>`).join('')}</ol>`:empty('The reviewer decision will be retained with this source pair.'))}${card('Source change decisions',approvals.length?approvals.map(a=>`<details><summary>${esc(a.agency_id)} · ${esc(a.field)} ${a.revoked_at||a.revoked?badge('Revoked'):''}</summary>${definition([['Before',`<code>${esc(a.before)}</code>`],['After',`<code>${esc(a.after)}</code>`],['Approved by',esc(a.approved_by)],['Reason',esc(a.reason)],['Original revision',`<code>${esc(short(a.plan_revision))}</code>`]])}${isReviewer()&&!a.revoked_at&&!a.revoked?button('Revoke this decision','revoke-approval',{id:a.id}):''}</details>`).join(''):empty('Exact approved changes will appear here.'))}${card('Cohort history',(result.versions||[]).map(v=>`<p>${link(short(v.revision),'plan',{id:p.id,revision:v.revision})}<small> · ${esc(date(v.created_at||v.updated_at))} · ${esc(v.author)}</small></p>`).join(''))}${card('Audit history',audits.map(a=>`<p>${link(a.status+' · '+date(a.created_at),'plan',{id:p.id,revision:p.revision,audit:a.id})}</p>`).join('')||empty('Run the original source audit.'))}</div></div>`;
   state.findings=exact;state.currentAudit=latest;
+}
+
+
+function expectationDraftKey(planId,environmentId,purpose,parentId=''){
+  return ['govhub-target-draft-v1',state.snapshot.workspace.id,state.user.name,planId,environmentId,purpose,parentId].join(':');
+}
+function expectationPayload(form){
+  const c=state.expectationContext,v=values(form);
+  return {plan_id:c.plan.id,expected_revision:c.plan.revision,purpose:c.purpose,
+    environment_id:c.environment.id,environment_revision:c.environment.revision,config_sha256:c.profile.revision,
+    name:v.name,reason:v.reason,parent_id:state.params.parent_id||null,
+    urls:[...form.querySelectorAll('[data-expectation-row]')].map(r=>({
+      agency_id:r.dataset.expectationRow,canonical_url:r.querySelector('[data-url]').value,reason:r.querySelector('[data-reason]').value
+    }))};
+}
+function retainExpectationDraft(form){
+  const payload=expectationPayload(form);
+  state.expectationDraft=payload;state.expectationPreview=null;state.expectationSaveKey=null;
+  const panel=document.querySelector('#target-expectation-preview');if(panel)panel.innerHTML=empty('Preview the current draft before saving.');
+  const save=form.querySelector('[value=save]');if(save)save.disabled=true;
+  try{sessionStorage.setItem(state.expectationDraftKey,JSON.stringify(payload));}
+  catch(error){notice('This draft remains in this page. Browser storage is unavailable; download the draft before leaving.',true);}
+}
+function targetComparisonTable(rows){
+  return table(['Comparison ID / field','Original source','Expected target','Actual observation','Rule','Result'],rows.map(r=>[
+    esc(r.agency_id)+'<br>'+esc(r.field),detailValue(r.source),detailValue(r.expected),detailValue(r.actual),esc(r.rule),badge(r.result,r.result==='FAIL')
+  ]));
+}
+async function renderExpectations(){
+  const planId=state.params.plan_id,environmentId=state.params.environment_id||'',purpose=state.params.purpose||'REHEARSAL';
+  if(!planId)throw Error('Open target expectations from a selected cohort.');
+  const [context,result]=await Promise.all([
+    ops('target-expectations.context',{plan_id:planId,environment_id:environmentId,purpose}),
+    ops('target-expectations.get',{plan_id:planId})
+  ]);
+  state.expectationContext=context;state.targetExpectationEditions=result.expectations;state.expectationPreview=null;
+  let draft=null;
+  state.expectationDraftKey=expectationDraftKey(planId,environmentId,purpose,state.params.parent_id||'');
+  try{draft=JSON.parse(sessionStorage.getItem(state.expectationDraftKey)||'null');}catch{}
+  if(!draft&&state.params.parent_id){
+    const prior=result.expectations.find(e=>e.expectation.id===state.params.parent_id)?.expectation;
+    if(prior)draft={name:prior.name+' · corrected edition',reason:'',urls:prior.urls};
+  }
+  const sourceRows=context.source.rows.filter(r=>context.plan.agency_ids.includes(r.agency_id));
+  const byId=new Map((draft?.urls||[]).map(r=>[r.agency_id,r]));
+  const rows=sourceRows.map((r,i)=>`<tr data-expectation-row="${esc(r.agency_id)}"><td>${esc(r.agency_id)}</td><td><code>${esc(r.canonical_url)}</code></td><td><label>Expected HTTPS URL<input data-url name="url_${i}" value="${esc(byId.get(r.agency_id)?.canonical_url??r.canonical_url)}" required></label></td><td><label>Reason / authority<textarea data-reason name="reason_${i}" required>${esc(byId.get(r.agency_id)?.reason||'')}</textarea></label></td></tr>`).join('');
+  const editions=result.expectations.slice().reverse().map(({expectation:e,latest_review:r,reviews,current,current_reason})=>{
+    const status=!current?'Historical binding':r?.decision||'Awaiting review';
+    return `<details><summary>${esc(e.name)} · ${esc(e.purpose)} · ${badge(status,!current||status==='RETURN')}</summary>${definition([
+      ['Edition',esc(e.id)],['Source / revision',esc(e.source_snapshot_id)+' / '+esc(e.plan_revision)],['Target / profile',esc(e.environment_id)+' / '+esc(e.config_sha256)],['Reason',esc(e.reason)],['Parent edition',esc(e.parent_id||'Initial')],['Current binding',esc(current_reason||'Matches current source and target')]
+    ])}${table(['ID','Original URL','Expected URL','Reason'],e.urls.map(x=>[esc(x.agency_id),esc(x.source_canonical_url),esc(x.canonical_url),esc(x.reason)]))}
+    ${isReviewer()?`<form data-form="target-expectation-review" data-id="${esc(e.id)}">${select('Decision','decision',[...(current?[['APPROVE','Approve this exact target expectation']]:[]),['RETURN','Return for work']],current?'APPROVE':'RETURN')}${area('Review and operating authority','reason','',true)}<button>Retain named decision</button></form>`:''}
+    ${link('Use as corrected edition','expectations',{plan_id:planId,environment_id:e.environment_id,purpose:e.purpose,parent_id:e.id})}
+    ${rawDetails('Full edition and reviewer history',{expectation:e,reviews})}</details>`;
+  }).join('');
+  main.innerHTML=`<div class="breadcrumbs">${link(context.plan.name,'plan',{id:planId})}<span>Target expectations</span></div>`+
+    heading('Reviewed target environment','Retain the planned target URLs separately from the original source and actual restored observations.')+
+    card('Select the exact target',`<form data-form="target-expectation-context">${select('Purpose','purpose',[['REHEARSAL','Isolated rehearsal'],['CUTOVER','Approved candidate cutover'],['ROLLBACK','Original baseline rollback']],purpose)}${select('Environment','environment_id',refOptions('environments'),environmentId)}<button>Open source-bound draft</button></form>`)+
+    (context.environment?card('Source → expected target',`<p>Source <code>${esc(context.source.id)}</code>; native profile <code>${esc(context.profile.revision)}</code>. Only the URL may differ by this map. Configuration-export and backup hashes, route count, ID presence and HTTP 2xx remain enforced.</p>${state.params.parent_id?`<p>Corrects retained edition <code>${esc(state.params.parent_id)}</code>.</p>`:''}<form data-form="target-expectation-draft">${input('Edition name','name',draft?.name||'','text',true)}${area('Why this target is expected / authorizing instruction','reason',draft?.reason||'',true)}<div class="table-wrap"><table><thead><tr><th>ID</th><th>Original URL</th><th>Expected URL</th><th>Reason</th></tr></thead><tbody>${rows}</tbody></table></div><div id="target-expectation-preview">${empty('Preview this complete draft before saving.')}</div><div class="actions"><button value="preview">Preview complete expectation</button><button value="save" disabled>Save immutable edition</button><button type="button" data-action="download-expectation-draft">Download unfinished draft</button></div><label>Reopen this target’s draft JSON<input type="file" accept=".json,application/json" data-expectation-draft-file></label></form>`):empty('Choose the configured target environment.'))+
+    card('Retained editions and decisions',editions||empty('No target expectation has been saved for this cohort.'));
+}
+async function submitExpectation(form,submitter){
+  const kind=form.dataset.form;
+  if(kind==='target-expectation-context'){
+    const v=values(form);await go('expectations',{plan_id:state.expectationContext.plan.id,environment_id:v.environment_id,purpose:v.purpose});return;
+  }
+  if(kind==='target-expectation-draft'){
+    const payload=expectationPayload(form),fingerprint=JSON.stringify(payload);
+    if(submitter?.value==='save'){
+      if(!state.expectationPreview||state.expectationPreview.fingerprint!==fingerprint)throw Error('Preview the current complete expectation before saving.');
+      state.expectationSaveKey??=newKey();
+      await ops('target-expectations.save',{...payload,preview_sha256:state.expectationPreview.value.preview_sha256,request_key:state.expectationSaveKey});
+      try{sessionStorage.removeItem(state.expectationDraftKey);}catch{}
+      state.expectationDraft=null;await refresh();notice('The immutable target expectation is retained. A reviewer must approve it before use.');return;
+    }
+    const value=await ops('target-expectations.preview',payload);
+    if(!form.isConnected||fingerprint!==JSON.stringify(expectationPayload(form))){state.expectationPreview=null;notice('The draft changed while previewing. Preview its current values again.',true);return;}
+    state.expectationPreview={fingerprint,value};state.expectationSaveKey=null;
+    document.querySelector('#target-expectation-preview').innerHTML=rawDetails('Complete source, expected rows and invariant rules',value)+`<p>Preview <code>${esc(value.preview_sha256)}</code>. Saving retains this edition; it does not execute a restore.</p>`;
+    form.querySelector('[value=save]').disabled=false;return;
+  }
+  if(kind==='target-expectation-review'){
+    const item=state.targetExpectationEditions.find(x=>x.expectation.id===form.dataset.id),v=values(form);
+    if(!item)throw Error('Reopen the exact retained expectation.');
+    form.dataset.requestKey??=newKey();
+    await ops('target-expectations.review',{expectation_id:item.expectation.id,expectation_sha256:item.expectation.sha256,previous_review_id:item.latest_review?.id||null,decision:v.decision,reason:v.reason,request_key:form.dataset.requestKey});
+    await refresh();notice('The named target expectation decision is retained.');return;
+  }
 }
 
 async function renderNative(){
@@ -225,7 +313,7 @@ async function renderOperationNew(){
   state.operationKey=newKey();state.operationDraft={};state.operationCapabilities=new Map();state.operationChoiceSequence=0;
   const p=plans().find(p=>p.id===state.params.plan_id);
   main.innerHTML=heading('Start a native operation','Select the actual environment, source cohort and authorized native work.')+
-    `<div class="grid wide">${card('Operating instruction',`<form data-form="operation-new">${select('Operation purpose','type',[['CAPTURE','Capture original source'],['PREVIEW','Operate native preview or environment'],['BACKUP_CREATE','Create and retain a native backup'],['BACKUP_DOWNLOAD','Download selected native backup'],['REHEARSAL','Rehearse the baseline operation'],['CUTOVER','Apply approved candidate'],['ROLLBACK','Return to original baseline']],state.params.type||'REHEARSAL')}<div id="operation-plan-field">${select('Source cohort','plan_id',planOptions(),p?.id||'')}</div>${select('Target environment','environment_id',refOptions('environments'),state.params.environment_id||'')}<div id="operation-native-choice"></div>${input('Operating authorization reference','authorization_reference','','text',true,'Use the actual operating instruction for this target and source.')}<button class="primary">Queue native operation</button></form>`)}<div>${card('Pinned source and target','<p>The operation retains the exact source snapshot, cohort revision, target environment and native driver configuration selected here. The completed cohort result is compared to that source through the original six-column inventory. Backup creation and download retain their exact native archives as source operations.</p>')}<div id="operation-readiness"></div></div></div>`;
+    `<div class="grid wide">${card('Operating instruction',`<form data-form="operation-new">${select('Operation purpose','type',[['CAPTURE','Capture original source'],['PREVIEW','Operate native preview or environment'],['BACKUP_CREATE','Create and retain a native backup'],['BACKUP_DOWNLOAD','Download selected native backup'],['REHEARSAL','Rehearse the baseline operation'],['CUTOVER','Apply approved candidate'],['ROLLBACK','Return to original baseline']],state.params.type||'REHEARSAL')}<div id="operation-plan-field">${select('Source cohort','plan_id',planOptions(),p?.id||'')}</div>${select('Target environment','environment_id',refOptions('environments'),state.params.environment_id||'')}<div id="operation-native-choice"></div>${input('Operating authorization reference','authorization_reference','','text',true,'Use the actual operating instruction for this target and source.')}<button class="primary">Queue native operation</button></form>`)}<div>${card('Pinned source and target','<p>The operation retains the exact source snapshot, cohort revision, target environment and native driver configuration selected here. The completed cohort result retains the original six-column comparison. A selected approved target expectation separately compares actual staging URLs while keeping source artifact and route invariants. Backup creation and download retain their exact native archives as source operations.</p>')}<div id="operation-readiness"></div></div></div>`;
   await operationChoice();
 }
 async function operationChoice(){
@@ -259,9 +347,17 @@ async function operationChoice(){
   if(needsPlan&&plan)source=(await ops('inventories.get',{snapshot_id:v.type==='CUTOVER'?plan.candidate_id:plan.baseline_id})).snapshot;
   if(!current())return;
   state.operationCapability=r;
+  let expectations=[];
+  if(needsPlan&&plan){
+    const found=await ops('target-expectations.get',{plan_id:plan.id});
+    if(!current())return;
+    expectations=found.expectations.filter(x=>x.current&&x.latest_review?.decision==='APPROVE'&&x.expectation.purpose===v.type&&x.expectation.environment_id===environment.id);
+  }
+  state.operationExpectationChoices=expectations;
   const backups=[...new Set((source?.bindings||[]).map(b=>b.backup_sha256||b.backup?.sha256||state.snapshot.files.find(f=>f.id===b.backup_file_id)?.sha256).filter(Boolean))];
   document.querySelector('#operation-native-choice').innerHTML=(available.length>1?select('Native action','native_action',available.map(a=>[a.value,a.label]),action,'Each action retains a separate native instruction and its original result.'):input('Native action','native_action',action,'text',true,available[0]?.label||'This provider does not offer the selected operation purpose.'))+
     (needsPlan&&plan?checks('Original comparison IDs operated by this command','operation_agency_ids',plan.agency_ids,plan.agency_ids)+(['lagoon','pantheon','skpr','upsun','castor'].includes(kind)?'':select('Exact source backup','backup_sha256',[['','Use the uniquely selected source backup'],...backups.map(h=>[h,h])])):'')+
+    (needsPlan&&plan?select('Result expectation','target_expectation_id',[['','Exact original source URLs (legacy)'],...expectations.map(x=>[x.expectation.id,x.expectation.name+' · approved by '+x.latest_review.author])],v.target_expectation_id||'','Choose a preapproved map for a staging URL change. '+(expectations.length?'':'Prepare and approve the map from the cohort page.')):'')+
     input('Observed target fingerprint','target_fingerprint',r.capabilities?.target_fingerprint||r.target_fingerprint||'','text',false,'The actual target identity observed by the selected native driver.');
   if(available.length<=1)form.elements.native_action.readOnly=true;
   if(form.elements.target_fingerprint)form.elements.target_fingerprint.readOnly=true;
@@ -289,7 +385,7 @@ function operationEvents(result){
   flush();return `<ol class="timeline">${rows.join('')}</ol>`;
 }
 function observationDetails(o){
-  return `<section class="card soft"><div class="split-heading"><h3>${esc(date(o.created_at))}</h3>${badge(o.status,o.status==='FAIL')}</div>${definition([['Restored inventory',link(snapshotName(o.restored_snapshot_id),'inventory',{id:o.restored_snapshot_id})],['Native started',esc(date(o.actual_started_at))],['Native finished',esc(date(o.actual_finished_at))],['Elapsed native work',esc(o.duration_seconds)+' seconds'],['Original execution',`<a href="/api/files/${enc(o.capture_file_id)}">Download original native capture</a>`],['Observed by',esc(o.author)],['Context',esc(o.notes)]])}${o.summary?.checks?.length?auditTable(o.summary.checks):empty('The actual restored inventory matches the selected source fields.')}${(o.missing_declared_ids||[]).length?`<div class="callout">Comparison IDs absent from both observations: ${esc(o.missing_declared_ids.join(', '))}</div>`:''}</section>`;
+  return `<section class="card soft"><div class="split-heading"><h3>${esc(date(o.created_at))}</h3>${badge(o.status,o.status==='FAIL')}</div>${definition([['Restored inventory',link(snapshotName(o.restored_snapshot_id),'inventory',{id:o.restored_snapshot_id})],['Native started',esc(date(o.actual_started_at))],['Native finished',esc(date(o.actual_finished_at))],['Elapsed native work',esc(o.duration_seconds)+' seconds'],['Original execution',`<a href="/api/files/${enc(o.capture_file_id)}">Download original native capture</a>`],['Observed by',esc(o.author)],['Context',esc(o.notes)]])}${o.target_comparison?`<h4>Actual versus reviewed target</h4>${targetComparisonTable(o.target_comparison.rows)}${rawDetails('Original source comparison (retained unchanged)',o.target_comparison.original_source_summary)}${rawDetails('Pinned expectation and approval',{expectation:o.target_comparison.expectation,review:o.target_comparison.review})}`:o.summary?.checks?.length?auditTable(o.summary.checks):empty('The actual restored inventory matches the selected source fields.')}${(o.missing_declared_ids||[]).length?`<div class="callout">Comparison IDs missing from a required source or actual observation: ${esc(o.missing_declared_ids.join(', '))}</div>`:''}</section>`;
 }
 function retainedDownloads(files,domain,id){
   const items=files||[],primary=items.filter(f=>/\.(zip|html)$/.test(f.name)),others=items.filter(f=>!primary.includes(f));
@@ -445,6 +541,7 @@ async function render(){
   else if(state.view==='plan-new')main.innerHTML=heading('Create a cohort','Select the exact source observations and comparison identifiers for this migration wave.')+card('Cohort scope',planForm());
   else if(state.view==='plan')await renderPlan();
   else if(state.view==='plan-edit')await renderPlan(true);
+  else if(state.view==='expectations')await renderExpectations();
   else if(state.view==='native')await renderNative();
   else if(state.view==='operations')renderOperations();
   else if(state.view==='operation-new')await renderOperationNew();
@@ -485,6 +582,7 @@ function nativeBindingRow(b={}){
   return `<fieldset data-native-binding><legend>Native file</legend><div class="form-grid">${select('Role','extra_role',[...new Set(['database_dump','configuration_file','public_files','private_files','configuration','capture','native_status',...(b.role?[b.role]:[])])],b.role||'database_dump')}${select('Retained file','extra_file',fileOptions('Choose original native file'),b.file_id||b.id||b.file?.id||'')}<div class="full">${input('Relative path within native material','extra_path',b.relative_path||b.native?.relative_path||'','text',false,'Native captures preserve this automatically. Supply the original path for an individually retained configuration file.')}</div></div>${button('Remove native binding','remove-native-binding')}</fieldset>`;
 }
 async function submitForm(form,submitter){
+  if(form.dataset.form.startsWith('target-expectation-'))return submitExpectation(form,submitter);
   if(form.dataset.form.startsWith('playbook-'))return window.GovHubPlaybook.submit(form);
   if(form.dataset.form.startsWith('pots-'))return window.GovHubPots.submit(form);
   if(form.dataset.form.startsWith('static-'))return window.GovHubStaticRelease.submit(form,submitter);
@@ -545,7 +643,7 @@ async function submitForm(form,submitter){
       if(!p)throw Error('Choose the source cohort for this native operation.');
       const agency_ids=[...form.querySelectorAll('[name=operation_agency_ids]:checked')].map(x=>x.value);
       if(!agency_ids.length)throw Error('Choose the original comparison IDs operated on this exact target.');
-      result=await ops('operations.create',{...base,type:v.type,plan_id:p.id,expected_revision:p.revision,native_action:v.native_action,agency_ids,...(v.backup_sha256?{backup_sha256:v.backup_sha256}:{}),...(v.target_fingerprint?{target_fingerprint:v.target_fingerprint}:{})});
+      result=await ops('operations.create',{...base,type:v.type,plan_id:p.id,expected_revision:p.revision,native_action:v.native_action,agency_ids,...(v.target_expectation_id?{target_expectation_id:v.target_expectation_id,target_expectation_review_id:state.operationExpectationChoices.find(x=>x.expectation.id===v.target_expectation_id)?.latest_review?.id}:{}),...(v.backup_sha256?{backup_sha256:v.backup_sha256}:{}),...(v.target_fingerprint?{target_fingerprint:v.target_fingerprint}:{})});
     }
     await reload();await go('operation',{id:result.operation.id});notice('The selected native work is queued with its original source and target.');return;
   }
@@ -607,9 +705,29 @@ async function submitForm(form,submitter){
 }
 
 main.addEventListener('submit',event=>{const form=event.target.closest('form[data-form]');if(!form)return;event.preventDefault();const submitter=event.submitter;busy(()=>submitForm(form,submitter)).catch(()=>{});});
-main.addEventListener('input',()=>{if(state.view==='operation')state.operationDirty=true;});
+main.addEventListener('input',event=>{if(state.view==='operation')state.operationDirty=true;const form=event.target.closest('[data-form=target-expectation-draft]');if(form)retainExpectationDraft(form);});
 main.addEventListener('change',event=>{
   const form=event.target.closest('form');if(!form)return;
+
+  if(event.target.matches('[data-expectation-draft-file]')){
+    const file=event.target.files[0],draftKey=state.expectationDraftKey,context=state.expectationContext;
+    if(!file)return;
+    busy(async()=>{
+      if(file.size>4*1024*1024)throw Error('The target draft exceeds 4 MiB.');
+      const bytes=new Uint8Array(await file.arrayBuffer()),source=new TextDecoder('utf-8',{fatal:true}).decode(bytes),received=JSON.parse(source);
+      if(!form.isConnected||state.expectationDraftKey!==draftKey)throw Error('Reopen the draft in its original target context.');
+      const payload=received.payload;
+      if(received.format!=='govhub-target-expectation-draft/1'||!payload||payload.plan_id!==context.plan.id||payload.environment_id!==context.environment.id||payload.purpose!==context.purpose)throw Error('This draft belongs to another plan, target or purpose.');
+      if(!Array.isArray(payload.urls)||payload.urls.length!==context.plan.agency_ids.length)throw Error('Retain the complete source-ID map.');
+      const mapped=new Map(payload.urls.map(r=>[r.agency_id,r]));
+      if(mapped.size!==payload.urls.length||context.plan.agency_ids.some(id=>!mapped.has(id)))throw Error('The original comparison IDs differ.');
+      for(const row of payload.urls)if(typeof row.canonical_url!=='string'||typeof row.reason!=='string')throw Error('Keep the draft URL and reason text.');
+      if(typeof payload.name!=='string'||typeof payload.reason!=='string')throw Error('Keep the draft name and reason text.');
+      form.elements.name.value=payload.name;form.elements.reason.value=payload.reason;
+      for(const row of form.querySelectorAll('[data-expectation-row]')){const r=mapped.get(row.dataset.expectationRow);row.querySelector('[data-url]').value=r.canonical_url;row.querySelector('[data-reason]').value=r.reason;}
+      retainExpectationDraft(form);notice('The unfinished draft is reopened. Preview its current source and target before saving.');
+    }).catch(()=>{});
+  }
   if(form.dataset.form==='operation-new'&&['type','environment_id','plan_id','native_action'].includes(event.target.name))busy(()=>operationChoice()).catch(()=>{});
   if(form.dataset.form==='native-profile'&&event.target.name==='source_kind')renderNativeFields(event.target.value);
 });
@@ -625,6 +743,11 @@ document.addEventListener('click',event=>{
     else if(action.startsWith('skpr-'))await window.GovHubSkpr.action(action,target);
     else if(action.startsWith('static-'))await window.GovHubStaticRelease.action(action,target);
     else if(action.startsWith('content-'))await contentAction(action,target);
+    else if(action==='download-expectation-draft'){
+      const form=main.querySelector('[data-form=target-expectation-draft]'),payload=expectationPayload(form);
+      const blob=new Blob([JSON.stringify({format:'govhub-target-expectation-draft/1',payload},null,2)+'\n'],{type:'application/json'});
+      const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='Target_Expectation_Draft.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }
     else if(action==='logout'){await api('logout',{});state.user=null;state.snapshot=null;renderLogin();}
     else if(action==='refresh'||action==='refresh-operation')await refresh();
     else if(action==='refresh-native-choice'){state.operationCapabilities.clear();await operationChoice();}

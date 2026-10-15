@@ -17,6 +17,7 @@ Use an existing POSIX host with Python 3.11 or later and SQLite support. The man
 
 | Area | Complete original entry |
 | --- | --- |
+| Reviewed source-to-target environments | application/workspace/TARGET_ENVIRONMENTS.md and target_environment_course.py |
 | Cutover and recovery | application/START_HERE.md and application/workspace/README.md |
 | Drupal / Lagoon | application/workspace/NATIVE_SOURCES.md and LAGOON.md |
 | Pantheon / native Terminus workflows | application/workspace/PANTHEON.md and PANTHEON_RECEIVING.md |
