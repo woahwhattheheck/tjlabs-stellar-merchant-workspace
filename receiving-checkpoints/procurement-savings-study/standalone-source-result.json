@@ -1,0 +1,93 @@
+{
+  "schema": "tjlabs.procurement-standalone-source-successor.v1",
+  "source": {
+    "files": 664,
+    "source": {
+      "bytes": 10269181,
+      "sha256": "5ab66ebde2b3d87780ea4dfa64180a0ce1fbbfafadb8fca1e96e5308f11c2f8e"
+    },
+    "html": {
+      "bytes": 3001589,
+      "sha256": "ebc0737de730f334f1b3e35b379a9ebf21c3f4195180b34cf52dbd752fa11ca7"
+    },
+    "executed658": {
+      "source": {
+        "bytes": 9982266,
+        "sha256": "e0264d15818218e5e84de2155ca887efd7e2e35086f419feedcbf81643f3f99b"
+      },
+      "html": {
+        "bytes": 2880102,
+        "sha256": "2cc9958d60e44513fe4e79a33b0956400fa09054cc3c7ac6ff25c42007ce8920"
+      },
+      "files": 658,
+      "donorFilesUnchanged": 612
+    }
+  },
+  "defaultCodec": {
+    "schema": "tjlabs.procurement-default-codec-result.v1",
+    "source": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/connected_gzip.cjs",
+    "sourceCommit": "b2c216f07468f7fa32d96423ddacab904bd99bdb",
+    "bytes": 47127,
+    "sha256": "1fc9f3b218c60d029c96bf9f1c1e4de5fcb86918ed5a0570586dc81488440119",
+    "actualDefaultPackAndRead": true,
+    "members": 2,
+    "compressedBytes": 615,
+    "originalBytes": 5524,
+    "unpairedSurrogateHandling": "Original maintained strict encoder retained"
+  },
+  "nativeModuleSourcesExactBank": true,
+  "embeddedHTMLExactBank": true,
+  "upperMembers": 662,
+  "lowerMembers": 663,
+  "nativeAndProviderModuleLoading": {
+    "entrypoints": [
+      "native/receive-installed.mjs",
+      "application-provider.mjs",
+      "merchant-provider.mjs"
+    ],
+    "resolvedModules": 40,
+    "nodeBuiltins": [
+      "node:assert/strict",
+      "node:async_hooks",
+      "node:child_process",
+      "node:crypto",
+      "node:fs",
+      "node:fs/promises",
+      "node:http",
+      "node:os",
+      "node:path",
+      "node:string_decoder",
+      "node:url"
+    ],
+    "externalEagerFilesRequired": 0,
+    "sharedOriginalsExact": true,
+    "dynamicHostOperations": [
+      {
+        "from": "merchant-provider.mjs",
+        "path": "./mcp.mjs"
+      },
+      {
+        "from": "merchant-provider.mjs",
+        "path": "./mcp.mjs"
+      },
+      {
+        "from": "merchant-provider.mjs",
+        "path": "./setup.mjs"
+      }
+    ]
+  },
+  "sharedSourceCommit": "b2c216f07468f7fa32d96423ddacab904bd99bdb",
+  "sharedPaths": {
+    "stellar/scf-starforge-20261009/sf30-seller-sdk/operations/history.mjs": "vendor/merchant-shared/operations/history.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs": "vendor/merchant-shared/runtime-workspace/application-provider.mjs",
+    "stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs": "vendor/merchant-shared/runtime-workspace/storage.mjs",
+    "stellar-forge/mcp-merchant-operator/provider-contract.mjs": "vendor/merchant-shared/merchant/provider-contract.mjs"
+  },
+  "installedHostBoundary": "Merchant initialize uses setup and the complete host's sf82 releases and Merchant config integrations; standalone native receiving and provider module loading use included local helpers",
+  "courseProvenance": {
+    "previousSourceResultCommit": "bb3a8366024cb4b7616d2b338d47978aa18b6a80",
+    "fullMerchantResultCommit": "02a3cfdb82c99de2c6b4170a0b65440e98d2c6d7",
+    "finalAssemblyCommit": "3139d1d5c981187b4dc07f157e74ba0f4be73ad5"
+  },
+  "elapsedMs": 21093
+}

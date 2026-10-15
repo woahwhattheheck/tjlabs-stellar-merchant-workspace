@@ -1,0 +1,65 @@
+{
+  "schema": "tjlabs.procurement-codec-source-successor.v1",
+  "source": {
+    "files": 660,
+    "source": {
+      "bytes": 10183154,
+      "sha256": "7f1796c3aafc4b1c16ea9d32197208a25aed6d1c94eb3a3829f1daa1dc012b73"
+    },
+    "html": {
+      "bytes": 2964465,
+      "sha256": "712b7d919cad52d7a8d0fd081218377128e891eb763a9ca4a6fd3f61c30d54e8"
+    },
+    "unchangedExistingNonManifestFiles": 654,
+    "previous659": {
+      "files": 659,
+      "source": {
+        "bytes": 10135003,
+        "sha256": "fe77831752c1a385072d5f4d926d6ef11d732a458fe09566b1b1989162afa053"
+      },
+      "html": {
+        "bytes": 2942553,
+        "sha256": "6591fb1c354ef93fa35c77d4b5d7657c20a04a67a66f46a96e50a3eb0159ff44"
+      },
+      "unchangedNonManifestFiles": 654,
+      "executedSource": {
+        "source": {
+          "bytes": 9982266,
+          "sha256": "e0264d15818218e5e84de2155ca887efd7e2e35086f419feedcbf81643f3f99b"
+        },
+        "html": {
+          "bytes": 2880102,
+          "sha256": "2cc9958d60e44513fe4e79a33b0956400fa09054cc3c7ac6ff25c42007ce8920"
+        },
+        "files": 658,
+        "donorFilesUnchanged": 612
+      }
+    },
+    "executed658": {
+      "source": {
+        "bytes": 9982266,
+        "sha256": "e0264d15818218e5e84de2155ca887efd7e2e35086f419feedcbf81643f3f99b"
+      },
+      "html": {
+        "bytes": 2880102,
+        "sha256": "2cc9958d60e44513fe4e79a33b0956400fa09054cc3c7ac6ff25c42007ce8920"
+      },
+      "files": 658,
+      "donorFilesUnchanged": 612
+    }
+  },
+  "defaultCodec": {
+    "schema": "tjlabs.procurement-default-codec-result.v1",
+    "source": "stellar/scf-starforge-20261009/distribution/runtime-companion-archive/toolkit/host/connected_gzip.cjs",
+    "sourceCommit": "b2c216f07468f7fa32d96423ddacab904bd99bdb",
+    "bytes": 47127,
+    "sha256": "1fc9f3b218c60d029c96bf9f1c1e4de5fcb86918ed5a0570586dc81488440119",
+    "actualDefaultPackAndRead": true,
+    "members": 2,
+    "compressedBytes": 615,
+    "originalBytes": 5524,
+    "unpairedSurrogateHandling": "Original maintained strict encoder retained"
+  },
+  "predecessorSourceResultCommit": "bb3a8366024cb4b7616d2b338d47978aa18b6a80",
+  "change": "Add exact maintained default codec; update complete manifests and generated source carrier"
+}

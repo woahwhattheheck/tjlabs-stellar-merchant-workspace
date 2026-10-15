@@ -20,3 +20,9 @@ node native/finish-prepared.mjs --checkpoint /absolute/checkpoint.json --manifes
 ```
 
 The checkpoint directory contains the original `objects/*.part` references. The native receiver verifies exact index bytes, all retained fragments, all original member SHA-256/CRC values and the export manifest. It writes a provisional file, independently hashes the written archive and publishes the completed ZIP atomically. Existing exact output is reusable. This preserves every source file, saved working session, historical study, request and managed edition.
+
+## Standalone source and host integration
+
+The complete source handover includes the maintained shared writer, Applications helper and storage, Merchant provider contract, and default ZIP codec. From the extracted product directory, `node native/receive-installed.mjs` runs with Node builtins and the included product files. The native CLI and private listener use the same local source closure.
+
+`setup.mjs` installs this product into the complete Applications/Merchant host. That host operation uses the maintained repository's `stellar/scf-starforge-20261009/sf82-seller-pilot/releases.mjs` and `stellar-forge/mcp-merchant-operator/config.mjs`; run it through the installed `procurement-savings-study` source selection. The standalone receiving command uses the local included helpers directly.
