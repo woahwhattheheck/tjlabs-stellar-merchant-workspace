@@ -1,0 +1,6 @@
+line_id,revision_id,description,amount_minor,reference
+QA1,A1,Accepted original grooming service,9000,Authored agreed quote
+QA2,A2,Accepted original grooming service,9000,Authored agreed quote
+QB1,B1,Accepted original grooming service,8000,Authored agreed quote
+QC1,C1,Accepted original grooming service,10000,Authored agreed quote
+QC2,C2,Accepted original grooming service,10000,Authored agreed quote

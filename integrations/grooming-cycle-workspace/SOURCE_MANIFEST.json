@@ -1,0 +1,267 @@
+{
+  "schema": "tjlabs.generic-source-manifest.v1",
+  "product": "Grooming Cycle Workbench",
+  "prepared_on": "2026-10-15",
+  "files": [
+    {
+      "path": "groom-cycle-core.js",
+      "bytes": 62271,
+      "sha256": "be8bf90a5aec4526e076257f5993da5d24224ad256d6fbf1e752891699e8f2df"
+    },
+    {
+      "path": "groom-cycle-core.mjs",
+      "bytes": 62278,
+      "sha256": "4d0ab07744cad69f4161ad1ca0f00f5c0cd086bf43245a3638dc2770a0284024"
+    },
+    {
+      "path": "vendor/archive-codec.js",
+      "bytes": 16609,
+      "sha256": "c08146e9ceac1bbc93ed2bc583c59760f9f6f6c30a7ddda16be1ae694385a1c9"
+    },
+    {
+      "path": "vendor/archive-codec.mjs",
+      "bytes": 16639,
+      "sha256": "29095a42da4d5e3753dd8a17bb471ccf762846d45147001a4dc8cff79cf9b20b"
+    },
+    {
+      "path": "INTAKE_CONTRACT.json",
+      "bytes": 6695,
+      "sha256": "a0628b14f6953da996a34a323f1a6e000fb10c075826b58be1530fd6402473d2"
+    },
+    {
+      "path": "examples/original-workspace.json",
+      "bytes": 10443,
+      "sha256": "360a8c7bbe4393cac1457ce0c7ccc761663f736953784d9b697b0fe9449ec6f3"
+    },
+    {
+      "path": "examples/original-analysis.json",
+      "bytes": 38993,
+      "sha256": "0cca33f113f6797f5a1912d31318873304239ff3e46a13bb5d9a14e47248b20b"
+    },
+    {
+      "path": "examples/original-report.html",
+      "bytes": 55142,
+      "sha256": "56aabec13eb122e56357de63c1c45b4053dd5c97a90a635e9eee5b824d8dc2b6"
+    },
+    {
+      "path": "examples/sources/resources.csv",
+      "bytes": 122,
+      "sha256": "b66cb5947329802b33f1551988497ec217eb41401b668da4ad0d760a3f2ca2b6"
+    },
+    {
+      "path": "examples/sources/availability.csv",
+      "bytes": 251,
+      "sha256": "112d3f95703d4c3b1d3a30fdd34bc061920a582d621b13e6ad3c440eed0a5e65"
+    },
+    {
+      "path": "examples/sources/booking_revisions.csv",
+      "bytes": 1651,
+      "sha256": "e2e80beab185c5a12b4c9c4262ad3b7110d4cf6b8b0c809a7d11a283f20904cf"
+    },
+    {
+      "path": "examples/sources/quoted_lines.csv",
+      "bytes": 408,
+      "sha256": "13c6709a7092b496d9b2647b1a51a41cd7e0ca4f39a0f00352a5cecda136e2ce"
+    },
+    {
+      "path": "examples/sources/completions.csv",
+      "bytes": 423,
+      "sha256": "b4572d27f753dfb273f7a7aad626705bf49983fd07a329d807ffac4a2787a6ac"
+    },
+    {
+      "path": "examples/sources/invoice_lines.csv",
+      "bytes": 226,
+      "sha256": "213e92636684492ed127a7c7956c4cc8ab3f78ca3a1c9cf7875c4492b12c1068"
+    },
+    {
+      "path": "examples/sources/payments.csv",
+      "bytes": 270,
+      "sha256": "255d1031de191edeb6baaf8153a338e45a1a07a401f7b869a0ab960be3b59a51"
+    },
+    {
+      "path": "examples/sources/allocations.csv",
+      "bytes": 374,
+      "sha256": "a88a186f1007df7f9e52a69395be49507021390f607a4b2f1232695f51447c82"
+    },
+    {
+      "path": "examples/sources/series.csv",
+      "bytes": 411,
+      "sha256": "4133020184e1e90fa9838982098302b66115cc6f58fc750ca8ab3a024afc9f03"
+    },
+    {
+      "path": "examples/sources/expected_visits.csv",
+      "bytes": 654,
+      "sha256": "8178e20c8929e02e8077247abbe27c1ff24e194a4e80e5567a719f33204a716a"
+    },
+    {
+      "path": "examples/sources/policy_versions.csv",
+      "bytes": 719,
+      "sha256": "26a737426337d83295bda8ba5d548c51c1aff9f32b0e81ca899e4327dee532c6"
+    },
+    {
+      "path": "examples/sources/decisions.csv",
+      "bytes": 451,
+      "sha256": "5bc356fffd173704b0dfb8b0812efb1c7b5bb93dc328646e1b9dc9850eb49068"
+    },
+    {
+      "path": "examples/sources/communications.csv",
+      "bytes": 986,
+      "sha256": "d263ab7af1235863cb780511ba5b3815c699cf2aa4501dd6ec9c72a496cfc87a"
+    },
+    {
+      "path": "workbench/groom-workspace.js",
+      "bytes": 5679,
+      "sha256": "65e9805b88e9c511b77763ddfe7ce8b81a6a739efe82b47c809729ff40831bb5"
+    },
+    {
+      "path": "workbench/browser-store.js",
+      "bytes": 2803,
+      "sha256": "0e339d406f0fc950c9dd661db2e3fcc3e6936e191e904797d23e582ff5c3f916"
+    },
+    {
+      "path": "workbench/style.css",
+      "bytes": 2208,
+      "sha256": "dd898d4bef48035bf074fafd3e2b44ee714b2f5a219de00977bafb907a95bbb2"
+    },
+    {
+      "path": "workbench/operator.js",
+      "bytes": 25314,
+      "sha256": "4f37c2f7089b424c069fa8bccb44170121f9ac29deef6a69a2fe967466e78e98"
+    },
+    {
+      "path": "workbench/shell.template.html",
+      "bytes": 6984,
+      "sha256": "291615bb102a3ce405614c65f9d4b08747c724e2846e36e69dbb08d5f08806bf"
+    },
+    {
+      "path": "workbench/build.js",
+      "bytes": 985,
+      "sha256": "11303e89f3492248fd29560705f73424630572261b2eb422688e3477b54b74b3"
+    },
+    {
+      "path": "workbench/build.mjs",
+      "bytes": 1016,
+      "sha256": "a7e68fb637c5bb2ff1b6f1525cc08a27491d1311874003b2af5c0364a2ca5748"
+    },
+    {
+      "path": "build.mjs",
+      "bytes": 1188,
+      "sha256": "8dc45eafc5a1f0cbc755990e1b65acab5f5059bdfec1b60c59177f4d085e2173"
+    },
+    {
+      "path": "groom-cycle-native.mjs",
+      "bytes": 6275,
+      "sha256": "4ed129122c54ee34c2bdb3838f6bb1ebce487176065ed0e3fc8fd673823ae696"
+    },
+    {
+      "path": "examples/blank-desk.json",
+      "bytes": 3738,
+      "sha256": "371723afc67907b639a901f23a22e2ade2c401b65e9f083e9fddb8330973fb1a"
+    },
+    {
+      "path": "examples/worked-desk.json",
+      "bytes": 19957,
+      "sha256": "311d2d2e7f333822ca62289dec93c8497f79a0db4a3773020fdd7840400a5649"
+    },
+    {
+      "path": "Grooming_Cycle_Workbench.html",
+      "bytes": 125017,
+      "sha256": "4f75488481ab45eb8c9690deb3c58639a8ea26bb2427e63e8bd92734b9c0881d"
+    },
+    {
+      "path": "Grooming_Cycle_Worked_Example.html",
+      "bytes": 140066,
+      "sha256": "2f8cebad1639ef60f959d2de43c1a8d9a8d9ba1e562ce5a6bb4f914e3661dd46"
+    },
+    {
+      "path": "receiving/controller-course.js",
+      "bytes": 10767,
+      "sha256": "6f528e0cd2866ffb5a6db7c189c655ea3c590f91b37dc24670644a1061dda462"
+    },
+    {
+      "path": "receiving/controller-result.json",
+      "bytes": 59478,
+      "sha256": "cb1b6b91930a09fb404ac7cbe2beca2d73dc03361f8a3d350653779f1a362e03"
+    },
+    {
+      "path": "receiving/reviewed-desk.json",
+      "bytes": 25190,
+      "sha256": "25738f6ceee6a174c9b68d6a7f46e66039733dab974df5e7cdeb60aba980a914"
+    },
+    {
+      "path": "WORKBENCH.md",
+      "bytes": 14845,
+      "sha256": "13ebfbb709f1d1eb72020536d02c51d8f98aee681c584ddf957053fc8b738307"
+    },
+    {
+      "path": "receiving/groom-native-receiving.mjs",
+      "bytes": 11187,
+      "sha256": "8008e98baf7a8c7eb5d7f8797fa8c5d5419d4abf31cf6db49e5077eb9f96d7ef"
+    },
+    {
+      "path": "receiving/run-groom-native.mjs",
+      "bytes": 1155,
+      "sha256": "405226d4234cc3be6c98db83e2fb4c7e93080f8b87893c95bba492549d8042ef"
+    },
+    {
+      "path": "receiving/groom-native-receiving-result.json",
+      "bytes": 332643,
+      "sha256": "677481071e2eae02fffc91f81afcd45c036ed93be65497da7866a1c84f0e7815"
+    },
+    {
+      "path": "NATIVE_WORKFLOW.md",
+      "bytes": 14808,
+      "sha256": "95d1338b071bd6e5b8c48d5432ccf64d339d44bab1fbc54d9c18d200184cae6a"
+    },
+    {
+      "path": "examples/native-receive.command.json",
+      "bytes": 1785,
+      "sha256": "6c2b0bb256e8f3ffb29ec528ceedca10fa4fe371cdef9d84b3b67245cd9fafe5"
+    },
+    {
+      "path": "examples/native-review.command.json",
+      "bytes": 438,
+      "sha256": "276d314806fbf5a20041cb096fb3e6d74f465a5f5de34b366513703f14bf4587"
+    },
+    {
+      "path": "receiving/in-memory-file-port.mjs",
+      "bytes": 1187,
+      "sha256": "a01821b634ce7d940c4af01f90756553273bc104ffa9c02f17d1f4a47c785805"
+    },
+    {
+      "path": "receiving/controller-course.mjs",
+      "bytes": 10803,
+      "sha256": "0f66c6934c0e493640f8cc2cb452b92e6986f20edd3f4e76bc47b2626a8243bf"
+    },
+    {
+      "path": "receiving/run-controller-course.mjs",
+      "bytes": 1073,
+      "sha256": "fc9b12e960daf97fa6f95eababfdf502882b54bd74e7f4822844e14e8164a6cc"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3810,
+      "sha256": "929bde1950eb4f91ea1d50e66b6625f27ae6e4f12e10e3fd47b2d8c16bdaee6a"
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 5241,
+      "sha256": "96f8a2b652afc287444ebf1c6e6b66c8838ddab5b05597ac97a58c7915d7b54a"
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1091,
+      "sha256": "2c961cd561150af9a4f94f3f48f0bad7bf271acd0f9cdaa1d354c511b94e84d8"
+    },
+    {
+      "path": "receiving/grooming-independent-course.js",
+      "bytes": 5079,
+      "sha256": "61b2d4844fd57de707d7d2a050983330c53f3e67703be0d1f4aaec7a50cc307b"
+    },
+    {
+      "path": "receiving/grooming-independent-result.json",
+      "bytes": 1129,
+      "sha256": "9a1dec525e1748f7caf2a7454854763993cd6bd7d0ad1fcffeedd77917415df5"
+    }
+  ]
+}

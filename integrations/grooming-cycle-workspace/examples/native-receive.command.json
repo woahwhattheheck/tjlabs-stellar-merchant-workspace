@@ -1,0 +1,68 @@
+{
+  "action": "receive",
+  "input": {
+    "id": "native-source-edition",
+    "label": "Authored original-file intake",
+    "receivedAt": "2026-11-02T19:00:00Z",
+    "settings": {
+      "dayStart": "2026-11-02T08:00:00-05:00",
+      "dayEnd": "2026-11-02T18:00:00-05:00",
+      "asOf": "2026-11-02T14:00:00-05:00"
+    },
+    "notes": "Authored thirteen-source example; replace with actual selected original exports."
+  },
+  "sourceFiles": {
+    "resources": {
+      "path": "sources/resources.csv",
+      "name": "resources.csv"
+    },
+    "availability": {
+      "path": "sources/availability.csv",
+      "name": "availability.csv"
+    },
+    "booking_revisions": {
+      "path": "sources/booking_revisions.csv",
+      "name": "booking_revisions.csv"
+    },
+    "quoted_lines": {
+      "path": "sources/quoted_lines.csv",
+      "name": "quoted_lines.csv"
+    },
+    "completions": {
+      "path": "sources/completions.csv",
+      "name": "completions.csv"
+    },
+    "invoice_lines": {
+      "path": "sources/invoice_lines.csv",
+      "name": "invoice_lines.csv"
+    },
+    "payments": {
+      "path": "sources/payments.csv",
+      "name": "payments.csv"
+    },
+    "allocations": {
+      "path": "sources/allocations.csv",
+      "name": "allocations.csv"
+    },
+    "series": {
+      "path": "sources/series.csv",
+      "name": "series.csv"
+    },
+    "expected_visits": {
+      "path": "sources/expected_visits.csv",
+      "name": "expected_visits.csv"
+    },
+    "policy_versions": {
+      "path": "sources/policy_versions.csv",
+      "name": "policy_versions.csv"
+    },
+    "decisions": {
+      "path": "sources/decisions.csv",
+      "name": "decisions.csv"
+    },
+    "communications": {
+      "path": "sources/communications.csv",
+      "name": "communications.csv"
+    }
+  }
+}

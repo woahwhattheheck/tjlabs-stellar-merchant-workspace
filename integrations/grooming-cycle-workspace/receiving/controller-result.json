@@ -1,0 +1,800 @@
+{
+  "runtime": "Actual production controller/model/core in V8 with explicit DOM, file, storage, download and strict UTF8 adapters; no browser rendering implied",
+  "checks": [
+    {
+      "name": "All thirteen authored originals received by production handlers",
+      "passed": true
+    },
+    {
+      "name": "Unfinished empty rename exports and reopens with valid current label",
+      "passed": true
+    },
+    {
+      "name": "Previous edited draft retained before file adoption; BOM and CRLF exact",
+      "passed": true
+    },
+    {
+      "name": "Malformed UTF8 retains exact bytes and previous CSV draft",
+      "passed": true
+    },
+    {
+      "name": "Quota failure preserves complete current working copy",
+      "passed": true
+    },
+    {
+      "name": "Confirmed exact emergency export permits replacement and keeps proposal status",
+      "passed": true
+    },
+    {
+      "name": "Accepted save commits state before failing list refresh",
+      "passed": true
+    },
+    {
+      "name": "Next save uses actual accepted head after list failure",
+      "passed": true
+    },
+    {
+      "name": "Stale head retains complete proposal and remains unsaved",
+      "passed": true
+    },
+    {
+      "name": "Retained copy is visibly an unsaved proposal",
+      "passed": true
+    },
+    {
+      "name": "Booking review retains original time and money",
+      "passed": true
+    },
+    {
+      "name": "Correction retains its exact predecessor",
+      "passed": true
+    },
+    {
+      "name": "Resource review is independent of booking review",
+      "passed": true
+    },
+    {
+      "name": "Invoice review never auto-applies postponed deposit",
+      "passed": true
+    },
+    {
+      "name": "All five cycle subject types retain attributed reviews through actual controls",
+      "passed": true
+    },
+    {
+      "name": "Policy and communication reviews retain original notice, language, future horizon and money",
+      "passed": true
+    },
+    {
+      "name": "Invalid unfinished time settings export without altering accepted source",
+      "passed": true
+    },
+    {
+      "name": "Invalid time intake preserves all accepted editions and literal draft",
+      "passed": true
+    },
+    {
+      "name": "Full native continuation opens visibly and remains in complete export",
+      "passed": true
+    },
+    {
+      "name": "Explicit continuation clear first retains complete original command",
+      "passed": true
+    }
+  ],
+  "snapshots": {
+    "reviewed": {
+      "schema": "tjlabs.groom-cycle-desk.v1",
+      "workspace": {
+        "schema": "tjlabs.groom-cycle-study.v1",
+        "id": "groom-cycle-example",
+        "label": "Authored recurring grooming day",
+        "editions": [
+          {
+            "id": "E1",
+            "label": "Original source edition",
+            "receivedAt": "2026-11-02T14:00:00-05:00",
+            "settings": {
+              "dayStart": "2026-11-02T08:00:00-05:00",
+              "dayEnd": "2026-11-02T18:00:00-05:00",
+              "asOf": "2026-11-02T14:00:00-05:00"
+            },
+            "notes": "Authored workflow example for source-based comparison; explicit occurrences and original accepted policy retained.",
+            "sources": {
+              "resources": {
+                "name": "resources.csv",
+                "text": "resource_id,name,kind,reference\r\nGROOM-A,Groomer A,groomer,Authored roster\r\nSTATION-A,Station A,station,Authored station\r\n",
+                "bytes": 122,
+                "sha256": "b66cb5947329802b33f1551988497ec217eb41401b668da4ad0d760a3f2ca2b6"
+              },
+              "availability": {
+                "name": "availability.csv",
+                "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW-G,GROOM-A,available,2026-11-02T08:00:00-05:00,2026-11-02T18:00:00-05:00,Authored declared day\r\nW-S,STATION-A,available,2026-11-02T08:00:00-05:00,2026-11-02T18:00:00-05:00,Authored declared day\r\n",
+                "bytes": 251,
+                "sha256": "112d3f95703d4c3b1d3a30fdd34bc061920a582d621b13e6ad3c440eed0a5e65"
+              },
+              "booking_revisions": {
+                "name": "booking_revisions.csv",
+                "text": "revision_id,appointment_id,revision,recorded_at,status,client_id,pet_id,location_id,groomer_id,station_id,start_at,end_at,groomer_before_minutes,groomer_after_minutes,station_before_minutes,station_after_minutes,series_id,occurrence_id,service_id,policy_id,policy_accepted_at,preferred_language,currency,authorization,reference\r\nA1,VISIT-A,1,2026-10-15T09:00:00-04:00,confirmed,CLIENT-A,PET-A,SALON,GROOM-A,STATION-A,2026-11-02T09:00:00-05:00,2026-11-02T10:30:00-05:00,0,0,0,10,SER-A,O-A2,GROOM,POL-24,2026-10-15T09:00:00-04:00,es,USD,Recorded customer appointment agreement,Authored booking\r\nA2,VISIT-A,2,2026-11-01T12:15:00-05:00,confirmed,CLIENT-A,PET-A,SALON,GROOM-A,STATION-A,2026-11-02T10:00:00-05:00,2026-11-02T11:30:00-05:00,0,0,0,10,SER-A,O-A2,GROOM,POL-24,2026-10-15T09:00:00-04:00,es,USD,Recorded customer appointment agreement,Authored booking\r\nB1,VISIT-B,1,2026-10-15T10:00:00-04:00,confirmed,CLIENT-B,PET-B,SALON,GROOM-A,STATION-A,2026-11-02T10:30:00-05:00,2026-11-02T12:00:00-05:00,0,0,0,10,SER-B,O-B1,GROOM,POL-24,2026-10-15T09:00:00-04:00,en,USD,Recorded customer appointment agreement,Authored booking\r\nC1,VISIT-C,1,2026-10-15T11:00:00-04:00,confirmed,CLIENT-C,PET-C,SALON,GROOM-A,STATION-A,2026-11-02T15:00:00-05:00,2026-11-02T16:00:00-05:00,0,0,0,10,SER-C,O-C1,GROOM,POL-BIZ,2026-10-15T09:00:00-04:00,en,USD,Recorded customer appointment agreement,Authored booking\r\nC2,VISIT-C,2,2026-11-02T07:00:00-05:00,postponed,CLIENT-C,PET-C,SALON,GROOM-A,STATION-A,2026-11-02T15:00:00-05:00,2026-11-02T16:00:00-05:00,0,0,0,10,SER-C,O-C1,GROOM,POL-BIZ,2026-10-15T09:00:00-04:00,en,USD,Recorded customer appointment agreement,Authored booking\r\n",
+                "bytes": 1651,
+                "sha256": "e2e80beab185c5a12b4c9c4262ad3b7110d4cf6b8b0c809a7d11a283f20904cf"
+              },
+              "quoted_lines": {
+                "name": "quoted_lines.csv",
+                "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Accepted original grooming service,9000,Authored agreed quote\r\nQA2,A2,Accepted original grooming service,9000,Authored agreed quote\r\nQB1,B1,Accepted original grooming service,8000,Authored agreed quote\r\nQC1,C1,Accepted original grooming service,10000,Authored agreed quote\r\nQC2,C2,Accepted original grooming service,10000,Authored agreed quote\r\n",
+                "bytes": 408,
+                "sha256": "13c6709a7092b496d9b2647b1a51a41cd7e0ca4f39a0f00352a5cecda136e2ce"
+              },
+              "completions": {
+                "name": "completions.csv",
+                "text": "observation_id,appointment_id,status,groomer_id,station_id,started_at,finished_at,observed_at,authorization,reference\r\nOBS-A,VISIT-A,completed,GROOM-A,STATION-A,2026-11-02T10:05:00-05:00,2026-11-02T11:15:00-05:00,2026-11-02T11:20:00-05:00,Actual observed work,Authored completion\r\nOBS-B,VISIT-B,in_progress,GROOM-A,STATION-A,2026-11-02T11:10:00-05:00,,2026-11-02T11:40:00-05:00,Actual observed work,Authored open interval\r\n",
+                "bytes": 423,
+                "sha256": "b4572d27f753dfb273f7a7aad626705bf49983fd07a329d807ffac4a2787a6ac"
+              },
+              "invoice_lines": {
+                "name": "invoice_lines.csv",
+                "text": "line_id,invoice_id,appointment_id,currency,amount_minor,description,issued_at,reference\r\nIL-A,INV-A,VISIT-A,USD,9500,Recorded invoice including separately observed addition,2026-11-02T11:30:00-05:00,Authored original invoice\r\n",
+                "bytes": 226,
+                "sha256": "213e92636684492ed127a7c7956c4cc8ab3f78ca3a1c9cf7875c4492b12c1068"
+              },
+              "payments": {
+                "name": "payments.csv",
+                "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nPAY-A,received,,USD,2500,2026-10-15T12:00:00-04:00,Recorded deposit,Original receipt PAY-A\r\nPAY-C,received,,USD,4000,2026-10-15T12:00:00-04:00,Recorded deposit,Original receipt PAY-C\r\n",
+                "bytes": 270,
+                "sha256": "255d1031de191edeb6baaf8153a338e45a1a07a401f7b869a0ab960be3b59a51"
+              },
+              "allocations": {
+                "name": "allocations.csv",
+                "text": "allocation_id,payment_id,appointment_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,PAY-A,VISIT-A,INV-A,deposit,2500,2026-11-02T11:30:00-05:00,Apply recorded deposit to this original invoice,Authored allocation\r\nAL-C,PAY-C,VISIT-C,,deposit,4000,2026-10-15T12:05:00-04:00,Retain original deposit pending actual reschedule,Authored allocation\r\n",
+                "bytes": 374,
+                "sha256": "a88a186f1007df7f9e52a69395be49507021390f607a4b2f1232695f51447c82"
+              },
+              "series": {
+                "name": "series.csv",
+                "text": "series_id,client_id,pet_id,service_id,cadence_label,status,recorded_at,reference\r\nSER-A,CLIENT-A,PET-A,GROOM,Every four weeks at the recorded local time,active,2026-10-01T09:00:00-04:00,Original agreed series\r\nSER-B,CLIENT-B,PET-B,GROOM,Every six weeks,active,2026-10-01T09:00:00-04:00,Original agreed series\r\nSER-C,CLIENT-C,PET-C,GROOM,Every four weeks,active,2026-10-01T09:00:00-04:00,Original agreed series\r\n",
+                "bytes": 411,
+                "sha256": "4133020184e1e90fa9838982098302b66115cc6f58fc750ca8ab3a024afc9f03"
+              },
+              "expected_visits": {
+                "name": "expected_visits.csv",
+                "text": "occurrence_id,series_id,sequence,expected_start_at,expected_end_at,recorded_at,reference\r\nO-A2,SER-A,2,2026-11-02T09:00:00-05:00,2026-11-02T10:30:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained\r\nO-A3,SER-A,3,2026-11-30T09:00:00-05:00,2026-11-30T10:30:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained\r\nO-B1,SER-B,1,2026-11-02T10:30:00-05:00,2026-11-02T12:00:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained\r\nO-C1,SER-C,1,2026-11-02T15:00:00-05:00,2026-11-02T16:00:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained\r\n",
+                "bytes": 654,
+                "sha256": "8178e20c8929e02e8077247abbe27c1ff24e194a4e80e5567a719f33204a716a"
+              },
+              "policy_versions": {
+                "name": "policy_versions.csv",
+                "text": "policy_id,service_id,label,notice_basis,notice_minutes,recorded_at,terms,reference\r\nPOL-24,GROOM,Original 24-hour policy,elapsed_minutes,1440,2026-10-01T09:00:00-04:00,The accepted policy requests 24 elapsed hours. Any fee or transfer follows the actual recorded operator decision.,Authored accepted terms\r\nPOL-48,GROOM,New 48-hour policy,elapsed_minutes,2880,2026-10-30T09:00:00-04:00,New policy edition. It does not replace an earlier appointment's accepted policy.,Authored accepted terms\r\nPOL-BIZ,GROOM,Business-hours policy,business_hours,,2026-10-01T09:00:00-04:00,The business requests 24 business hours' notice. Its actual opening calendar and operator decision control interpretation.,Authored accepted terms\r\n",
+                "bytes": 719,
+                "sha256": "26a737426337d83295bda8ba5d548c51c1aff9f32b0e81ca899e4327dee532c6"
+              },
+              "decisions": {
+                "name": "decisions.csv",
+                "text": "decision_id,appointment_id,revision_id,kind,decided_at,notice_received_at,authorization,reference\r\nD-A,VISIT-A,A1,reschedule,2026-11-01T12:10:00-05:00,2026-11-01T12:00:00-05:00,Customer requested new time; operator accepted without new charge,Authored recorded decision\r\nD-C,VISIT-C,C1,reschedule,2026-11-02T06:55:00-05:00,2026-11-01T15:00:00-05:00,Operator postponed; original deposit retained pending written replacement,Authored recorded decision\r\n",
+                "bytes": 451,
+                "sha256": "5bc356fffd173704b0dfb8b0812efb1c7b5bb93dc328646e1b9dc9850eb49068"
+              },
+              "communications": {
+                "name": "communications.csv",
+                "text": "message_id,appointment_id,revision_id,kind,language,scheduled_for,sent_at,observed_at,outcome,recipient_reference,reference\r\nM-A1,VISIT-A,A1,reminder,en,2026-11-01T09:00:00-05:00,2026-11-01T13:00:00-05:00,2026-11-01T13:01:00-05:00,delivered,CLIENT-A/email-original,Authored original delivery record\r\nM-A1-DUP,VISIT-A,A1,reminder,en,2026-11-01T09:00:00-05:00,2026-11-01T13:00:00-05:00,2026-11-01T13:01:00-05:00,delivered,CLIENT-A/email-original,Authored original delivery record\r\nM-A2,VISIT-A,A2,confirmation,es,2026-11-01T12:20:00-05:00,2026-11-01T12:20:00-05:00,2026-11-01T12:21:00-05:00,delivered,CLIENT-A/email-original,Authored original delivery record\r\nM-PICKUP,VISIT-A,A2,ready_for_pickup,es,2026-11-02T10:50:00-05:00,2026-11-02T10:50:00-05:00,2026-11-02T10:51:00-05:00,sent,CLIENT-A/email-original,Authored original delivery record\r\nM-C,VISIT-C,C1,reminder,en,2026-11-02T08:00:00-05:00,,2026-11-02T09:00:00-05:00,queued,CLIENT-C/email-original,Authored original delivery record\r\n",
+                "bytes": 986,
+                "sha256": "d263ab7af1235863cb780511ba5b3815c699cf2aa4501dd6ec9c72a496cfc87a"
+              }
+            },
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60"
+          }
+        ],
+        "reviews": [
+          {
+            "id": "review-1792048309132-7h0pvpyt4lb",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "booking",
+            "subjectId": "VISIT-A",
+            "disposition": "investigate",
+            "reviewer": "Course operator",
+            "reason": "Read the actual invoice difference",
+            "evidence": "Authored original source",
+            "previousReviewId": null,
+            "recordHash": "f9e5e8a19f450472444c9fb9f7b82fa5062d26120394ce7ca5bbca7eb825d097"
+          },
+          {
+            "id": "review-1792048309286-9achwkv0plt",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "booking",
+            "subjectId": "VISIT-A",
+            "disposition": "accept_expected",
+            "reviewer": "Course operator",
+            "reason": "Append an attributed correction without changing amounts",
+            "evidence": "Authored original source",
+            "previousReviewId": "review-1792048309132-7h0pvpyt4lb",
+            "recordHash": "b8162403f8092df30e964f33ea094ab6de8e6777c7e7104d4f3f05cdbc8a2436"
+          },
+          {
+            "id": "review-1792048309468-bbz4e57toy",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "resource",
+            "subjectId": "GROOM-A",
+            "disposition": "investigate",
+            "reviewer": "Course operator",
+            "reason": "Declared lunch overlaps planned and observed work",
+            "evidence": "Authored original source",
+            "previousReviewId": null,
+            "recordHash": "e3564e12bfa27817a13d9beb20245e4e0bbfa002a76830966cad360d4c1cc7f5"
+          },
+          {
+            "id": "review-1792048309637-1ssl76hdwqr",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "invoice",
+            "subjectId": "[\"INV-A\",\"VISIT-A\"]",
+            "disposition": "investigate",
+            "reviewer": "Course operator",
+            "reason": "Original recorded charge needs approval evidence",
+            "evidence": "Authored original source",
+            "previousReviewId": null,
+            "recordHash": "d35b686630fe8a3e37e73678a9535f9a2fae5d7a432f1087176928fa08c83cfc"
+          },
+          {
+            "id": "review-1792048309809-g4uaufemhn7",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "series",
+            "subjectId": "SER-A",
+            "disposition": "investigate",
+            "reviewer": "Course operator",
+            "reason": "Retain original series and its source-bound interpretation",
+            "evidence": "Authored original source",
+            "previousReviewId": null,
+            "recordHash": "00158e8aea569ed77e9abeadc6f3cf86c4c8e5ef10b13080cc7ece580a8c3e1e"
+          },
+          {
+            "id": "review-1792048309982-urdbu85o09n",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "occurrence",
+            "subjectId": "O-A3",
+            "disposition": "investigate",
+            "reviewer": "Course operator",
+            "reason": "Retain original occurrence and its source-bound interpretation",
+            "evidence": "Authored original source",
+            "previousReviewId": null,
+            "recordHash": "5950d1fdce9c8958580ad699acee9adb751620072985aa2dbb73fa89e472cb58"
+          },
+          {
+            "id": "review-1792048310164-3e89ftjuix5",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "policy",
+            "subjectId": "POL-24",
+            "disposition": "investigate",
+            "reviewer": "Course operator",
+            "reason": "Retain original policy and its source-bound interpretation",
+            "evidence": "Authored original source",
+            "previousReviewId": null,
+            "recordHash": "1e918091ace8cd4275159e9a4484b9e4c7077d828d77057dfd21b6ed44aa3f00"
+          },
+          {
+            "id": "review-1792048310343-5vt2d6qm0mg",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "decision",
+            "subjectId": "D-A",
+            "disposition": "investigate",
+            "reviewer": "Course operator",
+            "reason": "Retain original decision and its source-bound interpretation",
+            "evidence": "Authored original source",
+            "previousReviewId": null,
+            "recordHash": "68d3da23e579c0782f3915360846f80877910da8909e02c19538608dc81c2a98"
+          },
+          {
+            "id": "review-1792048310533-vfpvgcyt",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "communication",
+            "subjectId": "M-A1",
+            "disposition": "investigate",
+            "reviewer": "Course operator",
+            "reason": "Retain original communication and its source-bound interpretation",
+            "evidence": "Authored original source",
+            "previousReviewId": null,
+            "recordHash": "86f4fee3aec5c5e5c7862b50858e681333607a0661d7f600553f8defdd0d8894"
+          }
+        ]
+      },
+      "session": {
+        "editionId": "E1",
+        "table": "resources",
+        "resourceId": null,
+        "sourceDraft": {
+          "id": "E2",
+          "label": "Next reviewed source edition",
+          "receivedAt": "2026-11-02T14:05:00-05:00",
+          "notes": "",
+          "settings": {
+            "dayStart": "2026-11-02T08:00:00-05:00",
+            "dayEnd": "2026-11-02T18:00:00-05:00",
+            "asOf": "unfinished as-of"
+          },
+          "sources": {
+            "resources": {
+              "name": "resources.csv",
+              "text": "resource_id,name,kind,reference\r\nGROOM-A,Groomer A,groomer,Authored roster\r\nSTATION-A,Station A,station,Authored station\r\n",
+              "receiptSha256": null
+            },
+            "availability": {
+              "name": "availability.csv",
+              "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW-G,GROOM-A,available,2026-11-02T08:00:00-05:00,2026-11-02T18:00:00-05:00,Authored declared day\r\nW-S,STATION-A,available,2026-11-02T08:00:00-05:00,2026-11-02T18:00:00-05:00,Authored declared day\r\n",
+              "receiptSha256": null
+            },
+            "booking_revisions": {
+              "name": "booking_revisions.csv",
+              "text": "revision_id,appointment_id,revision,recorded_at,status,client_id,pet_id,location_id,groomer_id,station_id,start_at,end_at,groomer_before_minutes,groomer_after_minutes,station_before_minutes,station_after_minutes,series_id,occurrence_id,service_id,policy_id,policy_accepted_at,preferred_language,currency,authorization,reference\r\nA1,VISIT-A,1,2026-10-15T09:00:00-04:00,confirmed,CLIENT-A,PET-A,SALON,GROOM-A,STATION-A,2026-11-02T09:00:00-05:00,2026-11-02T10:30:00-05:00,0,0,0,10,SER-A,O-A2,GROOM,POL-24,2026-10-15T09:00:00-04:00,es,USD,Recorded customer appointment agreement,Authored booking\r\nA2,VISIT-A,2,2026-11-01T12:15:00-05:00,confirmed,CLIENT-A,PET-A,SALON,GROOM-A,STATION-A,2026-11-02T10:00:00-05:00,2026-11-02T11:30:00-05:00,0,0,0,10,SER-A,O-A2,GROOM,POL-24,2026-10-15T09:00:00-04:00,es,USD,Recorded customer appointment agreement,Authored booking\r\nB1,VISIT-B,1,2026-10-15T10:00:00-04:00,confirmed,CLIENT-B,PET-B,SALON,GROOM-A,STATION-A,2026-11-02T10:30:00-05:00,2026-11-02T12:00:00-05:00,0,0,0,10,SER-B,O-B1,GROOM,POL-24,2026-10-15T09:00:00-04:00,en,USD,Recorded customer appointment agreement,Authored booking\r\nC1,VISIT-C,1,2026-10-15T11:00:00-04:00,confirmed,CLIENT-C,PET-C,SALON,GROOM-A,STATION-A,2026-11-02T15:00:00-05:00,2026-11-02T16:00:00-05:00,0,0,0,10,SER-C,O-C1,GROOM,POL-BIZ,2026-10-15T09:00:00-04:00,en,USD,Recorded customer appointment agreement,Authored booking\r\nC2,VISIT-C,2,2026-11-02T07:00:00-05:00,postponed,CLIENT-C,PET-C,SALON,GROOM-A,STATION-A,2026-11-02T15:00:00-05:00,2026-11-02T16:00:00-05:00,0,0,0,10,SER-C,O-C1,GROOM,POL-BIZ,2026-10-15T09:00:00-04:00,en,USD,Recorded customer appointment agreement,Authored booking\r\n",
+              "receiptSha256": null
+            },
+            "quoted_lines": {
+              "name": "quoted_lines.csv",
+              "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Accepted original grooming service,9000,Authored agreed quote\r\nQA2,A2,Accepted original grooming service,9000,Authored agreed quote\r\nQB1,B1,Accepted original grooming service,8000,Authored agreed quote\r\nQC1,C1,Accepted original grooming service,10000,Authored agreed quote\r\nQC2,C2,Accepted original grooming service,10000,Authored agreed quote\r\n",
+              "receiptSha256": null
+            },
+            "completions": {
+              "name": "completions.csv",
+              "text": "observation_id,appointment_id,status,groomer_id,station_id,started_at,finished_at,observed_at,authorization,reference\r\nOBS-A,VISIT-A,completed,GROOM-A,STATION-A,2026-11-02T10:05:00-05:00,2026-11-02T11:15:00-05:00,2026-11-02T11:20:00-05:00,Actual observed work,Authored completion\r\nOBS-B,VISIT-B,in_progress,GROOM-A,STATION-A,2026-11-02T11:10:00-05:00,,2026-11-02T11:40:00-05:00,Actual observed work,Authored open interval\r\n",
+              "receiptSha256": null
+            },
+            "invoice_lines": {
+              "name": "invoice_lines.csv",
+              "text": "line_id,invoice_id,appointment_id,currency,amount_minor,description,issued_at,reference\r\nIL-A,INV-A,VISIT-A,USD,9500,Recorded invoice including separately observed addition,2026-11-02T11:30:00-05:00,Authored original invoice\r\n",
+              "receiptSha256": null
+            },
+            "payments": {
+              "name": "payments.csv",
+              "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nPAY-A,received,,USD,2500,2026-10-15T12:00:00-04:00,Recorded deposit,Original receipt PAY-A\r\nPAY-C,received,,USD,4000,2026-10-15T12:00:00-04:00,Recorded deposit,Original receipt PAY-C\r\n",
+              "receiptSha256": null
+            },
+            "allocations": {
+              "name": "allocations.csv",
+              "text": "allocation_id,payment_id,appointment_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,PAY-A,VISIT-A,INV-A,deposit,2500,2026-11-02T11:30:00-05:00,Apply recorded deposit to this original invoice,Authored allocation\r\nAL-C,PAY-C,VISIT-C,,deposit,4000,2026-10-15T12:05:00-04:00,Retain original deposit pending actual reschedule,Authored allocation\r\n",
+              "receiptSha256": null
+            },
+            "series": {
+              "name": "series.csv",
+              "text": "series_id,client_id,pet_id,service_id,cadence_label,status,recorded_at,reference\r\nSER-A,CLIENT-A,PET-A,GROOM,Every four weeks at the recorded local time,active,2026-10-01T09:00:00-04:00,Original agreed series\r\nSER-B,CLIENT-B,PET-B,GROOM,Every six weeks,active,2026-10-01T09:00:00-04:00,Original agreed series\r\nSER-C,CLIENT-C,PET-C,GROOM,Every four weeks,active,2026-10-01T09:00:00-04:00,Original agreed series\r\n",
+              "receiptSha256": null
+            },
+            "expected_visits": {
+              "name": "expected_visits.csv",
+              "text": "occurrence_id,series_id,sequence,expected_start_at,expected_end_at,recorded_at,reference\r\nO-A2,SER-A,2,2026-11-02T09:00:00-05:00,2026-11-02T10:30:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained\r\nO-A3,SER-A,3,2026-11-30T09:00:00-05:00,2026-11-30T10:30:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained\r\nO-B1,SER-B,1,2026-11-02T10:30:00-05:00,2026-11-02T12:00:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained\r\nO-C1,SER-C,1,2026-11-02T15:00:00-05:00,2026-11-02T16:00:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained\r\n",
+              "receiptSha256": null
+            },
+            "policy_versions": {
+              "name": "policy_versions.csv",
+              "text": "policy_id,service_id,label,notice_basis,notice_minutes,recorded_at,terms,reference\r\nPOL-24,GROOM,Original 24-hour policy,elapsed_minutes,1440,2026-10-01T09:00:00-04:00,The accepted policy requests 24 elapsed hours. Any fee or transfer follows the actual recorded operator decision.,Authored accepted terms\r\nPOL-48,GROOM,New 48-hour policy,elapsed_minutes,2880,2026-10-30T09:00:00-04:00,New policy edition. It does not replace an earlier appointment's accepted policy.,Authored accepted terms\r\nPOL-BIZ,GROOM,Business-hours policy,business_hours,,2026-10-01T09:00:00-04:00,The business requests 24 business hours' notice. Its actual opening calendar and operator decision control interpretation.,Authored accepted terms\r\n",
+              "receiptSha256": null
+            },
+            "decisions": {
+              "name": "decisions.csv",
+              "text": "decision_id,appointment_id,revision_id,kind,decided_at,notice_received_at,authorization,reference\r\nD-A,VISIT-A,A1,reschedule,2026-11-01T12:10:00-05:00,2026-11-01T12:00:00-05:00,Customer requested new time; operator accepted without new charge,Authored recorded decision\r\nD-C,VISIT-C,C1,reschedule,2026-11-02T06:55:00-05:00,2026-11-01T15:00:00-05:00,Operator postponed; original deposit retained pending written replacement,Authored recorded decision\r\n",
+              "receiptSha256": null
+            },
+            "communications": {
+              "name": "communications.csv",
+              "text": "message_id,appointment_id,revision_id,kind,language,scheduled_for,sent_at,observed_at,outcome,recipient_reference,reference\r\nM-A1,VISIT-A,A1,reminder,en,2026-11-01T09:00:00-05:00,2026-11-01T13:00:00-05:00,2026-11-01T13:01:00-05:00,delivered,CLIENT-A/email-original,Authored original delivery record\r\nM-A1-DUP,VISIT-A,A1,reminder,en,2026-11-01T09:00:00-05:00,2026-11-01T13:00:00-05:00,2026-11-01T13:01:00-05:00,delivered,CLIENT-A/email-original,Authored original delivery record\r\nM-A2,VISIT-A,A2,confirmation,es,2026-11-01T12:20:00-05:00,2026-11-01T12:20:00-05:00,2026-11-01T12:21:00-05:00,delivered,CLIENT-A/email-original,Authored original delivery record\r\nM-PICKUP,VISIT-A,A2,ready_for_pickup,es,2026-11-02T10:50:00-05:00,2026-11-02T10:50:00-05:00,2026-11-02T10:51:00-05:00,sent,CLIENT-A/email-original,Authored original delivery record\r\nM-C,VISIT-C,C1,reminder,en,2026-11-02T08:00:00-05:00,,2026-11-02T09:00:00-05:00,queued,CLIENT-C/email-original,Authored original delivery record\r\n",
+              "receiptSha256": null
+            }
+          }
+        },
+        "reviewDrafts": {},
+        "selectedSubject": "[\"communication\",\"M-A1\"]",
+        "receipts": [],
+        "notes": ""
+      }
+    },
+    "recovered": {
+      "schema": "tjlabs.groom-cycle-desk.v1",
+      "workspace": {
+        "schema": "tjlabs.groom-cycle-study.v1",
+        "id": "groom-cycle-blank",
+        "label": "Grooming cycle study",
+        "editions": [],
+        "reviews": []
+      },
+      "session": {
+        "editionId": null,
+        "table": "resources",
+        "resourceId": null,
+        "sourceDraft": {
+          "id": "edition-1792048265639",
+          "label": "Source edition",
+          "receivedAt": "2026-10-15T07:11:05.639Z",
+          "notes": "",
+          "settings": {
+            "dayStart": "",
+            "dayEnd": "",
+            "asOf": ""
+          },
+          "sources": {
+            "resources": {
+              "name": "resources.csv",
+              "text": "resource_id,name,kind,reference\r\n",
+              "receiptSha256": null
+            },
+            "availability": {
+              "name": "availability.csv",
+              "text": "window_id,resource_id,state,start_at,end_at,reference\r\n",
+              "receiptSha256": null
+            },
+            "booking_revisions": {
+              "name": "booking_revisions.csv",
+              "text": "revision_id,appointment_id,revision,recorded_at,status,client_id,pet_id,location_id,groomer_id,station_id,start_at,end_at,groomer_before_minutes,groomer_after_minutes,station_before_minutes,station_after_minutes,series_id,occurrence_id,service_id,policy_id,policy_accepted_at,preferred_language,currency,authorization,reference\r\n",
+              "receiptSha256": null
+            },
+            "quoted_lines": {
+              "name": "quoted_lines.csv",
+              "text": "line_id,revision_id,description,amount_minor,reference\r\n",
+              "receiptSha256": null
+            },
+            "completions": {
+              "name": "completions.csv",
+              "text": "observation_id,appointment_id,status,groomer_id,station_id,started_at,finished_at,observed_at,authorization,reference\r\n",
+              "receiptSha256": null
+            },
+            "invoice_lines": {
+              "name": "invoice_lines.csv",
+              "text": "line_id,invoice_id,appointment_id,currency,amount_minor,description,issued_at,reference\r\n",
+              "receiptSha256": null
+            },
+            "payments": {
+              "name": "payments.csv",
+              "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\n",
+              "receiptSha256": null
+            },
+            "allocations": {
+              "name": "allocations.csv",
+              "text": "allocation_id,payment_id,appointment_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\n",
+              "receiptSha256": null
+            },
+            "series": {
+              "name": "series.csv",
+              "text": "series_id,client_id,pet_id,service_id,cadence_label,status,recorded_at,reference\r\n",
+              "receiptSha256": null
+            },
+            "expected_visits": {
+              "name": "expected_visits.csv",
+              "text": "occurrence_id,series_id,sequence,expected_start_at,expected_end_at,recorded_at,reference\r\n",
+              "receiptSha256": null
+            },
+            "policy_versions": {
+              "name": "policy_versions.csv",
+              "text": "policy_id,service_id,label,notice_basis,notice_minutes,recorded_at,terms,reference\r\n",
+              "receiptSha256": null
+            },
+            "decisions": {
+              "name": "decisions.csv",
+              "text": "decision_id,appointment_id,revision_id,kind,decided_at,notice_received_at,authorization,reference\r\n",
+              "receiptSha256": null
+            },
+            "communications": {
+              "name": "communications.csv",
+              "text": "message_id,appointment_id,revision_id,kind,language,scheduled_for,sent_at,observed_at,outcome,recipient_reference,reference\r\n",
+              "receiptSha256": null
+            }
+          }
+        },
+        "reviewDrafts": {},
+        "selectedSubject": null,
+        "receipts": [],
+        "notes": ""
+      }
+    },
+    "final": {
+      "schema": "tjlabs.groom-cycle-desk.v1",
+      "workspace": {
+        "schema": "tjlabs.groom-cycle-study.v1",
+        "id": "groom-cycle-example",
+        "label": "Authored recurring grooming day",
+        "editions": [
+          {
+            "id": "E1",
+            "label": "Original source edition",
+            "receivedAt": "2026-11-02T14:00:00-05:00",
+            "settings": {
+              "dayStart": "2026-11-02T08:00:00-05:00",
+              "dayEnd": "2026-11-02T18:00:00-05:00",
+              "asOf": "2026-11-02T14:00:00-05:00"
+            },
+            "notes": "Authored workflow example for source-based comparison; explicit occurrences and original accepted policy retained.",
+            "sources": {
+              "resources": {
+                "name": "resources.csv",
+                "text": "resource_id,name,kind,reference\r\nGROOM-A,Groomer A,groomer,Authored roster\r\nSTATION-A,Station A,station,Authored station\r\n",
+                "bytes": 122,
+                "sha256": "b66cb5947329802b33f1551988497ec217eb41401b668da4ad0d760a3f2ca2b6"
+              },
+              "availability": {
+                "name": "availability.csv",
+                "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW-G,GROOM-A,available,2026-11-02T08:00:00-05:00,2026-11-02T18:00:00-05:00,Authored declared day\r\nW-S,STATION-A,available,2026-11-02T08:00:00-05:00,2026-11-02T18:00:00-05:00,Authored declared day\r\n",
+                "bytes": 251,
+                "sha256": "112d3f95703d4c3b1d3a30fdd34bc061920a582d621b13e6ad3c440eed0a5e65"
+              },
+              "booking_revisions": {
+                "name": "booking_revisions.csv",
+                "text": "revision_id,appointment_id,revision,recorded_at,status,client_id,pet_id,location_id,groomer_id,station_id,start_at,end_at,groomer_before_minutes,groomer_after_minutes,station_before_minutes,station_after_minutes,series_id,occurrence_id,service_id,policy_id,policy_accepted_at,preferred_language,currency,authorization,reference\r\nA1,VISIT-A,1,2026-10-15T09:00:00-04:00,confirmed,CLIENT-A,PET-A,SALON,GROOM-A,STATION-A,2026-11-02T09:00:00-05:00,2026-11-02T10:30:00-05:00,0,0,0,10,SER-A,O-A2,GROOM,POL-24,2026-10-15T09:00:00-04:00,es,USD,Recorded customer appointment agreement,Authored booking\r\nA2,VISIT-A,2,2026-11-01T12:15:00-05:00,confirmed,CLIENT-A,PET-A,SALON,GROOM-A,STATION-A,2026-11-02T10:00:00-05:00,2026-11-02T11:30:00-05:00,0,0,0,10,SER-A,O-A2,GROOM,POL-24,2026-10-15T09:00:00-04:00,es,USD,Recorded customer appointment agreement,Authored booking\r\nB1,VISIT-B,1,2026-10-15T10:00:00-04:00,confirmed,CLIENT-B,PET-B,SALON,GROOM-A,STATION-A,2026-11-02T10:30:00-05:00,2026-11-02T12:00:00-05:00,0,0,0,10,SER-B,O-B1,GROOM,POL-24,2026-10-15T09:00:00-04:00,en,USD,Recorded customer appointment agreement,Authored booking\r\nC1,VISIT-C,1,2026-10-15T11:00:00-04:00,confirmed,CLIENT-C,PET-C,SALON,GROOM-A,STATION-A,2026-11-02T15:00:00-05:00,2026-11-02T16:00:00-05:00,0,0,0,10,SER-C,O-C1,GROOM,POL-BIZ,2026-10-15T09:00:00-04:00,en,USD,Recorded customer appointment agreement,Authored booking\r\nC2,VISIT-C,2,2026-11-02T07:00:00-05:00,postponed,CLIENT-C,PET-C,SALON,GROOM-A,STATION-A,2026-11-02T15:00:00-05:00,2026-11-02T16:00:00-05:00,0,0,0,10,SER-C,O-C1,GROOM,POL-BIZ,2026-10-15T09:00:00-04:00,en,USD,Recorded customer appointment agreement,Authored booking\r\n",
+                "bytes": 1651,
+                "sha256": "e2e80beab185c5a12b4c9c4262ad3b7110d4cf6b8b0c809a7d11a283f20904cf"
+              },
+              "quoted_lines": {
+                "name": "quoted_lines.csv",
+                "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Accepted original grooming service,9000,Authored agreed quote\r\nQA2,A2,Accepted original grooming service,9000,Authored agreed quote\r\nQB1,B1,Accepted original grooming service,8000,Authored agreed quote\r\nQC1,C1,Accepted original grooming service,10000,Authored agreed quote\r\nQC2,C2,Accepted original grooming service,10000,Authored agreed quote\r\n",
+                "bytes": 408,
+                "sha256": "13c6709a7092b496d9b2647b1a51a41cd7e0ca4f39a0f00352a5cecda136e2ce"
+              },
+              "completions": {
+                "name": "completions.csv",
+                "text": "observation_id,appointment_id,status,groomer_id,station_id,started_at,finished_at,observed_at,authorization,reference\r\nOBS-A,VISIT-A,completed,GROOM-A,STATION-A,2026-11-02T10:05:00-05:00,2026-11-02T11:15:00-05:00,2026-11-02T11:20:00-05:00,Actual observed work,Authored completion\r\nOBS-B,VISIT-B,in_progress,GROOM-A,STATION-A,2026-11-02T11:10:00-05:00,,2026-11-02T11:40:00-05:00,Actual observed work,Authored open interval\r\n",
+                "bytes": 423,
+                "sha256": "b4572d27f753dfb273f7a7aad626705bf49983fd07a329d807ffac4a2787a6ac"
+              },
+              "invoice_lines": {
+                "name": "invoice_lines.csv",
+                "text": "line_id,invoice_id,appointment_id,currency,amount_minor,description,issued_at,reference\r\nIL-A,INV-A,VISIT-A,USD,9500,Recorded invoice including separately observed addition,2026-11-02T11:30:00-05:00,Authored original invoice\r\n",
+                "bytes": 226,
+                "sha256": "213e92636684492ed127a7c7956c4cc8ab3f78ca3a1c9cf7875c4492b12c1068"
+              },
+              "payments": {
+                "name": "payments.csv",
+                "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nPAY-A,received,,USD,2500,2026-10-15T12:00:00-04:00,Recorded deposit,Original receipt PAY-A\r\nPAY-C,received,,USD,4000,2026-10-15T12:00:00-04:00,Recorded deposit,Original receipt PAY-C\r\n",
+                "bytes": 270,
+                "sha256": "255d1031de191edeb6baaf8153a338e45a1a07a401f7b869a0ab960be3b59a51"
+              },
+              "allocations": {
+                "name": "allocations.csv",
+                "text": "allocation_id,payment_id,appointment_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,PAY-A,VISIT-A,INV-A,deposit,2500,2026-11-02T11:30:00-05:00,Apply recorded deposit to this original invoice,Authored allocation\r\nAL-C,PAY-C,VISIT-C,,deposit,4000,2026-10-15T12:05:00-04:00,Retain original deposit pending actual reschedule,Authored allocation\r\n",
+                "bytes": 374,
+                "sha256": "a88a186f1007df7f9e52a69395be49507021390f607a4b2f1232695f51447c82"
+              },
+              "series": {
+                "name": "series.csv",
+                "text": "series_id,client_id,pet_id,service_id,cadence_label,status,recorded_at,reference\r\nSER-A,CLIENT-A,PET-A,GROOM,Every four weeks at the recorded local time,active,2026-10-01T09:00:00-04:00,Original agreed series\r\nSER-B,CLIENT-B,PET-B,GROOM,Every six weeks,active,2026-10-01T09:00:00-04:00,Original agreed series\r\nSER-C,CLIENT-C,PET-C,GROOM,Every four weeks,active,2026-10-01T09:00:00-04:00,Original agreed series\r\n",
+                "bytes": 411,
+                "sha256": "4133020184e1e90fa9838982098302b66115cc6f58fc750ca8ab3a024afc9f03"
+              },
+              "expected_visits": {
+                "name": "expected_visits.csv",
+                "text": "occurrence_id,series_id,sequence,expected_start_at,expected_end_at,recorded_at,reference\r\nO-A2,SER-A,2,2026-11-02T09:00:00-05:00,2026-11-02T10:30:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained\r\nO-A3,SER-A,3,2026-11-30T09:00:00-05:00,2026-11-30T10:30:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained\r\nO-B1,SER-B,1,2026-11-02T10:30:00-05:00,2026-11-02T12:00:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained\r\nO-C1,SER-C,1,2026-11-02T15:00:00-05:00,2026-11-02T16:00:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained\r\n",
+                "bytes": 654,
+                "sha256": "8178e20c8929e02e8077247abbe27c1ff24e194a4e80e5567a719f33204a716a"
+              },
+              "policy_versions": {
+                "name": "policy_versions.csv",
+                "text": "policy_id,service_id,label,notice_basis,notice_minutes,recorded_at,terms,reference\r\nPOL-24,GROOM,Original 24-hour policy,elapsed_minutes,1440,2026-10-01T09:00:00-04:00,The accepted policy requests 24 elapsed hours. Any fee or transfer follows the actual recorded operator decision.,Authored accepted terms\r\nPOL-48,GROOM,New 48-hour policy,elapsed_minutes,2880,2026-10-30T09:00:00-04:00,New policy edition. It does not replace an earlier appointment's accepted policy.,Authored accepted terms\r\nPOL-BIZ,GROOM,Business-hours policy,business_hours,,2026-10-01T09:00:00-04:00,The business requests 24 business hours' notice. Its actual opening calendar and operator decision control interpretation.,Authored accepted terms\r\n",
+                "bytes": 719,
+                "sha256": "26a737426337d83295bda8ba5d548c51c1aff9f32b0e81ca899e4327dee532c6"
+              },
+              "decisions": {
+                "name": "decisions.csv",
+                "text": "decision_id,appointment_id,revision_id,kind,decided_at,notice_received_at,authorization,reference\r\nD-A,VISIT-A,A1,reschedule,2026-11-01T12:10:00-05:00,2026-11-01T12:00:00-05:00,Customer requested new time; operator accepted without new charge,Authored recorded decision\r\nD-C,VISIT-C,C1,reschedule,2026-11-02T06:55:00-05:00,2026-11-01T15:00:00-05:00,Operator postponed; original deposit retained pending written replacement,Authored recorded decision\r\n",
+                "bytes": 451,
+                "sha256": "5bc356fffd173704b0dfb8b0812efb1c7b5bb93dc328646e1b9dc9850eb49068"
+              },
+              "communications": {
+                "name": "communications.csv",
+                "text": "message_id,appointment_id,revision_id,kind,language,scheduled_for,sent_at,observed_at,outcome,recipient_reference,reference\r\nM-A1,VISIT-A,A1,reminder,en,2026-11-01T09:00:00-05:00,2026-11-01T13:00:00-05:00,2026-11-01T13:01:00-05:00,delivered,CLIENT-A/email-original,Authored original delivery record\r\nM-A1-DUP,VISIT-A,A1,reminder,en,2026-11-01T09:00:00-05:00,2026-11-01T13:00:00-05:00,2026-11-01T13:01:00-05:00,delivered,CLIENT-A/email-original,Authored original delivery record\r\nM-A2,VISIT-A,A2,confirmation,es,2026-11-01T12:20:00-05:00,2026-11-01T12:20:00-05:00,2026-11-01T12:21:00-05:00,delivered,CLIENT-A/email-original,Authored original delivery record\r\nM-PICKUP,VISIT-A,A2,ready_for_pickup,es,2026-11-02T10:50:00-05:00,2026-11-02T10:50:00-05:00,2026-11-02T10:51:00-05:00,sent,CLIENT-A/email-original,Authored original delivery record\r\nM-C,VISIT-C,C1,reminder,en,2026-11-02T08:00:00-05:00,,2026-11-02T09:00:00-05:00,queued,CLIENT-C/email-original,Authored original delivery record\r\n",
+                "bytes": 986,
+                "sha256": "d263ab7af1235863cb780511ba5b3815c699cf2aa4501dd6ec9c72a496cfc87a"
+              }
+            },
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60"
+          }
+        ],
+        "reviews": [
+          {
+            "id": "review-1792048309132-7h0pvpyt4lb",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "booking",
+            "subjectId": "VISIT-A",
+            "disposition": "investigate",
+            "reviewer": "Course operator",
+            "reason": "Read the actual invoice difference",
+            "evidence": "Authored original source",
+            "previousReviewId": null,
+            "recordHash": "f9e5e8a19f450472444c9fb9f7b82fa5062d26120394ce7ca5bbca7eb825d097"
+          },
+          {
+            "id": "review-1792048309286-9achwkv0plt",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "booking",
+            "subjectId": "VISIT-A",
+            "disposition": "accept_expected",
+            "reviewer": "Course operator",
+            "reason": "Append an attributed correction without changing amounts",
+            "evidence": "Authored original source",
+            "previousReviewId": "review-1792048309132-7h0pvpyt4lb",
+            "recordHash": "b8162403f8092df30e964f33ea094ab6de8e6777c7e7104d4f3f05cdbc8a2436"
+          },
+          {
+            "id": "review-1792048309468-bbz4e57toy",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "resource",
+            "subjectId": "GROOM-A",
+            "disposition": "investigate",
+            "reviewer": "Course operator",
+            "reason": "Declared lunch overlaps planned and observed work",
+            "evidence": "Authored original source",
+            "previousReviewId": null,
+            "recordHash": "e3564e12bfa27817a13d9beb20245e4e0bbfa002a76830966cad360d4c1cc7f5"
+          },
+          {
+            "id": "review-1792048309637-1ssl76hdwqr",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "invoice",
+            "subjectId": "[\"INV-A\",\"VISIT-A\"]",
+            "disposition": "investigate",
+            "reviewer": "Course operator",
+            "reason": "Original recorded charge needs approval evidence",
+            "evidence": "Authored original source",
+            "previousReviewId": null,
+            "recordHash": "d35b686630fe8a3e37e73678a9535f9a2fae5d7a432f1087176928fa08c83cfc"
+          },
+          {
+            "id": "review-1792048309809-g4uaufemhn7",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "series",
+            "subjectId": "SER-A",
+            "disposition": "investigate",
+            "reviewer": "Course operator",
+            "reason": "Retain original series and its source-bound interpretation",
+            "evidence": "Authored original source",
+            "previousReviewId": null,
+            "recordHash": "00158e8aea569ed77e9abeadc6f3cf86c4c8e5ef10b13080cc7ece580a8c3e1e"
+          },
+          {
+            "id": "review-1792048309982-urdbu85o09n",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "occurrence",
+            "subjectId": "O-A3",
+            "disposition": "investigate",
+            "reviewer": "Course operator",
+            "reason": "Retain original occurrence and its source-bound interpretation",
+            "evidence": "Authored original source",
+            "previousReviewId": null,
+            "recordHash": "5950d1fdce9c8958580ad699acee9adb751620072985aa2dbb73fa89e472cb58"
+          },
+          {
+            "id": "review-1792048310164-3e89ftjuix5",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "policy",
+            "subjectId": "POL-24",
+            "disposition": "investigate",
+            "reviewer": "Course operator",
+            "reason": "Retain original policy and its source-bound interpretation",
+            "evidence": "Authored original source",
+            "previousReviewId": null,
+            "recordHash": "1e918091ace8cd4275159e9a4484b9e4c7077d828d77057dfd21b6ed44aa3f00"
+          },
+          {
+            "id": "review-1792048310343-5vt2d6qm0mg",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "decision",
+            "subjectId": "D-A",
+            "disposition": "investigate",
+            "reviewer": "Course operator",
+            "reason": "Retain original decision and its source-bound interpretation",
+            "evidence": "Authored original source",
+            "previousReviewId": null,
+            "recordHash": "68d3da23e579c0782f3915360846f80877910da8909e02c19538608dc81c2a98"
+          },
+          {
+            "id": "review-1792048310533-vfpvgcyt",
+            "editionId": "E1",
+            "sourceHash": "48915fc63e3252902de5fff8636a2819734dda0b9e1a469cce3949714759bd60",
+            "subjectType": "communication",
+            "subjectId": "M-A1",
+            "disposition": "investigate",
+            "reviewer": "Course operator",
+            "reason": "Retain original communication and its source-bound interpretation",
+            "evidence": "Authored original source",
+            "previousReviewId": null,
+            "recordHash": "86f4fee3aec5c5e5c7862b50858e681333607a0661d7f600553f8defdd0d8894"
+          }
+        ]
+      },
+      "session": {
+        "editionId": "E1",
+        "table": "resources",
+        "resourceId": null,
+        "sourceDraft": {
+          "id": "E2",
+          "label": "Next reviewed source edition",
+          "receivedAt": "2026-11-02T14:05:00-05:00",
+          "notes": "",
+          "settings": {
+            "dayStart": "2026-11-02T08:00:00-05:00",
+            "dayEnd": "2026-11-02T18:00:00-05:00",
+            "asOf": "unfinished as-of"
+          },
+          "sources": {
+            "resources": {
+              "name": "resources.csv",
+              "text": "resource_id,name,kind,reference\r\nGROOM-A,Groomer A,groomer,Authored roster\r\nSTATION-A,Station A,station,Authored station\r\n",
+              "receiptSha256": null
+            },
+            "availability": {
+              "name": "availability.csv",
+              "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW-G,GROOM-A,available,2026-11-02T08:00:00-05:00,2026-11-02T18:00:00-05:00,Authored declared day\r\nW-S,STATION-A,available,2026-11-02T08:00:00-05:00,2026-11-02T18:00:00-05:00,Authored declared day\r\n",
+              "receiptSha256": null
+            },
+            "booking_revisions": {
+              "name": "booking_revisions.csv",
+              "text": "revision_id,appointment_id,revision,recorded_at,status,client_id,pet_id,location_id,groomer_id,station_id,start_at,end_at,groomer_before_minutes,groomer_after_minutes,station_before_minutes,station_after_minutes,series_id,occurrence_id,service_id,policy_id,policy_accepted_at,preferred_language,currency,authorization,reference\r\nA1,VISIT-A,1,2026-10-15T09:00:00-04:00,confirmed,CLIENT-A,PET-A,SALON,GROOM-A,STATION-A,2026-11-02T09:00:00-05:00,2026-11-02T10:30:00-05:00,0,0,0,10,SER-A,O-A2,GROOM,POL-24,2026-10-15T09:00:00-04:00,es,USD,Recorded customer appointment agreement,Authored booking\r\nA2,VISIT-A,2,2026-11-01T12:15:00-05:00,confirmed,CLIENT-A,PET-A,SALON,GROOM-A,STATION-A,2026-11-02T10:00:00-05:00,2026-11-02T11:30:00-05:00,0,0,0,10,SER-A,O-A2,GROOM,POL-24,2026-10-15T09:00:00-04:00,es,USD,Recorded customer appointment agreement,Authored booking\r\nB1,VISIT-B,1,2026-10-15T10:00:00-04:00,confirmed,CLIENT-B,PET-B,SALON,GROOM-A,STATION-A,2026-11-02T10:30:00-05:00,2026-11-02T12:00:00-05:00,0,0,0,10,SER-B,O-B1,GROOM,POL-24,2026-10-15T09:00:00-04:00,en,USD,Recorded customer appointment agreement,Authored booking\r\nC1,VISIT-C,1,2026-10-15T11:00:00-04:00,confirmed,CLIENT-C,PET-C,SALON,GROOM-A,STATION-A,2026-11-02T15:00:00-05:00,2026-11-02T16:00:00-05:00,0,0,0,10,SER-C,O-C1,GROOM,POL-BIZ,2026-10-15T09:00:00-04:00,en,USD,Recorded customer appointment agreement,Authored booking\r\nC2,VISIT-C,2,2026-11-02T07:00:00-05:00,postponed,CLIENT-C,PET-C,SALON,GROOM-A,STATION-A,2026-11-02T15:00:00-05:00,2026-11-02T16:00:00-05:00,0,0,0,10,SER-C,O-C1,GROOM,POL-BIZ,2026-10-15T09:00:00-04:00,en,USD,Recorded customer appointment agreement,Authored booking\r\n",
+              "receiptSha256": null
+            },
+            "quoted_lines": {
+              "name": "quoted_lines.csv",
+              "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Accepted original grooming service,9000,Authored agreed quote\r\nQA2,A2,Accepted original grooming service,9000,Authored agreed quote\r\nQB1,B1,Accepted original grooming service,8000,Authored agreed quote\r\nQC1,C1,Accepted original grooming service,10000,Authored agreed quote\r\nQC2,C2,Accepted original grooming service,10000,Authored agreed quote\r\n",
+              "receiptSha256": null
+            },
+            "completions": {
+              "name": "completions.csv",
+              "text": "observation_id,appointment_id,status,groomer_id,station_id,started_at,finished_at,observed_at,authorization,reference\r\nOBS-A,VISIT-A,completed,GROOM-A,STATION-A,2026-11-02T10:05:00-05:00,2026-11-02T11:15:00-05:00,2026-11-02T11:20:00-05:00,Actual observed work,Authored completion\r\nOBS-B,VISIT-B,in_progress,GROOM-A,STATION-A,2026-11-02T11:10:00-05:00,,2026-11-02T11:40:00-05:00,Actual observed work,Authored open interval\r\n",
+              "receiptSha256": null
+            },
+            "invoice_lines": {
+              "name": "invoice_lines.csv",
+              "text": "line_id,invoice_id,appointment_id,currency,amount_minor,description,issued_at,reference\r\nIL-A,INV-A,VISIT-A,USD,9500,Recorded invoice including separately observed addition,2026-11-02T11:30:00-05:00,Authored original invoice\r\n",
+              "receiptSha256": null
+            },
+            "payments": {
+              "name": "payments.csv",
+              "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nPAY-A,received,,USD,2500,2026-10-15T12:00:00-04:00,Recorded deposit,Original receipt PAY-A\r\nPAY-C,received,,USD,4000,2026-10-15T12:00:00-04:00,Recorded deposit,Original receipt PAY-C\r\n",
+              "receiptSha256": null
+            },
+            "allocations": {
+              "name": "allocations.csv",
+              "text": "allocation_id,payment_id,appointment_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,PAY-A,VISIT-A,INV-A,deposit,2500,2026-11-02T11:30:00-05:00,Apply recorded deposit to this original invoice,Authored allocation\r\nAL-C,PAY-C,VISIT-C,,deposit,4000,2026-10-15T12:05:00-04:00,Retain original deposit pending actual reschedule,Authored allocation\r\n",
+              "receiptSha256": null
+            },
+            "series": {
+              "name": "series.csv",
+              "text": "series_id,client_id,pet_id,service_id,cadence_label,status,recorded_at,reference\r\nSER-A,CLIENT-A,PET-A,GROOM,Every four weeks at the recorded local time,active,2026-10-01T09:00:00-04:00,Original agreed series\r\nSER-B,CLIENT-B,PET-B,GROOM,Every six weeks,active,2026-10-01T09:00:00-04:00,Original agreed series\r\nSER-C,CLIENT-C,PET-C,GROOM,Every four weeks,active,2026-10-01T09:00:00-04:00,Original agreed series\r\n",
+              "receiptSha256": null
+            },
+            "expected_visits": {
+              "name": "expected_visits.csv",
+              "text": "occurrence_id,series_id,sequence,expected_start_at,expected_end_at,recorded_at,reference\r\nO-A2,SER-A,2,2026-11-02T09:00:00-05:00,2026-11-02T10:30:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained\r\nO-A3,SER-A,3,2026-11-30T09:00:00-05:00,2026-11-30T10:30:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained\r\nO-B1,SER-B,1,2026-11-02T10:30:00-05:00,2026-11-02T12:00:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained\r\nO-C1,SER-C,1,2026-11-02T15:00:00-05:00,2026-11-02T16:00:00-05:00,2026-10-02T09:00:00-04:00,Exact exported occurrence; local offset retained\r\n",
+              "receiptSha256": null
+            },
+            "policy_versions": {
+              "name": "policy_versions.csv",
+              "text": "policy_id,service_id,label,notice_basis,notice_minutes,recorded_at,terms,reference\r\nPOL-24,GROOM,Original 24-hour policy,elapsed_minutes,1440,2026-10-01T09:00:00-04:00,The accepted policy requests 24 elapsed hours. Any fee or transfer follows the actual recorded operator decision.,Authored accepted terms\r\nPOL-48,GROOM,New 48-hour policy,elapsed_minutes,2880,2026-10-30T09:00:00-04:00,New policy edition. It does not replace an earlier appointment's accepted policy.,Authored accepted terms\r\nPOL-BIZ,GROOM,Business-hours policy,business_hours,,2026-10-01T09:00:00-04:00,The business requests 24 business hours' notice. Its actual opening calendar and operator decision control interpretation.,Authored accepted terms\r\n",
+              "receiptSha256": null
+            },
+            "decisions": {
+              "name": "decisions.csv",
+              "text": "decision_id,appointment_id,revision_id,kind,decided_at,notice_received_at,authorization,reference\r\nD-A,VISIT-A,A1,reschedule,2026-11-01T12:10:00-05:00,2026-11-01T12:00:00-05:00,Customer requested new time; operator accepted without new charge,Authored recorded decision\r\nD-C,VISIT-C,C1,reschedule,2026-11-02T06:55:00-05:00,2026-11-01T15:00:00-05:00,Operator postponed; original deposit retained pending written replacement,Authored recorded decision\r\n",
+              "receiptSha256": null
+            },
+            "communications": {
+              "name": "communications.csv",
+              "text": "message_id,appointment_id,revision_id,kind,language,scheduled_for,sent_at,observed_at,outcome,recipient_reference,reference\r\nM-A1,VISIT-A,A1,reminder,en,2026-11-01T09:00:00-05:00,2026-11-01T13:00:00-05:00,2026-11-01T13:01:00-05:00,delivered,CLIENT-A/email-original,Authored original delivery record\r\nM-A1-DUP,VISIT-A,A1,reminder,en,2026-11-01T09:00:00-05:00,2026-11-01T13:00:00-05:00,2026-11-01T13:01:00-05:00,delivered,CLIENT-A/email-original,Authored original delivery record\r\nM-A2,VISIT-A,A2,confirmation,es,2026-11-01T12:20:00-05:00,2026-11-01T12:20:00-05:00,2026-11-01T12:21:00-05:00,delivered,CLIENT-A/email-original,Authored original delivery record\r\nM-PICKUP,VISIT-A,A2,ready_for_pickup,es,2026-11-02T10:50:00-05:00,2026-11-02T10:50:00-05:00,2026-11-02T10:51:00-05:00,sent,CLIENT-A/email-original,Authored original delivery record\r\nM-C,VISIT-C,C1,reminder,en,2026-11-02T08:00:00-05:00,,2026-11-02T09:00:00-05:00,queued,CLIENT-C/email-original,Authored original delivery record\r\n",
+              "receiptSha256": null
+            }
+          }
+        },
+        "reviewDrafts": {},
+        "selectedSubject": "[\"communication\",\"M-A1\"]",
+        "receipts": [],
+        "notes": ""
+      }
+    }
+  }
+}

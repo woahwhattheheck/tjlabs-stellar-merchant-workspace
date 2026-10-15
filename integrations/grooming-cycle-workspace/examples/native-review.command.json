@@ -1,0 +1,14 @@
+{
+  "action": "review",
+  "input": {
+    "id": "native-review",
+    "editionId": "native-source-edition",
+    "subjectType": "booking",
+    "subjectId": "VISIT-A",
+    "disposition": "investigate",
+    "reviewer": "Authored receiving operator",
+    "reason": "Read the original quote and invoice: recorded invoice exceeds quote by 500 minor units.",
+    "evidence": "Authored retained source example.",
+    "previousReviewId": null
+  }
+}
