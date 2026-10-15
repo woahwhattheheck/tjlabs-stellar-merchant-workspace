@@ -1,0 +1,15 @@
+{
+  "schema": "commons.exact-source-preimages.v1",
+  "members": [
+    {
+      "path": "src/connected_zip.cjs",
+      "bytes": 13431,
+      "sha256": "f24df36a09b3f89ea95b53e13351d85fab676b7f493181ff34d92c9cb732d74f"
+    },
+    {
+      "path": "host/export-core.mjs",
+      "bytes": 4469,
+      "sha256": "301fa3ec22561dcda3b38368287894bcdefdab445306df08faac899789260119"
+    }
+  ]
+}
