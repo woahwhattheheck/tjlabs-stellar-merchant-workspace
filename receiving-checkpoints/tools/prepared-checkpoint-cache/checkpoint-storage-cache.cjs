@@ -5,7 +5,7 @@ function createPreparer(codec,partCharacters=650000) {
   if(!Number.isSafeInteger(partCharacters)||partCharacters<4096)throw Error('Choose a positive fragment size');
   let payloadCache=new Map(),computedPayloads=0,payloadHits=0,hashedCharacters=0;
   const copyRef=ref=>({...ref,parts:ref.parts.map(p=>({...p}))});
-  function chunk(text){const objects={},parts=[];for(let at=0;at<text.length;at+=partCharacters){const content=text.slice(at,at+partCharacters),sha256=codec.hashText(content),path='objects/'+sha256+'.part';objects[path]=content;parts.push({path,bytes:codec.utf8Encode(content).length,sha256});hashedCharacters+=content.length;}hashedCharacters+=text.length;return {ref:{bytes:codec.utf8Encode(text).length,sha256:codec.hashText(text),parts},objects};}
+  function chunk(text){const objects={},parts=[];for(let at=0;at<text.length;){let end=Math.min(at+partCharacters,text.length);if(end<text.length&&text.charCodeAt(end-1)>=0xd800&&text.charCodeAt(end-1)<=0xdbff)end--;const content=text.slice(at,end);at=end;const sha256=codec.hashText(content),path='objects/'+sha256+'.part';objects[path]=content;parts.push({path,bytes:codec.utf8Encode(content).length,sha256});hashedCharacters+=content.length;}hashedCharacters+=text.length;return {ref:{bytes:codec.utf8Encode(text).length,sha256:codec.hashText(text),parts},objects};}
   function prepare(checkpoint) {
     if(checkpoint?.schema!=='commons.complete-export-job.v1'||!Array.isArray(checkpoint.archive?.payloads))throw Error('Select a complete export checkpoint');
     const {payloads,...archive}=checkpoint.archive,metadata=chunk(JSON.stringify({...checkpoint,archive})),objects={...metadata.objects},nextCache=new Map();
