@@ -2983,8 +2983,8 @@
     },
     {
       "path": "SOURCE_MANIFEST.json",
-      "bytes": 126626,
-      "sha256": "3a88ae9c45ebd6585ae083d2a9464fd92285308a732f5563ba20c40c572dfdde"
+      "bytes": 133825,
+      "sha256": "6a990c0e65fd6197389485d67c95f844fa9c8a2c35579b7a011c2330316fa025"
     },
     {
       "path": "source-view.cjs",
