@@ -1,0 +1,436 @@
+{
+  "schema": "commons.source-manifest.v1",
+  "edition": "harvest-whole28-domain-course-20261015",
+  "members": [
+    {
+      "path": "sha256.cjs",
+      "bytes": 19696,
+      "sha256": "f37a1319db3aa8b9bd15ae2fea89cf0b79677e2a2eb295e63efa4d34f8308230"
+    },
+    {
+      "path": "binary.cjs",
+      "bytes": 1021,
+      "sha256": "99479b36e6f6e2e08da08d9faf25f02ca0f344df41902b08e8df06a1c6acf291"
+    },
+    {
+      "path": "csv.cjs",
+      "bytes": 1550,
+      "sha256": "945ce2b5c97de19b8cfc912c24d9ebd76b20a06938fc45e4f3a18bed67842e8e"
+    },
+    {
+      "path": "rational.cjs",
+      "bytes": 1350,
+      "sha256": "b2b38848a914a327cfecc271cf53ca0b52a6186b1d28bd38b3dc8677ca9974a2"
+    },
+    {
+      "path": "zip.cjs",
+      "bytes": 2008,
+      "sha256": "0db36ea7dfaa084be2da89e185576017d596f33b8a174ec61199ee17bc0ea1a9"
+    },
+    {
+      "path": "text.cjs",
+      "bytes": 2322,
+      "sha256": "521560e432751fa701553e9f8f1ec795dbbbb463afc4d9b1e441f95241f1fc51"
+    },
+    {
+      "path": "study-time.cjs",
+      "bytes": 4519,
+      "sha256": "3ecb1dd72248c5510d111eb0dee0a0f446adf58c74cbcbefee7837f38667aad9"
+    },
+    {
+      "path": "canonical.cjs",
+      "bytes": 185,
+      "sha256": "0584d18ea11873b0851e91ff45b7ebc49d4e6b284f25297c70c100ae26e78ad2"
+    },
+    {
+      "path": "harvest-schema.cjs",
+      "bytes": 6429,
+      "sha256": "0b389c333cbaab0d31909698bf9aa0585779b7aeedf1c14112e137ca5fc28cff"
+    },
+    {
+      "path": "source-view.cjs",
+      "bytes": 8023,
+      "sha256": "9bf83f0c126db78b717e4715a050649b4c871f5fc8b7d1ea0137d1595b3fe861"
+    },
+    {
+      "path": "harvest-outcomes.cjs",
+      "bytes": 34961,
+      "sha256": "c7d5d2ae69b8c4b2d81fed9c362e2619c85b4de50be9ef1c19a2fcd93418a5a4"
+    },
+    {
+      "path": "harvest-course.cjs",
+      "bytes": 9285,
+      "sha256": "fdc2a467d2031891bfe06104931b2c7406a151e2537903f612024880961f5145"
+    },
+    {
+      "path": "verify-harvest.cjs",
+      "bytes": 12239,
+      "sha256": "7fab8391836e69fcc2b42376bb643c2c6a52a93d5658937e17295c1cbaaf0134"
+    },
+    {
+      "path": "HARVEST_ADAPTER_CONTRACT.md",
+      "bytes": 4735,
+      "sha256": "97190cfe85539c5262dcde243e058cef8796a0d551d36a6dcadebcf681fa7f37"
+    },
+    {
+      "path": "contributions/harvest-reviewed.source.json",
+      "bytes": 393659,
+      "sha256": "d7aee02822f1d26d0e1a292d72557e29fd159455feefbdef2b28204bd25f8383"
+    },
+    {
+      "path": "base-schema.cjs",
+      "bytes": 3011,
+      "sha256": "92db89d46761ddcd0c9ff477e8f3b48372fc6a9c79965894c837ba1664ad5963"
+    },
+    {
+      "path": "schema.cjs",
+      "bytes": 230,
+      "sha256": "f4de8a9b348b18e938ef8f4e9d5b2ecb9e5fbc9f8105c51cbfae2cdc78571d17"
+    },
+    {
+      "path": "context-source-view.cjs",
+      "bytes": 8028,
+      "sha256": "11ccf4417b6bd466310e5e1488e18a61aaf69a65e6a20b78c94add0115e0c307"
+    },
+    {
+      "path": "harvest-context.cjs",
+      "bytes": 2840,
+      "sha256": "3aed7024f6a063d04e5bf7828146967c9754a107bd0efbc0b81adf560390bfa1"
+    },
+    {
+      "path": "harvest-effort.cjs",
+      "bytes": 2983,
+      "sha256": "1314f15ce3214d0714c7e8863ddf4e1d47cc545a1a523cbd23d5ae5841c1f36d"
+    },
+    {
+      "path": "core.cjs",
+      "bytes": 23009,
+      "sha256": "2e5bb91c7c22d4fa00638960935ac221319ff83425c50a5c447a8be1c38e4bd1"
+    },
+    {
+      "path": "session.cjs",
+      "bytes": 8555,
+      "sha256": "0774affc214d8907d140bbf83dc194c18e51ebf0871f4b1a25b487d84f76730b"
+    },
+    {
+      "path": "harvest.cjs",
+      "bytes": 11489,
+      "sha256": "d4ccecdcaffa6d6bfeb252d556501dbc963f073fe54718c9aee1fa48557aac7b"
+    },
+    {
+      "path": "examples/build-course.cjs",
+      "bytes": 6622,
+      "sha256": "3d8acc24a750f6e5e7148fa13b5c30946bda177a44ae907b93f2be33995153ae"
+    },
+    {
+      "path": "examples/complete.study.json",
+      "bytes": 321584,
+      "sha256": "30696da4d86c36dde01b0fb356d9abbec3001148d3970752417d139a95bcaf29"
+    },
+    {
+      "path": "examples/complete.session.json",
+      "bytes": 332005,
+      "sha256": "c1658fc6433fb15a205e9efd4e1b64888d6907d42456ff34efe6932180fe2578"
+    },
+    {
+      "path": "examples/complete-analysis.json",
+      "bytes": 308159,
+      "sha256": "43eac0d129ccbc5202d681f74b0dcfbce492afec32cc2aaa11acc1e8c6c2a29f"
+    },
+    {
+      "path": "examples/complete-report.md",
+      "bytes": 4100,
+      "sha256": "8573f1793cc54d2c55f7c04ea9e52ed6ad53f9b5ab0b848e6bff1292a4d80caf"
+    },
+    {
+      "path": "templates/growers.csv",
+      "bytes": 142,
+      "sha256": "2f4c9cef30957d7add0c0b3d58c730c00f97a840e6fa388fe5ed1a8ccc49ca7d"
+    },
+    {
+      "path": "examples/canonical/growers.csv",
+      "bytes": 373,
+      "sha256": "96d6c2cbde1fd9dd4467473d70679fa4d15c3803e7672b962d7c8329d4f710cc"
+    },
+    {
+      "path": "templates/sites.csv",
+      "bytes": 150,
+      "sha256": "36f8c3bfb049b0c0b43ff8cd14b5ec9200758941b7939eea3b2e33fb4dbef757"
+    },
+    {
+      "path": "examples/canonical/sites.csv",
+      "bytes": 378,
+      "sha256": "8d584263371441b08739c3619c12e08e556311bdf412bcd126d62b5389a483ce"
+    },
+    {
+      "path": "templates/crops.csv",
+      "bytes": 174,
+      "sha256": "8512de2f15d1d5fb2b94c33313f880ac5730838e54f672fbbfb208009fafb6ef"
+    },
+    {
+      "path": "examples/canonical/crops.csv",
+      "bytes": 789,
+      "sha256": "16396a747e613ddb434be71d4deaf593949e2760973692256b5159c20fe93e49"
+    },
+    {
+      "path": "templates/locations.csv",
+      "bytes": 152,
+      "sha256": "f9902afb5a8ad2e29a9cf121befbef07f51b787c5fee6d0e7c5238fd93952b01"
+    },
+    {
+      "path": "examples/canonical/locations.csv",
+      "bytes": 403,
+      "sha256": "f464b7c7e28e53163fda60ff084f89b424463ead31cccb2570f8a2b7ab2cf94e"
+    },
+    {
+      "path": "templates/loggers.csv",
+      "bytes": 154,
+      "sha256": "5fab376b35a1d7a0a3c1c7e8757e9f117eae9edf450e80bcf094f6364a0fe8f9"
+    },
+    {
+      "path": "examples/canonical/loggers.csv",
+      "bytes": 395,
+      "sha256": "44655fb216c5502e295f838d8f148db4444de194518a5d159de0104c1e00693e"
+    },
+    {
+      "path": "templates/people.csv",
+      "bytes": 169,
+      "sha256": "46f1561e6b5e2a228cba501ac4a3daf9a87d26a35341ea76712f8785ab2f5f4c"
+    },
+    {
+      "path": "examples/canonical/people.csv",
+      "bytes": 1160,
+      "sha256": "7bfd47301af92423fc970dcabeab7f78381b102bdb000809206827c5591c50ff"
+    },
+    {
+      "path": "templates/buyers.csv",
+      "bytes": 141,
+      "sha256": "4f80dfe5cb6486f3fb29cb9640b3002d97ef98adef59db5327b70fa77bf0958b"
+    },
+    {
+      "path": "examples/canonical/buyers.csv",
+      "bytes": 864,
+      "sha256": "3c0d5f5149f1782f1d2f1fd687d56bd762728939284404b1262dcaa5b89a7c6a"
+    },
+    {
+      "path": "templates/protocols.csv",
+      "bytes": 179,
+      "sha256": "09f33d96a4f5f9bed09880f08765e0c6a387c789cdcd2c513f44bd8bad7d3baf"
+    },
+    {
+      "path": "examples/canonical/protocols.csv",
+      "bytes": 629,
+      "sha256": "640240c1aabcaa3ed0d66a99c18945b67fd1ba56d543ceff91b7eb8a0c225d1c"
+    },
+    {
+      "path": "templates/invoice_lines.csv",
+      "bytes": 193,
+      "sha256": "3007f7cd9accf978f41e8f7202a877fb3b22d0dfeb79dbc5263a2a22c2f5a078"
+    },
+    {
+      "path": "examples/canonical/invoice_lines.csv",
+      "bytes": 444,
+      "sha256": "49cdf8d2862bf3f91647457f8eeb2954da7799ca8d67d55a50ede544e11018ac"
+    },
+    {
+      "path": "templates/authorities.csv",
+      "bytes": 203,
+      "sha256": "145ffc9e25be22e5219c33aba424d347de8aa9b2619403e1c466fcefb5a4986b"
+    },
+    {
+      "path": "examples/canonical/authorities.csv",
+      "bytes": 3297,
+      "sha256": "e19f911b3b80791fc3b08d00ce2138a52356947a046d0d0557658119571ef2aa"
+    },
+    {
+      "path": "templates/population_members.csv",
+      "bytes": 203,
+      "sha256": "20d062f0edb503ff1555b6cb5fdc892e914754174db4e5ea1917a81f85dc8a67"
+    },
+    {
+      "path": "examples/canonical/population_members.csv",
+      "bytes": 1677,
+      "sha256": "a117ef641018b13912b8492fcc15f42d5bb4563d87644599a09950492017bd98"
+    },
+    {
+      "path": "templates/effort.csv",
+      "bytes": 246,
+      "sha256": "6be59722476b036dc56c10d9fc6c66bf45e203aeba3c60e621141dfe8264b764"
+    },
+    {
+      "path": "examples/canonical/effort.csv",
+      "bytes": 33134,
+      "sha256": "759bcb7747bd3f38e7d9b487b8651e81304a847e617a0a5acd683ee56bd4ae01"
+    },
+    {
+      "path": "templates/harvest_batches.csv",
+      "bytes": 187,
+      "sha256": "48d5ac55504096d3963524895ab76b4f08373cd22c3a62641c07b1dde1c547cb"
+    },
+    {
+      "path": "examples/canonical/harvest_batches.csv",
+      "bytes": 1705,
+      "sha256": "30f26c22f2dc77ad1862b9912c8c4311615c8fb2c79f879362230dbafa63fff3"
+    },
+    {
+      "path": "templates/harvest_transfers.csv",
+      "bytes": 203,
+      "sha256": "0eba7d407439cd40c029b4828deda0396b420110534da239e62baf9c0313cf8f"
+    },
+    {
+      "path": "examples/canonical/harvest_transfers.csv",
+      "bytes": 701,
+      "sha256": "a89710ec61ba0a365a5b124248b115e1773c3becbb9f38e14b1b4b237602acd7"
+    },
+    {
+      "path": "templates/harvest_dispositions.csv",
+      "bytes": 181,
+      "sha256": "199b20d11b01ed9fd5b09da41860299099c4dee6257e104345a2124bb0554986"
+    },
+    {
+      "path": "examples/canonical/harvest_dispositions.csv",
+      "bytes": 664,
+      "sha256": "1e969ba260a17eb08249fe00d380312c38b31f8ab197d54622267235c757968f"
+    },
+    {
+      "path": "templates/harvest_storage.csv",
+      "bytes": 179,
+      "sha256": "4e992e1f989e2dcacb013d9c52ab1f5b7cb1dd1416c4c4a4ad3944284c67d14b"
+    },
+    {
+      "path": "examples/canonical/harvest_storage.csv",
+      "bytes": 1759,
+      "sha256": "5fd4410e0030560da4afa4baf822d0c707c661c2ea789de5bf07f754bd0e95f2"
+    },
+    {
+      "path": "templates/harvest_temperatures.csv",
+      "bytes": 221,
+      "sha256": "7b9b87cce5acc76c76ae5b3b960c0455be9723496bd23da34a30ba301eaf6eb6"
+    },
+    {
+      "path": "examples/canonical/harvest_temperatures.csv",
+      "bytes": 1758,
+      "sha256": "05d74f46499e5484b33da3228813b7be3ce24686dfdf361859e46fe524b994e4"
+    },
+    {
+      "path": "templates/harvest_models.csv",
+      "bytes": 252,
+      "sha256": "a14634bab69a499dcb7562d19c9adb0d4ca93c1e2465286c4f38841e7391bf5e"
+    },
+    {
+      "path": "examples/canonical/harvest_models.csv",
+      "bytes": 632,
+      "sha256": "611e2be5bff7aee3bf6a28575c6883f4ff6e058d3e929c58ea1f3942d10264d0"
+    },
+    {
+      "path": "templates/harvest_forecasts.csv",
+      "bytes": 270,
+      "sha256": "142f8f28518c36edb6813cdf6b8df76fde2930c81bdad2ef2ebe4ec4bd1c53b7"
+    },
+    {
+      "path": "examples/canonical/harvest_forecasts.csv",
+      "bytes": 1864,
+      "sha256": "479ee63a75ea61a8d087ea9205ae0affe25a46611e94fe50da9af422834855e1"
+    },
+    {
+      "path": "templates/harvest_forecast_inputs.csv",
+      "bytes": 163,
+      "sha256": "5418d1dac5c41cef4774506827f4aa954e2be47f14bc7012907e9ec107a9a921"
+    },
+    {
+      "path": "examples/canonical/harvest_forecast_inputs.csv",
+      "bytes": 4255,
+      "sha256": "b8dabda9e9c5f21e9e071f1f22a6d533e56be7f8ee5585f8c6a0679f68564ed0"
+    },
+    {
+      "path": "templates/harvest_quality.csv",
+      "bytes": 229,
+      "sha256": "b4df331746a9ce5439bab39fecea9a41b77c8d1a9ab17005bb47f076d52dbf3c"
+    },
+    {
+      "path": "examples/canonical/harvest_quality.csv",
+      "bytes": 1829,
+      "sha256": "4b285c844fde79efd689c437e2a7ba84a8357d2885aeff0cdf884823823bc897"
+    },
+    {
+      "path": "templates/harvest_demands.csv",
+      "bytes": 238,
+      "sha256": "94977af482113d187ed233acf162f834e9701632a738a692a74aec64fc41cad0"
+    },
+    {
+      "path": "examples/canonical/harvest_demands.csv",
+      "bytes": 1118,
+      "sha256": "5bf8f915aa64811718e6136aaa019a429b8f3f58b47c28ea31f26aed28981449"
+    },
+    {
+      "path": "templates/harvest_plans.csv",
+      "bytes": 233,
+      "sha256": "438ea9e8f5826ddc4b4c35eb5d7c448077a89846705860da0f6dec8903aa7b0d"
+    },
+    {
+      "path": "examples/canonical/harvest_plans.csv",
+      "bytes": 610,
+      "sha256": "c8fa8816a16ba8334b2f55a420b883eff8a3ab51cd67e9337eb4d2bc651428f9"
+    },
+    {
+      "path": "templates/harvest_plan_lines.csv",
+      "bytes": 220,
+      "sha256": "89cafbf0e118e03ea2b58416ab70fca2b10ae0551e3d9c7580fa9512728a321f"
+    },
+    {
+      "path": "examples/canonical/harvest_plan_lines.csv",
+      "bytes": 1011,
+      "sha256": "bd1cc94489a82c46983ce6d474b0290fdb4aac527368439d7435d079614669c6"
+    },
+    {
+      "path": "templates/harvest_plan_reviews.csv",
+      "bytes": 189,
+      "sha256": "b8c77a53a658e363402fbde07adff40712e88bd8880b77061a2bf67f4717e97a"
+    },
+    {
+      "path": "examples/canonical/harvest_plan_reviews.csv",
+      "bytes": 598,
+      "sha256": "88ff71f3aa10eff2ed0a75e6ed3ccd87cc37219a720b3177337793ee4850afa5"
+    },
+    {
+      "path": "templates/harvest_dispatches.csv",
+      "bytes": 238,
+      "sha256": "187e7d66bf1f83b7472f6c3237d0cdddfef29863ab2e58bedb6eb2291bf50206"
+    },
+    {
+      "path": "examples/canonical/harvest_dispatches.csv",
+      "bytes": 1131,
+      "sha256": "0070af618e0f2f837fe87a2d187cc1112cf9005779bde026e4f1843486221e1c"
+    },
+    {
+      "path": "templates/harvest_outcomes.csv",
+      "bytes": 204,
+      "sha256": "6399d6b6b0f296ea0f468b0c626afd1a61482840097354bb2b763dfae0c0158d"
+    },
+    {
+      "path": "examples/canonical/harvest_outcomes.csv",
+      "bytes": 1644,
+      "sha256": "8b52a21c0fac8ff240a611ddffb27440d1bd6272e1665c674b7e364ca15cd26c"
+    },
+    {
+      "path": "templates/harvest_credits.csv",
+      "bytes": 187,
+      "sha256": "da0dbcca6271643a177b801e7b29fca233054b59321b4685556e0b620c4b979d"
+    },
+    {
+      "path": "examples/canonical/harvest_credits.csv",
+      "bytes": 445,
+      "sha256": "62bfcf67daef36d4e400741a1ece47e54d395d84b77dac52b2ddee360c1cd8b1"
+    },
+    {
+      "path": "DOMAIN_HEADERS.json",
+      "bytes": 9453,
+      "sha256": "dbe026d298588522b6cd6d4c51fdbbe7a7c2b3e2aeb79dc0b354187caa993456"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1191,
+      "sha256": "a25e8802ab69d16be527dea878fe828240236f4c61c066bed39fad4adb26c9ac"
+    }
+  ]
+}
