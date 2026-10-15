@@ -61,16 +61,18 @@ function cloneJsonValue(value, ancestors = new WeakSet()) {
 }
 
 function checkedReason(value) {
-  if (typeof value !== 'string' || value.length === 0)
-    throw new TypeError('rejectedReason must be a non-empty string');
+  if (typeof value !== 'string')
+    throw new TypeError('rejectedReason must be a string when present');
   return value;
 }
 
 /** Build the Bazaar member of the server-internal EXTENSION-RESPONSES object. */
 export function bazaarExtensionResponse(status, rejectedReason) {
   if (!STATUSES.has(status)) throw new TypeError('Invalid Bazaar extension response status');
-  if (status === 'rejected')
+  if (status === 'rejected') {
+    if (rejectedReason === undefined) return { status };
     return { status, rejectedReason: checkedReason(rejectedReason) };
+  }
   if (rejectedReason !== undefined)
     throw new TypeError('rejectedReason is only valid when status is rejected');
   return { status };
