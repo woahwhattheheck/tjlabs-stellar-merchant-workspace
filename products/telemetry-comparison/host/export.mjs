@@ -2,7 +2,7 @@
 import {readFile,lstat} from 'node:fs/promises';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {codec,core,sessions,archive} from '../runtime.mjs';
+import {codec,core,sessions,archive,portable} from '../runtime.mjs';
 import {buildTelemetryDesk} from '../operator/build.mjs';
 import zip from '../operator/connected_zip.cjs';
 import {reportHTML,reportMarkdown,pairsCSV} from '../telemetry/report.mjs';
@@ -20,7 +20,7 @@ export function buildExport(files,state,records=[],editions=[]){
  const session=sessions.receive(JSON.stringify(state.carrier)),w=session.workspace,d=session.draft;
  const entries=Object.entries(files).map(([name,t])=>({name:'source/'+name,data:codec.utf8Encode(t)}));
  const add=(name,v)=>entries.push({name,data:codec.utf8Encode(typeof v==='string'?v:JSON.stringify(v,null,2)+'\n')});
- add('working/Telemetry_Working.json',state.carrier);add('working/Telemetry_Shared_Working.json',sessions.packShared(session));add('working/Managed_Edition.json',state);
+ add('working/Telemetry_Working.json',state.carrier);add('working/Telemetry_Shared_Node_Working.json',portable.serialize(session).content);add('working/Telemetry_Shared_Working.json',sessions.packShared(session));add('working/Managed_Edition.json',state);
  add('working/Telemetry_Editable.html',buildTelemetryDesk(files,codec,state.carrier).html);
  add('working/Telemetry_Workspace.json',core.exportWorkspace(w).content);add('working/Telemetry_Shared_Workspace.json',archive.serialize(w).content);
  for(const original of w.sources)entries.push({name:'originals/'+original.id+'/name-'+encodeURIComponent(original.name).replaceAll('*','%2A'),data:codec.fromBase64(original.content_base64)});

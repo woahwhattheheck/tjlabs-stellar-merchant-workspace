@@ -1,6 +1,6 @@
 /* MIT. Complete editable draft and original pending request live together in one IndexedDB transaction. */
-function createManagedSession({C,S,config,getSession,setSession,render,notice,download,isOperatorBusy=()=>false}){
- const hash=v=>S.hash(JSON.stringify(v)),copy=S.clone,key=config.installationId;let state=null,pending=null,history=[],branches=[],db=null,lastStored=null,ready=false,working=false,needsRefresh=false,dirtyPersistence=false,tail=Promise.resolve();
+function createManagedSession({C,S,config,getSession,setSession,render,notice,download,isOperatorBusy=()=>false,recoveryStorage}){
+ const hash=v=>S.hash(JSON.stringify(v)),copy=S.clone,key=config.installationId;let state=null,pending=null,history=[],branches=[],proposals=[],db=null,lastStored=null,ready=false,working=false,needsRefresh=false,dirtyPersistence=false,tail=Promise.resolve();
  const token=new URLSearchParams(location.hash.slice(1)).get('token')||'';historyReplace();function historyReplace(){if(location.hash)globalThis.history.replaceState(null,'',location.pathname);}
  const pane=document.getElementById('managed-controls');
  pane.innerHTML='<h2>Managed workspace</h2><p id="managed-status" role="status">Opening the selected private session…</p><div class="actions"><button id="managed-save">Save complete session</button><button id="managed-refresh">Open newest saved edition</button><button id="managed-recover">Recover original request</button><button id="managed-copy">Save complete recovery JSON</button><button id="managed-adopt-browser">Keep this browser branch; retain saved copy</button><button id="managed-export">Save retained handover ZIP</button></div><label>Open complete recovery JSON<input id="managed-receive" type="file" accept=".json"></label><div id="managed-branches"></div>';
@@ -27,31 +27,24 @@ function createManagedSession({C,S,config,getSession,setSession,render,notice,do
 
  function renderBranches(){
   const node=document.getElementById('managed-branches');if(!node)return;node.replaceChildren();
-  if(!branches.length)return;const title=document.createElement('h3');title.textContent='Retained complete browser branches';node.append(title);
+  if(!branches.length&&!proposals.length)return;const title=document.createElement('h3');title.textContent='Retained complete browser branches';node.append(title);
+  for(const p of proposals){const row=document.createElement('p'),button=document.createElement('button');button.textContent='Save complete proposal: edition '+p.sequence+(p.pendingId?' — original request '+p.pendingId:'')+' · '+p.id.slice(0,12);button.onclick=()=>{recoveryStorage.load(db,key,p.id).then(r=>download('Telemetry_Recovery_Proposal_'+p.id+'.json',JSON.stringify(r.value,null,2)+'\n')).catch(e=>notice(e.message,true));};row.append(button);node.append(row);}
   for(const b of branches){const row=document.createElement('p'),button=document.createElement('button');button.textContent='Save recovery JSON: '+b.reason+(b.recovery.pending?' — pending '+b.recovery.pending.id:'');button.onclick=()=>download('Telemetry_Browser_Branch_'+b.id+'.json',JSON.stringify(b.recovery,null,2)+'\n');row.append(button);node.append(row);}
  }
  async function adoptBrowser(){
-  const work=tail.then(async()=>{const local=shell();let selected;
-  await new Promise((resolve,reject)=>{
-   const tx=db.transaction('sessions','readwrite'),store=tx.objectStore('sessions'),read=store.get(key);
-   read.onsuccess=()=>{try{
-    const prior=read.result;if(prior)validateRecovery(prior);
-    const next=copy(local),all=[...(local.branches||[]),...(prior?.branches||[])],seen=new Set(all.map(b=>b.sha256));
+  const work=tail.then(async()=>{
+   const selected=await recoveryStorage.adopt(db,key,shell(),(local,prior)=>{
+    if(prior)validateRecovery(prior);const next=copy(local),all=[...(local.branches||[]),...(prior?.branches||[])],seen=new Set(all.map(b=>b.sha256));
     for(const [reason,recovery]of [['This local branch before explicit selection',local],['Other saved browser branch before explicit selection',prior]])if(recovery&&!seen.has(hash(recovery))){seen.add(hash(recovery));all.push({id:S.id(),reason,sha256:hash(recovery),recovery:copy(recovery)});}
-    next.branches=all;if(C.utf8Encode(JSON.stringify(next)).length>256*1024*1024)throw Error('Complete browser branches exceed the receiving limit. Save both recovery copies before using a separate installation.');
-    selected=next;store.put(next,key);
-   }catch(e){tx.abort();reject(e);}};
-   tx.oncomplete=()=>{lastStored=hash(selected);resolve();};tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Browser branch selection did not commit'));
-  });
-  branches=selected.branches;dirtyPersistence=false;status();notice('This browser branch is selected. Both complete preimages are retained below, including any other original pending request.');
+    next.branches=all;return next;
+   });
+   lastStored=selected.sha256;branches=selected.value.branches;dirtyPersistence=false;proposals=await recoveryStorage.list(db,key);status();notice('This browser branch is selected. Both complete preimages and earlier proposals remain available below.');
   });tail=work.catch(()=>{});return work;
  }
-
- function savedDB(value){
-  return new Promise((resolve,reject)=>{const tx=db.transaction('sessions','readwrite'),store=tx.objectStore('sessions'),read=store.get(key);
-   read.onsuccess=()=>{try{const prior=read.result;if((prior?hash(prior):null)!==lastStored)throw Error('Another opening saved this complete browser branch. Save recovery JSON before selecting it.');store.put(value,key);}catch(e){tx.abort();reject(e);}};
-   tx.oncomplete=()=>{lastStored=hash(value);resolve();};tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Browser transaction did not commit'));
-  });
+ async function savedDB(value){
+  const result=await recoveryStorage.save(db,key,value,lastStored);proposals=await recoveryStorage.list(db,key);
+  if(result.conflict)throw Error('Another opening saved the browser head. This complete proposal is independently retained below; explicitly select this branch or receive the saved recovery.');
+  lastStored=result.sha256;
  }
  function persist(){if(!ready)return Promise.resolve();dirtyPersistence=true;const work=tail.then(async()=>{const value=shell();await savedDB(value);dirtyPersistence=hash(shell())!==hash(value);status();});tail=work.catch(()=>{});return work.catch(e=>{status('Complete session remains in this tab; browser persistence needs attention: '+e.message);throw e;});}
  async function finish(result){
@@ -82,8 +75,8 @@ function createManagedSession({C,S,config,getSession,setSession,render,notice,do
  window.addEventListener('beforeunload',e=>{if(pending||dirtyPersistence||ready&&state.carrier.sha256!==S.pack(getSession()).sha256){e.preventDefault();e.returnValue='';}});
  async function initialize(){
   if(!/^[a-f0-9]{64}$/.test(token))throw Error('Open the current private Applications link');
-  db=await new Promise((resolve,reject)=>{const r=indexedDB.open('tjlabs.telemetry.managed.v1',1);r.onupgradeneeded=()=>r.result.createObjectStore('sessions');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
-  const prior=await new Promise((resolve,reject)=>{const r=db.transaction('sessions','readonly').objectStore('sessions').get(key);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+  db=await recoveryStorage.open();
+  const selected=await recoveryStorage.read(db,key),prior=selected.value;proposals=await recoveryStorage.list(db,key);
   const current=await api('/api/state');if(current.installationId!==key)throw Error('The managed installation identity changed');
   lastStored=prior?hash(prior):null;
   if(prior){validateRecovery(prior);state=prior.baseState;pending=prior.pending;history=prior.history;branches=prior.branches||[];needsRefresh=!!prior.needsRefresh;setSession(S.receive(JSON.stringify(prior.carrier)));if(!pending&&state.sha256!==current.sha256)needsRefresh=true;}

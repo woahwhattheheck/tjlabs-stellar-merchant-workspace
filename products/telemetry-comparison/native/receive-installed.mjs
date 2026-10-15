@@ -7,12 +7,12 @@ import {join} from 'node:path';
 import {initializeStore,openStore} from '../host/store.mjs';
 import {startServer} from '../host/server.mjs';
 import {TelemetryClient} from '../host/client.mjs';
-import {sessions,core,codec} from '../runtime.mjs';
+import {sessions,core,codec,portable} from '../runtime.mjs';
 import {writeJSON} from '../host/io.mjs';
 const parent=await mkdtemp(join(tmpdir(),'tjl-telemetry-')),directory=join(parent,'workspace');let service,client,success=false;const checks=[];
 try{
  const session=sessions.create('Authored installed native receiving');session.draft.actor='Authored receiving operator';session.workspace=core.importWorkspace(await readFile(new URL('../examples/authored-workspace.json',import.meta.url),'utf8'));session.draft.mapping.raw='{"unfinished":"original draft"}';
- const original=await initializeStore(directory,sessions.pack(session),'authored-native-installation');
+ const original=await initializeStore(directory,JSON.parse(portable.serialize(session).content),'authored-native-installation');
  service=await startServer({directory});client=await TelemetryClient.connect(directory,{installationId:original.installationId});
  assert.equal((await client.status()).installationId,original.installationId);await assert.rejects(openStore(directory));checks.push('One original writer and authenticated listener');
  const next=structuredClone(session);next.draft.mapping.raw='{"unfinished":"saved native draft"}';

@@ -16,3 +16,14 @@ Run this existing course in the target browser on the exact built source. Record
 12. Download the complete handover ZIP; reopen its working JSON and editable HTML. Check every original source and manifest. Use a second tab to create a browser-storage conflict; the first tab must retain its current session and require an explicit copy selection.
 
 The full source-native controller course executes these production handlers with explicit minimal DOM/storage/download adapters. It does not replace a target browser visual observation. Large calculations paint a working notice before saving drafts and invoking the synchronous core; allow the actual operation to finish.
+
+
+## Continue the same course through browser recovery
+
+13. Open the same saved copy in two tabs. Make different unfinished edits and save both. Browse retained browser versions: both complete proposals must be present; only the expected-head writer publishes that head. Open the other proposal, download it and save an independent copy. Reopen both.
+14. While an autosave is pending, type a later edit. The earlier completion must not clear the later edit's unsaved state. After the next save completes, reopen and check the complete latest text.
+15. Open an editable handover while an unrelated browser copy is active. It must open its own embedded identity. Save a later draft for that handover and reload it; the later draft must survive while the original file remains unchanged.
+16. Exercise unavailable storage or a rejected durable commit. The earlier saved head remains unchanged; the current complete working JSON/compact JSON/HTML can still be downloaded. Restore storage and save an independent copy, then reopen it.
+17. Import an earlier full operator carrier, earlier compact operator carrier and original domain workspace. Confirm exact source identities, all drafts and every prior snapshot. Download the unchanged earlier localStorage original if present.
+
+The current native controller entrypoint uses the same production handlers with an explicit transactional IndexedDB adapter. The retained eleven-group source receiving observation and independent peer are linked in history/INDEXEDDB_JOIN.md. Actual browser observations and screenshots remain attached to this original receiving course.

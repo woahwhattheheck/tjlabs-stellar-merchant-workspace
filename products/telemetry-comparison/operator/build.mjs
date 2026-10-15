@@ -1,7 +1,7 @@
 const TELEMETRY_SOURCE_ENVELOPES=new Map(),TELEMETRY_STATIC_SOURCE=new WeakMap();
 /* MIT. Deterministic standalone build from selected complete source files. */
 export function buildTelemetryDesk(files,C,boot=null,managed=null){
-const required=["telemetry/core.mjs","telemetry/archive.mjs","telemetry/report.mjs","operator/session.mjs","operator/view.mjs","operator/controller.js","operator/build.mjs","operator/codec.mjs","operator/connected_zip.cjs","operator/body.html","operator/style.css","docs/OPERATOR.md"];
+const required=["telemetry/core.mjs","telemetry/archive.mjs","telemetry/report.mjs","operator/session.mjs","operator/portable.mjs","operator/storage.mjs","operator/view.mjs","operator/controller.js","operator/build.mjs","operator/codec.mjs","operator/connected_zip.cjs","operator/body.html","operator/style.css","docs/OPERATOR.md"];
 for(const p of required)if(typeof files[p]!=="string")throw Error("Missing complete application file "+p);
 let retained=Object.isFrozen(files)?TELEMETRY_STATIC_SOURCE.get(files):null;
 if(!retained){
@@ -13,8 +13,8 @@ retained={source,bytes,digest,env,fullManifest};if(Object.isFrozen(files))TELEME
 const {source,bytes,digest,env,fullManifest}=retained;
 let storedBoot=null;if(boot){const raw=JSON.stringify(boot),plain=C.utf8Encode(raw);storedBoot={schema:"commons.telemetry-operator-boot.gzip-base64.v1",encoding:"gzip+base64",bytes:plain.length,sha256:C.sha256Bytes(plain),content_base64:C.toBase64(C.gzipBytes(plain))};}
 const strip=s=>s.replace(/^export \{[^\n]*\};?\s*$/gm,"").replace(/^export /gm,""),safe=s=>s.replace(/<\/script/gi,"<\\/script"),json=x=>JSON.stringify(x).replace(/</g,"\\u003c");
-if(managed&&typeof files["operator/managed.js"]!=="string")throw Error("Complete managed controller is absent");
-const code=[...(managed?["globalThis.TelemetryManaged="+json(managed)+";",files["operator/managed.js"]]:[]),strip(files["operator/codec.mjs"])+"\nglobalThis.TelemetryCodec={utf8Encode,utf8Decode,sha256Bytes,toBase64,fromBase64,gzipBytes,inflateGzip};","globalThis.TelemetryZIP=(function(){const module={exports:{}};"+files["operator/connected_zip.cjs"]+";return module.exports;})();",...["telemetry/core.mjs","telemetry/archive.mjs","telemetry/report.mjs","operator/session.mjs","operator/view.mjs","operator/build.mjs","operator/controller.js"].map(p=>strip(files[p]))];
+if(managed&&(!files["operator/managed.js"]||!files["operator/managed-storage.mjs"]))throw Error("Complete managed storage/controller is absent");
+const code=[...(managed?["globalThis.TelemetryManaged="+json(managed)+";",strip(files["operator/managed-storage.mjs"]),files["operator/managed.js"]]:[]),strip(files["operator/codec.mjs"])+"\nglobalThis.TelemetryCodec={utf8Encode,utf8Decode,sha256Bytes,toBase64,fromBase64,gzipBytes,inflateGzip};","globalThis.TelemetryZIP=(function(){const module={exports:{}};"+files["operator/connected_zip.cjs"]+";return module.exports;})();",...["telemetry/core.mjs","telemetry/archive.mjs","telemetry/report.mjs","operator/session.mjs","operator/portable.mjs","operator/storage.mjs","operator/view.mjs","operator/build.mjs","operator/controller.js"].map(p=>strip(files[p]))];
 const html='<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Telemetry and model comparison</title><style>'+files["operator/style.css"]+'</style></head><body>'+files["operator/body.html"]+'<script id="boot" type="application/json">'+json(storedBoot)+'</script><script id="source-bank" type="application/json">'+json(env)+'</script>'+code.map(s=>"<script>"+safe(s)+"</script>").join("")+"</body></html>";
 return {html,source,sourceBytes:bytes.length,sourceSha256:env.sha256,manifest:fullManifest};
 }
