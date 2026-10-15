@@ -80,12 +80,12 @@ Observed 6; included 6; excluded 0; unresolved 0; expected 6. Complete: true.
 
 Declared holdout forecasts 4; valid 4; unresolved 0; observed endpoints 3. Distinct valid original harvest families 3. Mean distance to observed censoring interval 0.666666666667 hours. Average distance from the prediction to the observed censoring interval; a lower bound on absolute error, not a measured exact-endpoint MAE.
 
-| Forecast | Batch | Outcome state | Lower observed hours | Upper observed hours | Error lower bound |
-| --- | --- | --- | --- | --- | --- |
-| FC-A1 | A1 | interval_censored | 24 | 48 | 2 |
-| FC-A2 | A2 | interval_censored | 30 | 36 | 0 |
-| FC-B | B | right_censored | 60 | unresolved | 0 |
-| FC-C | C | unobserved | unresolved | unresolved | unresolved |
+| Forecast | Batch | Outcome state | Lower observed hours | Upper observed hours | Error lower bound | Different protocol observations |
+| --- | --- | --- | --- | --- | --- | --- |
+| FC-A1 | A1 | interval_censored | 24 | 48 | 2 |  |
+| FC-A2 | A2 | interval_censored | 30 | 36 | 0 |  |
+| FC-B | B | right_censored | 60 | unresolved | 0 |  |
+| FC-C | C | unobserved | unresolved | unresolved | unresolved |  |
 
 ## Reviewed plans and actual dispatch
 

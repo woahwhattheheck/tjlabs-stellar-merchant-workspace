@@ -8,9 +8,9 @@ module.exports=function installController(original,template){
  let out=original.slice(0,original.indexOf('\n'))+template.slice(template.indexOf('\n'),requireAt(template,'const $=id'))+original.slice(requireAt(original,'const $=id'));
  let r=region(out,'transaction');out=out.slice(0,r.start)+out.slice(r.end);
  for(const name of ['checkedSaved','readActive','saveExact','persist','enqueueSave','exportSession','recordDraft','retainImport','replace','retainBinary','openFile','adoptLocal'])out=replaceFunction(out,name);
- const a=/^ (?:else )?if\(act==="download-session"\)/m.exec(out),b=requireAt(out,' else if(act==="csv-template")'),c=requireAt(template,' else if(act==="installed-working")'),d=requireAt(template,' else if(act==="csv-template")');
- if(!a||b<a.index)throw Error('Complete export actions changed');
- let block=template.slice(c,d);if(!a[0].includes('else'))block=block.replace(/^ else if/,' if');out=out.slice(0,a.index)+block+out.slice(b);
+ const a=/^ (?:else )?if\(act==="download-session"\)/m.exec(out),b=requireAt(out,' else if(act==="csv-template")'),c=template.search(/^ (?:else )?if\(act==="installed-working"\)/m),d=requireAt(template,' else if(act==="csv-template")');
+ if(!a||b<a.index||c<0)throw Error('Complete export actions changed');
+ let block=template.slice(c,d);block=block.replace(/^ (?:else )?if/,a[0].includes('else')?' else if':' if');out=out.slice(0,a.index)+block+out.slice(b);
  for(const action of ['clear-emergency','open-saved']){const re=new RegExp('^ else if\\(act==="'+action+'"\\).*$','m'),line=template.match(re)?.[0];if(!line||!re.test(out))throw Error('Recovery action missing: '+action);out=out.replace(re,()=>line);}
  const click=/^document\.addEventListener\("click".*$/m,clickLine=template.match(click)?.[0];if(!clickLine||!click.test(out))throw Error('Navigation handler changed');out=out.replace(click,()=>clickLine);
  out=out.replace('M.validate(staged);session=staged;','selectInstalled(staged);');

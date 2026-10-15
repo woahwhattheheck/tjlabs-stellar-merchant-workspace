@@ -5,9 +5,9 @@ import {HarvestOutcomeStudyClient} from './host/client.mjs';
 import {core,sessions,workspaceHead} from './runtime.mjs';
 import {previewHarvestOutcomeStudy,inspectHarvestOutcomeStudy} from './host/domain.mjs';
 import {model} from './host/store.mjs';
-import {waterOperationsTools} from './tools.mjs';
+import {harvestOutcomeTools} from './tools.mjs';
 const alias=v=>{need(typeof v==='string'&&/^[a-z0-9][a-z0-9_-]{0,63}$/.test(v),'HARVEST_OUTCOME_ALIAS','Choose a declared host alias.');return v;};
-const definitions=new Map(waterOperationsTools((name,description,properties,required)=>({name,properties,required})).map(x=>[x.name,x]));
+const definitions=new Map(harvestOutcomeTools((name,description,properties,required)=>({name,properties,required})).map(x=>[x.name,x]));
 export async function readHarvestOutcomeStudyConfiguration(path){
  const file=await readJSON(path,1024*1024),value=file.value;need(value.schema==='stellar-forge.harvest-outcome-host.v1'&&value.workspaces&&Object.keys(value.workspaces).length>0&&Object.keys(value.workspaces).length<=32,'HARVEST_OUTCOME_CONFIG','Declare 1–32 original managed workspaces.');
  const workspaces=Object.create(null),seen=new Set();

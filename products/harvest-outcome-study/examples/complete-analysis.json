@@ -1044,6 +1044,14 @@
             "released_at": "2026-09-30T12:00:00.000Z",
             "trained_through": "2026-09-29T12:00:00.000Z",
             "protocol_id": "QUALITY-PROTOCOL",
+            "protocol_crop_id": "CUT-GREENS",
+            "protocol_basis": {
+              "protocol_id": "QUALITY-PROTOCOL",
+              "record_id": "CTX-QUALITY-PROTOCOL",
+              "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+              "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+              "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+            },
             "training_root_record_keys": [
               "EXTERNAL-TRAINING-ROOT"
             ]
@@ -1087,6 +1095,13 @@
               "decimal": "60"
             },
             "protocol_id": "QUALITY-PROTOCOL",
+            "protocol_basis": {
+              "protocol_id": "QUALITY-PROTOCOL",
+              "record_id": "CTX-QUALITY-PROTOCOL",
+              "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+              "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+              "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+            },
             "cohort": "test",
             "root_record_keys": [
               "A"
@@ -1192,6 +1207,13 @@
               "decimal": "40"
             },
             "protocol_id": "QUALITY-PROTOCOL",
+            "protocol_basis": {
+              "protocol_id": "QUALITY-PROTOCOL",
+              "record_id": "CTX-QUALITY-PROTOCOL",
+              "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+              "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+              "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+            },
             "cohort": "test",
             "root_record_keys": [
               "A"
@@ -1297,6 +1319,13 @@
               "decimal": "84"
             },
             "protocol_id": "QUALITY-PROTOCOL",
+            "protocol_basis": {
+              "protocol_id": "QUALITY-PROTOCOL",
+              "record_id": "CTX-QUALITY-PROTOCOL",
+              "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+              "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+              "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+            },
             "cohort": "test",
             "root_record_keys": [
               "B"
@@ -1402,6 +1431,13 @@
               "decimal": "30"
             },
             "protocol_id": "QUALITY-PROTOCOL",
+            "protocol_basis": {
+              "protocol_id": "QUALITY-PROTOCOL",
+              "record_id": "CTX-QUALITY-PROTOCOL",
+              "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+              "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+              "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+            },
             "cohort": "test",
             "root_record_keys": [
               "C"
@@ -1732,6 +1768,13 @@
             "valid": true,
             "batch_record_id": "A1",
             "protocol_id": "QUALITY-PROTOCOL",
+            "protocol_basis": {
+              "protocol_id": "QUALITY-PROTOCOL",
+              "record_id": "CTX-QUALITY-PROTOCOL",
+              "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+              "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+              "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+            },
             "assessed_at": "2026-10-02T09:00:00.000Z",
             "condition": "usable",
             "portion_quantity": {
@@ -1760,6 +1803,13 @@
             "valid": true,
             "batch_record_id": "A1",
             "protocol_id": "QUALITY-PROTOCOL",
+            "protocol_basis": {
+              "protocol_id": "QUALITY-PROTOCOL",
+              "record_id": "CTX-QUALITY-PROTOCOL",
+              "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+              "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+              "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+            },
             "assessed_at": "2026-10-03T09:00:00.000Z",
             "condition": "unusable",
             "portion_quantity": {
@@ -1788,6 +1838,13 @@
             "valid": true,
             "batch_record_id": "A2",
             "protocol_id": "QUALITY-PROTOCOL",
+            "protocol_basis": {
+              "protocol_id": "QUALITY-PROTOCOL",
+              "record_id": "CTX-QUALITY-PROTOCOL",
+              "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+              "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+              "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+            },
             "assessed_at": "2026-10-02T15:00:00.000Z",
             "condition": "usable",
             "portion_quantity": {
@@ -1816,6 +1873,13 @@
             "valid": true,
             "batch_record_id": "A2",
             "protocol_id": "QUALITY-PROTOCOL",
+            "protocol_basis": {
+              "protocol_id": "QUALITY-PROTOCOL",
+              "record_id": "CTX-QUALITY-PROTOCOL",
+              "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+              "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+              "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+            },
             "assessed_at": "2026-10-02T21:00:00.000Z",
             "condition": "unusable",
             "portion_quantity": {
@@ -1844,6 +1908,13 @@
             "valid": true,
             "batch_record_id": "B",
             "protocol_id": "QUALITY-PROTOCOL",
+            "protocol_basis": {
+              "protocol_id": "QUALITY-PROTOCOL",
+              "record_id": "CTX-QUALITY-PROTOCOL",
+              "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+              "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+              "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+            },
             "assessed_at": "2026-10-03T21:00:00.000Z",
             "condition": "usable",
             "portion_quantity": {
@@ -1872,6 +1943,13 @@
             "valid": true,
             "batch_record_id": "C",
             "protocol_id": "QUALITY-PROTOCOL",
+            "protocol_basis": {
+              "protocol_id": "QUALITY-PROTOCOL",
+              "record_id": "CTX-QUALITY-PROTOCOL",
+              "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+              "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+              "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+            },
             "assessed_at": "2026-10-02T09:00:00.000Z",
             "condition": "usable",
             "portion_quantity": {
@@ -3047,6 +3125,13 @@
           "forecast_record_id": "FC-A1",
           "batch_record_id": "A1",
           "protocol_id": "QUALITY-PROTOCOL",
+          "protocol_basis": {
+            "protocol_id": "QUALITY-PROTOCOL",
+            "record_id": "CTX-QUALITY-PROTOCOL",
+            "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+            "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+            "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+          },
           "state": "interval_censored",
           "lower_hours": {
             "numerator": "24",
@@ -3067,8 +3152,39 @@
             "Q-A1-GOOD",
             "Q-A1-BAD"
           ],
+          "incompatible_protocol_observation_ids": [],
           "all_observation_count": 2,
           "partial_or_unobserved_count": 0,
+          "observations": [
+            {
+              "record_id": "Q-A1-GOOD",
+              "valid": true,
+              "condition": "usable",
+              "assessed_at": "2026-10-02T09:00:00.000Z",
+              "protocol_basis": {
+                "protocol_id": "QUALITY-PROTOCOL",
+                "record_id": "CTX-QUALITY-PROTOCOL",
+                "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+                "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+                "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+              },
+              "protocol_matches": true
+            },
+            {
+              "record_id": "Q-A1-BAD",
+              "valid": true,
+              "condition": "unusable",
+              "assessed_at": "2026-10-03T09:00:00.000Z",
+              "protocol_basis": {
+                "protocol_id": "QUALITY-PROTOCOL",
+                "record_id": "CTX-QUALITY-PROTOCOL",
+                "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+                "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+                "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+              },
+              "protocol_matches": true
+            }
+          ],
           "cohort": "test",
           "exposure": {
             "batch_record_id": "A1",
@@ -3136,6 +3252,13 @@
           "forecast_record_id": "FC-A2",
           "batch_record_id": "A2",
           "protocol_id": "QUALITY-PROTOCOL",
+          "protocol_basis": {
+            "protocol_id": "QUALITY-PROTOCOL",
+            "record_id": "CTX-QUALITY-PROTOCOL",
+            "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+            "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+            "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+          },
           "state": "interval_censored",
           "lower_hours": {
             "numerator": "30",
@@ -3156,8 +3279,39 @@
             "Q-A2-GOOD",
             "Q-A2-BAD"
           ],
+          "incompatible_protocol_observation_ids": [],
           "all_observation_count": 2,
           "partial_or_unobserved_count": 0,
+          "observations": [
+            {
+              "record_id": "Q-A2-GOOD",
+              "valid": true,
+              "condition": "usable",
+              "assessed_at": "2026-10-02T15:00:00.000Z",
+              "protocol_basis": {
+                "protocol_id": "QUALITY-PROTOCOL",
+                "record_id": "CTX-QUALITY-PROTOCOL",
+                "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+                "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+                "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+              },
+              "protocol_matches": true
+            },
+            {
+              "record_id": "Q-A2-BAD",
+              "valid": true,
+              "condition": "unusable",
+              "assessed_at": "2026-10-02T21:00:00.000Z",
+              "protocol_basis": {
+                "protocol_id": "QUALITY-PROTOCOL",
+                "record_id": "CTX-QUALITY-PROTOCOL",
+                "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+                "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+                "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+              },
+              "protocol_matches": true
+            }
+          ],
           "cohort": "test",
           "exposure": {
             "batch_record_id": "A2",
@@ -3225,6 +3379,13 @@
           "forecast_record_id": "FC-B",
           "batch_record_id": "B",
           "protocol_id": "QUALITY-PROTOCOL",
+          "protocol_basis": {
+            "protocol_id": "QUALITY-PROTOCOL",
+            "record_id": "CTX-QUALITY-PROTOCOL",
+            "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+            "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+            "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+          },
           "state": "right_censored",
           "lower_hours": {
             "numerator": "60",
@@ -3240,8 +3401,25 @@
           "whole_observation_ids": [
             "Q-B-GOOD"
           ],
+          "incompatible_protocol_observation_ids": [],
           "all_observation_count": 1,
           "partial_or_unobserved_count": 0,
+          "observations": [
+            {
+              "record_id": "Q-B-GOOD",
+              "valid": true,
+              "condition": "usable",
+              "assessed_at": "2026-10-03T21:00:00.000Z",
+              "protocol_basis": {
+                "protocol_id": "QUALITY-PROTOCOL",
+                "record_id": "CTX-QUALITY-PROTOCOL",
+                "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+                "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+                "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+              },
+              "protocol_matches": true
+            }
+          ],
           "cohort": "test",
           "exposure": {
             "batch_record_id": "B",
@@ -3283,13 +3461,37 @@
           "forecast_record_id": "FC-C",
           "batch_record_id": "C",
           "protocol_id": "QUALITY-PROTOCOL",
+          "protocol_basis": {
+            "protocol_id": "QUALITY-PROTOCOL",
+            "record_id": "CTX-QUALITY-PROTOCOL",
+            "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+            "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+            "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+          },
           "state": "unobserved",
           "lower_hours": null,
           "upper_hours": null,
           "absolute_error_lower_bound_hours": null,
           "whole_observation_ids": [],
+          "incompatible_protocol_observation_ids": [],
           "all_observation_count": 1,
           "partial_or_unobserved_count": 1,
+          "observations": [
+            {
+              "record_id": "Q-C-PARTIAL",
+              "valid": true,
+              "condition": "usable",
+              "assessed_at": "2026-10-02T09:00:00.000Z",
+              "protocol_basis": {
+                "protocol_id": "QUALITY-PROTOCOL",
+                "record_id": "CTX-QUALITY-PROTOCOL",
+                "record_sha256": "821325864cf4b7d754b42ac7f94b268c248711ed498da1ba246ffec17e35a506",
+                "method_document_id": "document-8252b4619132aad5b1b59c476f1f2b46",
+                "method_document_sha256": "09065a57c9178f4492af2bd679dcda2fe8fbbe337b8af70cbbee935e5a3238cf"
+              },
+              "protocol_matches": true
+            }
+          ],
           "cohort": "test",
           "exposure": {
             "batch_record_id": "C",

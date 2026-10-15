@@ -1,0 +1,28 @@
+{
+  "schema": "harvest-outcome.installed-receiving/v1",
+  "domainSource": {
+    "edition": "harvest-complete-operator-historical-protocol-final-20261015",
+    "files": 104,
+    "bytes": 1906378,
+    "sha256": "97e87a4a4fb977fec3b4a8cc26bc343fc245e62f059d417e7f16a7bd535b45f4"
+  },
+  "domainPeer": {
+    "maintainedEngine": 27,
+    "wholeModel": 9,
+    "independentCorrections": 4,
+    "mergedLotPositive": true,
+    "historicalProtocol": "Full retained correction from final donor"
+  },
+  "assembledBrowser": {
+    "status": "running",
+    "surface": "Actual assembled production HTML and handlers with supplied DOM and atomic IndexedDB"
+  },
+  "merchant": {
+    "status": "ready",
+    "surface": "Actual production Merchant dispatch/model with supplied filesystem and transport"
+  },
+  "native": {
+    "command": "node native/receive-installed.mjs",
+    "surface": "Existing equipped native operation"
+  }
+}

@@ -47,9 +47,9 @@ function checkpoint(s,nextStudy,reason){checkedStudy(nextStudy);const bank={...s
 function draft(s,key,value){return validate({...s,drafts:{...s.drafts,[key]:clone(value)},revision:s.revision+1,saved_at:null});}
 function use(s,study,reason){let x=retain(s,s,reason);x=checkpoint(x,study,reason);return {...x,drafts:{},selection:{},view:"study"};}
 function takeSession(s,other,reason){other=normalize(other);let x=retain(other,s,reason);x=retain(x,other,"Imported/opened session preimage");return validate({...x,revision:x.revision+1,saved_at:null});}
-function reviewDraft(s){return{study_sha256:Core.digest(s.study),role:s.study.config.service.required_review_roles[0],reviewer:"",at:now(),decision:"revise",notes:""};}
+function reviewDraft(s){return{study_sha256:Core.digest(s.study),role:s.study.config.harvest.required_review_roles[0],reviewer:"",at:now(),decision:"revise",notes:""};}
 function recordReview(s,value){return checkpoint(s,Core.review(s.study,value),"Record operator review");}
 function assess(s){try{return{ok:true,result:Core.analyze(s.study)}}catch(e){return{ok:false,error:e.message};}}
-function exports(s){validate(s);return[{path:"session.json",content:Core.json(s)},...Core.exports(s.study),{path:"recovery/index.json",content:Core.json({schema:"harvest-operations.source-recovery/v1",session:"../session.json",branches:s.backups,history:s.history,guide:"The complete session carries every unfinished form and retained branch. Open it in Water Operations Study Desk."})}];}
+function exports(s){validate(s);return[{path:"session.json",content:Core.json(s)},...Core.exports(s.study),{path:"recovery/index.json",content:Core.json({schema:"harvest-operations.source-recovery/v1",session:"../session.json",branches:s.backups,history:s.history,guide:"The complete session carries every unfinished form and retained branch. Open it in Harvest and Outcome Study Desk."})}];}
 return{assess,exports,SCHEMA,LEGACY,LIMIT,clone,hash,shape,create,validate,normalize,retain,retainStudy,checkpoint,draft,use,takeSession,historyStudy,branchSession,branchInfo,reviewDraft,recordReview,byteLength};
 })(require('./core.cjs'),require('./sha256.cjs'));

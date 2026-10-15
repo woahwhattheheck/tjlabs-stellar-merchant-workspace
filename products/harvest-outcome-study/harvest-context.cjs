@@ -10,7 +10,7 @@ function context(w,rows,selected,p){
   const invalidKnown=v.all[family].some(r=>(r.values.record_key===z.record_key||r.values[Schema.IDS[family]]===id)&&T.time(r.values.available_at)!==null&&T.time(r.values.available_at)<=t&&!snap.known[family].has(r.values.id));if(invalidKnown||!T.inside(z.valid_from,z.valid_to,t))return null;
   if(kind==='site'&&!active('grower',z.grower_id,t,seen)||kind==='location'&&!active('site',z.site_id,t,seen)||kind==='logger'&&!active('location',z.location_id,t,seen)||kind==='person'&&!active('grower',z.grower_id,t,seen))return null;
   if(kind==='crop'&&(!z.unit||!z.name)||kind==='protocol'&&(!z.meaning||!active('crop',z.crop_id,t,seen)||!doc(z.method_document_id,t))||kind==='invoice_line'&&(!active('buyer',z.buyer_id,t,seen)||!z.dispatch_record_id||!z.currency||!T.nonnegative(z.gross_amount)))return null;
-  return {...z,record_id:z.id,id};
+  return {...z,record_id:z.id,record_sha256:row.hash,id};
  }
  function authorize(role,pid,scope,at){const t=typeof at==='number'?at:T.time(at);if(t===null||!active('person',pid,t))return null;const xs=v.snapshot(t).current.authorities.filter(r=>{const z=r.values,g=T.time(z.granted_at);return z.person_id===pid&&z.permission===role&&z.scope_id===scope&&['grower','buyer'].includes(z.scope_kind)&&active(z.scope_kind,scope,t)&&active('person',z.granted_by,g)&&g!==null&&g<=t&&g<=T.time(z.recorded_at)&&T.inside(z.valid_from,z.valid_to,t);});
   if(!xs.length)return null;const row=xs[0];return {authorized:true,available_at:row.values.available_at,source_document_id:row.values.source_document_id};

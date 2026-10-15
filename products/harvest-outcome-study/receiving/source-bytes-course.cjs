@@ -1,0 +1,10 @@
+'use strict';
+module.exports=function run({core,inspect,C}){
+ const at='2026-10-15T14:29:00.000Z',csv='\ufeffid,name\r\n"O-1","café 水"\r\n',binary=new Uint8Array([0,255,128,13,10,0,42]);
+ let w=core.empty('Bounded exact source bytes');w=core.importExtract(w,{kind:'growers',side:'source',name:'literal.csv',content:csv,mapping:Object.fromEntries(core.FIELDS.growers.map(k=>[k,k==='name'||k==='id'?k:''])),at,available_at:at});
+ const retainedId=w.extracts[0].id;w=core.importExtract(w,{kind:'growers',side:'source',name:'later.csv',content:'id,name\nO-2,later\n',mapping:Object.fromEntries(core.FIELDS.growers.map(k=>[k,k==='name'||k==='id'?k:''])),at,available_at:at});
+ w=core.addDocument(w,{name:'binary.dat',media_type:'application/octet-stream',bytes:binary,at,available_at:at,notes:'Authored bounded-byte course'});
+ const state={sha256:'saved-edition',carrier:{session:{workspace:{study:w,backups:[],history:[]}}}},checks=[];
+ for(const sourceKind of ['original','document']){const item=(sourceKind==='original'?w.originals:w.documents)[0],bytes=[];let byteOffset=0;do{const p=inspect(core,state,{collection:'sourceBytes',sourceKind,id:item.id,byteOffset,byteLimit:2});if(p.editionSha256!==state.sha256)throw Error('Saved edition identity differs');bytes.push(...C.fromBase64(p.contentBase64));byteOffset=p.nextByteOffset;}while(byteOffset!==null);const expected=sourceKind==='original'?C.utf8Encode(csv):binary;if(C.sha256Bytes(new Uint8Array(bytes))!==C.sha256Bytes(expected))throw Error('Exact original reconstruction differs');checks.push({name:sourceKind+' original reconstructed from bounded two-byte ranges',passed:true,bytes:bytes.length});}
+ const before=JSON.stringify(w.config.selection),r=inspect(core,state,{collection:'extractRows',id:retainedId,limit:1});if(before!==JSON.stringify(w.config.selection)||r.rows[0].values.name!=='café 水')throw Error('Historical read altered source selection');checks.push({name:'Historical extract rows retain current selected successor',passed:true});return{checks};
+};
