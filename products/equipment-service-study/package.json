@@ -1,0 +1,12 @@
+{
+  "name": "equipment-service-study",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "receive:installed": "node native/receive-installed.mjs"
+  }
+}

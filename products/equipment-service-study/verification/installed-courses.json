@@ -1,0 +1,1052 @@
+{
+  "schema": "equipment-service.installed-course-record/v1",
+  "sourceCheckpoint": "9284405a4cf16c999508a49b43ae31da06804962290a08475ba3e16e30679832",
+  "browser": {
+    "surface": "Actual assembled production HTML and handlers, injected DOM and atomic IndexedDB",
+    "checks": [
+      "Every ordinary service and commercial section renders through assembled production handlers",
+      "Complete authored service, commerce, report chronology and recurring work results remain exact",
+      "Complete pending asset CSV retains BOM and CRLF",
+      "Actual mapped unit import retains the entire original",
+      "Ordinary commercial correction retains the exact whole invoice-line preimage",
+      "Binary technical source bytes remain exact",
+      "Exact source-document digest helper retains its complete draft",
+      "Document chronology correction retains prior metadata",
+      "Current configured technical or commercial review binds the exact source",
+      "Competing complete saved head detected",
+      "Explicit adoption retains complete competing service and commercial preimage",
+      "Continued editing and portable actor/session reopen"
+    ],
+    "ms": 150664
+  },
+  "assessmentCache": {
+    "rawMs": 3418,
+    "missMs": 3423,
+    "hitMs": 14,
+    "wholeParity": true,
+    "independentReturn": true
+  },
+  "merchant": {
+    "surface": "Actual Merchant dispatch, exact declared reads and complete production model in V8; filesystem/listener injected",
+    "checks": [
+      "Declared complete organisations input",
+      "Declared complete sites input",
+      "Declared complete people input",
+      "Declared complete technical_authorities input",
+      "Declared complete assets input",
+      "Declared complete identity_links input",
+      "Declared complete procedures input",
+      "Declared complete eligibility input",
+      "Declared complete obligations input",
+      "Declared complete cases input",
+      "Declared complete inspections input",
+      "Declared complete inspection_items input",
+      "Declared complete deficiencies input",
+      "Declared complete work input",
+      "Declared complete certificates input",
+      "Declared complete certificate_events input",
+      "Declared complete custody_events input",
+      "Declared complete reports input",
+      "Declared complete report_inputs input",
+      "Declared complete report_reviews input",
+      "Declared complete effort input",
+      "Declared complete source_documents input",
+      "Declared complete commerce_authorities input",
+      "Declared complete commerce_quote_lines input",
+      "Declared complete commerce_approvals input",
+      "Declared complete commerce_work_allocations input",
+      "Declared complete commerce_sales_lines input",
+      "Declared complete commerce_policies input",
+      "Declared complete commerce_entitlements input",
+      "Declared complete commerce_replacements input",
+      "Declared complete commerce_invoice_lines input",
+      "Declared complete commerce_credits input",
+      "Declared complete commerce_warranty_claims input",
+      "Declared complete commerce_warranty_events input",
+      "Declared complete commerce_rentals input",
+      "Declared complete commerce_rental_events input",
+      "Declared complete commerce_payments input",
+      "Declared exact binary original",
+      "service-plan",
+      "review",
+      "Complete incoming carrier and original editor actor retained with separate receiving attribution",
+      "Original exact request recovers after later work",
+      "Stale complete request retained without replacing selected work",
+      "Pinned full service and commerce observations, historical report inputs and all thirty-seven contributing raw families",
+      "Exact invoice-line revision preserves original row, unfinished source and incoming actor",
+      "Complete service assessment available through the production preview"
+    ],
+    "timings": [
+      {
+        "tool": "merchant_equipmentservicestudy_connect",
+        "collection": null,
+        "kind": null,
+        "ms": 0
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "organisations",
+        "ms": 2686
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "sites",
+        "ms": 2681
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "people",
+        "ms": 2779
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "technical_authorities",
+        "ms": 2666
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "assets",
+        "ms": 2645
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "identity_links",
+        "ms": 2653
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "procedures",
+        "ms": 2711
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "eligibility",
+        "ms": 2679
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "obligations",
+        "ms": 2655
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "cases",
+        "ms": 2691
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "inspections",
+        "ms": 2717
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "inspection_items",
+        "ms": 2687
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "deficiencies",
+        "ms": 2701
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "work",
+        "ms": 2719
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "certificates",
+        "ms": 2790
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "certificate_events",
+        "ms": 2752
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "custody_events",
+        "ms": 2755
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "reports",
+        "ms": 2751
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "report_inputs",
+        "ms": 2807
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "report_reviews",
+        "ms": 2785
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "effort",
+        "ms": 2930
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "source_documents",
+        "ms": 2925
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "commerce_authorities",
+        "ms": 2974
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "commerce_quote_lines",
+        "ms": 2852
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "commerce_approvals",
+        "ms": 2861
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "commerce_work_allocations",
+        "ms": 2886
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "commerce_sales_lines",
+        "ms": 2888
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "commerce_policies",
+        "ms": 2930
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "commerce_entitlements",
+        "ms": 2927
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "commerce_replacements",
+        "ms": 2947
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "commerce_invoice_lines",
+        "ms": 2972
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "commerce_credits",
+        "ms": 2994
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "commerce_warranty_claims",
+        "ms": 3001
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "commerce_warranty_events",
+        "ms": 3047
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "commerce_rentals",
+        "ms": 3054
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "commerce_rental_events",
+        "ms": 3050
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "commerce_payments",
+        "ms": 3108
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_ingest",
+        "collection": null,
+        "kind": "document",
+        "ms": 3131
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_action",
+        "collection": null,
+        "kind": "service-plan",
+        "ms": 3470
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_action",
+        "collection": null,
+        "kind": "review",
+        "ms": 3939
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_receive",
+        "collection": null,
+        "kind": "working",
+        "ms": 3639
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "originals",
+        "kind": null,
+        "ms": 1057
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "extracts",
+        "kind": null,
+        "ms": 493
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "extracts",
+        "kind": null,
+        "ms": 523
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 493
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 499
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 494
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 493
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 497
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 497
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 494
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "reviews",
+        "kind": null,
+        "ms": 495
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "documents",
+        "kind": null,
+        "ms": 492
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "documents",
+        "kind": null,
+        "ms": 498
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "documentLinks",
+        "kind": null,
+        "ms": 492
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "backups",
+        "kind": null,
+        "ms": 521
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "history",
+        "kind": null,
+        "ms": 494
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "draft",
+        "kind": null,
+        "ms": 504
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "requests",
+        "kind": null,
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "availability",
+        "kind": null,
+        "ms": 520
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "availability",
+        "kind": null,
+        "ms": 516
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "findings",
+        "kind": null,
+        "ms": 3870
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 501
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 499
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 495
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 499
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 510
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "assessment",
+        "kind": null,
+        "ms": 500
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "plan",
+        "kind": null,
+        "ms": 494
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "serviceResult",
+        "kind": null,
+        "ms": 500
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "serviceSummary",
+        "kind": null,
+        "ms": 499
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "cases",
+        "kind": null,
+        "ms": 534
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "inspections",
+        "kind": null,
+        "ms": 494
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "work",
+        "kind": null,
+        "ms": 497
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "deficiencies",
+        "kind": null,
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "certificates",
+        "kind": null,
+        "ms": 495
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "deliveries",
+        "kind": null,
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "custody",
+        "kind": null,
+        "ms": 517
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "obligations",
+        "kind": null,
+        "ms": 503
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "reports",
+        "kind": null,
+        "ms": 497
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "issues",
+        "kind": null,
+        "ms": 498
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "effortRecords",
+        "kind": null,
+        "ms": 502
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "effortRecords",
+        "kind": null,
+        "ms": 518
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "effortRecords",
+        "kind": null,
+        "ms": 515
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "effortGroups",
+        "kind": null,
+        "ms": 495
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialRentals",
+        "kind": null,
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialWarranties",
+        "kind": null,
+        "ms": 529
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialIssues",
+        "kind": null,
+        "ms": 493
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "organisations",
+        "ms": 493
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "sites",
+        "ms": 493
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "people",
+        "ms": 527
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "technical_authorities",
+        "ms": 533
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "assets",
+        "ms": 531
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "identity_links",
+        "ms": 528
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "procedures",
+        "ms": 495
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "eligibility",
+        "ms": 494
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "obligations",
+        "ms": 506
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "cases",
+        "ms": 539
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "inspections",
+        "ms": 529
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "inspection_items",
+        "ms": 551
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "deficiencies",
+        "ms": 573
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "work",
+        "ms": 502
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "certificates",
+        "ms": 494
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "certificate_events",
+        "ms": 495
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "custody_events",
+        "ms": 494
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "reports",
+        "ms": 499
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "report_inputs",
+        "ms": 494
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "report_reviews",
+        "ms": 494
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "effort",
+        "ms": 499
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "source_documents",
+        "ms": 497
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "commerce_authorities",
+        "ms": 516
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "commerce_quote_lines",
+        "ms": 502
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "commerce_approvals",
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "commerce_work_allocations",
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "commerce_sales_lines",
+        "ms": 531
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "commerce_policies",
+        "ms": 511
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "commerce_entitlements",
+        "ms": 501
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "commerce_replacements",
+        "ms": 495
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "commerce_invoice_lines",
+        "ms": 494
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "commerce_credits",
+        "ms": 500
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "commerce_warranty_claims",
+        "ms": 495
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "commerce_warranty_events",
+        "ms": 492
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "commerce_rentals",
+        "ms": 499
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "commerce_rental_events",
+        "ms": 512
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "rows",
+        "kind": "commerce_payments",
+        "ms": 498
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "reportInputs",
+        "kind": null,
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "reportReviews",
+        "kind": null,
+        "ms": 498
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "inspectionItems",
+        "kind": null,
+        "ms": 532
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "inspectionItems",
+        "kind": null,
+        "ms": 499
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "inspectionItems",
+        "kind": null,
+        "ms": 498
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "inspectionItems",
+        "kind": null,
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "inspectionItems",
+        "kind": null,
+        "ms": 500
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "inspectionItems",
+        "kind": null,
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "inspectionItems",
+        "kind": null,
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "inspectionItems",
+        "kind": null,
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialRecords",
+        "kind": "commerce_authorities",
+        "ms": 500
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialRecords",
+        "kind": "commerce_quote_lines",
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialRecords",
+        "kind": "commerce_approvals",
+        "ms": 499
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialRecords",
+        "kind": "commerce_work_allocations",
+        "ms": 498
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialRecords",
+        "kind": "commerce_sales_lines",
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialRecords",
+        "kind": "commerce_policies",
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialRecords",
+        "kind": "commerce_entitlements",
+        "ms": 527
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialRecords",
+        "kind": "commerce_replacements",
+        "ms": 498
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialRecords",
+        "kind": "commerce_invoice_lines",
+        "ms": 498
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialRecords",
+        "kind": "commerce_credits",
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialRecords",
+        "kind": "commerce_warranty_claims",
+        "ms": 498
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialRecords",
+        "kind": "commerce_warranty_events",
+        "ms": 494
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialRecords",
+        "kind": "commerce_rentals",
+        "ms": 496
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialRecords",
+        "kind": "commerce_rental_events",
+        "ms": 494
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "commercialRecords",
+        "kind": "commerce_payments",
+        "ms": 508
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "serviceResult",
+        "kind": null,
+        "ms": 499
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "serviceResult",
+        "kind": null,
+        "ms": 498
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "serviceResult",
+        "kind": null,
+        "ms": 497
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "serviceResult",
+        "kind": null,
+        "ms": 495
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_inspect",
+        "collection": "serviceResult",
+        "kind": null,
+        "ms": 497
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_action",
+        "collection": null,
+        "kind": "edit-row",
+        "ms": 4178
+      },
+      {
+        "tool": "merchant_equipmentservicestudy_preview",
+        "collection": null,
+        "kind": "assessment",
+        "ms": 4350
+      }
+    ],
+    "ms": 214109,
+    "requests": 43,
+    "editions": 44
+  },
+  "finalDonor": "2f1f2ffa6aa104ec7e2ff4645d2bd679bbbd9fdc6e2fd91bb215c449ea5b8419",
+  "finalRuntimeSourceIdentical": true,
+  "distribution": {
+    "ref": "ffc9ff76e7374e54452b3bdbff2db6875746788d",
+    "count": 106,
+    "allPathsPresent": true
+  }
+}

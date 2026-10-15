@@ -1,0 +1,755 @@
+{
+  "schema": "tjlabs.equipment-service-installed-source.v1",
+  "files": [
+    {
+      "path": "ADAPTER_CONTRACT.md",
+      "bytes": 8353,
+      "sha256": "e1e88ad44e3ecc9d4a0fb7909beb509ecbbd8cbbcc4fecdb21f71264c7e16a69"
+    },
+    {
+      "path": "COMMERCE.md",
+      "bytes": 3350,
+      "sha256": "6a0dc9ccfadf569a900d51d2285152b91f105ee30472d869b907652ad6326c5c"
+    },
+    {
+      "path": "DELIVERY.md",
+      "bytes": 728,
+      "sha256": "9a3eae36a686fbeee7b94df73c70da6bd1da6f2c00ac9f773cf1da6bff36e454"
+    },
+    {
+      "path": "DOMAIN_CONTRACT.md",
+      "bytes": 9997,
+      "sha256": "0ef330200c9a3718000c785184c4da3031f8ca1b30ccd94358b0791fd54adbcc"
+    },
+    {
+      "path": "DOMAIN_HEADERS.json",
+      "bytes": 18486,
+      "sha256": "355a1876c01317dc1a232ca74286e2f22ae112945fa092cbd8219d08488c9d38"
+    },
+    {
+      "path": "Equipment_Service_Study_Desk.html",
+      "bytes": 2792464,
+      "sha256": "be93c6167b9d654fee14dd234123edc80a9e35e7b8ade177c14864ab5f279ddc"
+    },
+    {
+      "path": "FIELD_REFERENCE.md",
+      "bytes": 12186,
+      "sha256": "98a00a04b589d11b006588ce85ee9e491d1a837b763e24e208fefd31181ed873"
+    },
+    {
+      "path": "FINANCIAL_REPORT_PEER.md",
+      "bytes": 1130,
+      "sha256": "678f95832a921c3154a833c3545e7dbe4a8ad7ef3ffc2c192f01133f50334779"
+    },
+    {
+      "path": "INSTALLED_OPERATION.md",
+      "bytes": 3919,
+      "sha256": "585fd83c6f3b8630212762dc730243f168c45ae148fe299b4745042be8911d18"
+    },
+    {
+      "path": "INSTALLED_RECEIVING.md",
+      "bytes": 1741,
+      "sha256": "9056f2a678127c08b0965e24277bc91190b91dddc080273c1d28af380649653d"
+    },
+    {
+      "path": "NATIVE.md",
+      "bytes": 3856,
+      "sha256": "2dc2907eb0c0437e93675c711a9fc82e21f1e4a22a92cc3dc973f86971516e0e"
+    },
+    {
+      "path": "OPERATOR.md",
+      "bytes": 8385,
+      "sha256": "d7df3c1fc669175ee2506011f44f09dfd787003130a2c198f9d047d88be8d997"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3536,
+      "sha256": "22bd543c8a0e27cd8984d1b480681d4c0ce7e55eabe5972faf8e4f5cde06abf5"
+    },
+    {
+      "path": "RECEIVING.md",
+      "bytes": 2380,
+      "sha256": "6015abe19748dcd0eae69c1fce2bee914bf7c13b7307d896eb395434772b4457"
+    },
+    {
+      "path": "SOURCE_MANIFEST.json",
+      "bytes": 23752,
+      "sha256": "a2f4226deb3a08afb62ae22e7159b0d33b8c0fbb2eeb348bc977ee32e2713856"
+    },
+    {
+      "path": "SOURCE_PROVENANCE.md",
+      "bytes": 1566,
+      "sha256": "2b5ae79634314a80855cb8bef99ff8ade2d5aa196e3fb7c392e87d242fe43d55"
+    },
+    {
+      "path": "application-provider.mjs",
+      "bytes": 4129,
+      "sha256": "fb3ec54119cb927e8110c0cef39f54377fd1f659469441266e45f173b0de225f"
+    },
+    {
+      "path": "base-schema.cjs",
+      "bytes": 7077,
+      "sha256": "f13dbe2ffa1af14704c1c607f016ec68e042764ba9216982dc7d784335c49709"
+    },
+    {
+      "path": "binary.cjs",
+      "bytes": 1021,
+      "sha256": "99479b36e6f6e2e08da08d9faf25f02ca0f344df41902b08e8df06a1c6acf291"
+    },
+    {
+      "path": "canonical.cjs",
+      "bytes": 185,
+      "sha256": "0584d18ea11873b0851e91ff45b7ebc49d4e6b284f25297c70c100ae26e78ad2"
+    },
+    {
+      "path": "commerce-course.cjs",
+      "bytes": 14829,
+      "sha256": "00acab0941452b4b950d5b5a448996bf26f6a680c339a1f79c6fe4fb8a3a0c60"
+    },
+    {
+      "path": "commerce-schema.cjs",
+      "bytes": 6834,
+      "sha256": "8d3a3d4d7f6c597e18eac49c211e5128da68a3f6322677b1edaec9c66fb4cb28"
+    },
+    {
+      "path": "contributions/financial-report-manifest.json",
+      "bytes": 924,
+      "sha256": "a38f88791dc8e12500ab1506a5ea6820d96052c25932f060702c351a9d1098eb"
+    },
+    {
+      "path": "contributions/financial-report-original-guide.md",
+      "bytes": 832,
+      "sha256": "281459e9f416b98f35d33e7934b557f45c8e90efabf6cd2bca6f51df374214fd"
+    },
+    {
+      "path": "contributions/service-commerce-manifest.json",
+      "bytes": 6969,
+      "sha256": "8f4b99def83c9ead10575910fd4cd98324d2a2f0f2af250650d90c0c262d826b"
+    },
+    {
+      "path": "contributions/service-commerce.source.json",
+      "bytes": 204058,
+      "sha256": "7d9debc0f561bdc943c70ac96977d9ce64202e3ceb48e36a98870156814ce20e"
+    },
+    {
+      "path": "core.cjs",
+      "bytes": 23898,
+      "sha256": "7903b0d9215ca66fe7580d763a7dfb4844f25dc6913482b179520e522035959e"
+    },
+    {
+      "path": "csv.cjs",
+      "bytes": 1550,
+      "sha256": "945ce2b5c97de19b8cfc912c24d9ebd76b20a06938fc45e4f3a18bed67842e8e"
+    },
+    {
+      "path": "examples/build-course.cjs",
+      "bytes": 22006,
+      "sha256": "734bdfee12a0c2dea3a33fe4651ae6bc78cb1896c75cacee1cb71d6ba4fc2ec8"
+    },
+    {
+      "path": "examples/canonical/commerce_approvals.csv",
+      "bytes": 616,
+      "sha256": "ef51340077dec3e83f811181c80e42de0ffbcdd563c610c7b9029765a5a25772"
+    },
+    {
+      "path": "examples/canonical/commerce_authorities.csv",
+      "bytes": 2543,
+      "sha256": "0910ea1e0382a9baa85c3a0643336e8a6d9d1ecd56f6da7c12e30174ae75be92"
+    },
+    {
+      "path": "examples/canonical/commerce_credits.csv",
+      "bytes": 613,
+      "sha256": "aedfb24c77bfa23b6ea8118d77216f9935c654797447ee527e285b6d78efb474"
+    },
+    {
+      "path": "examples/canonical/commerce_entitlements.csv",
+      "bytes": 598,
+      "sha256": "fbca1548f5f4100e054831722483efc66d4ba125e3de39680a56aaae0f9af2f4"
+    },
+    {
+      "path": "examples/canonical/commerce_invoice_lines.csv",
+      "bytes": 1427,
+      "sha256": "b2884690d1a4b7f36face78903dbe59a75aa7a2edfad230a86dfbf22532d4680"
+    },
+    {
+      "path": "examples/canonical/commerce_payments.csv",
+      "bytes": 516,
+      "sha256": "91f69812d28c502831803924cf1bbbd7e3adc413b45d8f37363adc99bbf6d8c3"
+    },
+    {
+      "path": "examples/canonical/commerce_policies.csv",
+      "bytes": 943,
+      "sha256": "349f0810ea16ca53600585f12218eeda9adc9089df664ed2b30e0b06b0c367ce"
+    },
+    {
+      "path": "examples/canonical/commerce_quote_lines.csv",
+      "bytes": 643,
+      "sha256": "aa86a4e67be0771d64f1f4731663693650c33a245028fb17a096b04640ab89ad"
+    },
+    {
+      "path": "examples/canonical/commerce_rental_events.csv",
+      "bytes": 726,
+      "sha256": "c7de5e563bf63e4070653a1cc1579d23dd6e90120f9b56270d717ae8661a8a88"
+    },
+    {
+      "path": "examples/canonical/commerce_rentals.csv",
+      "bytes": 601,
+      "sha256": "fa4ad302d6f059022d69369f76ec5e81e93c85824d052fa813e6df4508171961"
+    },
+    {
+      "path": "examples/canonical/commerce_replacements.csv",
+      "bytes": 565,
+      "sha256": "0f3f78458f2a83e335e33772137adf0f6988d4de7ab8fc4626fe1e6d475301f8"
+    },
+    {
+      "path": "examples/canonical/commerce_sales_lines.csv",
+      "bytes": 866,
+      "sha256": "e6f2cc2a9d82b45f96f6457ac01cdc56526571562f31f8e2eb561e2dc2aae1d9"
+    },
+    {
+      "path": "examples/canonical/commerce_warranty_claims.csv",
+      "bytes": 450,
+      "sha256": "6a703306b76bbbaddc780e35bfc60550774245cc6b541cd94b75d4ef09d57c6e"
+    },
+    {
+      "path": "examples/canonical/commerce_warranty_events.csv",
+      "bytes": 898,
+      "sha256": "cfbe8b827c1adf6b91ae0661a825e7d74f0efef37d9d46b8bd0f251f2ea88991"
+    },
+    {
+      "path": "examples/canonical/commerce_work_allocations.csv",
+      "bytes": 475,
+      "sha256": "52cc23447ccd3433ca717d24a242c2a3893d898205e30393ab6b2bfa27b48bf8"
+    },
+    {
+      "path": "examples/commerce-complete.json",
+      "bytes": 32895,
+      "sha256": "0d042796be6506a5f318dc759019a2630333c4838be609bbe5a3018e305134d1"
+    },
+    {
+      "path": "examples/commerce-result.json",
+      "bytes": 37315,
+      "sha256": "a46aad77433df8f7a1e717d4f8056adbb7fccbfc868c4509f7c47c465ed564e0"
+    },
+    {
+      "path": "examples/complete-report.md",
+      "bytes": 4804,
+      "sha256": "ebc8449bc011523b76105a0665864209a48485c2bc7d4d2734224a58ab6aad6b"
+    },
+    {
+      "path": "examples/complete.session.json",
+      "bytes": 293955,
+      "sha256": "8032ee1a5ce0bbcf0d46a5494421404778cf3d287ab1156fabbffe36ad705eae"
+    },
+    {
+      "path": "examples/complete.study.json",
+      "bytes": 283587,
+      "sha256": "857ecce5ab784858102724f232e4a2433bc3b7e5edbef8aaf31b97f04ce8f51e"
+    },
+    {
+      "path": "examples/financial-report-complete.json",
+      "bytes": 41988,
+      "sha256": "42d247cbbff3ccc759a3a5c2f29ebeb94707bebb0a1117cc27f54ac0e76ab9f6"
+    },
+    {
+      "path": "examples/financial-report-complete.study.json",
+      "bytes": 295996,
+      "sha256": "148ae22f0cce04d8631f582d2111bb7a51b86f8008468f1bf85d4031cec8cd8c"
+    },
+    {
+      "path": "host/client.mjs",
+      "bytes": 4444,
+      "sha256": "e42a40c90c7f604c06b52c34b9e34ca1d344d708b1d6c3e49068fbd4bba02baf"
+    },
+    {
+      "path": "host/codec.mjs",
+      "bytes": 28418,
+      "sha256": "ab609271b0bcb6aac8b732db7b437edd69bb7865dcaea4fd5cf1ec162de15c45"
+    },
+    {
+      "path": "host/domain.mjs",
+      "bytes": 6168,
+      "sha256": "93c36ce2a4dfea3ef04332fced10450b3a3ca676a0474ad690fe7c089a659ba8"
+    },
+    {
+      "path": "host/export-core.mjs",
+      "bytes": 4474,
+      "sha256": "e83b5304dce5abce07bf36516fbd534782771052769eb3d1b51ed8f6fdc17200"
+    },
+    {
+      "path": "host/export.mjs",
+      "bytes": 1594,
+      "sha256": "6bb1805f53b85f897de4479cdb04c5753b018d01ed7ad79dc46d6332522cb7f6"
+    },
+    {
+      "path": "host/io.mjs",
+      "bytes": 3200,
+      "sha256": "863f114a56f587648870b9a10716033d18315c3f287e3c6a1ffaf1f9e1c8e67c"
+    },
+    {
+      "path": "host/model.cjs",
+      "bytes": 5199,
+      "sha256": "d9954a035275b1bb5e26a9b13a5dfc1211fbd25aacf2b22839b1ff7e524d81e2"
+    },
+    {
+      "path": "host/server.mjs",
+      "bytes": 7182,
+      "sha256": "3d7e7d0553eda672e36887dfb75afaac65308d7db81cbf2a197f6b1609baa3f7"
+    },
+    {
+      "path": "host/store.mjs",
+      "bytes": 5737,
+      "sha256": "4969cb17cef43cfc4f826d93741abf3520645834c9b5b73f4a22ddc260152531"
+    },
+    {
+      "path": "installed-cli.mjs",
+      "bytes": 4665,
+      "sha256": "86e4e9b1d753f6aa9855e2204e6a3e8885674a9f93daace5a2d77f4168ba3f92"
+    },
+    {
+      "path": "managed.mjs",
+      "bytes": 2711,
+      "sha256": "c8dc3bf1db4bb7bf99d09c84ed620ee4d5dbef627560245a81265682eec70f48"
+    },
+    {
+      "path": "mcp.mjs",
+      "bytes": 9430,
+      "sha256": "6c434b37d53f52de755131e736f1c0593663d3525d032a5bc6023b9ccf677fd1"
+    },
+    {
+      "path": "merchant-provider.mjs",
+      "bytes": 2731,
+      "sha256": "22a7f2f522950071da97133f766e99ce34b76590ff09bbc6067a02562c874e9c"
+    },
+    {
+      "path": "native/receive-installed.mjs",
+      "bytes": 4577,
+      "sha256": "8dcd1c18c0b316a283ff65296ec245efe322dd4b08a56ef97b6bd2490fff0c54"
+    },
+    {
+      "path": "native/service-desk.cjs",
+      "bytes": 9631,
+      "sha256": "b7baf776b83bcdd69702c73bf430fdcf63ff2f83029ce3e7e74774cd47f56342"
+    },
+    {
+      "path": "operator/browser-course.cjs",
+      "bytes": 8321,
+      "sha256": "d06346b3f76c74e39b8500b37037677c7ff0326ed366cab2f382c217b157142f"
+    },
+    {
+      "path": "operator/desk.js",
+      "bytes": 64201,
+      "sha256": "6d2dc561770bd6ae40e3a1c605de14d3b983a958758e0fc84e6fe68e57062fb9"
+    },
+    {
+      "path": "operator/install-controller.cjs",
+      "bytes": 2953,
+      "sha256": "9a4556080aa2eab4f8de43d91a4340cb4a8d223596e80c293332f8987d38a091"
+    },
+    {
+      "path": "operator/installed-desk.js",
+      "bytes": 67097,
+      "sha256": "f2b8209cf36abcb0c6667570aab87d4f1dd916c2895f54ffad31fb15f8a048b5"
+    },
+    {
+      "path": "operator/native-course.cjs",
+      "bytes": 6415,
+      "sha256": "51615239b66910a34e4eb1c85ff191b78ff9f03cc5c234508d51ac883c464db1"
+    },
+    {
+      "path": "operator/render-desk.cjs",
+      "bytes": 6453,
+      "sha256": "380deefa3d32779639bec9e62a086e829004342f19dffe676f522d2519fc19fa"
+    },
+    {
+      "path": "package.json",
+      "bytes": 221,
+      "sha256": "5caeb16e9e16c906c1d0fc7998c3c62d12cb6d207c0b8517f6656e441ebb4858"
+    },
+    {
+      "path": "rational.cjs",
+      "bytes": 1350,
+      "sha256": "b2b38848a914a327cfecc271cf53ca0b52a6186b1d28bd38b3dc8677ca9974a2"
+    },
+    {
+      "path": "receiving/EXPORT_COMPRESSION.md",
+      "bytes": 3817,
+      "sha256": "25c4cb13c71cef0e4c67c75ae06bba4c77b50be88098915d6d90a59e6ff4c2dd"
+    },
+    {
+      "path": "receiving/export-compression-comparison.json",
+      "bytes": 1251,
+      "sha256": "1b06115a3318d70075a215ebe9b2d28aad5b2ec753e5cd9bbf44ed593796d271"
+    },
+    {
+      "path": "receiving/export-compression-course.cjs",
+      "bytes": 3726,
+      "sha256": "a99bb48b16d3717de95f123ed8b36f944b10e70dce9535b42e975bb2d00790e1"
+    },
+    {
+      "path": "receiving/host-course.cjs",
+      "bytes": 13505,
+      "sha256": "ade6147a7ac72090c61d4b64ed47d6587eed0cb7f2632c36c33a1f8592516f8c"
+    },
+    {
+      "path": "receiving/portable-course.cjs",
+      "bytes": 13074,
+      "sha256": "56a649fcfc5be4f5ec1f537c34c1d8deaebb18d08ebd78cc35d271ba2e67b2b9"
+    },
+    {
+      "path": "runtime.mjs",
+      "bytes": 2469,
+      "sha256": "27bceef2fa7543a0841bef549d3b772dcb635e5ad2e5afe57eea4b7fae4c58e9"
+    },
+    {
+      "path": "schema.cjs",
+      "bytes": 349,
+      "sha256": "0ffed3f970c96a6063db89930217490fe6322b6bbbf94748d5267781eeb00794"
+    },
+    {
+      "path": "service-commerce.cjs",
+      "bytes": 33006,
+      "sha256": "adaa8ee590d6696710fba98cf81a1cb364c3a41b188d31953e7f863aca188e1a"
+    },
+    {
+      "path": "service-context.cjs",
+      "bytes": 7316,
+      "sha256": "0dd4c89723dbfa77fdfdc2b64eab9aa9505d6e030020f6a4c7ec0c09a102ee1b"
+    },
+    {
+      "path": "service-effort.cjs",
+      "bytes": 2912,
+      "sha256": "88f0fcf3dd4af04f104a8ca61ed105f7a8bad0b6b8e0443253f501b586af5129"
+    },
+    {
+      "path": "service-records.cjs",
+      "bytes": 13571,
+      "sha256": "ef08ba8d557bec5bd96f151c2806bfbf19e0367786d2d9f4454ee0773d139648"
+    },
+    {
+      "path": "service-reports.cjs",
+      "bytes": 5166,
+      "sha256": "5ec9599f13a60efcf09d6d295d9a497f928d303984781c0ab1175e7e85b63128"
+    },
+    {
+      "path": "service.cjs",
+      "bytes": 13078,
+      "sha256": "75a72db1e2469ddac2f08da646cc231efdd3acc27947c52727ef22148dad54b8"
+    },
+    {
+      "path": "session.cjs",
+      "bytes": 8569,
+      "sha256": "ee48dbb1d61f430fa4ad810bf309e7b9ac21a5de27aa4e0121ca1f1c2fbf33ce"
+    },
+    {
+      "path": "setup.mjs",
+      "bytes": 2706,
+      "sha256": "d5d9843f1714d455a96d8ddf72c0a46bde628b59a024605f72d21c6aeb57ebce"
+    },
+    {
+      "path": "sha256.cjs",
+      "bytes": 19696,
+      "sha256": "f37a1319db3aa8b9bd15ae2fea89cf0b79677e2a2eb295e63efa4d34f8308230"
+    },
+    {
+      "path": "src/archive.mjs",
+      "bytes": 511,
+      "sha256": "f02b424c6a8661292ed3bfa3f4cf60e7ff88877be3cb61ba96a02b23a171b5f9"
+    },
+    {
+      "path": "src/build-installed.mjs",
+      "bytes": 9155,
+      "sha256": "cd788f72ce65aeade8ae3fd57e1cb8b2150559d7e77278144317bc73cc8c8152"
+    },
+    {
+      "path": "src/connected_zip.cjs",
+      "bytes": 13178,
+      "sha256": "4903eb16215d3015388b62788670da9f23872d65e94422ff22cbf09863f9dd08"
+    },
+    {
+      "path": "src/core-cache.cjs",
+      "bytes": 831,
+      "sha256": "b581f68ac01a7e87e0ad62674a858f42d0952c597fbdb1e39ba4b41786ec00c2"
+    },
+    {
+      "path": "src/managed-storage.mjs",
+      "bytes": 7859,
+      "sha256": "ffd75fd2bba36d7603a87f9c4f27e4e50531ef97507eb35810dc085361328d9c"
+    },
+    {
+      "path": "src/managed.js",
+      "bytes": 14361,
+      "sha256": "737c4fd1e0c3ab7ff0207d4f4091fc133cd7c3792b60552f94fecc4a777c010d"
+    },
+    {
+      "path": "src/session-cache.cjs",
+      "bytes": 2587,
+      "sha256": "086500791db65b50dd6c53631bf02881575f150a61c425c090f88d691ac4844b"
+    },
+    {
+      "path": "src/session.mjs",
+      "bytes": 3911,
+      "sha256": "7b2fa22a76d0c0b8c92e7460e56ce6a0a92a5d402490669168f38750bda161a2"
+    },
+    {
+      "path": "study-time.cjs",
+      "bytes": 4519,
+      "sha256": "3ecb1dd72248c5510d111eb0dee0a0f446adf58c74cbcbefee7837f38667aad9"
+    },
+    {
+      "path": "templates/assets.csv",
+      "bytes": 257,
+      "sha256": "0003e665de4b415509726f719df3f17959edb2d63f1496175514d4f423198dfa"
+    },
+    {
+      "path": "templates/cases.csv",
+      "bytes": 242,
+      "sha256": "de69936b0347b4fe2ce92bdd9a7ee2787e82cfa8ceb0be67e05a3e22ab4e13fa"
+    },
+    {
+      "path": "templates/certificate_events.csv",
+      "bytes": 265,
+      "sha256": "c5c89b61ac259822c65b26e590876b4a8add8de01b8c2786a1eb283bac834362"
+    },
+    {
+      "path": "templates/certificates.csv",
+      "bytes": 301,
+      "sha256": "37ce5154e7909829aa522fc3cb36f90913bd6a5f15e0f90e0fec8085e65debdf"
+    },
+    {
+      "path": "templates/commerce_approvals.csv",
+      "bytes": 291,
+      "sha256": "1473e7ecf723d3cabd969a4c918adb4a47f780891953c84c6bd47970304c49bb"
+    },
+    {
+      "path": "templates/commerce_authorities.csv",
+      "bytes": 221,
+      "sha256": "b79ea11a1be0ca567d5f9d92e2f59082613e6ef110648124dd94eb1ed6f01643"
+    },
+    {
+      "path": "templates/commerce_credits.csv",
+      "bytes": 312,
+      "sha256": "a8755b50fd4f6781da303bddd6f5e9c1c3923908e9d519547c61d978575787a6"
+    },
+    {
+      "path": "templates/commerce_entitlements.csv",
+      "bytes": 290,
+      "sha256": "85d6bba21a4b8b96a6f738a90587afae7386332ebec8187d0a0c9423e09f6f05"
+    },
+    {
+      "path": "templates/commerce_invoice_lines.csv",
+      "bytes": 304,
+      "sha256": "a3c269436843506c3236bd9b053970a34a4bb9f52690fb3ce2da33cb50f6ade4"
+    },
+    {
+      "path": "templates/commerce_payments.csv",
+      "bytes": 258,
+      "sha256": "38825199dc1fe078334c4fd965b1218a172883e281a509ffd7a15e8cea648eae"
+    },
+    {
+      "path": "templates/commerce_policies.csv",
+      "bytes": 299,
+      "sha256": "5b2d1ad950819660bf617e4f757e2362035d7b6d9431f2b40f16b94c6e1351c4"
+    },
+    {
+      "path": "templates/commerce_quote_lines.csv",
+      "bytes": 321,
+      "sha256": "74b89f58dfc9e2429725ee5033fad43b0cef53848480bc6dbf667f77f61856c8"
+    },
+    {
+      "path": "templates/commerce_rental_events.csv",
+      "bytes": 242,
+      "sha256": "9073d87ad15f568426d5bd8acc2c303a0f0e5f265adefcc18dcb7eb71c577275"
+    },
+    {
+      "path": "templates/commerce_rentals.csv",
+      "bytes": 324,
+      "sha256": "72a5862c86a3264583845d53b91980458b83597ab63e68555183d9ce818497a7"
+    },
+    {
+      "path": "templates/commerce_replacements.csv",
+      "bytes": 298,
+      "sha256": "07ddc12d185a36afb995546d9249dfc658df4ead4374cd54a4c817a971d576df"
+    },
+    {
+      "path": "templates/commerce_sales_lines.csv",
+      "bytes": 290,
+      "sha256": "af1bc697032a7759b49524cf097849f32fc6aa18c85221c4b968052683fbe533"
+    },
+    {
+      "path": "templates/commerce_warranty_claims.csv",
+      "bytes": 207,
+      "sha256": "f5592b4a04905120da380540e3b524e188f525dfbdfada2a1d4b5f2f5bc357ea"
+    },
+    {
+      "path": "templates/commerce_warranty_events.csv",
+      "bytes": 277,
+      "sha256": "14a5e22ade4daf2fff89926e538d415c0b563c345e7249602a36f486c9dc9958"
+    },
+    {
+      "path": "templates/commerce_work_allocations.csv",
+      "bytes": 235,
+      "sha256": "d1e2461def6be78bbdf5fba357e22ef1f33ffaf2cb3255b07d49841fc7a207c7"
+    },
+    {
+      "path": "templates/custody_events.csv",
+      "bytes": 233,
+      "sha256": "453775760e9a9722fbf93095b010284b1fb2857231610e90818a36a166f10526"
+    },
+    {
+      "path": "templates/deficiencies.csv",
+      "bytes": 299,
+      "sha256": "abeb2a7b9768bb53683cd7090b4f885bb61f84d1c483ba4132c00faad1971cf1"
+    },
+    {
+      "path": "templates/effort.csv",
+      "bytes": 244,
+      "sha256": "0f696b85c08c33ffed2f10115f7b7f3e79e98e97062a580eb7ad16ca5484ebc1"
+    },
+    {
+      "path": "templates/eligibility.csv",
+      "bytes": 217,
+      "sha256": "cb65411f4dc4a2c74ccb48ba46a3b695e462297c4eaac6b10f49792b748c37ab"
+    },
+    {
+      "path": "templates/identity_links.csv",
+      "bytes": 221,
+      "sha256": "f7a81f756dd65422cb430c3fb4b0234d0b11b84a45953d9bcc4dab47556749d1"
+    },
+    {
+      "path": "templates/inspection_items.csv",
+      "bytes": 207,
+      "sha256": "dd8f2ddc83e81c9ca5ff740d1da6fa3deb9f5b2f4ff19baf85e447b4bf7c9f01"
+    },
+    {
+      "path": "templates/inspections.csv",
+      "bytes": 281,
+      "sha256": "087d42eb891d9c37b64cc98f0412eb767d5faccf33ab7ba486c6775cb57372e5"
+    },
+    {
+      "path": "templates/obligations.csv",
+      "bytes": 224,
+      "sha256": "1db87692101f5fde58c570cf8f6efd4fb3e27b6cc8e77df88b636bbc4197e121"
+    },
+    {
+      "path": "templates/organisations.csv",
+      "bytes": 153,
+      "sha256": "eae011384e1a02823e7058d379b99cb65eb2bbe9c3ca5938279202cb15867808"
+    },
+    {
+      "path": "templates/people.csv",
+      "bytes": 163,
+      "sha256": "991f3f25b4bf20771d08a91da063b0337898a02bf7c263fdda6aa48cdbc1578f"
+    },
+    {
+      "path": "templates/procedures.csv",
+      "bytes": 319,
+      "sha256": "71bf3f146e9a93ca0fc7b5071669de2ae6da79eedc8ed7460549e2dcb79ac1f6"
+    },
+    {
+      "path": "templates/report_inputs.csv",
+      "bytes": 189,
+      "sha256": "97e4423bb83c82c8d2192c89cd04962f0efba8c374171a5510f00f4a89683936"
+    },
+    {
+      "path": "templates/report_reviews.csv",
+      "bytes": 198,
+      "sha256": "a416e322f201e4c4d914cc108fc90c3168e28f799f103aca4b966a2d46505290"
+    },
+    {
+      "path": "templates/reports.csv",
+      "bytes": 258,
+      "sha256": "cecb612efd944542e99820334b21b2dae0ad49db1ac5a8e738038b6f661ae49f"
+    },
+    {
+      "path": "templates/sites.csv",
+      "bytes": 186,
+      "sha256": "a03724f1eb54c0e70e56e764958eae863838aaf336502e478ab9733ff31c2a88"
+    },
+    {
+      "path": "templates/source_documents.csv",
+      "bytes": 171,
+      "sha256": "43c24ec32c9745b2a835ab580519a968feaef185d11d9f0e290c8b3120b3302d"
+    },
+    {
+      "path": "templates/technical_authorities.csv",
+      "bytes": 235,
+      "sha256": "3f04357e7c5a4b8dd71a8fe7e4b7ba98cff36449e427707d7534cbd3613f6fdf"
+    },
+    {
+      "path": "templates/work.csv",
+      "bytes": 275,
+      "sha256": "e1e333ba156c9779b1c77ff9b4b6e2a8b42e943fe44c4706fa538d27c2858708"
+    },
+    {
+      "path": "text.cjs",
+      "bytes": 2322,
+      "sha256": "521560e432751fa701553e9f8f1ec795dbbbb463afc4d9b1e441f95241f1fc51"
+    },
+    {
+      "path": "tools.mjs",
+      "bytes": 5914,
+      "sha256": "4a3bc7309751750371845008d6d8c1ec2efc8fd876f136d6ad2b887f3d2aad1b"
+    },
+    {
+      "path": "vendor/PAKO_LICENSE.txt",
+      "bytes": 1104,
+      "sha256": "a04665b3b2de56c66730c1f720f528175739e4104f79073614aa611da1e85539"
+    },
+    {
+      "path": "vendor/pako.cjs",
+      "bytes": 238806,
+      "sha256": "e3c8f46f5a741598157ba051a9a0c043bcdc879c1867d3268e4058d4fae5fe3e"
+    },
+    {
+      "path": "verification/browser-course.json",
+      "bytes": 1586,
+      "sha256": "81e5d2bd5c22751fd81a17670e4001e05ec58c1fcaa600a0fb4e996dbab3b0a5"
+    },
+    {
+      "path": "verification/commerce-course.json",
+      "bytes": 2263,
+      "sha256": "08150d0dc95598fbb9872ed1383a7b78237b0791a6fe83f76e52e894d0db1bb6"
+    },
+    {
+      "path": "verification/financial-report-peer.cjs",
+      "bytes": 3400,
+      "sha256": "d6b63bb7e93b82a8774cdd91ed435224a6ae6895718211f06f0ea7fec0a3bc0d"
+    },
+    {
+      "path": "verification/financial-report-peer.json",
+      "bytes": 871,
+      "sha256": "a034937ec4d9c49fc9a4fe235370986f72e2d8afe1a27e5da7a017663fb0f802"
+    },
+    {
+      "path": "verification/installed-courses.json",
+      "bytes": 29331,
+      "sha256": "6964577f7b02f2b615c002add53036afcedf7b98ce1ebbe408c24a72a2f5198d"
+    },
+    {
+      "path": "verification/model-course.json",
+      "bytes": 2752,
+      "sha256": "581a9b04bf13b8a785b4ce731963555fa5b66bf57fe72e6840c665218f4ee94c"
+    },
+    {
+      "path": "verification/native-course.json",
+      "bytes": 949,
+      "sha256": "c27d7e4fa0fc3c583b4833bc6cc0ae966929b7e381023839d8480ebe73a36b63"
+    },
+    {
+      "path": "verification/source-closure.json",
+      "bytes": 541,
+      "sha256": "700383abc7c27d632c52691468c1ea11e82e47fad5919d95a2ed4e17e4dcd550"
+    },
+    {
+      "path": "verify.cjs",
+      "bytes": 1353,
+      "sha256": "016b91883707c74707f105c8b6212c9db4bfd2997f261f97a00077fbe7a730b2"
+    },
+    {
+      "path": "zip.cjs",
+      "bytes": 2008,
+      "sha256": "0db36ea7dfaa084be2da89e185576017d596f33b8a174ec61199ee17bc0ea1a9"
+    }
+  ]
+}

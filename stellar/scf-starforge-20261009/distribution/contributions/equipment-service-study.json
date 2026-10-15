@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "equipment-service-study",
+  "description": "Complete equipment service and entitlement reconstruction with exact unit identity, approved procedures and forms, actual inspection/work/certificate history, commercial approvals, custody, full recurring work and complete recovery.",
+  "components": [
+    "products/equipment-service-study"
+  ],
+  "commands": {
+    "equipment-service-study-workspace": "products/equipment-service-study/installed-cli.mjs",
+    "equipment-service-study-managed": "products/equipment-service-study/managed.mjs"
+  },
+  "commandDescriptions": {
+    "equipment-service-study-workspace": "Create, receive and export complete Equipment Service and Entitlement Study sessions",
+    "equipment-service-study-managed": "Open the complete equipment service and entitlement study through Applications"
+  },
+  "exports": {
+    "./products/equipment-service-study": "./source/products/equipment-service-study/runtime.mjs",
+    "./products/equipment-service-study/client": "./source/products/equipment-service-study/host/client.mjs",
+    "./products/equipment-service-study/server": "./source/products/equipment-service-study/host/server.mjs"
+  },
+  "applicationProviders": {
+    "equipment-service-study": "products/equipment-service-study/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "equipment-service-study": "products/equipment-service-study/merchant-provider.mjs"
+  }
+}

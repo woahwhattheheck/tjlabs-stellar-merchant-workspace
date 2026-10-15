@@ -1,0 +1,984 @@
+{
+  "schema": "service.commerce-course/v1",
+  "provenance": "Complete authored operating example; fictional companies, units, policies and commercial observations.",
+  "as_of": "2026-10-02T14:00:00.000Z",
+  "records": {
+    "commerce_authorities": [
+      {
+        "id": "auth-quote",
+        "record_key": "auth-quote",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-01T00:00:00.000Z",
+        "available_at": "2026-10-01T00:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / auth-quote",
+        "authority_id": "AUTH-quote",
+        "person_id": "OP",
+        "role": "quote",
+        "customer_id": "*",
+        "valid_from": "2026-10-01T00:00:00.000Z",
+        "valid_to": "",
+        "authority_document_id": "authority-quote"
+      },
+      {
+        "id": "auth-customer_approval",
+        "record_key": "auth-customer_approval",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-01T00:00:00.000Z",
+        "available_at": "2026-10-01T00:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / auth-customer_approval",
+        "authority_id": "AUTH-customer_approval",
+        "person_id": "CUSTOMER",
+        "role": "customer_approval",
+        "customer_id": "*",
+        "valid_from": "2026-10-01T00:00:00.000Z",
+        "valid_to": "",
+        "authority_document_id": "authority-customer_approval"
+      },
+      {
+        "id": "auth-policy",
+        "record_key": "auth-policy",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-01T00:00:00.000Z",
+        "available_at": "2026-10-01T00:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / auth-policy",
+        "authority_id": "AUTH-policy",
+        "person_id": "OP",
+        "role": "policy",
+        "customer_id": "*",
+        "valid_from": "2026-10-01T00:00:00.000Z",
+        "valid_to": "",
+        "authority_document_id": "authority-policy"
+      },
+      {
+        "id": "auth-entitlement",
+        "record_key": "auth-entitlement",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-01T00:00:00.000Z",
+        "available_at": "2026-10-01T00:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / auth-entitlement",
+        "authority_id": "AUTH-entitlement",
+        "person_id": "OP",
+        "role": "entitlement",
+        "customer_id": "*",
+        "valid_from": "2026-10-01T00:00:00.000Z",
+        "valid_to": "",
+        "authority_document_id": "authority-entitlement"
+      },
+      {
+        "id": "auth-replacement",
+        "record_key": "auth-replacement",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-01T00:00:00.000Z",
+        "available_at": "2026-10-01T00:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / auth-replacement",
+        "authority_id": "AUTH-replacement",
+        "person_id": "OP",
+        "role": "replacement",
+        "customer_id": "*",
+        "valid_from": "2026-10-01T00:00:00.000Z",
+        "valid_to": "",
+        "authority_document_id": "authority-replacement"
+      },
+      {
+        "id": "auth-credit",
+        "record_key": "auth-credit",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-01T00:00:00.000Z",
+        "available_at": "2026-10-01T00:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / auth-credit",
+        "authority_id": "AUTH-credit",
+        "person_id": "OP",
+        "role": "credit",
+        "customer_id": "*",
+        "valid_from": "2026-10-01T00:00:00.000Z",
+        "valid_to": "",
+        "authority_document_id": "authority-credit"
+      },
+      {
+        "id": "auth-warranty",
+        "record_key": "auth-warranty",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-01T00:00:00.000Z",
+        "available_at": "2026-10-01T00:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / auth-warranty",
+        "authority_id": "AUTH-warranty",
+        "person_id": "MAKER",
+        "role": "warranty",
+        "customer_id": "*",
+        "valid_from": "2026-10-01T00:00:00.000Z",
+        "valid_to": "",
+        "authority_document_id": "authority-warranty"
+      },
+      {
+        "id": "auth-rental",
+        "record_key": "auth-rental",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-01T00:00:00.000Z",
+        "available_at": "2026-10-01T00:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / auth-rental",
+        "authority_id": "AUTH-rental",
+        "person_id": "CUSTOMER",
+        "role": "rental",
+        "customer_id": "*",
+        "valid_from": "2026-10-01T00:00:00.000Z",
+        "valid_to": "",
+        "authority_document_id": "authority-rental"
+      },
+      {
+        "id": "auth-custody",
+        "record_key": "auth-custody",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-01T00:00:00.000Z",
+        "available_at": "2026-10-01T00:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / auth-custody",
+        "authority_id": "AUTH-custody",
+        "person_id": "OP",
+        "role": "custody",
+        "customer_id": "*",
+        "valid_from": "2026-10-01T00:00:00.000Z",
+        "valid_to": "",
+        "authority_document_id": "authority-custody"
+      }
+    ],
+    "commerce_quote_lines": [
+      {
+        "id": "q1",
+        "record_key": "q1",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T08:00:00.000Z",
+        "available_at": "2026-10-02T08:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / q1",
+        "quote_line_id": "Q-LINE1",
+        "quote_id": "Q1",
+        "case_id": "CASE-REPAIR",
+        "asset_id": "HOIST",
+        "action": "repair",
+        "catalogue_item": "LABOUR",
+        "description": "Up to four approved repair hours",
+        "quantity": "4",
+        "unit": "hour",
+        "currency": "CAD",
+        "unit_price": "40",
+        "tax_amount": "16",
+        "issued_at": "2026-10-02T08:00:00.000Z",
+        "valid_until": "2026-10-02T18:00:00.000Z",
+        "issued_by": "OP",
+        "authority_id": "AUTH-quote"
+      }
+    ],
+    "commerce_approvals": [
+      {
+        "id": "ap1",
+        "record_key": "ap1",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T08:10:00.000Z",
+        "available_at": "2026-10-02T08:10:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / ap1",
+        "approval_id": "AP1",
+        "quote_line_record_id": "q1",
+        "quote_line_sha256": "ccdfbb2e3a883be9756199d906fa9fcf41a4f4e5513c2677216d1bb999ee2c2f",
+        "customer_id": "C1",
+        "approved_quantity": "2",
+        "decision": "approved",
+        "decided_at": "2026-10-02T08:10:00.000Z",
+        "decided_by": "CUSTOMER",
+        "authority_id": "AUTH-customer_approval",
+        "decision_document_id": "customer-partial-approval"
+      }
+    ],
+    "commerce_work_allocations": [
+      {
+        "id": "alloc1",
+        "record_key": "alloc1",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T08:30:00.000Z",
+        "available_at": "2026-10-02T08:30:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / alloc1",
+        "allocation_id": "ALLOC1",
+        "approval_record_id": "ap1",
+        "work_id": "W-REPAIR",
+        "case_id": "CASE-REPAIR",
+        "asset_id": "HOIST",
+        "action": "repair",
+        "quantity": "2",
+        "unit": "hour",
+        "performed_at": "2026-10-02T08:30:00.000Z"
+      }
+    ],
+    "commerce_sales_lines": [
+      {
+        "id": "sale-first",
+        "record_key": "sale-first",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-01T00:00:00.000Z",
+        "available_at": "2026-10-01T00:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / sale-first",
+        "sale_line_id": "SALE-FIRST",
+        "sale_id": "SALE1",
+        "customer_id": "C1",
+        "asset_id": "FIRST",
+        "catalogue_item": "EQUIPMENT-A",
+        "quantity": "1",
+        "unit": "unit",
+        "currency": "CAD",
+        "unit_price": "500",
+        "tax_amount": "0",
+        "sold_at": "2026-10-01T00:00:00.000Z",
+        "sale_status": "completed",
+        "sale_document_id": "original-purchase"
+      },
+      {
+        "id": "sale-new",
+        "record_key": "sale-new",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T10:00:00.000Z",
+        "available_at": "2026-10-02T10:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / sale-new",
+        "sale_line_id": "SALE-NEW",
+        "sale_id": "SALE2",
+        "customer_id": "C1",
+        "asset_id": "NEW",
+        "catalogue_item": "EQUIPMENT-B",
+        "quantity": "1",
+        "unit": "unit",
+        "currency": "CAD",
+        "unit_price": "1000",
+        "tax_amount": "0",
+        "sold_at": "2026-10-02T10:00:00.000Z",
+        "sale_status": "completed",
+        "sale_document_id": "replacement-purchase"
+      }
+    ],
+    "commerce_policies": [
+      {
+        "id": "policy-first",
+        "record_key": "policy-first",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-01T00:00:00.000Z",
+        "available_at": "2026-10-01T00:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / policy-first",
+        "policy_id": "FIRST-SERVICE",
+        "policy_type": "first_service",
+        "service_action": "service",
+        "maximum_uses": "1",
+        "maximum_credit": "",
+        "currency": "",
+        "valid_from": "2026-10-01T00:00:00.000Z",
+        "valid_to": "",
+        "approved_by": "OP",
+        "approved_at": "2026-10-01T00:00:00.000Z",
+        "authority_id": "AUTH-policy",
+        "policy_document_id": "first-service-policy"
+      },
+      {
+        "id": "policy-waiver",
+        "record_key": "policy-waiver",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-01T00:00:00.000Z",
+        "available_at": "2026-10-01T00:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / policy-waiver",
+        "policy_id": "REPLACEMENT-WAIVER",
+        "policy_type": "replacement_fee_waiver",
+        "service_action": "diagnosis",
+        "maximum_uses": "",
+        "maximum_credit": "80",
+        "currency": "CAD",
+        "valid_from": "2026-10-01T00:00:00.000Z",
+        "valid_to": "",
+        "approved_by": "OP",
+        "approved_at": "2026-10-01T00:00:00.000Z",
+        "authority_id": "AUTH-policy",
+        "policy_document_id": "waiver-policy"
+      }
+    ],
+    "commerce_entitlements": [
+      {
+        "id": "use1",
+        "record_key": "use1",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T09:00:00.000Z",
+        "available_at": "2026-10-02T09:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / use1",
+        "entitlement_id": "USE1",
+        "policy_record_id": "policy-first",
+        "sale_line_record_id": "sale-first",
+        "case_id": "CASE-FIRST",
+        "work_id": "W-FIRST",
+        "asset_id": "FIRST",
+        "used_at": "2026-10-02T09:00:00.000Z",
+        "approved_by": "OP",
+        "approved_at": "2026-10-02T08:45:00.000Z",
+        "authority_id": "AUTH-entitlement",
+        "approval_document_id": "first-service-approval"
+      }
+    ],
+    "commerce_replacements": [
+      {
+        "id": "rep1",
+        "record_key": "rep1",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T11:00:00.000Z",
+        "available_at": "2026-10-02T11:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / rep1",
+        "replacement_id": "REP1",
+        "case_id": "CASE-REPLACE",
+        "old_asset_id": "OLD",
+        "new_asset_id": "NEW",
+        "assessment_work_id": "W-DIAG",
+        "replacement_sale_record_id": "sale-new",
+        "decision_at": "2026-10-02T11:00:00.000Z",
+        "approved_by": "OP",
+        "authority_id": "AUTH-replacement",
+        "decision_document_id": "replacement-decision"
+      }
+    ],
+    "commerce_invoice_lines": [
+      {
+        "id": "inv-repair",
+        "record_key": "inv-repair",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T12:00:00.000Z",
+        "available_at": "2026-10-02T12:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / inv-repair",
+        "invoice_line_id": "INV-REPAIR",
+        "invoice_id": "INV-REPAIR",
+        "customer_id": "C1",
+        "case_id": "CASE-REPAIR",
+        "asset_id": "HOIST",
+        "basis_type": "work",
+        "basis_record_id": "alloc1",
+        "quantity": "2",
+        "unit_price": "40",
+        "tax_amount": "8",
+        "currency": "CAD",
+        "issued_at": "2026-10-02T12:00:00.000Z",
+        "invoice_document_id": "inv-repair"
+      },
+      {
+        "id": "inv-diag",
+        "record_key": "inv-diag",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T12:00:00.000Z",
+        "available_at": "2026-10-02T12:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / inv-diag",
+        "invoice_line_id": "INV-DIAG",
+        "invoice_id": "INV-DIAG",
+        "customer_id": "C1",
+        "case_id": "CASE-REPLACE",
+        "asset_id": "OLD",
+        "basis_type": "diagnosis",
+        "basis_record_id": "W-DIAG",
+        "quantity": "1",
+        "unit_price": "50",
+        "tax_amount": "0",
+        "currency": "CAD",
+        "issued_at": "2026-10-02T12:00:00.000Z",
+        "invoice_document_id": "inv-diag"
+      },
+      {
+        "id": "inv-sale",
+        "record_key": "inv-sale",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T12:00:00.000Z",
+        "available_at": "2026-10-02T12:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / inv-sale",
+        "invoice_line_id": "INV-SALE",
+        "invoice_id": "INV-SALE",
+        "customer_id": "C1",
+        "case_id": "CASE-REPLACE",
+        "asset_id": "NEW",
+        "basis_type": "sale",
+        "basis_record_id": "sale-new",
+        "quantity": "1",
+        "unit_price": "1000",
+        "tax_amount": "0",
+        "currency": "CAD",
+        "issued_at": "2026-10-02T12:00:00.000Z",
+        "invoice_document_id": "inv-sale"
+      },
+      {
+        "id": "inv-rental",
+        "record_key": "inv-rental",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T12:00:00.000Z",
+        "available_at": "2026-10-02T12:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / inv-rental",
+        "invoice_line_id": "INV-RENTAL",
+        "invoice_id": "INV-RENTAL",
+        "customer_id": "C1",
+        "case_id": "CASE-RENTAL",
+        "asset_id": "LOAN",
+        "basis_type": "rental",
+        "basis_record_id": "rent1",
+        "quantity": "1",
+        "unit_price": "20",
+        "tax_amount": "0",
+        "currency": "CAD",
+        "issued_at": "2026-10-02T12:00:00.000Z",
+        "invoice_document_id": "inv-rental"
+      }
+    ],
+    "commerce_credits": [
+      {
+        "id": "credit1",
+        "record_key": "credit1",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T13:00:00.000Z",
+        "available_at": "2026-10-02T13:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / credit1",
+        "credit_id": "CREDIT1",
+        "invoice_line_record_id": "inv-diag",
+        "policy_record_id": "policy-waiver",
+        "replacement_record_id": "rep1",
+        "amount": "50",
+        "currency": "CAD",
+        "decision": "posted",
+        "approved_at": "2026-10-02T12:15:00.000Z",
+        "approved_by": "OP",
+        "authority_id": "AUTH-credit",
+        "posted_at": "2026-10-02T13:00:00.000Z",
+        "credit_document_id": "posted-credit"
+      }
+    ],
+    "commerce_warranty_claims": [
+      {
+        "id": "claim1",
+        "record_key": "claim1",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T09:30:00.000Z",
+        "available_at": "2026-10-02T09:30:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / claim1",
+        "claim_id": "CLAIM1",
+        "case_id": "CASE-REPLACE",
+        "asset_id": "OLD",
+        "manufacturer": "Authored manufacturer",
+        "submitted_at": "2026-10-02T09:30:00.000Z",
+        "claim_document_id": "warranty-claim"
+      }
+    ],
+    "commerce_warranty_events": [
+      {
+        "id": "warranty-approved",
+        "record_key": "warranty-approved",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T10:00:00.000Z",
+        "available_at": "2026-10-02T10:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / warranty-approved",
+        "warranty_event_id": "WARRANTY-APPROVED",
+        "claim_id": "CLAIM1",
+        "event_type": "approved",
+        "amount": "40",
+        "currency": "CAD",
+        "occurred_at": "2026-10-02T10:00:00.000Z",
+        "decided_by": "MAKER",
+        "authority_id": "AUTH-warranty",
+        "event_document_id": "warranty-approved",
+        "provider_transaction_id": ""
+      },
+      {
+        "id": "warranty-payment",
+        "record_key": "warranty-payment",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T12:00:00.000Z",
+        "available_at": "2026-10-02T12:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / warranty-payment",
+        "warranty_event_id": "WARRANTY-PAYMENT",
+        "claim_id": "CLAIM1",
+        "event_type": "payment",
+        "amount": "20",
+        "currency": "CAD",
+        "occurred_at": "2026-10-02T12:00:00.000Z",
+        "decided_by": "MAKER",
+        "authority_id": "AUTH-warranty",
+        "event_document_id": "warranty-payment",
+        "provider_transaction_id": "AUTHORED-WARRANTY-TX1"
+      }
+    ],
+    "commerce_rentals": [
+      {
+        "id": "rent1",
+        "record_key": "rent1",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T08:00:00.000Z",
+        "available_at": "2026-10-02T08:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / rent1",
+        "rental_id": "RENT1",
+        "case_id": "CASE-RENTAL",
+        "customer_id": "C1",
+        "customer_asset_id": "MONITOR",
+        "rental_asset_id": "LOAN",
+        "currency": "CAD",
+        "rate": "10",
+        "billing_unit_minutes": "60",
+        "minimum_units": "1",
+        "agreement_at": "2026-10-02T08:00:00.000Z",
+        "accepted_by": "CUSTOMER",
+        "authority_id": "AUTH-rental",
+        "agreement_document_id": "rental-agreement"
+      }
+    ],
+    "commerce_rental_events": [
+      {
+        "id": "issue1",
+        "record_key": "issue1",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T08:05:00.000Z",
+        "available_at": "2026-10-02T08:05:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / issue1",
+        "rental_event_id": "ISSUE1",
+        "rental_id": "RENT1",
+        "event_type": "issue",
+        "asset_id": "LOAN",
+        "occurred_at": "2026-10-02T08:05:00.000Z",
+        "recorded_by": "OP",
+        "authority_id": "AUTH-custody",
+        "event_document_id": "rental-issue"
+      },
+      {
+        "id": "return1",
+        "record_key": "return1",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T10:05:00.000Z",
+        "available_at": "2026-10-02T10:05:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / return1",
+        "rental_event_id": "RETURN1",
+        "rental_id": "RENT1",
+        "event_type": "return",
+        "asset_id": "LOAN",
+        "occurred_at": "2026-10-02T10:05:00.000Z",
+        "recorded_by": "OP",
+        "authority_id": "AUTH-custody",
+        "event_document_id": "rental-return"
+      }
+    ],
+    "commerce_payments": [
+      {
+        "id": "payment1",
+        "record_key": "payment1",
+        "revision": "1",
+        "supersedes_id": "",
+        "record_status": "active",
+        "recorded_at": "2026-10-02T13:00:00.000Z",
+        "available_at": "2026-10-02T13:00:00.000Z",
+        "source_document_id": "",
+        "source_ref": "Authored complete service-commerce course / payment1",
+        "payment_id": "PAY1",
+        "invoice_id": "INV-REPAIR",
+        "customer_id": "C1",
+        "currency": "CAD",
+        "amount": "88",
+        "payment_type": "receipt",
+        "paid_at": "2026-10-02T13:00:00.000Z",
+        "provider_transaction_id": "AUTHORED-TX1",
+        "payment_document_id": "payment-original"
+      }
+    ]
+  },
+  "context": {
+    "case": [
+      {
+        "case_id": "CASE-REPLACE",
+        "customer_id": "C1",
+        "asset_id": "OLD",
+        "available_at": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "case_id": "CASE-FIRST",
+        "customer_id": "C1",
+        "asset_id": "FIRST",
+        "available_at": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "case_id": "CASE-REPAIR",
+        "customer_id": "C1",
+        "asset_id": "HOIST",
+        "available_at": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "case_id": "CASE-RENTAL",
+        "customer_id": "C1",
+        "asset_id": "MONITOR",
+        "available_at": "2026-10-01T00:00:00.000Z"
+      }
+    ],
+    "asset": [
+      {
+        "asset_id": "OLD",
+        "customer_id": "C1",
+        "ownership": "customer",
+        "available_at": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "asset_id": "NEW",
+        "customer_id": "C1",
+        "ownership": "customer",
+        "available_at": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "asset_id": "FIRST",
+        "customer_id": "C1",
+        "ownership": "customer",
+        "available_at": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "asset_id": "HOIST",
+        "customer_id": "C1",
+        "ownership": "customer",
+        "available_at": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "asset_id": "MONITOR",
+        "customer_id": "C1",
+        "ownership": "customer",
+        "available_at": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "asset_id": "LOAN",
+        "customer_id": "PROVIDER",
+        "ownership": "provider",
+        "available_at": "2026-10-01T00:00:00.000Z"
+      }
+    ],
+    "person": [
+      {
+        "person_id": "OP",
+        "available_at": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "person_id": "CUSTOMER",
+        "available_at": "2026-10-01T00:00:00.000Z"
+      },
+      {
+        "person_id": "MAKER",
+        "available_at": "2026-10-01T00:00:00.000Z"
+      }
+    ],
+    "work": [
+      {
+        "work_id": "W-DIAG",
+        "case_id": "CASE-REPLACE",
+        "asset_id": "OLD",
+        "action": "diagnosis",
+        "quantity": "1",
+        "unit": "job",
+        "performed_at": "2026-10-02T09:00:00.000Z",
+        "disposition": "unrepairable",
+        "available_at": "2026-10-02T09:00:00.000Z"
+      },
+      {
+        "work_id": "W-FIRST",
+        "case_id": "CASE-FIRST",
+        "asset_id": "FIRST",
+        "action": "service",
+        "quantity": "1",
+        "unit": "job",
+        "performed_at": "2026-10-02T09:00:00.000Z",
+        "disposition": "complete",
+        "available_at": "2026-10-02T09:00:00.000Z"
+      },
+      {
+        "work_id": "W-REPAIR",
+        "case_id": "CASE-REPAIR",
+        "asset_id": "HOIST",
+        "action": "repair",
+        "quantity": "2",
+        "unit": "hour",
+        "performed_at": "2026-10-02T08:30:00.000Z",
+        "disposition": "complete",
+        "available_at": "2026-10-02T08:30:00.000Z"
+      }
+    ]
+  },
+  "documents": [
+    {
+      "id": "authority-quote",
+      "available_at": "2026-10-01T00:00:00.000Z",
+      "filename": "authority-quote.txt",
+      "content": "Authored original authority-quote"
+    },
+    {
+      "id": "authority-customer_approval",
+      "available_at": "2026-10-01T00:00:00.000Z",
+      "filename": "authority-customer_approval.txt",
+      "content": "Authored original authority-customer_approval"
+    },
+    {
+      "id": "authority-policy",
+      "available_at": "2026-10-01T00:00:00.000Z",
+      "filename": "authority-policy.txt",
+      "content": "Authored original authority-policy"
+    },
+    {
+      "id": "authority-entitlement",
+      "available_at": "2026-10-01T00:00:00.000Z",
+      "filename": "authority-entitlement.txt",
+      "content": "Authored original authority-entitlement"
+    },
+    {
+      "id": "authority-replacement",
+      "available_at": "2026-10-01T00:00:00.000Z",
+      "filename": "authority-replacement.txt",
+      "content": "Authored original authority-replacement"
+    },
+    {
+      "id": "authority-credit",
+      "available_at": "2026-10-01T00:00:00.000Z",
+      "filename": "authority-credit.txt",
+      "content": "Authored original authority-credit"
+    },
+    {
+      "id": "authority-warranty",
+      "available_at": "2026-10-01T00:00:00.000Z",
+      "filename": "authority-warranty.txt",
+      "content": "Authored original authority-warranty"
+    },
+    {
+      "id": "authority-rental",
+      "available_at": "2026-10-01T00:00:00.000Z",
+      "filename": "authority-rental.txt",
+      "content": "Authored original authority-rental"
+    },
+    {
+      "id": "authority-custody",
+      "available_at": "2026-10-01T00:00:00.000Z",
+      "filename": "authority-custody.txt",
+      "content": "Authored original authority-custody"
+    },
+    {
+      "id": "customer-partial-approval",
+      "available_at": "2026-10-02T08:10:00.000Z",
+      "filename": "customer-partial-approval.txt",
+      "content": "Authored original customer-partial-approval"
+    },
+    {
+      "id": "original-purchase",
+      "available_at": "2026-10-01T00:00:00.000Z",
+      "filename": "original-purchase.txt",
+      "content": "Authored original original-purchase"
+    },
+    {
+      "id": "replacement-purchase",
+      "available_at": "2026-10-02T10:00:00.000Z",
+      "filename": "replacement-purchase.txt",
+      "content": "Authored original replacement-purchase"
+    },
+    {
+      "id": "first-service-policy",
+      "available_at": "2026-10-01T00:00:00.000Z",
+      "filename": "first-service-policy.txt",
+      "content": "Authored original first-service-policy"
+    },
+    {
+      "id": "waiver-policy",
+      "available_at": "2026-10-01T00:00:00.000Z",
+      "filename": "waiver-policy.txt",
+      "content": "Authored original waiver-policy"
+    },
+    {
+      "id": "first-service-approval",
+      "available_at": "2026-10-02T08:45:00.000Z",
+      "filename": "first-service-approval.txt",
+      "content": "Authored original first-service-approval"
+    },
+    {
+      "id": "replacement-decision",
+      "available_at": "2026-10-02T11:00:00.000Z",
+      "filename": "replacement-decision.txt",
+      "content": "Authored original replacement-decision"
+    },
+    {
+      "id": "rental-agreement",
+      "available_at": "2026-10-02T08:00:00.000Z",
+      "filename": "rental-agreement.txt",
+      "content": "Authored original rental-agreement"
+    },
+    {
+      "id": "rental-issue",
+      "available_at": "2026-10-02T08:05:00.000Z",
+      "filename": "rental-issue.txt",
+      "content": "Authored original rental-issue"
+    },
+    {
+      "id": "rental-return",
+      "available_at": "2026-10-02T10:05:00.000Z",
+      "filename": "rental-return.txt",
+      "content": "Authored original rental-return"
+    },
+    {
+      "id": "inv-repair",
+      "available_at": "2026-10-02T12:00:00.000Z",
+      "filename": "inv-repair.txt",
+      "content": "Authored original inv-repair"
+    },
+    {
+      "id": "inv-diag",
+      "available_at": "2026-10-02T12:00:00.000Z",
+      "filename": "inv-diag.txt",
+      "content": "Authored original inv-diag"
+    },
+    {
+      "id": "inv-sale",
+      "available_at": "2026-10-02T12:00:00.000Z",
+      "filename": "inv-sale.txt",
+      "content": "Authored original inv-sale"
+    },
+    {
+      "id": "inv-rental",
+      "available_at": "2026-10-02T12:00:00.000Z",
+      "filename": "inv-rental.txt",
+      "content": "Authored original inv-rental"
+    },
+    {
+      "id": "posted-credit",
+      "available_at": "2026-10-02T12:15:00.000Z",
+      "filename": "posted-credit.txt",
+      "content": "Authored original posted-credit"
+    },
+    {
+      "id": "warranty-claim",
+      "available_at": "2026-10-02T09:30:00.000Z",
+      "filename": "warranty-claim.txt",
+      "content": "Authored original warranty-claim"
+    },
+    {
+      "id": "warranty-approved",
+      "available_at": "2026-10-02T10:00:00.000Z",
+      "filename": "warranty-approved.txt",
+      "content": "Authored original warranty-approved"
+    },
+    {
+      "id": "warranty-payment",
+      "available_at": "2026-10-02T12:00:00.000Z",
+      "filename": "warranty-payment.txt",
+      "content": "Authored original warranty-payment"
+    },
+    {
+      "id": "payment-original",
+      "available_at": "2026-10-02T13:00:00.000Z",
+      "filename": "payment-original.txt",
+      "content": "Authored original payment-original"
+    }
+  ],
+  "extract_available_at": {
+    "commerce_authorities": "2026-10-01T00:00:00.000Z",
+    "commerce_quote_lines": "2026-10-01T00:00:00.000Z",
+    "commerce_approvals": "2026-10-01T00:00:00.000Z",
+    "commerce_work_allocations": "2026-10-01T00:00:00.000Z",
+    "commerce_sales_lines": "2026-10-01T00:00:00.000Z",
+    "commerce_policies": "2026-10-01T00:00:00.000Z",
+    "commerce_entitlements": "2026-10-01T00:00:00.000Z",
+    "commerce_replacements": "2026-10-01T00:00:00.000Z",
+    "commerce_invoice_lines": "2026-10-01T00:00:00.000Z",
+    "commerce_credits": "2026-10-01T00:00:00.000Z",
+    "commerce_warranty_claims": "2026-10-01T00:00:00.000Z",
+    "commerce_warranty_events": "2026-10-01T00:00:00.000Z",
+    "commerce_rentals": "2026-10-01T00:00:00.000Z",
+    "commerce_rental_events": "2026-10-01T00:00:00.000Z",
+    "commerce_payments": "2026-10-01T00:00:00.000Z"
+  },
+  "expected_counts": {
+    "commerce_authorities": 9,
+    "commerce_quote_lines": 1,
+    "commerce_approvals": 1,
+    "commerce_work_allocations": 1,
+    "commerce_sales_lines": 2,
+    "commerce_policies": 2,
+    "commerce_entitlements": 1,
+    "commerce_replacements": 1,
+    "commerce_invoice_lines": 4,
+    "commerce_credits": 1,
+    "commerce_warranty_claims": 1,
+    "commerce_warranty_events": 2,
+    "commerce_rentals": 1,
+    "commerce_rental_events": 2,
+    "commerce_payments": 1
+  },
+  "population_complete": true
+}
