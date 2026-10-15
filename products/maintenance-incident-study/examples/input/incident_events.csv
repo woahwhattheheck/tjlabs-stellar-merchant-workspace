@@ -1,0 +1,4 @@
+id,incident_id,status,assignee,effective_at,recorded_at,actor,reason,source_ref
+E1,I1,assigned,Authored technician B,2026-10-12T08:10:00Z,2026-10-12T08:11:00Z,Authored shift lead,Authored dated state change,authored/source
+E2,I1,resolved,Authored technician B,2026-10-12T10:20:00Z,2026-10-12T10:21:00Z,Authored shift lead,Authored dated state change,authored/source
+E3,I1,reopened,Authored technician C,2026-10-12T11:00:00Z,2026-10-12T12:00:00Z,Authored shift lead,Authored dated state change,authored/source

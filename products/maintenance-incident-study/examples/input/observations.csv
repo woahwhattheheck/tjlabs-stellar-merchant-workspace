@@ -1,0 +1,11 @@
+id,incident_id,symptom_code,value,state,source_role,observer,observed_at,recorded_at,supersedes_id,source_ref
+O1,I1,S1,observed-1,confirmed,technician,Authored technician A,2026-10-12T08:02:00Z,2026-10-12T08:03:00Z,,authored/source
+O2,I2,S1,observed-2,confirmed,technician,Authored technician A,2026-10-12T08:02:00Z,2026-10-12T08:03:00Z,,authored/source
+O3,I3,S1,observed-3,confirmed,technician,Authored technician A,2026-10-12T08:02:00Z,2026-10-12T08:03:00Z,,authored/source
+O4,I4,S1,observed-4,confirmed,technician,Authored technician A,2026-10-12T08:02:00Z,2026-10-12T08:03:00Z,,authored/source
+O5,I5,S1,observed-5,confirmed,technician,Authored technician A,2026-10-12T08:02:00Z,2026-10-12T08:03:00Z,,authored/source
+O6,I6,S1,observed-6,confirmed,technician,Authored technician A,2026-10-12T08:02:00Z,2026-10-12T08:03:00Z,,authored/source
+O7,I7,S1,observed-7,confirmed,technician,Authored technician A,2026-10-12T08:02:00Z,2026-10-12T08:03:00Z,,authored/source
+O8,I8,S1,observed-8,confirmed,technician,Authored technician A,2026-10-12T08:02:00Z,2026-10-12T08:03:00Z,,authored/source
+O9,I9,S1,observed-9,confirmed,technician,Authored technician A,2026-10-12T08:02:00Z,2026-10-12T08:03:00Z,,authored/source
+O10,I10,S1,observed-10,confirmed,technician,Authored technician A,2026-10-12T08:02:00Z,2026-10-12T08:03:00Z,,authored/source
