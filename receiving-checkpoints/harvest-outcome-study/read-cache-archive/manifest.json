@@ -1,0 +1,73 @@
+{
+  "schema": "complete-archive-transfer/v1",
+  "encoding": "base64",
+  "sourceHead": "579f2b781b4ad2b22a56f69c6f09e7833b5ae35a",
+  "sourceFiles": 171,
+  "requests": 3,
+  "editions": 4,
+  "members": 1134,
+  "uncompressedBytes": 27902668,
+  "bytes": 6108806,
+  "sha256": "0a76af1647d76e6025f2bf166a446b452b3f6e7dbfaf8e34a7caeb9f861a4add",
+  "buildMs": 39328,
+  "totalMs": 77830,
+  "allMemberCRCAndSHAExact": true,
+  "allSourcesAndManagedRecordsExact": true,
+  "parts": [
+    {
+      "path": "receiving-checkpoints/harvest-outcome-study/read-cache-archive/part-000.txt",
+      "bytes": 750000,
+      "sha256": "2beea0e30499f97aa652a1382d1e522d2ebcb315667525da6389bbfd53e90bcd"
+    },
+    {
+      "path": "receiving-checkpoints/harvest-outcome-study/read-cache-archive/part-001.txt",
+      "bytes": 750000,
+      "sha256": "18bc7eb291e2d900242e7031e067b60c0f0898fa1e7b8039669f29f010002ceb"
+    },
+    {
+      "path": "receiving-checkpoints/harvest-outcome-study/read-cache-archive/part-002.txt",
+      "bytes": 750000,
+      "sha256": "5aefdcd9caf5d409adc08fb3cc048deb60d9f3a71f3a92e0ce6cce823e035c9b"
+    },
+    {
+      "path": "receiving-checkpoints/harvest-outcome-study/read-cache-archive/part-003.txt",
+      "bytes": 750000,
+      "sha256": "539d065dad9863e876a8764467a17f56e2218c8f58832763f60783471bc56cef"
+    },
+    {
+      "path": "receiving-checkpoints/harvest-outcome-study/read-cache-archive/part-004.txt",
+      "bytes": 750000,
+      "sha256": "49466658a1b0063a40104ee36d42a418884949abed2b7a9e7b7bc1de36b84b56"
+    },
+    {
+      "path": "receiving-checkpoints/harvest-outcome-study/read-cache-archive/part-005.txt",
+      "bytes": 750000,
+      "sha256": "2ccbc8645ae697dce22bb1bc7a47bed5c8ac9ccaf8bead154ab78b88f1a91ab5"
+    },
+    {
+      "path": "receiving-checkpoints/harvest-outcome-study/read-cache-archive/part-006.txt",
+      "bytes": 750000,
+      "sha256": "aeccf907c79ec826dd9df59aab431138a4883f8123903b6fb4e25ac808958e02"
+    },
+    {
+      "path": "receiving-checkpoints/harvest-outcome-study/read-cache-archive/part-007.txt",
+      "bytes": 750000,
+      "sha256": "55ef97352449c44ea3981079c64a38bf356553a1cf764495945da636fe4f459b"
+    },
+    {
+      "path": "receiving-checkpoints/harvest-outcome-study/read-cache-archive/part-008.txt",
+      "bytes": 750000,
+      "sha256": "3a465a9c54ee01828b1fbc61c5f38f36a5c06c9c616b7424630e1063613465d0"
+    },
+    {
+      "path": "receiving-checkpoints/harvest-outcome-study/read-cache-archive/part-009.txt",
+      "bytes": 750000,
+      "sha256": "c5f9f99f2d3a449a49ec9d401516168817c344e1a063b4a748a7ce76f4bc0baf"
+    },
+    {
+      "path": "receiving-checkpoints/harvest-outcome-study/read-cache-archive/part-010.txt",
+      "bytes": 645076,
+      "sha256": "c45e2e36bfee0415dd949764d4e54745042ec1e243d549ab3381b18086345e6f"
+    }
+  ]
+}
