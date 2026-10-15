@@ -1,0 +1,860 @@
+{
+  "schema": "tjlabs.field-filing-desk.v1",
+  "workspace": {
+    "schema": "tjlabs.field-filing-study.v1",
+    "id": "operating-course",
+    "label": "Field filing complete operating course",
+    "editions": [
+      {
+        "id": "before-sync",
+        "label": "before-sync",
+        "receivedAt": "2026-10-20T14:00:00-04:00",
+        "settings": {
+          "dayStart": "2026-10-20T00:00:00-04:00",
+          "dayEnd": "2026-10-21T00:00:00-04:00",
+          "asOf": "2026-10-20T12:00:00-04:00"
+        },
+        "notes": "Authored end-to-end operating example",
+        "sources": {
+          "resources": {
+            "name": "resources.csv",
+            "text": "resource_id,name,kind,reference\r\nCREW-A,Crew A,crew,Authored roster\r\nTRUCK-A,Truck A,truck,Authored roster\r\n",
+            "bytes": 108,
+            "sha256": "11e7ac707e2a2067121d1b33bdc21af2ee527e2f08dfa6a5707ba88150194237"
+          },
+          "availability": {
+            "name": "availability.csv",
+            "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW-C,CREW-A,available,2026-10-20T08:00:00-04:00,2026-10-20T18:00:00-04:00,Declared crew day\r\nW-T,TRUCK-A,available,2026-10-20T08:00:00-04:00,2026-10-20T18:00:00-04:00,Declared truck day\r\nW-BREAK,CREW-A,blocked,2026-10-20T12:00:00-04:00,2026-10-20T12:30:00-04:00,Declared break\r\n",
+            "bytes": 332,
+            "sha256": "7beb1dc7d9f71df1ae59d437a30912587da1a69a4d64c19c1bfc9ea24470ccb8"
+          },
+          "booking_revisions": {
+            "name": "booking_revisions.csv",
+            "text": "revision_id,job_id,revision,recorded_at,status,customer_id,system_id,location_id,crew_id,truck_id,start_at,end_at,crew_before_minutes,crew_after_minutes,truck_before_minutes,truck_after_minutes,promise_id,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-04:00,confirmed,CUSTOMER-A,SYS-A,PROPERTY-A,CREW-A,TRUCK-A,2026-10-20T09:00:00-04:00,2026-10-20T11:00:00-04:00,15,15,10,10,PROMISE-A,USD,Original service accepted,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-04:00,confirmed,CUSTOMER-A,SYS-A,PROPERTY-A,CREW-A,TRUCK-A,2026-10-20T10:30:00-04:00,2026-10-20T12:00:00-04:00,15,15,10,10,PROMISE-A,USD,Office moved planned service; original arrival agreement retained,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-04:00,confirmed,CUSTOMER-B,SYS-B,PROPERTY-B,CREW-A,TRUCK-A,2026-10-20T11:45:00-04:00,2026-10-20T13:30:00-04:00,15,15,10,10,PROMISE-B,USD,Accepted service,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-04:00,confirmed,CUSTOMER-C,SYS-C,PROPERTY-C,CREW-A,TRUCK-A,2026-10-20T15:00:00-04:00,2026-10-20T17:00:00-04:00,15,15,10,10,PROMISE-C,USD,Accepted service,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-04:00,postponed,CUSTOMER-C,SYS-C,PROPERTY-C,CREW-A,TRUCK-A,2026-10-20T15:00:00-04:00,2026-10-20T17:00:00-04:00,15,15,10,10,PROMISE-C,USD,Weather postponement; original deposit remains until rebooking instruction,Authored booking\r\n",
+            "bytes": 1370,
+            "sha256": "8922052141da1a152d002fa4d19380f611c3fe619fe02e140556cbe0c532686c"
+          },
+          "quoted_lines": {
+            "name": "quoted_lines.csv",
+            "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed inspection and service,45000,Original quote\r\nQA2,A2,Agreed inspection and service,45000,Same scope; revised schedule\r\nQB,B1,Agreed inspection,22500,Accepted quote\r\nQC,C1,Agreed pump service,50000,Original quote\r\n",
+            "bytes": 282,
+            "sha256": "3c613f1789eda61d86b26fe3306d92501fd970628a770372f63261ae6c12f973"
+          },
+          "completions": {
+            "name": "completions.csv",
+            "text": "observation_id,job_id,status,crew_id,truck_id,started_at,finished_at,observed_at,authorization,reference\r\nOBS-A,JOB-A,completed,CREW-A,TRUCK-A,2026-10-20T10:40:00-04:00,2026-10-20T11:40:00-04:00,2026-10-20T12:30:00-04:00,Crew reported actual visit,Authored field completion\r\nOBS-B,JOB-B,in_progress,CREW-A,TRUCK-A,2026-10-20T11:35:00-04:00,,2026-10-20T12:20:00-04:00,Crew current observation,Authored current field update\r\n",
+            "bytes": 423,
+            "sha256": "76ad760d13e9f4eddec98e635bf8e49e481326789e310848d82a22a27fe435ae"
+          },
+          "invoice_lines": {
+            "name": "invoice_lines.csv",
+            "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIL-A,INV-A,JOB-A,USD,45000,Agreed inspection and service,2026-10-20T12:45:00-04:00,Original invoice\r\n",
+            "bytes": 182,
+            "sha256": "85f7bd2844ccd528d6316714d35f844dfe461855ceed88882d7f06c2b3cfc5f5"
+          },
+          "payments": {
+            "name": "payments.csv",
+            "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nPAY-A,received,,USD,10000,2026-10-19T10:15:00-04:00,Recorded customer deposit,Original receipt\r\nPAY-C,received,,USD,7500,2026-10-19T12:15:00-04:00,Recorded customer deposit,Original receipt\r\n",
+            "bytes": 277,
+            "sha256": "ab847f0d1d4403ce1bcb1a502e85734b63704ac57ab5293b7ee34b5bfb5233b8"
+          },
+          "allocations": {
+            "name": "allocations.csv",
+            "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nALLOC-A,PAY-A,JOB-A,INV-A,deposit,10000,2026-10-20T12:45:00-04:00,Apply original deposit to invoice,Source allocation\r\nALLOC-C,PAY-C,JOB-C,,deposit,7500,2026-10-19T12:20:00-04:00,Retain on original job pending written rebooking,Source allocation\r\n",
+            "bytes": 350,
+            "sha256": "1176bba4ca245489509533c1673cc5b1a57f5f785ce6e50401c95ea60e1387bc"
+          },
+          "systems": {
+            "name": "systems.csv",
+            "text": "system_id,customer_id,property_id,parcel_id,jurisdiction_id,source_system,source_id,recorded_at,reference\r\nSYS-A,CUSTOMER-A,PROPERTY-A,PARCEL-A,JURISDICTION-EXAMPLE,Original register,REGISTER-A,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\nSYS-B,CUSTOMER-B,PROPERTY-B,PARCEL-B,JURISDICTION-EXAMPLE,Original register,REGISTER-B,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\nSYS-C,CUSTOMER-C,PROPERTY-C,PARCEL-C,JURISDICTION-EXAMPLE,Original register,REGISTER-C,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\n",
+            "bytes": 572,
+            "sha256": "ffcc1725e31aeb44d4c06bb6ddfab88ee5ec19250b4e59a985ae7736146d1283"
+          },
+          "arrival_promises": {
+            "name": "arrival_promises.csv",
+            "text": "promise_id,job_id,window_start_at,window_end_at,accepted_at,authorization,reference\r\nPROMISE-A,JOB-A,2026-10-20T09:00:00-04:00,2026-10-20T10:00:00-04:00,2026-10-19T08:30:00-04:00,Customer accepted original 09:00–10:00 arrival,Authored agreement\r\nPROMISE-B,JOB-B,2026-10-20T11:30:00-04:00,2026-10-20T12:30:00-04:00,2026-10-19T10:30:00-04:00,Customer accepted 11:30–12:30 arrival,Authored agreement\r\nPROMISE-C,JOB-C,2026-10-20T15:00:00-04:00,2026-10-20T16:00:00-04:00,2026-10-19T11:30:00-04:00,Original accepted arrival,Authored agreement\r\n",
+            "bytes": 542,
+            "sha256": "1d6e4a7d5dad77c4396ff91a9a4717eacb514536b4b21818b425f2c9e45f4411"
+          },
+          "field_versions": {
+            "name": "field_versions.csv",
+            "text": "field_version_id,job_id,revision_id,version,previous_version_id,captured_at,observed_at,status,field_values_json,customer_notes,internal_notes,authorization,reference\r\nFIELD-A1,JOB-A,A1,1,,2026-10-20T11:40:00-04:00,2026-10-20T12:30:00-04:00,final,\"{\"\"tank_count\"\":1,\"\"reported_capacity_gallons\"\":1000,\"\"photo_references\"\":[\"\"example/photo-a-1.jpg\"\"],\"\"source_note\"\":\"\"Authored values for operating behavior only\"\"}\",Inspection completed; written report follows.,Crew worked from original downloaded booking.,Crew submitted original field record,Authored offline capture\r\nFIELD-A2,JOB-A,A2,2,FIELD-A1,2026-10-20T13:05:00-04:00,2026-10-20T13:10:00-04:00,final,\"{\"\"tank_count\"\":2,\"\"reported_capacity_gallons\"\":1500,\"\"photo_references\"\":[\"\"example/photo-a-1.jpg\"\",\"\"example/photo-a-2.jpg\"\"],\"\"correction_reason\"\":\"\"Second compartment added to original field record\"\"}\",Corrected system description prepared.,Office correction requires replacement form and customer signature.,Crew and office recorded correction,Authored field correction\r\nFIELD-B1,JOB-B,B1,1,,2026-10-20T12:15:00-04:00,2026-10-20T12:25:00-04:00,draft,\"{\"\"work_started\"\":true,\"\"photo_references\"\":[]}\",Visit in progress.,Measurements incomplete; keep draft separate.,Crew draft observation,Authored draft field record\r\n",
+            "bytes": 1281,
+            "sha256": "6ce4a311e0ee4a3ccf6bfb2ad2ae7ec9ffb7c2624bdba95d7b167c1b245e5649"
+          },
+          "form_templates": {
+            "name": "form_templates.csv",
+            "text": "form_version_id,form_id,version_label,jurisdiction_id,title,source_url,source_document_sha256,required_roles_json,recorded_at,reference\r\nTEMPLATE-A1,FORM-EXAMPLE-A,2026-01,JURISDICTION-EXAMPLE,Authored inspection form,,,\"[\"\"technician\"\",\"\"owner\"\"]\",2026-10-19T08:05:00-04:00,Authored role requirements; replace with actual jurisdiction form\r\nTEMPLATE-B1,FORM-EXAMPLE-B,2026-01,JURISDICTION-EXAMPLE,Authored draft form without supplied requirements,,,[],2026-10-19T08:10:00-04:00,Requirements unspecified\r\n",
+            "bytes": 505,
+            "sha256": "607b57849c358c99af87c38bf3818a4645b1f37d307d69f626383e6a55b46833"
+          },
+          "form_instances": {
+            "name": "form_instances.csv",
+            "text": "instance_id,job_id,field_version_id,form_version_id,artifact_sha256,created_at,observed_at,reference\r\nFORM-A1,JOB-A,FIELD-A1,TEMPLATE-A1,c822242fbc69dc2ed67fcaed5b63610216f9164f55f650c36c6c899f7b2462c0,2026-10-20T11:45:00-04:00,2026-10-20T12:35:00-04:00,Original authored artifact identity\r\nFORM-A2,JOB-A,FIELD-A2,TEMPLATE-A1,3ac37ce2c0872282a7c0f3e8d1c687d6b6ce3afb3e6a585cf55adc8ad9b82ab3,2026-10-20T13:15:00-04:00,2026-10-20T13:16:00-04:00,Corrected authored artifact identity\r\nFORM-B1,JOB-B,FIELD-B1,TEMPLATE-B1,416fe7c6db6f7f4e7371be50d7a6728c324345a2a0b96857a38aa12c84cbf755,2026-10-20T12:26:00-04:00,2026-10-20T12:27:00-04:00,Draft authored artifact identity\r\n",
+            "bytes": 667,
+            "sha256": "df449d522eeb85a37e66ae3bef69068bb42865de8f90a4a5eb37ba7acfe9a557"
+          },
+          "signatures": {
+            "name": "signatures.csv",
+            "text": "signature_event_id,signature_id,instance_id,role,signer_reference,status,signed_at,observed_at,reference\r\nSIGN-A-TECH-1,SIGN-A-TECH,FORM-A1,technician,CREW-A,signed,2026-10-20T11:46:00-04:00,2026-10-20T12:40:00-04:00,Authored technician signature event\r\nSIGN-A-OWNER-1,SIGN-A-OWNER,FORM-A1,owner,CUSTOMER-A,signed,2026-10-20T11:48:00-04:00,2026-10-20T12:41:00-04:00,Authored owner signature event\r\nSIGN-A-OWNER-2,SIGN-A-OWNER,FORM-A1,owner,CUSTOMER-A,revoked,,2026-10-20T13:25:00-04:00,Owner requests corrected form before signing again\r\nSIGN-A2-TECH-1,SIGN-A2-TECH,FORM-A2,technician,CREW-A,signed,2026-10-20T13:17:00-04:00,2026-10-20T13:18:00-04:00,Corrected technician signature; owner pending\r\n",
+            "bytes": 698,
+            "sha256": "50564128a2200a17d773993d37f90f68ba79afc528cd0b6b269a5a11230851f4"
+          },
+          "filing_attempts": {
+            "name": "filing_attempts.csv",
+            "text": "attempt_id,instance_id,submitted_at,observed_at,channel,destination,authorization,reference\r\nFILE-A1,FORM-A1,2026-10-20T12:50:00-04:00,2026-10-20T12:55:00-04:00,Recorded email delivery,Authored jurisdiction filing desk,Office authorized original filed form,Original filing\r\nFILE-A1-REPEAT,FORM-A1,2026-10-20T13:10:00-04:00,2026-10-20T13:12:00-04:00,Recorded email delivery,Authored jurisdiction filing desk,Office recorded repeated attempt,Repeated filing\r\nFILE-B1,FORM-B1,2026-10-20T13:00:00-04:00,2026-10-20T13:05:00-04:00,Recorded portal submission,Authored jurisdiction draft desk,Office submitted exact draft artifact,Draft filing retained\r\n",
+            "bytes": 646,
+            "sha256": "0b85393760c94a6b6c4ba34fcd12106eff355ad9d18d4b7ca9c3191ef4dc56b7"
+          },
+          "filing_events": {
+            "name": "filing_events.csv",
+            "text": "event_id,attempt_id,kind,occurred_at,observed_at,receipt_reference,reference\r\nEVENT-A1-DELIVERED,FILE-A1,delivered,2026-10-20T12:51:00-04:00,2026-10-20T12:56:00-04:00,Authored delivery receipt,Delivery transport\r\nEVENT-A1-ACK,FILE-A1,acknowledged,2026-10-20T13:00:00-04:00,2026-10-20T13:02:00-04:00,EXAMPLE-ACK-001,Agency acknowledgement\r\nEVENT-A1-ACCEPT,FILE-A1,accepted,2026-10-20T13:20:00-04:00,2026-10-20T13:22:00-04:00,EXAMPLE-ACCEPT-001,Initial response\r\nEVENT-A1-REJECT,FILE-A1,rejected,2026-10-20T13:40:00-04:00,2026-10-20T13:45:00-04:00,EXAMPLE-REJECT-002,Later explicit response requests corrected report\r\n",
+            "bytes": 616,
+            "sha256": "22971a1c64e186937577936d7f596aa17bb10974254ab26c3e603af8caa52f73"
+          }
+        },
+        "sourceHash": "2c602fbe5d16648aec4d8db9e0360e214af1cade71e23d897b1401db793875bb"
+      },
+      {
+        "id": "original-received",
+        "label": "original-received",
+        "receivedAt": "2026-10-20T14:00:00-04:00",
+        "settings": {
+          "dayStart": "2026-10-20T00:00:00-04:00",
+          "dayEnd": "2026-10-21T00:00:00-04:00",
+          "asOf": "2026-10-20T12:42:00-04:00"
+        },
+        "notes": "Authored end-to-end operating example",
+        "sources": {
+          "resources": {
+            "name": "resources.csv",
+            "text": "resource_id,name,kind,reference\r\nCREW-A,Crew A,crew,Authored roster\r\nTRUCK-A,Truck A,truck,Authored roster\r\n",
+            "bytes": 108,
+            "sha256": "11e7ac707e2a2067121d1b33bdc21af2ee527e2f08dfa6a5707ba88150194237"
+          },
+          "availability": {
+            "name": "availability.csv",
+            "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW-C,CREW-A,available,2026-10-20T08:00:00-04:00,2026-10-20T18:00:00-04:00,Declared crew day\r\nW-T,TRUCK-A,available,2026-10-20T08:00:00-04:00,2026-10-20T18:00:00-04:00,Declared truck day\r\nW-BREAK,CREW-A,blocked,2026-10-20T12:00:00-04:00,2026-10-20T12:30:00-04:00,Declared break\r\n",
+            "bytes": 332,
+            "sha256": "7beb1dc7d9f71df1ae59d437a30912587da1a69a4d64c19c1bfc9ea24470ccb8"
+          },
+          "booking_revisions": {
+            "name": "booking_revisions.csv",
+            "text": "revision_id,job_id,revision,recorded_at,status,customer_id,system_id,location_id,crew_id,truck_id,start_at,end_at,crew_before_minutes,crew_after_minutes,truck_before_minutes,truck_after_minutes,promise_id,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-04:00,confirmed,CUSTOMER-A,SYS-A,PROPERTY-A,CREW-A,TRUCK-A,2026-10-20T09:00:00-04:00,2026-10-20T11:00:00-04:00,15,15,10,10,PROMISE-A,USD,Original service accepted,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-04:00,confirmed,CUSTOMER-A,SYS-A,PROPERTY-A,CREW-A,TRUCK-A,2026-10-20T10:30:00-04:00,2026-10-20T12:00:00-04:00,15,15,10,10,PROMISE-A,USD,Office moved planned service; original arrival agreement retained,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-04:00,confirmed,CUSTOMER-B,SYS-B,PROPERTY-B,CREW-A,TRUCK-A,2026-10-20T11:45:00-04:00,2026-10-20T13:30:00-04:00,15,15,10,10,PROMISE-B,USD,Accepted service,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-04:00,confirmed,CUSTOMER-C,SYS-C,PROPERTY-C,CREW-A,TRUCK-A,2026-10-20T15:00:00-04:00,2026-10-20T17:00:00-04:00,15,15,10,10,PROMISE-C,USD,Accepted service,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-04:00,postponed,CUSTOMER-C,SYS-C,PROPERTY-C,CREW-A,TRUCK-A,2026-10-20T15:00:00-04:00,2026-10-20T17:00:00-04:00,15,15,10,10,PROMISE-C,USD,Weather postponement; original deposit remains until rebooking instruction,Authored booking\r\n",
+            "bytes": 1370,
+            "sha256": "8922052141da1a152d002fa4d19380f611c3fe619fe02e140556cbe0c532686c"
+          },
+          "quoted_lines": {
+            "name": "quoted_lines.csv",
+            "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed inspection and service,45000,Original quote\r\nQA2,A2,Agreed inspection and service,45000,Same scope; revised schedule\r\nQB,B1,Agreed inspection,22500,Accepted quote\r\nQC,C1,Agreed pump service,50000,Original quote\r\n",
+            "bytes": 282,
+            "sha256": "3c613f1789eda61d86b26fe3306d92501fd970628a770372f63261ae6c12f973"
+          },
+          "completions": {
+            "name": "completions.csv",
+            "text": "observation_id,job_id,status,crew_id,truck_id,started_at,finished_at,observed_at,authorization,reference\r\nOBS-A,JOB-A,completed,CREW-A,TRUCK-A,2026-10-20T10:40:00-04:00,2026-10-20T11:40:00-04:00,2026-10-20T12:30:00-04:00,Crew reported actual visit,Authored field completion\r\nOBS-B,JOB-B,in_progress,CREW-A,TRUCK-A,2026-10-20T11:35:00-04:00,,2026-10-20T12:20:00-04:00,Crew current observation,Authored current field update\r\n",
+            "bytes": 423,
+            "sha256": "76ad760d13e9f4eddec98e635bf8e49e481326789e310848d82a22a27fe435ae"
+          },
+          "invoice_lines": {
+            "name": "invoice_lines.csv",
+            "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIL-A,INV-A,JOB-A,USD,45000,Agreed inspection and service,2026-10-20T12:45:00-04:00,Original invoice\r\n",
+            "bytes": 182,
+            "sha256": "85f7bd2844ccd528d6316714d35f844dfe461855ceed88882d7f06c2b3cfc5f5"
+          },
+          "payments": {
+            "name": "payments.csv",
+            "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nPAY-A,received,,USD,10000,2026-10-19T10:15:00-04:00,Recorded customer deposit,Original receipt\r\nPAY-C,received,,USD,7500,2026-10-19T12:15:00-04:00,Recorded customer deposit,Original receipt\r\n",
+            "bytes": 277,
+            "sha256": "ab847f0d1d4403ce1bcb1a502e85734b63704ac57ab5293b7ee34b5bfb5233b8"
+          },
+          "allocations": {
+            "name": "allocations.csv",
+            "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nALLOC-A,PAY-A,JOB-A,INV-A,deposit,10000,2026-10-20T12:45:00-04:00,Apply original deposit to invoice,Source allocation\r\nALLOC-C,PAY-C,JOB-C,,deposit,7500,2026-10-19T12:20:00-04:00,Retain on original job pending written rebooking,Source allocation\r\n",
+            "bytes": 350,
+            "sha256": "1176bba4ca245489509533c1673cc5b1a57f5f785ce6e50401c95ea60e1387bc"
+          },
+          "systems": {
+            "name": "systems.csv",
+            "text": "system_id,customer_id,property_id,parcel_id,jurisdiction_id,source_system,source_id,recorded_at,reference\r\nSYS-A,CUSTOMER-A,PROPERTY-A,PARCEL-A,JURISDICTION-EXAMPLE,Original register,REGISTER-A,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\nSYS-B,CUSTOMER-B,PROPERTY-B,PARCEL-B,JURISDICTION-EXAMPLE,Original register,REGISTER-B,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\nSYS-C,CUSTOMER-C,PROPERTY-C,PARCEL-C,JURISDICTION-EXAMPLE,Original register,REGISTER-C,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\n",
+            "bytes": 572,
+            "sha256": "ffcc1725e31aeb44d4c06bb6ddfab88ee5ec19250b4e59a985ae7736146d1283"
+          },
+          "arrival_promises": {
+            "name": "arrival_promises.csv",
+            "text": "promise_id,job_id,window_start_at,window_end_at,accepted_at,authorization,reference\r\nPROMISE-A,JOB-A,2026-10-20T09:00:00-04:00,2026-10-20T10:00:00-04:00,2026-10-19T08:30:00-04:00,Customer accepted original 09:00–10:00 arrival,Authored agreement\r\nPROMISE-B,JOB-B,2026-10-20T11:30:00-04:00,2026-10-20T12:30:00-04:00,2026-10-19T10:30:00-04:00,Customer accepted 11:30–12:30 arrival,Authored agreement\r\nPROMISE-C,JOB-C,2026-10-20T15:00:00-04:00,2026-10-20T16:00:00-04:00,2026-10-19T11:30:00-04:00,Original accepted arrival,Authored agreement\r\n",
+            "bytes": 542,
+            "sha256": "1d6e4a7d5dad77c4396ff91a9a4717eacb514536b4b21818b425f2c9e45f4411"
+          },
+          "field_versions": {
+            "name": "field_versions.csv",
+            "text": "field_version_id,job_id,revision_id,version,previous_version_id,captured_at,observed_at,status,field_values_json,customer_notes,internal_notes,authorization,reference\r\nFIELD-A1,JOB-A,A1,1,,2026-10-20T11:40:00-04:00,2026-10-20T12:30:00-04:00,final,\"{\"\"tank_count\"\":1,\"\"reported_capacity_gallons\"\":1000,\"\"photo_references\"\":[\"\"example/photo-a-1.jpg\"\"],\"\"source_note\"\":\"\"Authored values for operating behavior only\"\"}\",Inspection completed; written report follows.,Crew worked from original downloaded booking.,Crew submitted original field record,Authored offline capture\r\nFIELD-A2,JOB-A,A2,2,FIELD-A1,2026-10-20T13:05:00-04:00,2026-10-20T13:10:00-04:00,final,\"{\"\"tank_count\"\":2,\"\"reported_capacity_gallons\"\":1500,\"\"photo_references\"\":[\"\"example/photo-a-1.jpg\"\",\"\"example/photo-a-2.jpg\"\"],\"\"correction_reason\"\":\"\"Second compartment added to original field record\"\"}\",Corrected system description prepared.,Office correction requires replacement form and customer signature.,Crew and office recorded correction,Authored field correction\r\nFIELD-B1,JOB-B,B1,1,,2026-10-20T12:15:00-04:00,2026-10-20T12:25:00-04:00,draft,\"{\"\"work_started\"\":true,\"\"photo_references\"\":[]}\",Visit in progress.,Measurements incomplete; keep draft separate.,Crew draft observation,Authored draft field record\r\n",
+            "bytes": 1281,
+            "sha256": "6ce4a311e0ee4a3ccf6bfb2ad2ae7ec9ffb7c2624bdba95d7b167c1b245e5649"
+          },
+          "form_templates": {
+            "name": "form_templates.csv",
+            "text": "form_version_id,form_id,version_label,jurisdiction_id,title,source_url,source_document_sha256,required_roles_json,recorded_at,reference\r\nTEMPLATE-A1,FORM-EXAMPLE-A,2026-01,JURISDICTION-EXAMPLE,Authored inspection form,,,\"[\"\"technician\"\",\"\"owner\"\"]\",2026-10-19T08:05:00-04:00,Authored role requirements; replace with actual jurisdiction form\r\nTEMPLATE-B1,FORM-EXAMPLE-B,2026-01,JURISDICTION-EXAMPLE,Authored draft form without supplied requirements,,,[],2026-10-19T08:10:00-04:00,Requirements unspecified\r\n",
+            "bytes": 505,
+            "sha256": "607b57849c358c99af87c38bf3818a4645b1f37d307d69f626383e6a55b46833"
+          },
+          "form_instances": {
+            "name": "form_instances.csv",
+            "text": "instance_id,job_id,field_version_id,form_version_id,artifact_sha256,created_at,observed_at,reference\r\nFORM-A1,JOB-A,FIELD-A1,TEMPLATE-A1,c822242fbc69dc2ed67fcaed5b63610216f9164f55f650c36c6c899f7b2462c0,2026-10-20T11:45:00-04:00,2026-10-20T12:35:00-04:00,Original authored artifact identity\r\nFORM-A2,JOB-A,FIELD-A2,TEMPLATE-A1,3ac37ce2c0872282a7c0f3e8d1c687d6b6ce3afb3e6a585cf55adc8ad9b82ab3,2026-10-20T13:15:00-04:00,2026-10-20T13:16:00-04:00,Corrected authored artifact identity\r\nFORM-B1,JOB-B,FIELD-B1,TEMPLATE-B1,416fe7c6db6f7f4e7371be50d7a6728c324345a2a0b96857a38aa12c84cbf755,2026-10-20T12:26:00-04:00,2026-10-20T12:27:00-04:00,Draft authored artifact identity\r\n",
+            "bytes": 667,
+            "sha256": "df449d522eeb85a37e66ae3bef69068bb42865de8f90a4a5eb37ba7acfe9a557"
+          },
+          "signatures": {
+            "name": "signatures.csv",
+            "text": "signature_event_id,signature_id,instance_id,role,signer_reference,status,signed_at,observed_at,reference\r\nSIGN-A-TECH-1,SIGN-A-TECH,FORM-A1,technician,CREW-A,signed,2026-10-20T11:46:00-04:00,2026-10-20T12:40:00-04:00,Authored technician signature event\r\nSIGN-A-OWNER-1,SIGN-A-OWNER,FORM-A1,owner,CUSTOMER-A,signed,2026-10-20T11:48:00-04:00,2026-10-20T12:41:00-04:00,Authored owner signature event\r\nSIGN-A-OWNER-2,SIGN-A-OWNER,FORM-A1,owner,CUSTOMER-A,revoked,,2026-10-20T13:25:00-04:00,Owner requests corrected form before signing again\r\nSIGN-A2-TECH-1,SIGN-A2-TECH,FORM-A2,technician,CREW-A,signed,2026-10-20T13:17:00-04:00,2026-10-20T13:18:00-04:00,Corrected technician signature; owner pending\r\n",
+            "bytes": 698,
+            "sha256": "50564128a2200a17d773993d37f90f68ba79afc528cd0b6b269a5a11230851f4"
+          },
+          "filing_attempts": {
+            "name": "filing_attempts.csv",
+            "text": "attempt_id,instance_id,submitted_at,observed_at,channel,destination,authorization,reference\r\nFILE-A1,FORM-A1,2026-10-20T12:50:00-04:00,2026-10-20T12:55:00-04:00,Recorded email delivery,Authored jurisdiction filing desk,Office authorized original filed form,Original filing\r\nFILE-A1-REPEAT,FORM-A1,2026-10-20T13:10:00-04:00,2026-10-20T13:12:00-04:00,Recorded email delivery,Authored jurisdiction filing desk,Office recorded repeated attempt,Repeated filing\r\nFILE-B1,FORM-B1,2026-10-20T13:00:00-04:00,2026-10-20T13:05:00-04:00,Recorded portal submission,Authored jurisdiction draft desk,Office submitted exact draft artifact,Draft filing retained\r\n",
+            "bytes": 646,
+            "sha256": "0b85393760c94a6b6c4ba34fcd12106eff355ad9d18d4b7ca9c3191ef4dc56b7"
+          },
+          "filing_events": {
+            "name": "filing_events.csv",
+            "text": "event_id,attempt_id,kind,occurred_at,observed_at,receipt_reference,reference\r\nEVENT-A1-DELIVERED,FILE-A1,delivered,2026-10-20T12:51:00-04:00,2026-10-20T12:56:00-04:00,Authored delivery receipt,Delivery transport\r\nEVENT-A1-ACK,FILE-A1,acknowledged,2026-10-20T13:00:00-04:00,2026-10-20T13:02:00-04:00,EXAMPLE-ACK-001,Agency acknowledgement\r\nEVENT-A1-ACCEPT,FILE-A1,accepted,2026-10-20T13:20:00-04:00,2026-10-20T13:22:00-04:00,EXAMPLE-ACCEPT-001,Initial response\r\nEVENT-A1-REJECT,FILE-A1,rejected,2026-10-20T13:40:00-04:00,2026-10-20T13:45:00-04:00,EXAMPLE-REJECT-002,Later explicit response requests corrected report\r\n",
+            "bytes": 616,
+            "sha256": "22971a1c64e186937577936d7f596aa17bb10974254ab26c3e603af8caa52f73"
+          }
+        },
+        "sourceHash": "3ffda24b9e0317e930641e4905e512abcc8b6f44c3c706dbc6e5e165f2311dc6"
+      },
+      {
+        "id": "accepted-observation",
+        "label": "accepted-observation",
+        "receivedAt": "2026-10-20T14:00:00-04:00",
+        "settings": {
+          "dayStart": "2026-10-20T00:00:00-04:00",
+          "dayEnd": "2026-10-21T00:00:00-04:00",
+          "asOf": "2026-10-20T13:23:00-04:00"
+        },
+        "notes": "Authored end-to-end operating example",
+        "sources": {
+          "resources": {
+            "name": "resources.csv",
+            "text": "resource_id,name,kind,reference\r\nCREW-A,Crew A,crew,Authored roster\r\nTRUCK-A,Truck A,truck,Authored roster\r\n",
+            "bytes": 108,
+            "sha256": "11e7ac707e2a2067121d1b33bdc21af2ee527e2f08dfa6a5707ba88150194237"
+          },
+          "availability": {
+            "name": "availability.csv",
+            "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW-C,CREW-A,available,2026-10-20T08:00:00-04:00,2026-10-20T18:00:00-04:00,Declared crew day\r\nW-T,TRUCK-A,available,2026-10-20T08:00:00-04:00,2026-10-20T18:00:00-04:00,Declared truck day\r\nW-BREAK,CREW-A,blocked,2026-10-20T12:00:00-04:00,2026-10-20T12:30:00-04:00,Declared break\r\n",
+            "bytes": 332,
+            "sha256": "7beb1dc7d9f71df1ae59d437a30912587da1a69a4d64c19c1bfc9ea24470ccb8"
+          },
+          "booking_revisions": {
+            "name": "booking_revisions.csv",
+            "text": "revision_id,job_id,revision,recorded_at,status,customer_id,system_id,location_id,crew_id,truck_id,start_at,end_at,crew_before_minutes,crew_after_minutes,truck_before_minutes,truck_after_minutes,promise_id,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-04:00,confirmed,CUSTOMER-A,SYS-A,PROPERTY-A,CREW-A,TRUCK-A,2026-10-20T09:00:00-04:00,2026-10-20T11:00:00-04:00,15,15,10,10,PROMISE-A,USD,Original service accepted,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-04:00,confirmed,CUSTOMER-A,SYS-A,PROPERTY-A,CREW-A,TRUCK-A,2026-10-20T10:30:00-04:00,2026-10-20T12:00:00-04:00,15,15,10,10,PROMISE-A,USD,Office moved planned service; original arrival agreement retained,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-04:00,confirmed,CUSTOMER-B,SYS-B,PROPERTY-B,CREW-A,TRUCK-A,2026-10-20T11:45:00-04:00,2026-10-20T13:30:00-04:00,15,15,10,10,PROMISE-B,USD,Accepted service,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-04:00,confirmed,CUSTOMER-C,SYS-C,PROPERTY-C,CREW-A,TRUCK-A,2026-10-20T15:00:00-04:00,2026-10-20T17:00:00-04:00,15,15,10,10,PROMISE-C,USD,Accepted service,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-04:00,postponed,CUSTOMER-C,SYS-C,PROPERTY-C,CREW-A,TRUCK-A,2026-10-20T15:00:00-04:00,2026-10-20T17:00:00-04:00,15,15,10,10,PROMISE-C,USD,Weather postponement; original deposit remains until rebooking instruction,Authored booking\r\n",
+            "bytes": 1370,
+            "sha256": "8922052141da1a152d002fa4d19380f611c3fe619fe02e140556cbe0c532686c"
+          },
+          "quoted_lines": {
+            "name": "quoted_lines.csv",
+            "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed inspection and service,45000,Original quote\r\nQA2,A2,Agreed inspection and service,45000,Same scope; revised schedule\r\nQB,B1,Agreed inspection,22500,Accepted quote\r\nQC,C1,Agreed pump service,50000,Original quote\r\n",
+            "bytes": 282,
+            "sha256": "3c613f1789eda61d86b26fe3306d92501fd970628a770372f63261ae6c12f973"
+          },
+          "completions": {
+            "name": "completions.csv",
+            "text": "observation_id,job_id,status,crew_id,truck_id,started_at,finished_at,observed_at,authorization,reference\r\nOBS-A,JOB-A,completed,CREW-A,TRUCK-A,2026-10-20T10:40:00-04:00,2026-10-20T11:40:00-04:00,2026-10-20T12:30:00-04:00,Crew reported actual visit,Authored field completion\r\nOBS-B,JOB-B,in_progress,CREW-A,TRUCK-A,2026-10-20T11:35:00-04:00,,2026-10-20T12:20:00-04:00,Crew current observation,Authored current field update\r\n",
+            "bytes": 423,
+            "sha256": "76ad760d13e9f4eddec98e635bf8e49e481326789e310848d82a22a27fe435ae"
+          },
+          "invoice_lines": {
+            "name": "invoice_lines.csv",
+            "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIL-A,INV-A,JOB-A,USD,45000,Agreed inspection and service,2026-10-20T12:45:00-04:00,Original invoice\r\n",
+            "bytes": 182,
+            "sha256": "85f7bd2844ccd528d6316714d35f844dfe461855ceed88882d7f06c2b3cfc5f5"
+          },
+          "payments": {
+            "name": "payments.csv",
+            "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nPAY-A,received,,USD,10000,2026-10-19T10:15:00-04:00,Recorded customer deposit,Original receipt\r\nPAY-C,received,,USD,7500,2026-10-19T12:15:00-04:00,Recorded customer deposit,Original receipt\r\n",
+            "bytes": 277,
+            "sha256": "ab847f0d1d4403ce1bcb1a502e85734b63704ac57ab5293b7ee34b5bfb5233b8"
+          },
+          "allocations": {
+            "name": "allocations.csv",
+            "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nALLOC-A,PAY-A,JOB-A,INV-A,deposit,10000,2026-10-20T12:45:00-04:00,Apply original deposit to invoice,Source allocation\r\nALLOC-C,PAY-C,JOB-C,,deposit,7500,2026-10-19T12:20:00-04:00,Retain on original job pending written rebooking,Source allocation\r\n",
+            "bytes": 350,
+            "sha256": "1176bba4ca245489509533c1673cc5b1a57f5f785ce6e50401c95ea60e1387bc"
+          },
+          "systems": {
+            "name": "systems.csv",
+            "text": "system_id,customer_id,property_id,parcel_id,jurisdiction_id,source_system,source_id,recorded_at,reference\r\nSYS-A,CUSTOMER-A,PROPERTY-A,PARCEL-A,JURISDICTION-EXAMPLE,Original register,REGISTER-A,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\nSYS-B,CUSTOMER-B,PROPERTY-B,PARCEL-B,JURISDICTION-EXAMPLE,Original register,REGISTER-B,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\nSYS-C,CUSTOMER-C,PROPERTY-C,PARCEL-C,JURISDICTION-EXAMPLE,Original register,REGISTER-C,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\n",
+            "bytes": 572,
+            "sha256": "ffcc1725e31aeb44d4c06bb6ddfab88ee5ec19250b4e59a985ae7736146d1283"
+          },
+          "arrival_promises": {
+            "name": "arrival_promises.csv",
+            "text": "promise_id,job_id,window_start_at,window_end_at,accepted_at,authorization,reference\r\nPROMISE-A,JOB-A,2026-10-20T09:00:00-04:00,2026-10-20T10:00:00-04:00,2026-10-19T08:30:00-04:00,Customer accepted original 09:00–10:00 arrival,Authored agreement\r\nPROMISE-B,JOB-B,2026-10-20T11:30:00-04:00,2026-10-20T12:30:00-04:00,2026-10-19T10:30:00-04:00,Customer accepted 11:30–12:30 arrival,Authored agreement\r\nPROMISE-C,JOB-C,2026-10-20T15:00:00-04:00,2026-10-20T16:00:00-04:00,2026-10-19T11:30:00-04:00,Original accepted arrival,Authored agreement\r\n",
+            "bytes": 542,
+            "sha256": "1d6e4a7d5dad77c4396ff91a9a4717eacb514536b4b21818b425f2c9e45f4411"
+          },
+          "field_versions": {
+            "name": "field_versions.csv",
+            "text": "field_version_id,job_id,revision_id,version,previous_version_id,captured_at,observed_at,status,field_values_json,customer_notes,internal_notes,authorization,reference\r\nFIELD-A1,JOB-A,A1,1,,2026-10-20T11:40:00-04:00,2026-10-20T12:30:00-04:00,final,\"{\"\"tank_count\"\":1,\"\"reported_capacity_gallons\"\":1000,\"\"photo_references\"\":[\"\"example/photo-a-1.jpg\"\"],\"\"source_note\"\":\"\"Authored values for operating behavior only\"\"}\",Inspection completed; written report follows.,Crew worked from original downloaded booking.,Crew submitted original field record,Authored offline capture\r\nFIELD-A2,JOB-A,A2,2,FIELD-A1,2026-10-20T13:05:00-04:00,2026-10-20T13:10:00-04:00,final,\"{\"\"tank_count\"\":2,\"\"reported_capacity_gallons\"\":1500,\"\"photo_references\"\":[\"\"example/photo-a-1.jpg\"\",\"\"example/photo-a-2.jpg\"\"],\"\"correction_reason\"\":\"\"Second compartment added to original field record\"\"}\",Corrected system description prepared.,Office correction requires replacement form and customer signature.,Crew and office recorded correction,Authored field correction\r\nFIELD-B1,JOB-B,B1,1,,2026-10-20T12:15:00-04:00,2026-10-20T12:25:00-04:00,draft,\"{\"\"work_started\"\":true,\"\"photo_references\"\":[]}\",Visit in progress.,Measurements incomplete; keep draft separate.,Crew draft observation,Authored draft field record\r\n",
+            "bytes": 1281,
+            "sha256": "6ce4a311e0ee4a3ccf6bfb2ad2ae7ec9ffb7c2624bdba95d7b167c1b245e5649"
+          },
+          "form_templates": {
+            "name": "form_templates.csv",
+            "text": "form_version_id,form_id,version_label,jurisdiction_id,title,source_url,source_document_sha256,required_roles_json,recorded_at,reference\r\nTEMPLATE-A1,FORM-EXAMPLE-A,2026-01,JURISDICTION-EXAMPLE,Authored inspection form,,,\"[\"\"technician\"\",\"\"owner\"\"]\",2026-10-19T08:05:00-04:00,Authored role requirements; replace with actual jurisdiction form\r\nTEMPLATE-B1,FORM-EXAMPLE-B,2026-01,JURISDICTION-EXAMPLE,Authored draft form without supplied requirements,,,[],2026-10-19T08:10:00-04:00,Requirements unspecified\r\n",
+            "bytes": 505,
+            "sha256": "607b57849c358c99af87c38bf3818a4645b1f37d307d69f626383e6a55b46833"
+          },
+          "form_instances": {
+            "name": "form_instances.csv",
+            "text": "instance_id,job_id,field_version_id,form_version_id,artifact_sha256,created_at,observed_at,reference\r\nFORM-A1,JOB-A,FIELD-A1,TEMPLATE-A1,c822242fbc69dc2ed67fcaed5b63610216f9164f55f650c36c6c899f7b2462c0,2026-10-20T11:45:00-04:00,2026-10-20T12:35:00-04:00,Original authored artifact identity\r\nFORM-A2,JOB-A,FIELD-A2,TEMPLATE-A1,3ac37ce2c0872282a7c0f3e8d1c687d6b6ce3afb3e6a585cf55adc8ad9b82ab3,2026-10-20T13:15:00-04:00,2026-10-20T13:16:00-04:00,Corrected authored artifact identity\r\nFORM-B1,JOB-B,FIELD-B1,TEMPLATE-B1,416fe7c6db6f7f4e7371be50d7a6728c324345a2a0b96857a38aa12c84cbf755,2026-10-20T12:26:00-04:00,2026-10-20T12:27:00-04:00,Draft authored artifact identity\r\n",
+            "bytes": 667,
+            "sha256": "df449d522eeb85a37e66ae3bef69068bb42865de8f90a4a5eb37ba7acfe9a557"
+          },
+          "signatures": {
+            "name": "signatures.csv",
+            "text": "signature_event_id,signature_id,instance_id,role,signer_reference,status,signed_at,observed_at,reference\r\nSIGN-A-TECH-1,SIGN-A-TECH,FORM-A1,technician,CREW-A,signed,2026-10-20T11:46:00-04:00,2026-10-20T12:40:00-04:00,Authored technician signature event\r\nSIGN-A-OWNER-1,SIGN-A-OWNER,FORM-A1,owner,CUSTOMER-A,signed,2026-10-20T11:48:00-04:00,2026-10-20T12:41:00-04:00,Authored owner signature event\r\nSIGN-A-OWNER-2,SIGN-A-OWNER,FORM-A1,owner,CUSTOMER-A,revoked,,2026-10-20T13:25:00-04:00,Owner requests corrected form before signing again\r\nSIGN-A2-TECH-1,SIGN-A2-TECH,FORM-A2,technician,CREW-A,signed,2026-10-20T13:17:00-04:00,2026-10-20T13:18:00-04:00,Corrected technician signature; owner pending\r\n",
+            "bytes": 698,
+            "sha256": "50564128a2200a17d773993d37f90f68ba79afc528cd0b6b269a5a11230851f4"
+          },
+          "filing_attempts": {
+            "name": "filing_attempts.csv",
+            "text": "attempt_id,instance_id,submitted_at,observed_at,channel,destination,authorization,reference\r\nFILE-A1,FORM-A1,2026-10-20T12:50:00-04:00,2026-10-20T12:55:00-04:00,Recorded email delivery,Authored jurisdiction filing desk,Office authorized original filed form,Original filing\r\nFILE-A1-REPEAT,FORM-A1,2026-10-20T13:10:00-04:00,2026-10-20T13:12:00-04:00,Recorded email delivery,Authored jurisdiction filing desk,Office recorded repeated attempt,Repeated filing\r\nFILE-B1,FORM-B1,2026-10-20T13:00:00-04:00,2026-10-20T13:05:00-04:00,Recorded portal submission,Authored jurisdiction draft desk,Office submitted exact draft artifact,Draft filing retained\r\n",
+            "bytes": 646,
+            "sha256": "0b85393760c94a6b6c4ba34fcd12106eff355ad9d18d4b7ca9c3191ef4dc56b7"
+          },
+          "filing_events": {
+            "name": "filing_events.csv",
+            "text": "event_id,attempt_id,kind,occurred_at,observed_at,receipt_reference,reference\r\nEVENT-A1-DELIVERED,FILE-A1,delivered,2026-10-20T12:51:00-04:00,2026-10-20T12:56:00-04:00,Authored delivery receipt,Delivery transport\r\nEVENT-A1-ACK,FILE-A1,acknowledged,2026-10-20T13:00:00-04:00,2026-10-20T13:02:00-04:00,EXAMPLE-ACK-001,Agency acknowledgement\r\nEVENT-A1-ACCEPT,FILE-A1,accepted,2026-10-20T13:20:00-04:00,2026-10-20T13:22:00-04:00,EXAMPLE-ACCEPT-001,Initial response\r\nEVENT-A1-REJECT,FILE-A1,rejected,2026-10-20T13:40:00-04:00,2026-10-20T13:45:00-04:00,EXAMPLE-REJECT-002,Later explicit response requests corrected report\r\n",
+            "bytes": 616,
+            "sha256": "22971a1c64e186937577936d7f596aa17bb10974254ab26c3e603af8caa52f73"
+          }
+        },
+        "sourceHash": "a423181df33ac8236ecb4c177368a60fee85359898e23ac058e5b68f71ca55ec"
+      },
+      {
+        "id": "current",
+        "label": "current",
+        "receivedAt": "2026-10-20T14:00:00-04:00",
+        "settings": {
+          "dayStart": "2026-10-20T00:00:00-04:00",
+          "dayEnd": "2026-10-21T00:00:00-04:00",
+          "asOf": "2026-10-20T14:00:00-04:00"
+        },
+        "notes": "Authored end-to-end operating example",
+        "sources": {
+          "resources": {
+            "name": "resources.csv",
+            "text": "resource_id,name,kind,reference\r\nCREW-A,Crew A,crew,Authored roster\r\nTRUCK-A,Truck A,truck,Authored roster\r\n",
+            "bytes": 108,
+            "sha256": "11e7ac707e2a2067121d1b33bdc21af2ee527e2f08dfa6a5707ba88150194237"
+          },
+          "availability": {
+            "name": "availability.csv",
+            "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW-C,CREW-A,available,2026-10-20T08:00:00-04:00,2026-10-20T18:00:00-04:00,Declared crew day\r\nW-T,TRUCK-A,available,2026-10-20T08:00:00-04:00,2026-10-20T18:00:00-04:00,Declared truck day\r\nW-BREAK,CREW-A,blocked,2026-10-20T12:00:00-04:00,2026-10-20T12:30:00-04:00,Declared break\r\n",
+            "bytes": 332,
+            "sha256": "7beb1dc7d9f71df1ae59d437a30912587da1a69a4d64c19c1bfc9ea24470ccb8"
+          },
+          "booking_revisions": {
+            "name": "booking_revisions.csv",
+            "text": "revision_id,job_id,revision,recorded_at,status,customer_id,system_id,location_id,crew_id,truck_id,start_at,end_at,crew_before_minutes,crew_after_minutes,truck_before_minutes,truck_after_minutes,promise_id,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-04:00,confirmed,CUSTOMER-A,SYS-A,PROPERTY-A,CREW-A,TRUCK-A,2026-10-20T09:00:00-04:00,2026-10-20T11:00:00-04:00,15,15,10,10,PROMISE-A,USD,Original service accepted,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-04:00,confirmed,CUSTOMER-A,SYS-A,PROPERTY-A,CREW-A,TRUCK-A,2026-10-20T10:30:00-04:00,2026-10-20T12:00:00-04:00,15,15,10,10,PROMISE-A,USD,Office moved planned service; original arrival agreement retained,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-04:00,confirmed,CUSTOMER-B,SYS-B,PROPERTY-B,CREW-A,TRUCK-A,2026-10-20T11:45:00-04:00,2026-10-20T13:30:00-04:00,15,15,10,10,PROMISE-B,USD,Accepted service,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-04:00,confirmed,CUSTOMER-C,SYS-C,PROPERTY-C,CREW-A,TRUCK-A,2026-10-20T15:00:00-04:00,2026-10-20T17:00:00-04:00,15,15,10,10,PROMISE-C,USD,Accepted service,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-04:00,postponed,CUSTOMER-C,SYS-C,PROPERTY-C,CREW-A,TRUCK-A,2026-10-20T15:00:00-04:00,2026-10-20T17:00:00-04:00,15,15,10,10,PROMISE-C,USD,Weather postponement; original deposit remains until rebooking instruction,Authored booking\r\n",
+            "bytes": 1370,
+            "sha256": "8922052141da1a152d002fa4d19380f611c3fe619fe02e140556cbe0c532686c"
+          },
+          "quoted_lines": {
+            "name": "quoted_lines.csv",
+            "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed inspection and service,45000,Original quote\r\nQA2,A2,Agreed inspection and service,45000,Same scope; revised schedule\r\nQB,B1,Agreed inspection,22500,Accepted quote\r\nQC,C1,Agreed pump service,50000,Original quote\r\n",
+            "bytes": 282,
+            "sha256": "3c613f1789eda61d86b26fe3306d92501fd970628a770372f63261ae6c12f973"
+          },
+          "completions": {
+            "name": "completions.csv",
+            "text": "observation_id,job_id,status,crew_id,truck_id,started_at,finished_at,observed_at,authorization,reference\r\nOBS-A,JOB-A,completed,CREW-A,TRUCK-A,2026-10-20T10:40:00-04:00,2026-10-20T11:40:00-04:00,2026-10-20T12:30:00-04:00,Crew reported actual visit,Authored field completion\r\nOBS-B,JOB-B,in_progress,CREW-A,TRUCK-A,2026-10-20T11:35:00-04:00,,2026-10-20T12:20:00-04:00,Crew current observation,Authored current field update\r\n",
+            "bytes": 423,
+            "sha256": "76ad760d13e9f4eddec98e635bf8e49e481326789e310848d82a22a27fe435ae"
+          },
+          "invoice_lines": {
+            "name": "invoice_lines.csv",
+            "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIL-A,INV-A,JOB-A,USD,45000,Agreed inspection and service,2026-10-20T12:45:00-04:00,Original invoice\r\n",
+            "bytes": 182,
+            "sha256": "85f7bd2844ccd528d6316714d35f844dfe461855ceed88882d7f06c2b3cfc5f5"
+          },
+          "payments": {
+            "name": "payments.csv",
+            "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nPAY-A,received,,USD,10000,2026-10-19T10:15:00-04:00,Recorded customer deposit,Original receipt\r\nPAY-C,received,,USD,7500,2026-10-19T12:15:00-04:00,Recorded customer deposit,Original receipt\r\n",
+            "bytes": 277,
+            "sha256": "ab847f0d1d4403ce1bcb1a502e85734b63704ac57ab5293b7ee34b5bfb5233b8"
+          },
+          "allocations": {
+            "name": "allocations.csv",
+            "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nALLOC-A,PAY-A,JOB-A,INV-A,deposit,10000,2026-10-20T12:45:00-04:00,Apply original deposit to invoice,Source allocation\r\nALLOC-C,PAY-C,JOB-C,,deposit,7500,2026-10-19T12:20:00-04:00,Retain on original job pending written rebooking,Source allocation\r\n",
+            "bytes": 350,
+            "sha256": "1176bba4ca245489509533c1673cc5b1a57f5f785ce6e50401c95ea60e1387bc"
+          },
+          "systems": {
+            "name": "systems.csv",
+            "text": "system_id,customer_id,property_id,parcel_id,jurisdiction_id,source_system,source_id,recorded_at,reference\r\nSYS-A,CUSTOMER-A,PROPERTY-A,PARCEL-A,JURISDICTION-EXAMPLE,Original register,REGISTER-A,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\nSYS-B,CUSTOMER-B,PROPERTY-B,PARCEL-B,JURISDICTION-EXAMPLE,Original register,REGISTER-B,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\nSYS-C,CUSTOMER-C,PROPERTY-C,PARCEL-C,JURISDICTION-EXAMPLE,Original register,REGISTER-C,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\n",
+            "bytes": 572,
+            "sha256": "ffcc1725e31aeb44d4c06bb6ddfab88ee5ec19250b4e59a985ae7736146d1283"
+          },
+          "arrival_promises": {
+            "name": "arrival_promises.csv",
+            "text": "promise_id,job_id,window_start_at,window_end_at,accepted_at,authorization,reference\r\nPROMISE-A,JOB-A,2026-10-20T09:00:00-04:00,2026-10-20T10:00:00-04:00,2026-10-19T08:30:00-04:00,Customer accepted original 09:00–10:00 arrival,Authored agreement\r\nPROMISE-B,JOB-B,2026-10-20T11:30:00-04:00,2026-10-20T12:30:00-04:00,2026-10-19T10:30:00-04:00,Customer accepted 11:30–12:30 arrival,Authored agreement\r\nPROMISE-C,JOB-C,2026-10-20T15:00:00-04:00,2026-10-20T16:00:00-04:00,2026-10-19T11:30:00-04:00,Original accepted arrival,Authored agreement\r\n",
+            "bytes": 542,
+            "sha256": "1d6e4a7d5dad77c4396ff91a9a4717eacb514536b4b21818b425f2c9e45f4411"
+          },
+          "field_versions": {
+            "name": "field_versions.csv",
+            "text": "field_version_id,job_id,revision_id,version,previous_version_id,captured_at,observed_at,status,field_values_json,customer_notes,internal_notes,authorization,reference\r\nFIELD-A1,JOB-A,A1,1,,2026-10-20T11:40:00-04:00,2026-10-20T12:30:00-04:00,final,\"{\"\"tank_count\"\":1,\"\"reported_capacity_gallons\"\":1000,\"\"photo_references\"\":[\"\"example/photo-a-1.jpg\"\"],\"\"source_note\"\":\"\"Authored values for operating behavior only\"\"}\",Inspection completed; written report follows.,Crew worked from original downloaded booking.,Crew submitted original field record,Authored offline capture\r\nFIELD-A2,JOB-A,A2,2,FIELD-A1,2026-10-20T13:05:00-04:00,2026-10-20T13:10:00-04:00,final,\"{\"\"tank_count\"\":2,\"\"reported_capacity_gallons\"\":1500,\"\"photo_references\"\":[\"\"example/photo-a-1.jpg\"\",\"\"example/photo-a-2.jpg\"\"],\"\"correction_reason\"\":\"\"Second compartment added to original field record\"\"}\",Corrected system description prepared.,Office correction requires replacement form and customer signature.,Crew and office recorded correction,Authored field correction\r\nFIELD-B1,JOB-B,B1,1,,2026-10-20T12:15:00-04:00,2026-10-20T12:25:00-04:00,draft,\"{\"\"work_started\"\":true,\"\"photo_references\"\":[]}\",Visit in progress.,Measurements incomplete; keep draft separate.,Crew draft observation,Authored draft field record\r\n",
+            "bytes": 1281,
+            "sha256": "6ce4a311e0ee4a3ccf6bfb2ad2ae7ec9ffb7c2624bdba95d7b167c1b245e5649"
+          },
+          "form_templates": {
+            "name": "form_templates.csv",
+            "text": "form_version_id,form_id,version_label,jurisdiction_id,title,source_url,source_document_sha256,required_roles_json,recorded_at,reference\r\nTEMPLATE-A1,FORM-EXAMPLE-A,2026-01,JURISDICTION-EXAMPLE,Authored inspection form,,,\"[\"\"technician\"\",\"\"owner\"\"]\",2026-10-19T08:05:00-04:00,Authored role requirements; replace with actual jurisdiction form\r\nTEMPLATE-B1,FORM-EXAMPLE-B,2026-01,JURISDICTION-EXAMPLE,Authored draft form without supplied requirements,,,[],2026-10-19T08:10:00-04:00,Requirements unspecified\r\n",
+            "bytes": 505,
+            "sha256": "607b57849c358c99af87c38bf3818a4645b1f37d307d69f626383e6a55b46833"
+          },
+          "form_instances": {
+            "name": "form_instances.csv",
+            "text": "instance_id,job_id,field_version_id,form_version_id,artifact_sha256,created_at,observed_at,reference\r\nFORM-A1,JOB-A,FIELD-A1,TEMPLATE-A1,c822242fbc69dc2ed67fcaed5b63610216f9164f55f650c36c6c899f7b2462c0,2026-10-20T11:45:00-04:00,2026-10-20T12:35:00-04:00,Original authored artifact identity\r\nFORM-A2,JOB-A,FIELD-A2,TEMPLATE-A1,3ac37ce2c0872282a7c0f3e8d1c687d6b6ce3afb3e6a585cf55adc8ad9b82ab3,2026-10-20T13:15:00-04:00,2026-10-20T13:16:00-04:00,Corrected authored artifact identity\r\nFORM-B1,JOB-B,FIELD-B1,TEMPLATE-B1,416fe7c6db6f7f4e7371be50d7a6728c324345a2a0b96857a38aa12c84cbf755,2026-10-20T12:26:00-04:00,2026-10-20T12:27:00-04:00,Draft authored artifact identity\r\n",
+            "bytes": 667,
+            "sha256": "df449d522eeb85a37e66ae3bef69068bb42865de8f90a4a5eb37ba7acfe9a557"
+          },
+          "signatures": {
+            "name": "signatures.csv",
+            "text": "signature_event_id,signature_id,instance_id,role,signer_reference,status,signed_at,observed_at,reference\r\nSIGN-A-TECH-1,SIGN-A-TECH,FORM-A1,technician,CREW-A,signed,2026-10-20T11:46:00-04:00,2026-10-20T12:40:00-04:00,Authored technician signature event\r\nSIGN-A-OWNER-1,SIGN-A-OWNER,FORM-A1,owner,CUSTOMER-A,signed,2026-10-20T11:48:00-04:00,2026-10-20T12:41:00-04:00,Authored owner signature event\r\nSIGN-A-OWNER-2,SIGN-A-OWNER,FORM-A1,owner,CUSTOMER-A,revoked,,2026-10-20T13:25:00-04:00,Owner requests corrected form before signing again\r\nSIGN-A2-TECH-1,SIGN-A2-TECH,FORM-A2,technician,CREW-A,signed,2026-10-20T13:17:00-04:00,2026-10-20T13:18:00-04:00,Corrected technician signature; owner pending\r\n",
+            "bytes": 698,
+            "sha256": "50564128a2200a17d773993d37f90f68ba79afc528cd0b6b269a5a11230851f4"
+          },
+          "filing_attempts": {
+            "name": "filing_attempts.csv",
+            "text": "attempt_id,instance_id,submitted_at,observed_at,channel,destination,authorization,reference\r\nFILE-A1,FORM-A1,2026-10-20T12:50:00-04:00,2026-10-20T12:55:00-04:00,Recorded email delivery,Authored jurisdiction filing desk,Office authorized original filed form,Original filing\r\nFILE-A1-REPEAT,FORM-A1,2026-10-20T13:10:00-04:00,2026-10-20T13:12:00-04:00,Recorded email delivery,Authored jurisdiction filing desk,Office recorded repeated attempt,Repeated filing\r\nFILE-B1,FORM-B1,2026-10-20T13:00:00-04:00,2026-10-20T13:05:00-04:00,Recorded portal submission,Authored jurisdiction draft desk,Office submitted exact draft artifact,Draft filing retained\r\n",
+            "bytes": 646,
+            "sha256": "0b85393760c94a6b6c4ba34fcd12106eff355ad9d18d4b7ca9c3191ef4dc56b7"
+          },
+          "filing_events": {
+            "name": "filing_events.csv",
+            "text": "event_id,attempt_id,kind,occurred_at,observed_at,receipt_reference,reference\r\nEVENT-A1-DELIVERED,FILE-A1,delivered,2026-10-20T12:51:00-04:00,2026-10-20T12:56:00-04:00,Authored delivery receipt,Delivery transport\r\nEVENT-A1-ACK,FILE-A1,acknowledged,2026-10-20T13:00:00-04:00,2026-10-20T13:02:00-04:00,EXAMPLE-ACK-001,Agency acknowledgement\r\nEVENT-A1-ACCEPT,FILE-A1,accepted,2026-10-20T13:20:00-04:00,2026-10-20T13:22:00-04:00,EXAMPLE-ACCEPT-001,Initial response\r\nEVENT-A1-REJECT,FILE-A1,rejected,2026-10-20T13:40:00-04:00,2026-10-20T13:45:00-04:00,EXAMPLE-REJECT-002,Later explicit response requests corrected report\r\n",
+            "bytes": 616,
+            "sha256": "22971a1c64e186937577936d7f596aa17bb10974254ab26c3e603af8caa52f73"
+          }
+        },
+        "sourceHash": "cc35c5fd4300ebe159b35020a34516e4edfb10e4d2978e06832c7d2c9459597f"
+      },
+      {
+        "id": "delayed-callbacks",
+        "label": "delayed-callbacks",
+        "receivedAt": "2026-10-20T14:00:00-04:00",
+        "settings": {
+          "dayStart": "2026-10-20T00:00:00-04:00",
+          "dayEnd": "2026-10-21T00:00:00-04:00",
+          "asOf": "2026-10-20T14:00:00-04:00"
+        },
+        "notes": "Authored end-to-end operating example",
+        "sources": {
+          "resources": {
+            "name": "resources.csv",
+            "text": "resource_id,name,kind,reference\r\nCREW-A,Crew A,crew,Authored roster\r\nTRUCK-A,Truck A,truck,Authored roster\r\n",
+            "bytes": 108,
+            "sha256": "11e7ac707e2a2067121d1b33bdc21af2ee527e2f08dfa6a5707ba88150194237"
+          },
+          "availability": {
+            "name": "availability.csv",
+            "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW-C,CREW-A,available,2026-10-20T08:00:00-04:00,2026-10-20T18:00:00-04:00,Declared crew day\r\nW-T,TRUCK-A,available,2026-10-20T08:00:00-04:00,2026-10-20T18:00:00-04:00,Declared truck day\r\nW-BREAK,CREW-A,blocked,2026-10-20T12:00:00-04:00,2026-10-20T12:30:00-04:00,Declared break\r\n",
+            "bytes": 332,
+            "sha256": "7beb1dc7d9f71df1ae59d437a30912587da1a69a4d64c19c1bfc9ea24470ccb8"
+          },
+          "booking_revisions": {
+            "name": "booking_revisions.csv",
+            "text": "revision_id,job_id,revision,recorded_at,status,customer_id,system_id,location_id,crew_id,truck_id,start_at,end_at,crew_before_minutes,crew_after_minutes,truck_before_minutes,truck_after_minutes,promise_id,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-04:00,confirmed,CUSTOMER-A,SYS-A,PROPERTY-A,CREW-A,TRUCK-A,2026-10-20T09:00:00-04:00,2026-10-20T11:00:00-04:00,15,15,10,10,PROMISE-A,USD,Original service accepted,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-04:00,confirmed,CUSTOMER-A,SYS-A,PROPERTY-A,CREW-A,TRUCK-A,2026-10-20T10:30:00-04:00,2026-10-20T12:00:00-04:00,15,15,10,10,PROMISE-A,USD,Office moved planned service; original arrival agreement retained,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-04:00,confirmed,CUSTOMER-B,SYS-B,PROPERTY-B,CREW-A,TRUCK-A,2026-10-20T11:45:00-04:00,2026-10-20T13:30:00-04:00,15,15,10,10,PROMISE-B,USD,Accepted service,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-04:00,confirmed,CUSTOMER-C,SYS-C,PROPERTY-C,CREW-A,TRUCK-A,2026-10-20T15:00:00-04:00,2026-10-20T17:00:00-04:00,15,15,10,10,PROMISE-C,USD,Accepted service,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-04:00,postponed,CUSTOMER-C,SYS-C,PROPERTY-C,CREW-A,TRUCK-A,2026-10-20T15:00:00-04:00,2026-10-20T17:00:00-04:00,15,15,10,10,PROMISE-C,USD,Weather postponement; original deposit remains until rebooking instruction,Authored booking\r\n",
+            "bytes": 1370,
+            "sha256": "8922052141da1a152d002fa4d19380f611c3fe619fe02e140556cbe0c532686c"
+          },
+          "quoted_lines": {
+            "name": "quoted_lines.csv",
+            "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed inspection and service,45000,Original quote\r\nQA2,A2,Agreed inspection and service,45000,Same scope; revised schedule\r\nQB,B1,Agreed inspection,22500,Accepted quote\r\nQC,C1,Agreed pump service,50000,Original quote\r\n",
+            "bytes": 282,
+            "sha256": "3c613f1789eda61d86b26fe3306d92501fd970628a770372f63261ae6c12f973"
+          },
+          "completions": {
+            "name": "completions.csv",
+            "text": "observation_id,job_id,status,crew_id,truck_id,started_at,finished_at,observed_at,authorization,reference\r\nOBS-A,JOB-A,completed,CREW-A,TRUCK-A,2026-10-20T10:40:00-04:00,2026-10-20T11:40:00-04:00,2026-10-20T12:30:00-04:00,Crew reported actual visit,Authored field completion\r\nOBS-B,JOB-B,in_progress,CREW-A,TRUCK-A,2026-10-20T11:35:00-04:00,,2026-10-20T12:20:00-04:00,Crew current observation,Authored current field update\r\n",
+            "bytes": 423,
+            "sha256": "76ad760d13e9f4eddec98e635bf8e49e481326789e310848d82a22a27fe435ae"
+          },
+          "invoice_lines": {
+            "name": "invoice_lines.csv",
+            "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIL-A,INV-A,JOB-A,USD,45000,Agreed inspection and service,2026-10-20T12:45:00-04:00,Original invoice\r\n",
+            "bytes": 182,
+            "sha256": "85f7bd2844ccd528d6316714d35f844dfe461855ceed88882d7f06c2b3cfc5f5"
+          },
+          "payments": {
+            "name": "payments.csv",
+            "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nPAY-A,received,,USD,10000,2026-10-19T10:15:00-04:00,Recorded customer deposit,Original receipt\r\nPAY-C,received,,USD,7500,2026-10-19T12:15:00-04:00,Recorded customer deposit,Original receipt\r\n",
+            "bytes": 277,
+            "sha256": "ab847f0d1d4403ce1bcb1a502e85734b63704ac57ab5293b7ee34b5bfb5233b8"
+          },
+          "allocations": {
+            "name": "allocations.csv",
+            "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nALLOC-A,PAY-A,JOB-A,INV-A,deposit,10000,2026-10-20T12:45:00-04:00,Apply original deposit to invoice,Source allocation\r\nALLOC-C,PAY-C,JOB-C,,deposit,7500,2026-10-19T12:20:00-04:00,Retain on original job pending written rebooking,Source allocation\r\n",
+            "bytes": 350,
+            "sha256": "1176bba4ca245489509533c1673cc5b1a57f5f785ce6e50401c95ea60e1387bc"
+          },
+          "systems": {
+            "name": "systems.csv",
+            "text": "system_id,customer_id,property_id,parcel_id,jurisdiction_id,source_system,source_id,recorded_at,reference\r\nSYS-A,CUSTOMER-A,PROPERTY-A,PARCEL-A,JURISDICTION-EXAMPLE,Original register,REGISTER-A,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\nSYS-B,CUSTOMER-B,PROPERTY-B,PARCEL-B,JURISDICTION-EXAMPLE,Original register,REGISTER-B,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\nSYS-C,CUSTOMER-C,PROPERTY-C,PARCEL-C,JURISDICTION-EXAMPLE,Original register,REGISTER-C,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\n",
+            "bytes": 572,
+            "sha256": "ffcc1725e31aeb44d4c06bb6ddfab88ee5ec19250b4e59a985ae7736146d1283"
+          },
+          "arrival_promises": {
+            "name": "arrival_promises.csv",
+            "text": "promise_id,job_id,window_start_at,window_end_at,accepted_at,authorization,reference\r\nPROMISE-A,JOB-A,2026-10-20T09:00:00-04:00,2026-10-20T10:00:00-04:00,2026-10-19T08:30:00-04:00,Customer accepted original 09:00–10:00 arrival,Authored agreement\r\nPROMISE-B,JOB-B,2026-10-20T11:30:00-04:00,2026-10-20T12:30:00-04:00,2026-10-19T10:30:00-04:00,Customer accepted 11:30–12:30 arrival,Authored agreement\r\nPROMISE-C,JOB-C,2026-10-20T15:00:00-04:00,2026-10-20T16:00:00-04:00,2026-10-19T11:30:00-04:00,Original accepted arrival,Authored agreement\r\n",
+            "bytes": 542,
+            "sha256": "1d6e4a7d5dad77c4396ff91a9a4717eacb514536b4b21818b425f2c9e45f4411"
+          },
+          "field_versions": {
+            "name": "field_versions.csv",
+            "text": "field_version_id,job_id,revision_id,version,previous_version_id,captured_at,observed_at,status,field_values_json,customer_notes,internal_notes,authorization,reference\r\nFIELD-A1,JOB-A,A1,1,,2026-10-20T11:40:00-04:00,2026-10-20T12:30:00-04:00,final,\"{\"\"tank_count\"\":1,\"\"reported_capacity_gallons\"\":1000,\"\"photo_references\"\":[\"\"example/photo-a-1.jpg\"\"],\"\"source_note\"\":\"\"Authored values for operating behavior only\"\"}\",Inspection completed; written report follows.,Crew worked from original downloaded booking.,Crew submitted original field record,Authored offline capture\r\nFIELD-A2,JOB-A,A2,2,FIELD-A1,2026-10-20T13:05:00-04:00,2026-10-20T13:10:00-04:00,final,\"{\"\"tank_count\"\":2,\"\"reported_capacity_gallons\"\":1500,\"\"photo_references\"\":[\"\"example/photo-a-1.jpg\"\",\"\"example/photo-a-2.jpg\"\"],\"\"correction_reason\"\":\"\"Second compartment added to original field record\"\"}\",Corrected system description prepared.,Office correction requires replacement form and customer signature.,Crew and office recorded correction,Authored field correction\r\nFIELD-B1,JOB-B,B1,1,,2026-10-20T12:15:00-04:00,2026-10-20T12:25:00-04:00,draft,\"{\"\"work_started\"\":true,\"\"photo_references\"\":[]}\",Visit in progress.,Measurements incomplete; keep draft separate.,Crew draft observation,Authored draft field record\r\n",
+            "bytes": 1281,
+            "sha256": "6ce4a311e0ee4a3ccf6bfb2ad2ae7ec9ffb7c2624bdba95d7b167c1b245e5649"
+          },
+          "form_templates": {
+            "name": "form_templates.csv",
+            "text": "form_version_id,form_id,version_label,jurisdiction_id,title,source_url,source_document_sha256,required_roles_json,recorded_at,reference\r\nTEMPLATE-A1,FORM-EXAMPLE-A,2026-01,JURISDICTION-EXAMPLE,Authored inspection form,,,\"[\"\"technician\"\",\"\"owner\"\"]\",2026-10-19T08:05:00-04:00,Authored role requirements; replace with actual jurisdiction form\r\nTEMPLATE-B1,FORM-EXAMPLE-B,2026-01,JURISDICTION-EXAMPLE,Authored draft form without supplied requirements,,,[],2026-10-19T08:10:00-04:00,Requirements unspecified\r\n",
+            "bytes": 505,
+            "sha256": "607b57849c358c99af87c38bf3818a4645b1f37d307d69f626383e6a55b46833"
+          },
+          "form_instances": {
+            "name": "form_instances.csv",
+            "text": "instance_id,job_id,field_version_id,form_version_id,artifact_sha256,created_at,observed_at,reference\r\nFORM-A1,JOB-A,FIELD-A1,TEMPLATE-A1,c822242fbc69dc2ed67fcaed5b63610216f9164f55f650c36c6c899f7b2462c0,2026-10-20T11:45:00-04:00,2026-10-20T12:35:00-04:00,Original authored artifact identity\r\nFORM-A2,JOB-A,FIELD-A2,TEMPLATE-A1,3ac37ce2c0872282a7c0f3e8d1c687d6b6ce3afb3e6a585cf55adc8ad9b82ab3,2026-10-20T13:15:00-04:00,2026-10-20T13:16:00-04:00,Corrected authored artifact identity\r\nFORM-B1,JOB-B,FIELD-B1,TEMPLATE-B1,416fe7c6db6f7f4e7371be50d7a6728c324345a2a0b96857a38aa12c84cbf755,2026-10-20T12:26:00-04:00,2026-10-20T12:27:00-04:00,Draft authored artifact identity\r\n",
+            "bytes": 667,
+            "sha256": "df449d522eeb85a37e66ae3bef69068bb42865de8f90a4a5eb37ba7acfe9a557"
+          },
+          "signatures": {
+            "name": "signatures.csv",
+            "text": "signature_event_id,signature_id,instance_id,role,signer_reference,status,signed_at,observed_at,reference\r\nSIGN-A-TECH-1,SIGN-A-TECH,FORM-A1,technician,CREW-A,signed,2026-10-20T11:46:00-04:00,2026-10-20T12:40:00-04:00,Authored technician signature event\r\nSIGN-A-OWNER-1,SIGN-A-OWNER,FORM-A1,owner,CUSTOMER-A,signed,2026-10-20T11:48:00-04:00,2026-10-20T12:41:00-04:00,Authored owner signature event\r\nSIGN-A-OWNER-2,SIGN-A-OWNER,FORM-A1,owner,CUSTOMER-A,revoked,,2026-10-20T13:25:00-04:00,Owner requests corrected form before signing again\r\nSIGN-A2-TECH-1,SIGN-A2-TECH,FORM-A2,technician,CREW-A,signed,2026-10-20T13:17:00-04:00,2026-10-20T13:18:00-04:00,Corrected technician signature; owner pending\r\n",
+            "bytes": 698,
+            "sha256": "50564128a2200a17d773993d37f90f68ba79afc528cd0b6b269a5a11230851f4"
+          },
+          "filing_attempts": {
+            "name": "filing_attempts.csv",
+            "text": "attempt_id,instance_id,submitted_at,observed_at,channel,destination,authorization,reference\r\nFILE-A1,FORM-A1,2026-10-20T12:50:00-04:00,2026-10-20T12:55:00-04:00,Recorded email delivery,Authored jurisdiction filing desk,Office authorized original filed form,Original filing\r\nFILE-A1-REPEAT,FORM-A1,2026-10-20T13:10:00-04:00,2026-10-20T13:12:00-04:00,Recorded email delivery,Authored jurisdiction filing desk,Office recorded repeated attempt,Repeated filing\r\nFILE-B1,FORM-B1,2026-10-20T13:00:00-04:00,2026-10-20T13:05:00-04:00,Recorded portal submission,Authored jurisdiction draft desk,Office submitted exact draft artifact,Draft filing retained\r\n",
+            "bytes": 646,
+            "sha256": "0b85393760c94a6b6c4ba34fcd12106eff355ad9d18d4b7ca9c3191ef4dc56b7"
+          },
+          "filing_events": {
+            "name": "filing_events.csv",
+            "text": "event_id,attempt_id,kind,occurred_at,observed_at,receipt_reference,reference\r\nEVENT-A1-DELIVERED,FILE-A1,delivered,2026-10-20T12:51:00-04:00,2026-10-20T12:56:00-04:00,Authored delivery receipt,Delivery transport\r\nEVENT-A1-ACK,FILE-A1,acknowledged,2026-10-20T13:00:00-04:00,2026-10-20T13:02:00-04:00,EXAMPLE-ACK-001,Agency acknowledgement\r\nEVENT-A1-ACCEPT,FILE-A1,accepted,2026-10-20T13:20:00-04:00,2026-10-20T13:22:00-04:00,EXAMPLE-ACCEPT-001,Initial response\r\nEVENT-A1-REJECT,FILE-A1,rejected,2026-10-20T13:40:00-04:00,2026-10-20T13:45:00-04:00,EXAMPLE-REJECT-002,Later explicit response requests corrected report\r\nEVENT-A1-LATE-DELIVERY,FILE-A1,delivered,2026-10-20T12:51:00-04:00,2026-10-20T13:50:00-04:00,LATE-DELIVERY-RECEIPT,Delayed transport observation after agency rejection\r\nEVENT-A1-LATE-ACCEPT,FILE-A1,accepted,2026-10-20T13:21:00-04:00,2026-10-20T13:51:00-04:00,LATE-ACCEPT-RECEIPT,Delayed older agency acceptance\r\n",
+            "bytes": 928,
+            "sha256": "15128c0f41233f758a5abff9fc12289d1a1e575dc7a181608be1bc25b2e463fa"
+          }
+        },
+        "sourceHash": "9b57b78ddfd25a59c226f0192755f07722a85447ae2d2609dbe8345302bfdd50"
+      }
+    ],
+    "reviews": [
+      {
+        "id": "review-system",
+        "editionId": "current",
+        "sourceHash": "cc35c5fd4300ebe159b35020a34516e4edfb10e4d2978e06832c7d2c9459597f",
+        "subjectType": "system",
+        "subjectId": "SYS-A",
+        "disposition": "investigate",
+        "reviewer": "Authored office reviewer",
+        "reason": "Retain original source and inspect this exact operational subject",
+        "evidence": "Authored course source",
+        "previousReviewId": null,
+        "recordHash": "2b714fa9e604f0bc6cd66f317fcde8795efd19f03bce7a0a6ccc202a5270890f"
+      },
+      {
+        "id": "review-promise",
+        "editionId": "current",
+        "sourceHash": "cc35c5fd4300ebe159b35020a34516e4edfb10e4d2978e06832c7d2c9459597f",
+        "subjectType": "promise",
+        "subjectId": "PROMISE-A",
+        "disposition": "investigate",
+        "reviewer": "Authored office reviewer",
+        "reason": "Retain original source and inspect this exact operational subject",
+        "evidence": "Authored course source",
+        "previousReviewId": null,
+        "recordHash": "deddb2b3556fe6c7df0d64a03432cad53f708d1cccfb5a9d4fe1295656a54f38"
+      },
+      {
+        "id": "review-fieldRecord",
+        "editionId": "current",
+        "sourceHash": "cc35c5fd4300ebe159b35020a34516e4edfb10e4d2978e06832c7d2c9459597f",
+        "subjectType": "fieldRecord",
+        "subjectId": "FIELD-A1",
+        "disposition": "investigate",
+        "reviewer": "Authored office reviewer",
+        "reason": "Retain original source and inspect this exact operational subject",
+        "evidence": "Authored course source",
+        "previousReviewId": null,
+        "recordHash": "e4f46c6329da8748df47e7d785cac605c493a401e434256fc129a6bd3a47469b"
+      },
+      {
+        "id": "review-formTemplate",
+        "editionId": "current",
+        "sourceHash": "cc35c5fd4300ebe159b35020a34516e4edfb10e4d2978e06832c7d2c9459597f",
+        "subjectType": "formTemplate",
+        "subjectId": "TEMPLATE-A1",
+        "disposition": "investigate",
+        "reviewer": "Authored office reviewer",
+        "reason": "Retain original source and inspect this exact operational subject",
+        "evidence": "Authored course source",
+        "previousReviewId": null,
+        "recordHash": "c097d828d5c8170cd3d38823bdbfc02abd7c35c411a331f8f618de028e3da9da"
+      },
+      {
+        "id": "review-formInstance",
+        "editionId": "current",
+        "sourceHash": "cc35c5fd4300ebe159b35020a34516e4edfb10e4d2978e06832c7d2c9459597f",
+        "subjectType": "formInstance",
+        "subjectId": "FORM-A1",
+        "disposition": "investigate",
+        "reviewer": "Authored office reviewer",
+        "reason": "Retain original source and inspect this exact operational subject",
+        "evidence": "Authored course source",
+        "previousReviewId": null,
+        "recordHash": "21e59f8ce2ef449b7fa9efea7fd8575cf6b16e975c7e2f8c6919749e1a92bb7b"
+      },
+      {
+        "id": "review-signature",
+        "editionId": "current",
+        "sourceHash": "cc35c5fd4300ebe159b35020a34516e4edfb10e4d2978e06832c7d2c9459597f",
+        "subjectType": "signature",
+        "subjectId": "SIGN-A-TECH-1",
+        "disposition": "investigate",
+        "reviewer": "Authored office reviewer",
+        "reason": "Retain original source and inspect this exact operational subject",
+        "evidence": "Authored course source",
+        "previousReviewId": null,
+        "recordHash": "09f0d7f89a249f9953411d014d67469c3ac8744f63ff55ccc2a0b125b91d2b06"
+      },
+      {
+        "id": "review-filingAttempt",
+        "editionId": "current",
+        "sourceHash": "cc35c5fd4300ebe159b35020a34516e4edfb10e4d2978e06832c7d2c9459597f",
+        "subjectType": "filingAttempt",
+        "subjectId": "FILE-A1",
+        "disposition": "investigate",
+        "reviewer": "Authored office reviewer",
+        "reason": "Retain original source and inspect this exact operational subject",
+        "evidence": "Authored course source",
+        "previousReviewId": null,
+        "recordHash": "70ea4c2763e4810b37a688f8d69c31c54858e717331a65fcd9869079331177d7"
+      },
+      {
+        "id": "review-filingEvent",
+        "editionId": "current",
+        "sourceHash": "cc35c5fd4300ebe159b35020a34516e4edfb10e4d2978e06832c7d2c9459597f",
+        "subjectType": "filingEvent",
+        "subjectId": "EVENT-A1-DELIVERED",
+        "disposition": "investigate",
+        "reviewer": "Authored office reviewer",
+        "reason": "Retain original source and inspect this exact operational subject",
+        "evidence": "Authored course source",
+        "previousReviewId": null,
+        "recordHash": "6573e795521422a3b99d2f91bb30208fc47d6877a472670a7614404735ee57de"
+      },
+      {
+        "id": "review-1792052380456-w252fhitltr",
+        "editionId": "delayed-callbacks",
+        "sourceHash": "9b57b78ddfd25a59c226f0192755f07722a85447ae2d2609dbe8345302bfdd50",
+        "subjectType": "booking",
+        "subjectId": "JOB-A",
+        "disposition": "investigate",
+        "reviewer": "Course operator",
+        "reason": "Read the original field and money handover",
+        "evidence": "Authored original source",
+        "previousReviewId": null,
+        "recordHash": "b9f55acf6e6c846a416afe982cb71641c1a2e98842b96b1a90aa0156a4b16c5b"
+      },
+      {
+        "id": "review-1792052381295-ul7c0dr1cn",
+        "editionId": "delayed-callbacks",
+        "sourceHash": "9b57b78ddfd25a59c226f0192755f07722a85447ae2d2609dbe8345302bfdd50",
+        "subjectType": "booking",
+        "subjectId": "JOB-A",
+        "disposition": "accept_expected",
+        "reviewer": "Course operator",
+        "reason": "Append attributed correction, keeping original values",
+        "evidence": "Authored original source",
+        "previousReviewId": "review-1792052380456-w252fhitltr",
+        "recordHash": "cf88f97174eda46b38725b176d229e11602aa23bf8682779a70569d978bc89c0"
+      },
+      {
+        "id": "review-1792052382148-xtjjrecrb2h",
+        "editionId": "delayed-callbacks",
+        "sourceHash": "9b57b78ddfd25a59c226f0192755f07722a85447ae2d2609dbe8345302bfdd50",
+        "subjectType": "resource",
+        "subjectId": "CREW-A",
+        "disposition": "investigate",
+        "reviewer": "Course operator",
+        "reason": "Review original resource occupancy",
+        "evidence": "Authored original source",
+        "previousReviewId": null,
+        "recordHash": "96485414fe495fc89d518c9d0587c8a3b35aacdd46aa0bd4ce7d617e8577327b"
+      },
+      {
+        "id": "review-1792052382995-ue83c9ul4bk",
+        "editionId": "delayed-callbacks",
+        "sourceHash": "9b57b78ddfd25a59c226f0192755f07722a85447ae2d2609dbe8345302bfdd50",
+        "subjectType": "invoice",
+        "subjectId": "[\"INV-A\",\"JOB-A\"]",
+        "disposition": "investigate",
+        "reviewer": "Course operator",
+        "reason": "Read independent invoice and allocations",
+        "evidence": "Authored original source",
+        "previousReviewId": null,
+        "recordHash": "85f030795d4e51b845a0600ecd911f3bb043b396bd2511c2f250ee94837a5c6f"
+      },
+      {
+        "id": "review-1792052383840-8xlv4ef3rf5",
+        "editionId": "delayed-callbacks",
+        "sourceHash": "9b57b78ddfd25a59c226f0192755f07722a85447ae2d2609dbe8345302bfdd50",
+        "subjectType": "fieldRecord",
+        "subjectId": "FIELD-A1",
+        "disposition": "investigate",
+        "reviewer": "Course operator",
+        "reason": "Keep original capture and later observation",
+        "evidence": "Authored original source",
+        "previousReviewId": null,
+        "recordHash": "77a5e185ee8593b5105173b6643a8cb7fe40d2a333ad857d4ecacd7de8ac3212"
+      },
+      {
+        "id": "review-1792052384714-zta218iyxi",
+        "editionId": "delayed-callbacks",
+        "sourceHash": "9b57b78ddfd25a59c226f0192755f07722a85447ae2d2609dbe8345302bfdd50",
+        "subjectType": "formInstance",
+        "subjectId": "FORM-A1",
+        "disposition": "investigate",
+        "reviewer": "Course operator",
+        "reason": "Review exact original form source binding",
+        "evidence": "Authored original source",
+        "previousReviewId": null,
+        "recordHash": "1ed7119463f067cd3d119c9f6e883d176903cc9765ef11f555eee041e22411e0"
+      },
+      {
+        "id": "review-1792052385565-nt4t589rpzd",
+        "editionId": "delayed-callbacks",
+        "sourceHash": "9b57b78ddfd25a59c226f0192755f07722a85447ae2d2609dbe8345302bfdd50",
+        "subjectType": "filingEvent",
+        "subjectId": "EVENT-A1-DELIVERED",
+        "disposition": "investigate",
+        "reviewer": "Course operator",
+        "reason": "Read original authority receipt",
+        "evidence": "Authored original source",
+        "previousReviewId": null,
+        "recordHash": "951583807991771c5c99d0ed233bc7a2777f3c18dd12a8dfddaabb65117db3b5"
+      }
+    ]
+  },
+  "session": {
+    "editionId": "delayed-callbacks",
+    "table": "resources",
+    "resourceId": null,
+    "jobId": "JOB-A",
+    "sourceDraft": {
+      "id": "next-source-edition",
+      "label": "Next source edition draft",
+      "receivedAt": "2026-10-20T18:00:00Z",
+      "notes": "Complete authored source history is retained in five existing editions. Prepare an explicit correction here.",
+      "settings": {
+        "dayStart": "2026-10-20T00:00:00-04:00",
+        "dayEnd": "2026-10-21T00:00:00-04:00",
+        "asOf": "unfinished as-of"
+      },
+      "sources": {
+        "resources": {
+          "name": "resources.csv",
+          "text": "resource_id,name,kind,reference\r\nCREW-A,Crew A,crew,Authored roster\r\nTRUCK-A,Truck A,truck,Authored roster\r\n",
+          "receiptSha256": null
+        },
+        "availability": {
+          "name": "availability.csv",
+          "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW-C,CREW-A,available,2026-10-20T08:00:00-04:00,2026-10-20T18:00:00-04:00,Declared crew day\r\nW-T,TRUCK-A,available,2026-10-20T08:00:00-04:00,2026-10-20T18:00:00-04:00,Declared truck day\r\nW-BREAK,CREW-A,blocked,2026-10-20T12:00:00-04:00,2026-10-20T12:30:00-04:00,Declared break\r\n",
+          "receiptSha256": null
+        },
+        "booking_revisions": {
+          "name": "booking_revisions.csv",
+          "text": "revision_id,job_id,revision,recorded_at,status,customer_id,system_id,location_id,crew_id,truck_id,start_at,end_at,crew_before_minutes,crew_after_minutes,truck_before_minutes,truck_after_minutes,promise_id,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-04:00,confirmed,CUSTOMER-A,SYS-A,PROPERTY-A,CREW-A,TRUCK-A,2026-10-20T09:00:00-04:00,2026-10-20T11:00:00-04:00,15,15,10,10,PROMISE-A,USD,Original service accepted,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-04:00,confirmed,CUSTOMER-A,SYS-A,PROPERTY-A,CREW-A,TRUCK-A,2026-10-20T10:30:00-04:00,2026-10-20T12:00:00-04:00,15,15,10,10,PROMISE-A,USD,Office moved planned service; original arrival agreement retained,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-04:00,confirmed,CUSTOMER-B,SYS-B,PROPERTY-B,CREW-A,TRUCK-A,2026-10-20T11:45:00-04:00,2026-10-20T13:30:00-04:00,15,15,10,10,PROMISE-B,USD,Accepted service,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-04:00,confirmed,CUSTOMER-C,SYS-C,PROPERTY-C,CREW-A,TRUCK-A,2026-10-20T15:00:00-04:00,2026-10-20T17:00:00-04:00,15,15,10,10,PROMISE-C,USD,Accepted service,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-04:00,postponed,CUSTOMER-C,SYS-C,PROPERTY-C,CREW-A,TRUCK-A,2026-10-20T15:00:00-04:00,2026-10-20T17:00:00-04:00,15,15,10,10,PROMISE-C,USD,Weather postponement; original deposit remains until rebooking instruction,Authored booking\r\n",
+          "receiptSha256": null
+        },
+        "quoted_lines": {
+          "name": "quoted_lines.csv",
+          "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed inspection and service,45000,Original quote\r\nQA2,A2,Agreed inspection and service,45000,Same scope; revised schedule\r\nQB,B1,Agreed inspection,22500,Accepted quote\r\nQC,C1,Agreed pump service,50000,Original quote\r\n",
+          "receiptSha256": null
+        },
+        "completions": {
+          "name": "completions.csv",
+          "text": "observation_id,job_id,status,crew_id,truck_id,started_at,finished_at,observed_at,authorization,reference\r\nOBS-A,JOB-A,completed,CREW-A,TRUCK-A,2026-10-20T10:40:00-04:00,2026-10-20T11:40:00-04:00,2026-10-20T12:30:00-04:00,Crew reported actual visit,Authored field completion\r\nOBS-B,JOB-B,in_progress,CREW-A,TRUCK-A,2026-10-20T11:35:00-04:00,,2026-10-20T12:20:00-04:00,Crew current observation,Authored current field update\r\n",
+          "receiptSha256": null
+        },
+        "invoice_lines": {
+          "name": "invoice_lines.csv",
+          "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIL-A,INV-A,JOB-A,USD,45000,Agreed inspection and service,2026-10-20T12:45:00-04:00,Original invoice\r\n",
+          "receiptSha256": null
+        },
+        "payments": {
+          "name": "payments.csv",
+          "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nPAY-A,received,,USD,10000,2026-10-19T10:15:00-04:00,Recorded customer deposit,Original receipt\r\nPAY-C,received,,USD,7500,2026-10-19T12:15:00-04:00,Recorded customer deposit,Original receipt\r\n",
+          "receiptSha256": null
+        },
+        "allocations": {
+          "name": "allocations.csv",
+          "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nALLOC-A,PAY-A,JOB-A,INV-A,deposit,10000,2026-10-20T12:45:00-04:00,Apply original deposit to invoice,Source allocation\r\nALLOC-C,PAY-C,JOB-C,,deposit,7500,2026-10-19T12:20:00-04:00,Retain on original job pending written rebooking,Source allocation\r\n",
+          "receiptSha256": null
+        },
+        "systems": {
+          "name": "systems.csv",
+          "text": "system_id,customer_id,property_id,parcel_id,jurisdiction_id,source_system,source_id,recorded_at,reference\r\nSYS-A,CUSTOMER-A,PROPERTY-A,PARCEL-A,JURISDICTION-EXAMPLE,Original register,REGISTER-A,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\nSYS-B,CUSTOMER-B,PROPERTY-B,PARCEL-B,JURISDICTION-EXAMPLE,Original register,REGISTER-B,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\nSYS-C,CUSTOMER-C,PROPERTY-C,PARCEL-C,JURISDICTION-EXAMPLE,Original register,REGISTER-C,2026-10-19T08:00:00-04:00,Authored system record; no real property\r\n",
+          "receiptSha256": null
+        },
+        "arrival_promises": {
+          "name": "arrival_promises.csv",
+          "text": "promise_id,job_id,window_start_at,window_end_at,accepted_at,authorization,reference\r\nPROMISE-A,JOB-A,2026-10-20T09:00:00-04:00,2026-10-20T10:00:00-04:00,2026-10-19T08:30:00-04:00,Customer accepted original 09:00–10:00 arrival,Authored agreement\r\nPROMISE-B,JOB-B,2026-10-20T11:30:00-04:00,2026-10-20T12:30:00-04:00,2026-10-19T10:30:00-04:00,Customer accepted 11:30–12:30 arrival,Authored agreement\r\nPROMISE-C,JOB-C,2026-10-20T15:00:00-04:00,2026-10-20T16:00:00-04:00,2026-10-19T11:30:00-04:00,Original accepted arrival,Authored agreement\r\n",
+          "receiptSha256": null
+        },
+        "field_versions": {
+          "name": "field_versions.csv",
+          "text": "field_version_id,job_id,revision_id,version,previous_version_id,captured_at,observed_at,status,field_values_json,customer_notes,internal_notes,authorization,reference\r\nFIELD-A1,JOB-A,A1,1,,2026-10-20T11:40:00-04:00,2026-10-20T12:30:00-04:00,final,\"{\"\"tank_count\"\":1,\"\"reported_capacity_gallons\"\":1000,\"\"photo_references\"\":[\"\"example/photo-a-1.jpg\"\"],\"\"source_note\"\":\"\"Authored values for operating behavior only\"\"}\",Inspection completed; written report follows.,Crew worked from original downloaded booking.,Crew submitted original field record,Authored offline capture\r\nFIELD-A2,JOB-A,A2,2,FIELD-A1,2026-10-20T13:05:00-04:00,2026-10-20T13:10:00-04:00,final,\"{\"\"tank_count\"\":2,\"\"reported_capacity_gallons\"\":1500,\"\"photo_references\"\":[\"\"example/photo-a-1.jpg\"\",\"\"example/photo-a-2.jpg\"\"],\"\"correction_reason\"\":\"\"Second compartment added to original field record\"\"}\",Corrected system description prepared.,Office correction requires replacement form and customer signature.,Crew and office recorded correction,Authored field correction\r\nFIELD-B1,JOB-B,B1,1,,2026-10-20T12:15:00-04:00,2026-10-20T12:25:00-04:00,draft,\"{\"\"work_started\"\":true,\"\"photo_references\"\":[]}\",Visit in progress.,Measurements incomplete; keep draft separate.,Crew draft observation,Authored draft field record\r\n",
+          "receiptSha256": null
+        },
+        "form_templates": {
+          "name": "form_templates.csv",
+          "text": "form_version_id,form_id,version_label,jurisdiction_id,title,source_url,source_document_sha256,required_roles_json,recorded_at,reference\r\nTEMPLATE-A1,FORM-EXAMPLE-A,2026-01,JURISDICTION-EXAMPLE,Authored inspection form,,,\"[\"\"technician\"\",\"\"owner\"\"]\",2026-10-19T08:05:00-04:00,Authored role requirements; replace with actual jurisdiction form\r\nTEMPLATE-B1,FORM-EXAMPLE-B,2026-01,JURISDICTION-EXAMPLE,Authored draft form without supplied requirements,,,[],2026-10-19T08:10:00-04:00,Requirements unspecified\r\n",
+          "receiptSha256": null
+        },
+        "form_instances": {
+          "name": "form_instances.csv",
+          "text": "instance_id,job_id,field_version_id,form_version_id,artifact_sha256,created_at,observed_at,reference\r\nFORM-A1,JOB-A,FIELD-A1,TEMPLATE-A1,c822242fbc69dc2ed67fcaed5b63610216f9164f55f650c36c6c899f7b2462c0,2026-10-20T11:45:00-04:00,2026-10-20T12:35:00-04:00,Original authored artifact identity\r\nFORM-A2,JOB-A,FIELD-A2,TEMPLATE-A1,3ac37ce2c0872282a7c0f3e8d1c687d6b6ce3afb3e6a585cf55adc8ad9b82ab3,2026-10-20T13:15:00-04:00,2026-10-20T13:16:00-04:00,Corrected authored artifact identity\r\nFORM-B1,JOB-B,FIELD-B1,TEMPLATE-B1,416fe7c6db6f7f4e7371be50d7a6728c324345a2a0b96857a38aa12c84cbf755,2026-10-20T12:26:00-04:00,2026-10-20T12:27:00-04:00,Draft authored artifact identity\r\n",
+          "receiptSha256": null
+        },
+        "signatures": {
+          "name": "signatures.csv",
+          "text": "signature_event_id,signature_id,instance_id,role,signer_reference,status,signed_at,observed_at,reference\r\nSIGN-A-TECH-1,SIGN-A-TECH,FORM-A1,technician,CREW-A,signed,2026-10-20T11:46:00-04:00,2026-10-20T12:40:00-04:00,Authored technician signature event\r\nSIGN-A-OWNER-1,SIGN-A-OWNER,FORM-A1,owner,CUSTOMER-A,signed,2026-10-20T11:48:00-04:00,2026-10-20T12:41:00-04:00,Authored owner signature event\r\nSIGN-A-OWNER-2,SIGN-A-OWNER,FORM-A1,owner,CUSTOMER-A,revoked,,2026-10-20T13:25:00-04:00,Owner requests corrected form before signing again\r\nSIGN-A2-TECH-1,SIGN-A2-TECH,FORM-A2,technician,CREW-A,signed,2026-10-20T13:17:00-04:00,2026-10-20T13:18:00-04:00,Corrected technician signature; owner pending\r\n",
+          "receiptSha256": null
+        },
+        "filing_attempts": {
+          "name": "filing_attempts.csv",
+          "text": "attempt_id,instance_id,submitted_at,observed_at,channel,destination,authorization,reference\r\nFILE-A1,FORM-A1,2026-10-20T12:50:00-04:00,2026-10-20T12:55:00-04:00,Recorded email delivery,Authored jurisdiction filing desk,Office authorized original filed form,Original filing\r\nFILE-A1-REPEAT,FORM-A1,2026-10-20T13:10:00-04:00,2026-10-20T13:12:00-04:00,Recorded email delivery,Authored jurisdiction filing desk,Office recorded repeated attempt,Repeated filing\r\nFILE-B1,FORM-B1,2026-10-20T13:00:00-04:00,2026-10-20T13:05:00-04:00,Recorded portal submission,Authored jurisdiction draft desk,Office submitted exact draft artifact,Draft filing retained\r\n",
+          "receiptSha256": null
+        },
+        "filing_events": {
+          "name": "filing_events.csv",
+          "text": "event_id,attempt_id,kind,occurred_at,observed_at,receipt_reference,reference\r\nEVENT-A1-DELIVERED,FILE-A1,delivered,2026-10-20T12:51:00-04:00,2026-10-20T12:56:00-04:00,Authored delivery receipt,Delivery transport\r\nEVENT-A1-ACK,FILE-A1,acknowledged,2026-10-20T13:00:00-04:00,2026-10-20T13:02:00-04:00,EXAMPLE-ACK-001,Agency acknowledgement\r\nEVENT-A1-ACCEPT,FILE-A1,accepted,2026-10-20T13:20:00-04:00,2026-10-20T13:22:00-04:00,EXAMPLE-ACCEPT-001,Initial response\r\nEVENT-A1-REJECT,FILE-A1,rejected,2026-10-20T13:40:00-04:00,2026-10-20T13:45:00-04:00,EXAMPLE-REJECT-002,Later explicit response requests corrected report\r\nEVENT-A1-LATE-DELIVERY,FILE-A1,delivered,2026-10-20T12:51:00-04:00,2026-10-20T13:50:00-04:00,LATE-DELIVERY-RECEIPT,Delayed transport observation after agency rejection\r\nEVENT-A1-LATE-ACCEPT,FILE-A1,accepted,2026-10-20T13:21:00-04:00,2026-10-20T13:51:00-04:00,LATE-ACCEPT-RECEIPT,Delayed older agency acceptance\r\n",
+          "receiptSha256": null
+        }
+      }
+    },
+    "reviewDrafts": {},
+    "selectedSubject": "[\"filingEvent\",\"EVENT-A1-DELIVERED\"]",
+    "receipts": [],
+    "notes": ""
+  }
+}

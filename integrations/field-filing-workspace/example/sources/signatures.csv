@@ -1,0 +1,5 @@
+signature_event_id,signature_id,instance_id,role,signer_reference,status,signed_at,observed_at,reference
+SIGN-A-TECH-1,SIGN-A-TECH,FORM-A1,technician,CREW-A,signed,2026-10-20T11:46:00-04:00,2026-10-20T12:40:00-04:00,Authored technician signature event
+SIGN-A-OWNER-1,SIGN-A-OWNER,FORM-A1,owner,CUSTOMER-A,signed,2026-10-20T11:48:00-04:00,2026-10-20T12:41:00-04:00,Authored owner signature event
+SIGN-A-OWNER-2,SIGN-A-OWNER,FORM-A1,owner,CUSTOMER-A,revoked,,2026-10-20T13:25:00-04:00,Owner requests corrected form before signing again
+SIGN-A2-TECH-1,SIGN-A2-TECH,FORM-A2,technician,CREW-A,signed,2026-10-20T13:17:00-04:00,2026-10-20T13:18:00-04:00,Corrected technician signature; owner pending

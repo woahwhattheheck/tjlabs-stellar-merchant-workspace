@@ -1,0 +1,221 @@
+{
+  "schema": "tjlabs.field-filing-intake.v1",
+  "operation": "TJLABS-FIELD-FILING-WORKSPACE",
+  "factory": "createFieldFilingCore",
+  "coreSchema": "tjlabs.field-filing-study.v1",
+  "wrapperSchema": "tjlabs.field-filing-desk.v1",
+  "columns": {
+    "resources": [
+      "resource_id",
+      "name",
+      "kind",
+      "reference"
+    ],
+    "availability": [
+      "window_id",
+      "resource_id",
+      "state",
+      "start_at",
+      "end_at",
+      "reference"
+    ],
+    "booking_revisions": [
+      "revision_id",
+      "job_id",
+      "revision",
+      "recorded_at",
+      "status",
+      "customer_id",
+      "system_id",
+      "location_id",
+      "crew_id",
+      "truck_id",
+      "start_at",
+      "end_at",
+      "crew_before_minutes",
+      "crew_after_minutes",
+      "truck_before_minutes",
+      "truck_after_minutes",
+      "promise_id",
+      "currency",
+      "authorization",
+      "reference"
+    ],
+    "quoted_lines": [
+      "line_id",
+      "revision_id",
+      "description",
+      "amount_minor",
+      "reference"
+    ],
+    "completions": [
+      "observation_id",
+      "job_id",
+      "status",
+      "crew_id",
+      "truck_id",
+      "started_at",
+      "finished_at",
+      "observed_at",
+      "authorization",
+      "reference"
+    ],
+    "invoice_lines": [
+      "line_id",
+      "invoice_id",
+      "job_id",
+      "currency",
+      "amount_minor",
+      "description",
+      "issued_at",
+      "reference"
+    ],
+    "payments": [
+      "payment_id",
+      "kind",
+      "parent_payment_id",
+      "currency",
+      "amount_minor",
+      "occurred_at",
+      "method",
+      "reference"
+    ],
+    "allocations": [
+      "allocation_id",
+      "payment_id",
+      "job_id",
+      "invoice_id",
+      "purpose",
+      "amount_minor",
+      "authorized_at",
+      "authorization",
+      "reference"
+    ],
+    "systems": [
+      "system_id",
+      "customer_id",
+      "property_id",
+      "parcel_id",
+      "jurisdiction_id",
+      "source_system",
+      "source_id",
+      "recorded_at",
+      "reference"
+    ],
+    "arrival_promises": [
+      "promise_id",
+      "job_id",
+      "window_start_at",
+      "window_end_at",
+      "accepted_at",
+      "authorization",
+      "reference"
+    ],
+    "field_versions": [
+      "field_version_id",
+      "job_id",
+      "revision_id",
+      "version",
+      "previous_version_id",
+      "captured_at",
+      "observed_at",
+      "status",
+      "field_values_json",
+      "customer_notes",
+      "internal_notes",
+      "authorization",
+      "reference"
+    ],
+    "form_templates": [
+      "form_version_id",
+      "form_id",
+      "version_label",
+      "jurisdiction_id",
+      "title",
+      "source_url",
+      "source_document_sha256",
+      "required_roles_json",
+      "recorded_at",
+      "reference"
+    ],
+    "form_instances": [
+      "instance_id",
+      "job_id",
+      "field_version_id",
+      "form_version_id",
+      "artifact_sha256",
+      "created_at",
+      "observed_at",
+      "reference"
+    ],
+    "signatures": [
+      "signature_event_id",
+      "signature_id",
+      "instance_id",
+      "role",
+      "signer_reference",
+      "status",
+      "signed_at",
+      "observed_at",
+      "reference"
+    ],
+    "filing_attempts": [
+      "attempt_id",
+      "instance_id",
+      "submitted_at",
+      "observed_at",
+      "channel",
+      "destination",
+      "authorization",
+      "reference"
+    ],
+    "filing_events": [
+      "event_id",
+      "attempt_id",
+      "kind",
+      "occurred_at",
+      "observed_at",
+      "receipt_reference",
+      "reference"
+    ]
+  },
+  "analysisTables": [
+    "systems",
+    "arrivalPromises",
+    "fieldRecords",
+    "formTemplates",
+    "formInstances",
+    "signatures",
+    "filingAttempts",
+    "filingEvents"
+  ],
+  "reviewTypes": [
+    "booking",
+    "resource",
+    "invoice",
+    "payment",
+    "allocation",
+    "system",
+    "promise",
+    "fieldRecord",
+    "formTemplate",
+    "formInstance",
+    "signature",
+    "filingAttempt",
+    "filingEvent"
+  ],
+  "rules": [
+    "Source-defined customer, property, parcel, jurisdiction and system identities remain explicit. Stable system/customer and currency bind every job revision; property equals original booking location.",
+    "Arrival promises retain exact accepted window, agreement time and authorization. Booking revisions name their accepted promise; changed schedule and original promise compare without inferred permission.",
+    "Field record versions retain captured time and later observed/sync time, exact booking revision, predecessor, arbitrary original field-value JSON, customer notes and distinct internal notes. Latest observed version is current; every prior body remains.",
+    "Field statuses are draft, final or voided. Final is the source field-record disposition and does not prove physical completion, which remains an independent completion record.",
+    "Templates retain original jurisdiction/form/version, original document URL/hash when supplied and explicit source-declared role list. Empty role list means unspecified requirements, not legal completeness.",
+    "Form instances bind the exact field record version and template version and retain the source-reported artifact digest. Later field corrections do not silently rewrite a signed or filed artifact. The instance created_at and later observed_at are both retained; as-of visibility follows observed_at.",
+    "Signature events bind original signature identity, instance, role and signer, with signed, declined or revoked outcome and observation time. A signature state is compared only at its recorded observation; it is never treated as legal validation.",
+    "Filing attempts retain exact form instance, destination, channel, submission time, observation time and authorization. Separate events are delivered, acknowledged, accepted, rejected or withdrawn; accepted/rejected/acknowledged need the actual receipt reference.",
+    "All observation histories are selected at the explicit as-of instant. Physical capture, submission, delivery, acknowledgement, acceptance, completed work, invoice issuance and payment remain separate. Within observed filing responses, current agency decision follows occurred_at; delivery and acknowledgement have their own retained events, so delayed transport or older agency callbacks cannot erase a newer decision.",
+    "Current source comparisons flag arrival beyond the accepted window, older-booking field records, superseded field bodies under a retained form, missing or revoked source-declared signature roles, repeated filings and later conflicting filing outcomes.",
+    "No live dispatch, signing, filing, customer communication, payment, AI diagnosis or regulatory inference. Independent explicit source exports and authored operating examples only.",
+    "Complete offline/browser/native copies retain source editions, original byte receipts, unfinished forms and source-specific review corrections. Monetary arithmetic remains exact integer minor units in explicit currencies."
+  ]
+}

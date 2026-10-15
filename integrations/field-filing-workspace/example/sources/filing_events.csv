@@ -1,0 +1,5 @@
+event_id,attempt_id,kind,occurred_at,observed_at,receipt_reference,reference
+EVENT-A1-DELIVERED,FILE-A1,delivered,2026-10-20T12:51:00-04:00,2026-10-20T12:56:00-04:00,Authored delivery receipt,Delivery transport
+EVENT-A1-ACK,FILE-A1,acknowledged,2026-10-20T13:00:00-04:00,2026-10-20T13:02:00-04:00,EXAMPLE-ACK-001,Agency acknowledgement
+EVENT-A1-ACCEPT,FILE-A1,accepted,2026-10-20T13:20:00-04:00,2026-10-20T13:22:00-04:00,EXAMPLE-ACCEPT-001,Initial response
+EVENT-A1-REJECT,FILE-A1,rejected,2026-10-20T13:40:00-04:00,2026-10-20T13:45:00-04:00,EXAMPLE-REJECT-002,Later explicit response requests corrected report

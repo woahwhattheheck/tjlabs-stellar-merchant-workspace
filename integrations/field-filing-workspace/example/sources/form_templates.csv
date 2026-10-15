@@ -1,0 +1,3 @@
+form_version_id,form_id,version_label,jurisdiction_id,title,source_url,source_document_sha256,required_roles_json,recorded_at,reference
+TEMPLATE-A1,FORM-EXAMPLE-A,2026-01,JURISDICTION-EXAMPLE,Authored inspection form,,,"[""technician"",""owner""]",2026-10-19T08:05:00-04:00,Authored role requirements; replace with actual jurisdiction form
+TEMPLATE-B1,FORM-EXAMPLE-B,2026-01,JURISDICTION-EXAMPLE,Authored draft form without supplied requirements,,,[],2026-10-19T08:10:00-04:00,Requirements unspecified

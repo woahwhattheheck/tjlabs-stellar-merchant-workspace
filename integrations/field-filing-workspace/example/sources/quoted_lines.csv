@@ -1,0 +1,5 @@
+line_id,revision_id,description,amount_minor,reference
+QA1,A1,Agreed inspection and service,45000,Original quote
+QA2,A2,Agreed inspection and service,45000,Same scope; revised schedule
+QB,B1,Agreed inspection,22500,Accepted quote
+QC,C1,Agreed pump service,50000,Original quote
