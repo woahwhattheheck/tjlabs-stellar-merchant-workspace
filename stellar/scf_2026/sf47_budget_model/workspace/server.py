@@ -23,6 +23,7 @@ from model import Workspace, Problem, HERE, SOURCE_URL, canonical, csv_bytes, da
 
 STATIC = {"/": ("index.html", "text/html; charset=utf-8"),
           "/app.mjs": ("app.mjs", "text/javascript; charset=utf-8"),
+          "/agent-contracts.mjs": ("agent-contracts.mjs", "text/javascript; charset=utf-8"),
           "/case-planning.mjs": ("case-planning.mjs", "text/javascript; charset=utf-8"),
           "/case-planning.css": ("case-planning.css", "text/css; charset=utf-8"),
           "/case-planning-guide.md": ("CASE_PLANNING.md", "text/markdown; charset=utf-8"),
