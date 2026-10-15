@@ -550,5 +550,14 @@ function createSha256ByteHasher() {
   return api;
 }
 
-module.exports = {sha256Utf8, sha256Bytes, utf8ByteLength, createSha256ByteHasher};
+// Cache only exact immutable text. Each caller receives an isolated digest record.
+const completeTextDigests=new Map();let completeTextDigestBytes=0;
+function cachedSha256Utf8(value){
+ if(typeof value!=='string')return sha256Utf8(value);
+ const hit=completeTextDigests.get(value);if(hit){completeTextDigests.delete(value);completeTextDigests.set(value,hit);return {bytes:hit.value.bytes,sha256:hit.value.sha256};}
+ const result=sha256Utf8(value),cost=value.length*2+128;
+ if(cost<=16*1024*1024){while(completeTextDigests.size&&(completeTextDigestBytes+cost>16*1024*1024||completeTextDigests.size>=4096)){const key=completeTextDigests.keys().next().value;completeTextDigestBytes-=completeTextDigests.get(key).cost;completeTextDigests.delete(key);}completeTextDigests.set(value,{value:{...result},cost});completeTextDigestBytes+=cost;}
+ return result;
+}
+module.exports = {sha256Utf8:cachedSha256Utf8, sha256Bytes, utf8ByteLength, createSha256ByteHasher};
 

@@ -14,15 +14,1048 @@
     "historicalProtocol": "Full retained correction from final donor"
   },
   "assembledBrowser": {
-    "status": "running",
-    "surface": "Actual assembled production HTML and handlers with supplied DOM and atomic IndexedDB"
+    "status": "passed",
+    "checks": [
+      "Every ordinary harvest and outcome section renders through assembled production handlers",
+      "Complete authored harvest, forecast inputs and physical outcomes and recurring work results remain exact",
+      "Complete pending asset CSV retains BOM and CRLF",
+      "Actual mapped unit import retains the entire original",
+      "Ordinary harvest plan correction retains the exact whole harvest plan-line preimage",
+      "Binary supporting source bytes remain exact",
+      "Exact forecast input helper retains its complete source-bound draft",
+      "Document chronology correction retains prior metadata",
+      "Current configured operator or board review binds the exact source",
+      "Competing complete saved head detected",
+      "Explicit adoption retains complete competing harvest and outcome preimage",
+      "Continued editing and portable actor/session reopen"
+    ],
+    "surface": "Actual assembled production HTML and handlers, injected DOM and atomic IndexedDB",
+    "elapsedMs": 158743
   },
   "merchant": {
-    "status": "ready",
-    "surface": "Actual production Merchant dispatch/model with supplied filesystem and transport"
+    "status": "passed",
+    "checks": [
+      "Declared complete growers input",
+      "Declared complete sites input",
+      "Declared complete crops input",
+      "Declared complete locations input",
+      "Declared complete loggers input",
+      "Declared complete people input",
+      "Declared complete buyers input",
+      "Declared complete protocols input",
+      "Declared complete invoice_lines input",
+      "Declared complete authorities input",
+      "Declared complete population_members input",
+      "Declared complete effort input",
+      "Declared complete harvest_batches input",
+      "Declared complete harvest_transfers input",
+      "Declared complete harvest_dispositions input",
+      "Declared complete harvest_storage input",
+      "Declared complete harvest_temperatures input",
+      "Declared complete harvest_models input",
+      "Declared complete harvest_forecasts input",
+      "Declared complete harvest_forecast_inputs input",
+      "Declared complete harvest_quality input",
+      "Declared complete harvest_demands input",
+      "Declared complete harvest_plans input",
+      "Declared complete harvest_plan_lines input",
+      "Declared complete harvest_plan_reviews input",
+      "Declared complete harvest_dispatches input",
+      "Declared complete harvest_outcomes input",
+      "Declared complete harvest_credits input",
+      "Declared exact binary original",
+      "harvest-plan",
+      "review",
+      "Complete incoming carrier and original editor actor retained with separate receiving attribution",
+      "Original exact request recovers after later work",
+      "Stale complete request retained without replacing selected work",
+      "Pinned harvest/outcome observations, all twenty-eight raw families and exact bounded original bytes",
+      "Exact harvest plan-line revision preserves original row, unfinished source and incoming actor",
+      "Complete harvest assessment available through the production preview"
+    ],
+    "surface": "Actual Merchant dispatch, exact declared reads and complete production model in V8; filesystem/listener injected",
+    "requests": 34,
+    "editions": 35,
+    "elapsedMs": 566891,
+    "timings": [
+      {
+        "tool": "merchant_harvestoutcomestudy_connect",
+        "collection": null,
+        "kind": null,
+        "ms": 1
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "growers",
+        "ms": 1854
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "sites",
+        "ms": 1907
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "crops",
+        "ms": 2019
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "locations",
+        "ms": 2132
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "loggers",
+        "ms": 2258
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "people",
+        "ms": 2364
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "buyers",
+        "ms": 2480
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "protocols",
+        "ms": 2599
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "invoice_lines",
+        "ms": 2709
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "authorities",
+        "ms": 2840
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "population_members",
+        "ms": 2958
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "effort",
+        "ms": 3228
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "harvest_batches",
+        "ms": 3405
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "harvest_transfers",
+        "ms": 3531
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "harvest_dispositions",
+        "ms": 3718
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "harvest_storage",
+        "ms": 3797
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "harvest_temperatures",
+        "ms": 3905
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "harvest_models",
+        "ms": 4068
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "harvest_forecasts",
+        "ms": 4285
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "harvest_forecast_inputs",
+        "ms": 4301
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "harvest_quality",
+        "ms": 4463
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "harvest_demands",
+        "ms": 4626
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "harvest_plans",
+        "ms": 4710
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "harvest_plan_lines",
+        "ms": 4848
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "harvest_plan_reviews",
+        "ms": 4996
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "harvest_dispatches",
+        "ms": 5096
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "harvest_outcomes",
+        "ms": 5254
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "harvest_credits",
+        "ms": 5493
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_ingest",
+        "collection": null,
+        "kind": "document",
+        "ms": 5703
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_action",
+        "collection": null,
+        "kind": "harvest-plan",
+        "ms": 5588
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_action",
+        "collection": null,
+        "kind": "review",
+        "ms": 5739
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_receive",
+        "collection": null,
+        "kind": "working",
+        "ms": 16548
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "originals",
+        "kind": null,
+        "ms": 1861
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "originals",
+        "kind": null,
+        "ms": 369
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "extracts",
+        "kind": null,
+        "ms": 357
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "extracts",
+        "kind": null,
+        "ms": 358
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 357
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 355
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 355
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "crosswalks",
+        "kind": null,
+        "ms": 356
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "reviews",
+        "kind": null,
+        "ms": 376
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "documents",
+        "kind": null,
+        "ms": 379
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "documents",
+        "kind": null,
+        "ms": 375
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "documents",
+        "kind": null,
+        "ms": 371
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "documents",
+        "kind": null,
+        "ms": 368
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "documentLinks",
+        "kind": null,
+        "ms": 352
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "backups",
+        "kind": null,
+        "ms": 355
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "history",
+        "kind": null,
+        "ms": 356
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "draft",
+        "kind": null,
+        "ms": 358
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "requests",
+        "kind": null,
+        "ms": 358
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "availability",
+        "kind": null,
+        "ms": 381
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "availability",
+        "kind": null,
+        "ms": 377
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "findings",
+        "kind": null,
+        "ms": 874
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 362
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 351
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 365
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "documentComparisons",
+        "kind": null,
+        "ms": 361
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "assessment",
+        "kind": null,
+        "ms": 355
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "plan",
+        "kind": null,
+        "ms": 358
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "harvestResult",
+        "kind": null,
+        "ms": 350
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "populationMembers",
+        "kind": null,
+        "ms": 357
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "inventory",
+        "kind": null,
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "plans",
+        "kind": null,
+        "ms": 352
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "dispatchOutcomes",
+        "kind": null,
+        "ms": 354
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "forecastEvaluations",
+        "kind": null,
+        "ms": 361
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalIssues",
+        "kind": null,
+        "ms": 360
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "harvestIssues",
+        "kind": null,
+        "ms": 356
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "effortRecords",
+        "kind": null,
+        "ms": 365
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "effortRecords",
+        "kind": null,
+        "ms": 363
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "effortGroups",
+        "kind": null,
+        "ms": 392
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "growers",
+        "ms": 380
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "sites",
+        "ms": 352
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "crops",
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "locations",
+        "ms": 357
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "loggers",
+        "ms": 351
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "people",
+        "ms": 351
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "buyers",
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "protocols",
+        "ms": 352
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "invoice_lines",
+        "ms": 351
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "authorities",
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "population_members",
+        "ms": 356
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "effort",
+        "ms": 360
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "harvest_batches",
+        "ms": 360
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "harvest_transfers",
+        "ms": 359
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "harvest_dispositions",
+        "ms": 351
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "harvest_storage",
+        "ms": 349
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "harvest_temperatures",
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "harvest_models",
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "harvest_forecasts",
+        "ms": 349
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "harvest_forecast_inputs",
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "harvest_quality",
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "harvest_demands",
+        "ms": 358
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "harvest_plans",
+        "ms": 351
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "harvest_plan_lines",
+        "ms": 351
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "harvest_plan_reviews",
+        "ms": 357
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "harvest_dispatches",
+        "ms": 354
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "harvest_outcomes",
+        "ms": 352
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "rows",
+        "kind": "harvest_credits",
+        "ms": 352
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalRecords",
+        "kind": "harvest_batches",
+        "ms": 351
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalRecords",
+        "kind": "harvest_transfers",
+        "ms": 351
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalRecords",
+        "kind": "harvest_dispositions",
+        "ms": 349
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalRecords",
+        "kind": "harvest_storage",
+        "ms": 357
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalRecords",
+        "kind": "harvest_temperatures",
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalRecords",
+        "kind": "harvest_models",
+        "ms": 355
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalRecords",
+        "kind": "harvest_forecasts",
+        "ms": 352
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalRecords",
+        "kind": "harvest_forecast_inputs",
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalRecords",
+        "kind": "harvest_quality",
+        "ms": 354
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalRecords",
+        "kind": "harvest_demands",
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalRecords",
+        "kind": "harvest_plans",
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalRecords",
+        "kind": "harvest_plan_lines",
+        "ms": 356
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalRecords",
+        "kind": "harvest_plan_reviews",
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalRecords",
+        "kind": "harvest_dispatches",
+        "ms": 356
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalRecords",
+        "kind": "harvest_outcomes",
+        "ms": 357
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "physicalRecords",
+        "kind": "harvest_credits",
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "planLines",
+        "kind": null,
+        "ms": 354
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "forecastInputs",
+        "kind": null,
+        "ms": 351
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "forecastInputs",
+        "kind": null,
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "forecastInputs",
+        "kind": null,
+        "ms": 358
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "forecastInputs",
+        "kind": null,
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "harvestResult",
+        "kind": null,
+        "ms": 353
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "harvestResult",
+        "kind": null,
+        "ms": 355
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "harvestResult",
+        "kind": null,
+        "ms": 351
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "harvestResult",
+        "kind": null,
+        "ms": 359
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_inspect",
+        "collection": "harvestResult",
+        "kind": null,
+        "ms": 351
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_action",
+        "collection": null,
+        "kind": "edit-row",
+        "ms": 6111
+      },
+      {
+        "tool": "merchant_harvestoutcomestudy_preview",
+        "collection": null,
+        "kind": "assessment",
+        "ms": 2696
+      }
+    ]
   },
   "native": {
     "command": "node native/receive-installed.mjs",
     "surface": "Existing equipped native operation"
+  },
+  "originalByteRead": {
+    "checks": [
+      {
+        "name": "original original reconstructed from bounded two-byte ranges",
+        "passed": true,
+        "bytes": 31
+      },
+      {
+        "name": "document original reconstructed from bounded two-byte ranges",
+        "passed": true,
+        "bytes": 7
+      },
+      {
+        "name": "Historical extract rows retain current selected successor",
+        "passed": true
+      }
+    ]
+  },
+  "throughput": {
+    "sourceCanvas": "F0C9CK1FB5H",
+    "sourceSha256": "888758cf3fc6bff4b08e0b671e79fb8d0008cb90f7a42e46c7ef9fd45fd88367",
+    "compatibility": {
+      "execution": "Actual old/new pure-JavaScript codec and pinned SHA wrapper",
+      "checks": [
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 0",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 1",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 2",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 3",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 4",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 5",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 6",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 7",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 8",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 9",
+          "passed": true
+        },
+        {
+          "name": "Exact Unicode/boundary transport bytes and SHA 10",
+          "passed": true
+        },
+        {
+          "name": "Isolated exact-text digest result 11",
+          "passed": true
+        },
+        {
+          "name": "Isolated exact-text digest result 12",
+          "passed": true
+        },
+        {
+          "name": "Isolated exact-text digest result 13",
+          "passed": true
+        },
+        {
+          "name": "Original invalid Unicode and type rejection",
+          "passed": true
+        },
+        {
+          "name": "Exact digest after bounded cache eviction",
+          "passed": true
+        },
+        {
+          "name": "Mutable binary input remains uncached",
+          "passed": true
+        },
+        {
+          "name": "Transport ordinary byte-array compatibility",
+          "passed": true
+        }
+      ]
+    },
+    "managedResultEquivalent": {
+      "execution": "Actual full705005-byte authored Water source, original managed plan and response in V8; deterministic injected clock/random for complete result identity",
+      "baseline_ms": 6414,
+      "candidate_ms": 4203,
+      "reduction_percent": 34.47146866230122,
+      "managed_result_bytes": 1383247,
+      "managed_result_sha256": "c59939d94fc7ee108e496f340a360637f38d59f5f283a027ad8db8b32fa40679",
+      "complete_result_identical": true,
+      "baseline_profile": {
+        "Codec.hashText": {
+          "calls": 11,
+          "ms": 2706
+        },
+        "Original.validate": {
+          "calls": 15,
+          "ms": 717
+        },
+        "Codec.utf8Encode": {
+          "calls": 6,
+          "ms": 895
+        },
+        "Sessions.receive": {
+          "calls": 3,
+          "ms": 550
+        },
+        "SHA.sha256Utf8": {
+          "calls": 1280,
+          "ms": 1460
+        },
+        "SHA.sha256Bytes": {
+          "calls": 1164,
+          "ms": 173
+        },
+        "CSV.table": {
+          "calls": 452,
+          "ms": 116
+        },
+        "Core.validate": {
+          "calls": 3,
+          "ms": 953
+        },
+        "Original.checkpoint": {
+          "calls": 1,
+          "ms": 1547
+        },
+        "Original.byteLength": {
+          "calls": 817,
+          "ms": 58
+        },
+        "Original.retain": {
+          "calls": 1,
+          "ms": 68
+        },
+        "Sessions.advance": {
+          "calls": 1,
+          "ms": 466
+        },
+        "Sessions.pack": {
+          "calls": 1,
+          "ms": 1629
+        }
+      },
+      "candidate_profile": {
+        "Codec.hashText": {
+          "calls": 11,
+          "ms": 2073
+        },
+        "Original.validate": {
+          "calls": 15,
+          "ms": 707
+        },
+        "Sessions.receive": {
+          "calls": 3,
+          "ms": 266
+        },
+        "SHA.sha256Utf8": {
+          "calls": 1280,
+          "ms": 522
+        },
+        "SHA.sha256Bytes": {
+          "calls": 1164,
+          "ms": 177
+        },
+        "CSV.table": {
+          "calls": 452,
+          "ms": 118
+        },
+        "Core.validate": {
+          "calls": 3,
+          "ms": 281
+        },
+        "Original.checkpoint": {
+          "calls": 1,
+          "ms": 873
+        },
+        "Original.byteLength": {
+          "calls": 817,
+          "ms": 59
+        },
+        "Original.retain": {
+          "calls": 1,
+          "ms": 30
+        },
+        "Sessions.advance": {
+          "calls": 1,
+          "ms": 258
+        },
+        "Sessions.pack": {
+          "calls": 1,
+          "ms": 1189
+        }
+      }
+    }
   }
 }

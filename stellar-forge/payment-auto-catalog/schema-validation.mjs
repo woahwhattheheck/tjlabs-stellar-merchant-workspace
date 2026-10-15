@@ -98,10 +98,16 @@ function inspectSchema(schema, depth = 0, state = { nodes: 0, schemas: new WeakS
 }
 
 function resolvePointer(root, ref) {
-  if (ref === '#') return root;
-  if (!ref.startsWith('#/')) throw new TypeError('SCHEMA_LOCAL_REFERENCE_INVALID');
+  if (typeof ref !== 'string' || !ref.startsWith('#'))
+    throw new TypeError('SCHEMA_LOCAL_REFERENCE_INVALID');
+  let pointer;
+  try { pointer = decodeURIComponent(ref.slice(1)); }
+  catch { throw new TypeError('SCHEMA_LOCAL_REFERENCE_INVALID'); }
+  if (pointer === '') return root;
+  if (!pointer.startsWith('/')) throw new TypeError('SCHEMA_LOCAL_REFERENCE_INVALID');
   let node = root;
-  for (const raw of ref.slice(2).split('/')) {
+  for (const raw of pointer.slice(1).split('/')) {
+    if (/~(?:[^01]|$)/.test(raw)) throw new TypeError('SCHEMA_LOCAL_REFERENCE_INVALID');
     const key = raw.replace(/~1/g, '/').replace(/~0/g, '~');
     if (!plain(node) || !Object.hasOwn(node, key)) throw new TypeError('SCHEMA_LOCAL_REFERENCE_MISSING');
     node = node[key];

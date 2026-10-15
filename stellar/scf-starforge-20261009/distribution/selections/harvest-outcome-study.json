@@ -171,7 +171,7 @@
   ],
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
-    "description": "Complete drinking-harvest and outcome study with original field readings, laboratory custody and amendments, exact historical report inputs, named reviews, actual filing, handovers, recurring work and full recovery.",
+    "description": "Complete harvest and outcome study with stable physical lot lineage, split and merge quantities, original temperature histories, exact forecast inputs, censored quality outcomes, reviewed plans, actual dispatch, sales, credits and recurring work.",
     "readme": "products/harvest-outcome-study/INSTALLED_OPERATION.md",
     "bin": {
       "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs"
