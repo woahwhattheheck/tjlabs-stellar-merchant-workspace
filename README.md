@@ -459,3 +459,8 @@ The [Tenderly operating guide](products/tenderly/OPERATING.md) covers the `tende
 - [Field Filing Workbench: original field versions, exact forms, independent filing history and complete source/native recovery](integrations/field-filing-workspace/README.md)
 
 - [Pool Route Workbench: original route/service histories, exact report delivery, explicit monthly counts and complete browser/native recovery](integrations/pool-route-workspace/README.md)
+
+
+## Contractor pilot programme
+
+The [contractor pilot programme](integrations/contractor-pilot-programme/README.md) turns an authorized research programme into an offline working desk and fixed customer editions. It preserves saved work, observation corrections, exact selected profiles, successor buyer briefs and the original JSON/CSV/HTML delivery bodies. Build from your complete private programme or workspace with its native builder; full operating instructions are in the integration guide.
