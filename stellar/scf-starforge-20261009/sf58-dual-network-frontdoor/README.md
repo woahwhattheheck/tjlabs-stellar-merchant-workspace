@@ -68,8 +68,11 @@ implementation for a host integration.
 Successful native settlements can publish their metadata through the original
 SF25, SF54 and SF60 composition. The gateway preserves the selected trusted
 backend's valid `EXTENSION-RESPONSES` header alongside the payment response.
-The encoded header is consumed by the resource server. A malformed optional
-header is dropped without changing the upstream payment result.
+The encoded header is consumed by the resource server. Extension names and
+members are opaque to the gateway, so empty keyed objects and future/vendor
+names are preserved exactly. Malformed base64, UTF-8, JSON, non-object or
+oversized optional headers are dropped without changing the upstream payment
+result.
 
 ## Original catalog discovery
 

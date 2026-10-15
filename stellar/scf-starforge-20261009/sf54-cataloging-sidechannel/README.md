@@ -30,6 +30,9 @@ Sibling extension outcomes come from the trusted facilitator. The adapter
 snapshots and validates those fields before catalog ingestion and reserves
 enough space for the longest sanitized Bazaar rejection reason. This prevents a
 catalog commit from being followed by an avoidable header-serialization failure.
+Sibling extension names and their JSON members remain opaque: the x402 wire
+contract does not impose a local lowercase-key grammar. Only `bazaar` is
+reserved so this adapter remains authoritative for its own outcome.
 
 ## Trusted in-process use
 
@@ -62,8 +65,10 @@ existing x402 payment-response contract.
 
 `header.mjs` provides a dependency-free
 `validatedExtensionResponsesHeader(value)` helper. It accepts canonical
-base64 containing UTF-8 JSON with extension keys and a decoded size at most
-16,384 bytes. SF58 uses it to preserve the trusted backend's original header.
+base64 containing a UTF-8 JSON object, including an empty object or opaque
+future/vendor extension names, with an encoded header size at most 16,384
+bytes. SF58 uses it to preserve the trusted backend's original header
+byte-for-byte.
 A malformed optional header is dropped while the gateway returns the original
 payment response bytes and status.
 
