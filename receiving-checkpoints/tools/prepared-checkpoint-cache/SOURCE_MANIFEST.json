@@ -1,0 +1,30 @@
+{
+  "schema": "commons.prepared-checkpoint-cache-source.v1",
+  "members": [
+    {
+      "path": "prepared-zip-snapshot-cache.cjs",
+      "bytes": 22417,
+      "sha256": "78cc84089aa4aad4303888b6ca0156df258ab19ac0ca2aca1aeffd9674d1fb6a"
+    },
+    {
+      "path": "checkpoint-storage-cache.cjs",
+      "bytes": 3507,
+      "sha256": "d692b466c73d983b543c041e4b968988d14b557a377c2f5c070ee184653a1502"
+    },
+    {
+      "path": "before-prepared-zip.cjs",
+      "bytes": 22223,
+      "sha256": "751354cbfe55450be53689de23631900f3b1661063c7974e46f99fa2413cbc1f"
+    },
+    {
+      "path": "before-checkpoint-storage.cjs",
+      "bytes": 2493,
+      "sha256": "effafda4907de3ab610f90427a04067e2e3e2cefbd4af2008fad3bdde07db78f"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1372,
+      "sha256": "e792f9092ad3eed4bcf4e4f2a4126671023a5c8880814c01fa3cc539d1b6bf4f"
+    }
+  ]
+}
