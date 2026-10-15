@@ -1,0 +1,3 @@
+"id","record_key","revision","supersedes_id","record_status","recorded_at","available_at","source_document_id","source_ref","rental_event_id","rental_id","event_type","asset_id","occurred_at","recorded_by","authority_id","event_document_id"
+"issue1","issue1","1","","active","2026-10-02T08:05:00.000Z","2026-10-02T08:05:00.000Z","","Authored complete service-commerce course / issue1","ISSUE1","RENT1","issue","LOAN","2026-10-02T08:05:00.000Z","OP","AUTH-custody","rental-issue"
+"return1","return1","1","","active","2026-10-02T10:05:00.000Z","2026-10-02T10:05:00.000Z","","Authored complete service-commerce course / return1","RETURN1","RENT1","return","LOAN","2026-10-02T10:05:00.000Z","OP","AUTH-custody","rental-return"
