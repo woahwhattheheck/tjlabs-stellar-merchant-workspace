@@ -18,8 +18,8 @@
     },
     {
       "path": "INSTALLED_OPERATION.md",
-      "bytes": 5436,
-      "sha256": "ddd40b2ca18d1c5d2153a90c6613e77213b200401dd2d2960ec26ddfdf3c7bcd"
+      "bytes": 5573,
+      "sha256": "4d5d584337929b94a1122760ec4cfb358beee9bd5842488128296eb2def0d9d3"
     },
     {
       "path": "INSTALLED_RECEIVING.md",
@@ -323,8 +323,8 @@
     },
     {
       "path": "mcp.mjs",
-      "bytes": 9216,
-      "sha256": "5a1d1f4c17e826d1dcc3ccd6f5ef46f805677613705c9a47ba56025706b2440f"
+      "bytes": 9176,
+      "sha256": "01acf0e89ffebd923ba1aa78b73dfc3a07c71e8e6f7be0a5f731c31b64fee983"
     },
     {
       "path": "merchant-provider.mjs",
@@ -387,14 +387,19 @@
       "sha256": "cef70170ae6a89ec48e54346db3436d90d44873766ed95cb1b9b6e8b2889e831"
     },
     {
+      "path": "receiving/export-compression-comparison.json",
+      "bytes": 1251,
+      "sha256": "1b06115a3318d70075a215ebe9b2d28aad5b2ec753e5cd9bbf44ed593796d271"
+    },
+    {
       "path": "receiving/export-compression-course.cjs",
       "bytes": 3733,
       "sha256": "19084ef82ccf28202b2a48d8fe5fc0cccce7b4f89043d52da73d60f2c6ede921"
     },
     {
       "path": "receiving/host-course.cjs",
-      "bytes": 8884,
-      "sha256": "3a54eca60fcc029d1d71e0beb6d8e7a155003813147479b5ec2d39d2002e32fa"
+      "bytes": 10148,
+      "sha256": "44ae160dfdba2d54a7ca4e21e13fd78c926a84c31696d5e9f37de6dc8bc3b6f4"
     },
     {
       "path": "receiving/portable-course.cjs",
@@ -608,8 +613,8 @@
     },
     {
       "path": "tools.mjs",
-      "bytes": 5313,
-      "sha256": "a6da197d1274df316a692b9c8e6bc557545e5791b3a664b641915aec7ea438fe"
+      "bytes": 5409,
+      "sha256": "42bf3d615efd45f18dfbe0b70bcb8a5b6d6dae7e4dd61f3ce7faf33d8c1f306d"
     },
     {
       "path": "vendor/PAKO_LICENSE.txt",
@@ -630,6 +635,11 @@
       "path": "verification/complete-analysis.json",
       "bytes": 101922,
       "sha256": "1d28038726ac2dfca4200732cd77595c366cc7141dc92a9e9c09d94012ff5458"
+    },
+    {
+      "path": "verification/installed-browser-course.json",
+      "bytes": 999,
+      "sha256": "0889a54db7b970543d9caf48a7ea3edae28087b7bf7d97a693b21fa90f17a1ad"
     },
     {
       "path": "verification/model-course.json",

@@ -54,7 +54,7 @@ export class MerchantConstructionProgressStudy{
     const selected=scope.inputs[alias(args.sourceInput)];need(selected&&selected.sha256===args.expectedSourceSha256,'CONSTRUCTION_INPUT','Select a declared complete input hash.',409);
     const original=await readBytes(selected.file);need(original.sha256===selected.sha256&&original.bytes.length===selected.bytes,'CONSTRUCTION_INPUT_CHANGED','The complete original changed.',409);
     if(args.kind==='request')request=JSON.parse(decode(original.bytes));
-    else{need(args.request,'CONSTRUCTION_REQUEST','Retain the original save request fields.');const received=sessions.receive(decode(original.bytes));received.draft.actor=args.request.actor;request={schema:'stellar-forge.construction-request.v1',installationId:scope.installationId,...args.request,kind:'save',carrier:sessions.pack(received)};}
+    else{need(args.request,'CONSTRUCTION_REQUEST','Retain the original save request fields.');const received=sessions.receive(decode(original.bytes));request={schema:'stellar-forge.construction-request.v1',installationId:scope.installationId,...args.request,kind:'save',carrier:sessions.pack(received)};}
    }
    request??={schema:'stellar-forge.construction-request.v1',installationId:scope.installationId,...args.request,kind:'action',operation};
    const r=await(args.recoverOnly?c.requestStatus(request):c.apply(request));return {outcome:r.outcome,reused:r.reused,requestSha256:r.record?.requestSha256||r.requestSha256,sequence:r.state.sequence,sha256:r.state.sha256,sessionSha256:r.state.carrier.sha256,error:r.record?.error};

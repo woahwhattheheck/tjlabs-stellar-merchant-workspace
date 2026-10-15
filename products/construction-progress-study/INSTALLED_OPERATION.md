@@ -30,7 +30,7 @@ Applications runs construction-managed; construction-workspace is the native ins
 
 Declare every physical workspace and exact input-file SHA. CSV ingest requires actual availability, canonical family, side and mappings. Requests bind installation ID, request ID, actor, timestamp, saved state SHA and complete session head. Exact row corrections also require study_id and expected_extract_id, including explicit null for a new table.
 
-Pinned reads expose all thirty raw families with fields and idField; every original, mapping, selected source edition, comparison and review; project, contract, variation, measurement, milestone, claim, certificate, retention, invoice, client/supplier cash, supplier cost line/invoice, historical report and effort observation. projectCosts and projectRetention select an exact project ID. Page against one saved SHA. Exact retries return the retained outcome while preserving later work.
+Pinned reads expose all thirty raw families with fields and idField; every original, mapping, selected source edition, comparison and review; project, contract, variation, measurement, milestone, claim, certificate, retention, invoice, client/supplier cash, supplier cost line/invoice, historical report and effort observation. projectCosts and projectRetention select an exact project ID. Page against one saved SHA. Exact retries return the retained outcome while preserving later work. Receiving a complete working carrier preserves its original editor actor; the managed request independently records the receiving actor.
 
 ## Export and receiving
 
