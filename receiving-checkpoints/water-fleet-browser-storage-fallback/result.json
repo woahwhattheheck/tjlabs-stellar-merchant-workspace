@@ -1,0 +1,82 @@
+{
+  "schema": "commons.water-fleet-browser-memory-fallback.v1",
+  "originalSource": "e1cb22158270e6c52fb6f7dc80a94b7567f0e572",
+  "sourceHead": "018b6524346727c3313ad599a6d2bee7af9c4c88",
+  "products": {
+    "fleet": {
+      "schema": "commons.installed-browser-memory-fallback-course.v1",
+      "surface": "Actual assembled production HTML/controllers with supplied browser DOM and atomic IndexedDB adapters",
+      "checks": [
+        "Actual assembled controller opens in memory with the original storage-denial reason",
+        "Actor, unfinished note and later navigation retain complete working edits and original guidance",
+        "Explicit saved-copy operations retain working state without a null database transaction",
+        "Working recovery control produces its complete download",
+        "Downloaded original carrier reopens with exact actor and unfinished note",
+        "The same generated source continues complete recovery in the ordinary atomic storage path"
+      ],
+      "deniedOpenCalls": 1,
+      "download": {
+        "name": "Fleet_Availability_Study_Working.json",
+        "bytes": 5556,
+        "sha256": "1475739ebc0745dd425fbe629e52ed3c881e7b3b1a8f89cda0f2bdb7d1baa5ef"
+      },
+      "preservedDraftActor": true,
+      "deniedGetterReads": 1,
+      "build": {
+        "sourceFiles": 194,
+        "installed": {
+          "bytes": 4703457,
+          "sha256": "9e4dec08787dd448c9cd4ba05f1fb86d756e6c3af7ca8f787272994e6ff6afe4"
+        },
+        "working": {
+          "bytes": 7766287,
+          "sha256": "5cf133ac7259b1a0a4cc042b647f6c09ee6e138e768e26503948b7341450767b"
+        },
+        "originalWorking": {
+          "bytes": 7765342,
+          "sha256": "85716c1198a297296b6ddc98cc543498b84e0630730c063ab23ba72539c8d376",
+          "elapsed": 10349
+        }
+      },
+      "elapsedMs": 14787
+    },
+    "water": {
+      "schema": "commons.installed-browser-memory-fallback-course.v1",
+      "surface": "Actual assembled production HTML/controllers with supplied browser DOM and atomic IndexedDB adapters",
+      "checks": [
+        "Actual assembled controller opens in memory with the original storage-denial reason",
+        "Actor, unfinished note and later navigation retain complete working edits and original guidance",
+        "Explicit saved-copy operations retain working state without a null database transaction",
+        "Working recovery control produces its complete download",
+        "Downloaded original carrier reopens with exact actor and unfinished note",
+        "The same generated source continues complete recovery in the ordinary atomic storage path"
+      ],
+      "deniedOpenCalls": 1,
+      "download": {
+        "name": "Water_Operations_Study_Working.json",
+        "bytes": 5354,
+        "sha256": "96f1177f6d3e47f9c45c2c30e5691461caf40f0c6ae49924e7b46b91f3a0796e"
+      },
+      "preservedDraftActor": true,
+      "deniedGetterReads": 1,
+      "build": {
+        "sourceFiles": 236,
+        "installed": {
+          "bytes": 4917960,
+          "sha256": "d4376bb049e1688521fd6d3ce72f26d80cade1532b116931b3d353596b9bab00"
+        },
+        "working": {
+          "bytes": 9186606,
+          "sha256": "72c77a0952c2707703201cef9255d268b71bd59db3c2b6683515e5b3d4165236"
+        },
+        "originalWorking": {
+          "bytes": 9185661,
+          "sha256": "a979e64715f32cbc4fca59fc9868d447630ba40519dd3fd42264e4c38580359c",
+          "sourceHead": "e1cb22158270e6c52fb6f7dc80a94b7567f0e572",
+          "elapsed": 11561
+        }
+      },
+      "elapsedMs": 15278
+    }
+  }
+}
