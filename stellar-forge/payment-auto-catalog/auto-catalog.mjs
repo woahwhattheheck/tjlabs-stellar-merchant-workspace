@@ -2,6 +2,7 @@
  * seller import does not load mutable catalog storage or trust dependencies. */
 import { AtomicCatalogIntegration } from '../product-integration/atomic-catalog.mjs';
 import { validateBazaarExtension } from './schema-validation.mjs';
+import { sanitizeResourceForCatalog } from './resource-service-metadata.mjs';
 export { validateBazaarExtension } from './schema-validation.mjs';
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const clone = value => structuredClone(value);
@@ -44,7 +45,7 @@ export class PaymentAutoCatalog {
     if (!/^[a-f0-9]{64}$/.test(settlement.receiptSha256 ?? '')) return { decision: 'reject', reason: 'SETTLEMENT_RECEIPT_SHA_INVALID' };
 
     const entry = {
-      resource: clone(paymentPayload.resource),
+      resource: sanitizeResourceForCatalog(paymentPayload.resource),
       accepts: [clone(accepted)],
       // x402 v2 catalog entries echo the complete PaymentPayload extensions
       // object. Unknown extension payloads remain opaque; the existing atomic
