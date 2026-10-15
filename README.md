@@ -16,6 +16,8 @@ roadmap, native acceptance and complete customer handover in one source.
 
 ## Choose a workflow
 
+The standalone [Studio Session Workbench](integrations/studio-session-workspace/README.md) receives eight declared studio CSV sources, compares session/crew/report/payer/payment records, retains original editions and unfinished work, and continues through native output and full browser reopening.
+
 | Work to complete | Entry point | Result |
 | --- | --- | --- |
 | Review CRM migration mappings, exact values and directed associations | **Applications → CRM migration review**, `starforge crm-migration` and [the complete operating guide](products/crm-migration/OPERATING.md) | Complete original exports, explicit ID crosswalks, preserved rehearsal editions and lead decisions, nine merchant tools, shared native/browser state and editable customer receiving |

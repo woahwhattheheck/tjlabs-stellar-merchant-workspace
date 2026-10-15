@@ -1,0 +1,3 @@
+room_id,role,required_count
+ROOM-A,engineer,1
+ROOM-A,assistant,1

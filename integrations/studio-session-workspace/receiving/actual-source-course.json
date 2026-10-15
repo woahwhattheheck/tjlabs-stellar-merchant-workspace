@@ -1,0 +1,68 @@
+{
+  "schema": "tjlabs.studio-session-source-course.v1",
+  "runtime": "Actual production source functions in V8",
+  "checks": [
+    {
+      "name": "Booked and actual overnight durations distinct",
+      "passed": true
+    },
+    {
+      "name": "Exact label and artist allocations expose missing overtime",
+      "passed": true
+    },
+    {
+      "name": "Deposit applied once",
+      "passed": true
+    },
+    {
+      "name": "Review correction retains prior and numeric difference",
+      "passed": true
+    },
+    {
+      "name": "Accepted cover and signed report close source gaps",
+      "passed": true
+    },
+    {
+      "name": "Both original editions and BOM/CRLF preserved",
+      "passed": true
+    },
+    {
+      "name": "Retained review mutation rejected",
+      "passed": true
+    },
+    {
+      "name": "Session PO wins over declared deal PO",
+      "passed": true
+    },
+    {
+      "name": "Cancellation never invents charge or refund",
+      "passed": true
+    },
+    {
+      "name": "Exact base-first fixed cap",
+      "passed": true
+    },
+    {
+      "name": "Malformed intake preserves current complete workspace",
+      "passed": true
+    },
+    {
+      "name": "Unresolved cover retains original person's reserved occupancy",
+      "passed": true
+    }
+  ],
+  "summary": {
+    "sessions": 1,
+    "completed": 1,
+    "attention": 0,
+    "unreviewed": 0,
+    "invoices": 2,
+    "totalsByCurrency": {
+      "USD": {
+        "invoicedMinor": "96000",
+        "netPaidMinor": "36000",
+        "balanceMinor": "60000"
+      }
+    }
+  }
+}

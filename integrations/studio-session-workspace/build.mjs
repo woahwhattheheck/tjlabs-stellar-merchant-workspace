@@ -1,0 +1,11 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import {fileURLToPath} from "node:url";
+import {buildStudioSessionDesk} from "./workbench/build.mjs";
+const root=path.dirname(fileURLToPath(import.meta.url));
+const output=process.argv[2];if(!output)throw Error("Usage: node build.mjs NEW_DIRECTORY");
+const names=["vendor/archive-codec.js","studio-session-core.js","workbench/studio-workspace.js","workbench/browser-store.js","workbench/operator.js","workbench/style.css","workbench/shell.template.html"];
+const files=Object.fromEntries(await Promise.all(names.map(async name=>[name,await fs.readFile(path.join(root,name),"utf8")])));
+const blank=JSON.parse(await fs.readFile(path.join(root,"examples/blank-desk.json"),"utf8")),worked=JSON.parse(await fs.readFile(path.join(root,"examples/worked-desk.json"),"utf8"));
+const outputs={"Studio_Session_Workbench.html":buildStudioSessionDesk({files,workspace:blank}),"Studio_Session_Worked_Example.html":buildStudioSessionDesk({files,workspace:worked})};
+await fs.mkdir(output,{recursive:false});for(const[name,text]of Object.entries(outputs))await fs.writeFile(path.join(output,name),text,{encoding:"utf8",flag:"wx"});console.log(output);

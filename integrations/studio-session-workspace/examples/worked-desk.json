@@ -1,0 +1,204 @@
+{
+  "schema": "tjlabs.studio-session-desk.v1",
+  "workspace": {
+    "schema": "tjlabs.studio-session-study.v1",
+    "operation_id": "studio-session-authored-course",
+    "label": "Authored full session course",
+    "editions": [
+      {
+        "id": "first",
+        "label": "Original overnight session",
+        "receivedAt": "2026-10-15T05:10:00Z",
+        "notes": "Fictional sources.6h×12000=72000;2h×12000=24000,labelbase72000,artistot24000. Recordedartistot12000 is-12000. Deposit36000 appliedonce.",
+        "sources": {
+          "rooms": {
+            "name": "rooms.csv",
+            "text": "room_id,name\r\nROOM-A,Authored tracking room\r\n",
+            "bytes": 45,
+            "sha256": "53fe6b8896dfd527887fdf4756b9942846253a50ff17b81d05f4f1f6adf68fa5"
+          },
+          "sessions": {
+            "name": "sessions.csv",
+            "text": "session_id,room_id,artist_id,booked_start,booked_end,actual_start,actual_end,status,billing_mode,hourly_rate_minor,package_minor,overtime_rate_minor,increment_minutes,currency,quote_reference\r\nSESSION-1,ROOM-A,ARTIST-1,2026-10-15T18:00:00-04:00,2026-10-16T00:00:00-04:00,2026-10-15T18:00:00-04:00,2026-10-16T02:00:00-04:00,completed,booked,12000,0,12000,15,USD,Authored accepted six-hour quote\r\n",
+            "bytes": 395,
+            "sha256": "63ab6729a4d50968ec53f557ec4513cd9815837b6cb8b44ed36770c4879043e9"
+          },
+          "crew_rules": {
+            "name": "crew_rules.csv",
+            "text": "room_id,role,required_count\r\nROOM-A,engineer,1\r\nROOM-A,assistant,1\r\n",
+            "bytes": 68,
+            "sha256": "ec27411680364dbde586e5912a91babf74ae898aaf67e7e1b89b0eb0b3e6006c"
+          },
+          "crew": {
+            "name": "crew.csv",
+            "text": "assignment_id,session_id,role,person_id,status,replacement_id\r\nCREW-1,SESSION-1,engineer,ENGINEER-1,seen,\r\nCREW-2,SESSION-1,assistant,ASSISTANT-1,cant_make_it,\r\n",
+            "bytes": 161,
+            "sha256": "2d05eb0ec4eb3eacf16b8061a6a94ca04a4606fb840d948e41cbde173b9101d5"
+          },
+          "reports": {
+            "name": "reports.csv",
+            "text": "report_id,session_id,status,signed_by,signed_at,reference\r\nREPORT-1,SESSION-1,draft,,,Authored draft session report\r\n",
+            "bytes": 117,
+            "sha256": "91b1d8801deb0d6a3cf39bfce6e15eee3edab96653863fc473e9fa53b07d072b"
+          },
+          "allocations": {
+            "name": "allocations.csv",
+            "text": "session_id,payer_id,rule,limit_minor,reference\r\nSESSION-1,LABEL-1,booked,0,Authored label covers six booked hours\r\n",
+            "bytes": 115,
+            "sha256": "d08245634fcdb51cb27d8756fca7cee9acc51c054588991e29485130f8740013"
+          },
+          "invoice_lines": {
+            "name": "invoice_lines.csv",
+            "text": "line_id,invoice_id,session_id,payer_id,category,amount_minor,currency,reference\r\nLINE-1,INVOICE-LABEL,SESSION-1,LABEL-1,base,72000,USD,Authored invoice base\r\nLINE-2,INVOICE-ARTIST,SESSION-1,ARTIST-1,overtime,12000,USD,Authored invoice omits one overtime hour\r\n",
+            "bytes": 260,
+            "sha256": "c577b9a8adcf51a2aac7e9c49c47238a4550b2d26051abfa9698e30f619136c6"
+          },
+          "payments": {
+            "name": "payments.csv",
+            "text": "payment_id,invoice_id,kind,amount_minor,currency,reference\r\nPAY-1,INVOICE-LABEL,receipt,36000,USD,Authored deposit already applied once\r\n",
+            "bytes": 137,
+            "sha256": "697e590fb0ab02b1ed95d1afef2bb050053efc66477a91a0ef26cb0088ee1303"
+          }
+        },
+        "sourceHash": "085690d3d028cf44b802fe76bdf6d33856d8b05681946914fa2c555efce06ae8"
+      },
+      {
+        "id": "corrected",
+        "label": "Corrected originals",
+        "receivedAt": "2026-10-16T10:00:00Z",
+        "notes": "Fictional correction: accepted cover, signed report, full overtime.",
+        "sources": {
+          "rooms": {
+            "name": "rooms.csv",
+            "text": "room_id,name\r\nROOM-A,Authored tracking room\r\n",
+            "bytes": 45,
+            "sha256": "53fe6b8896dfd527887fdf4756b9942846253a50ff17b81d05f4f1f6adf68fa5"
+          },
+          "sessions": {
+            "name": "sessions.csv",
+            "text": "﻿session_id,room_id,artist_id,booked_start,booked_end,actual_start,actual_end,status,billing_mode,hourly_rate_minor,package_minor,overtime_rate_minor,increment_minutes,currency,quote_reference\r\nSESSION-1,ROOM-A,ARTIST-1,2026-10-15T18:00:00-04:00,2026-10-16T00:00:00-04:00,2026-10-15T18:00:00-04:00,2026-10-16T02:00:00-04:00,completed,booked,12000,0,12000,15,USD,Authored accepted six-hour quote\r\n",
+            "bytes": 398,
+            "sha256": "2a7c8f6480fa5ea3c2e5d25b396daed38ef581cb6e4a5bda13ef190a21209cb3"
+          },
+          "crew_rules": {
+            "name": "crew_rules.csv",
+            "text": "room_id,role,required_count\r\nROOM-A,engineer,1\r\nROOM-A,assistant,1\r\n",
+            "bytes": 68,
+            "sha256": "ec27411680364dbde586e5912a91babf74ae898aaf67e7e1b89b0eb0b3e6006c"
+          },
+          "crew": {
+            "name": "crew.csv",
+            "text": "assignment_id,session_id,role,person_id,status,replacement_id\r\nCREW-1,SESSION-1,engineer,ENGINEER-1,seen,\r\nCREW-2,SESSION-1,assistant,ASSISTANT-1,covered,CREW-3\r\nCREW-3,SESSION-1,assistant,ASSISTANT-2,seen,\r\n",
+            "bytes": 208,
+            "sha256": "ccb7bace64412c322f1ceec23799f7dd81b429500bab51fb5c466ac5cb78d274"
+          },
+          "reports": {
+            "name": "reports.csv",
+            "text": "report_id,session_id,status,signed_by,signed_at,reference\r\nREPORT-1,SESSION-1,signed,Authored assistant,2026-10-16T02:05:00-04:00,Authored signed session report\r\n",
+            "bytes": 162,
+            "sha256": "b8e72aac1a6ef136434aecac18de643183146fc20d162423d980e3f96189ba54"
+          },
+          "allocations": {
+            "name": "allocations.csv",
+            "text": "session_id,payer_id,rule,limit_minor,reference\r\nSESSION-1,LABEL-1,booked,0,Authored label covers six booked hours\r\n",
+            "bytes": 115,
+            "sha256": "d08245634fcdb51cb27d8756fca7cee9acc51c054588991e29485130f8740013"
+          },
+          "invoice_lines": {
+            "name": "invoice_lines.csv",
+            "text": "line_id,invoice_id,session_id,payer_id,category,amount_minor,currency,reference\r\nLINE-1,INVOICE-LABEL,SESSION-1,LABEL-1,base,72000,USD,Authored invoice base\r\nLINE-2,INVOICE-ARTIST,SESSION-1,ARTIST-1,overtime,24000,USD,Authored invoice omits one overtime hour\r\n",
+            "bytes": 260,
+            "sha256": "30bb3896d2e33b82c92421f920d9f43cbbf7efac0631872f0931d496c7783080"
+          },
+          "payments": {
+            "name": "payments.csv",
+            "text": "payment_id,invoice_id,kind,amount_minor,currency,reference\r\nPAY-1,INVOICE-LABEL,receipt,36000,USD,Authored deposit already applied once\r\n",
+            "bytes": 137,
+            "sha256": "697e590fb0ab02b1ed95d1afef2bb050053efc66477a91a0ef26cb0088ee1303"
+          }
+        },
+        "sourceHash": "eb858e40316753532daa50f5230631bf5c745fbd5bc9517f43115722748be5cf"
+      }
+    ],
+    "reviews": [
+      {
+        "id": "review-1",
+        "editionId": "first",
+        "attentionId": "408a9edf0b5516e553d77f454da6d34eb71bc6174c29727ad045a0be5080ced2",
+        "disposition": "investigate",
+        "reviewer": "Authored operator",
+        "reason": "Check source extension.",
+        "evidence": "Authored source note",
+        "previousReviewId": null,
+        "identity": "8bff374d13eb611f0e17598e6d13df5965e827871b9b0499d3e62ec16da64da7"
+      },
+      {
+        "id": "review-2",
+        "editionId": "first",
+        "attentionId": "408a9edf0b5516e553d77f454da6d34eb71bc6174c29727ad045a0be5080ced2",
+        "disposition": "correct_source",
+        "reviewer": "Authored operator",
+        "reason": "One overtime hour missing from actual invoice extract.",
+        "evidence": "Authored corrected export",
+        "previousReviewId": "review-1",
+        "identity": "313e4e9bba977d5939a051879c25827ff427910402653ead4383510f5ff8d4f0"
+      }
+    ]
+  },
+  "session": {
+    "editionId": "corrected",
+    "table": "rooms",
+    "sourceDraft": {
+      "id": "edition-1792042735242",
+      "label": "Source edition",
+      "receivedAt": "2026-10-15T05:38:55.242Z",
+      "notes": "",
+      "sources": {
+        "rooms": {
+          "name": "rooms.csv",
+          "text": "room_id,name\r\n",
+          "receiptSha256": null
+        },
+        "sessions": {
+          "name": "sessions.csv",
+          "text": "session_id,room_id,artist_id,booked_start,booked_end,actual_start,actual_end,status,billing_mode,hourly_rate_minor,package_minor,overtime_rate_minor,increment_minutes,currency,quote_reference\r\n",
+          "receiptSha256": null
+        },
+        "crew_rules": {
+          "name": "crew_rules.csv",
+          "text": "room_id,role,required_count\r\n",
+          "receiptSha256": null
+        },
+        "crew": {
+          "name": "crew.csv",
+          "text": "assignment_id,session_id,role,person_id,status,replacement_id\r\n",
+          "receiptSha256": null
+        },
+        "reports": {
+          "name": "reports.csv",
+          "text": "report_id,session_id,status,signed_by,signed_at,reference\r\n",
+          "receiptSha256": null
+        },
+        "allocations": {
+          "name": "allocations.csv",
+          "text": "session_id,payer_id,rule,limit_minor,reference\r\n",
+          "receiptSha256": null
+        },
+        "invoice_lines": {
+          "name": "invoice_lines.csv",
+          "text": "line_id,invoice_id,session_id,payer_id,category,amount_minor,currency,reference\r\n",
+          "receiptSha256": null
+        },
+        "payments": {
+          "name": "payments.csv",
+          "text": "payment_id,invoice_id,kind,amount_minor,currency,reference\r\n",
+          "receiptSha256": null
+        }
+      }
+    },
+    "reviewDrafts": {},
+    "selectedAttention": null,
+    "receipts": [],
+    "notes": ""
+  }
+}

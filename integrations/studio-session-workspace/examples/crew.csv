@@ -1,0 +1,3 @@
+assignment_id,session_id,role,person_id,status,replacement_id
+CREW-1,SESSION-1,engineer,ENGINEER-1,seen,
+CREW-2,SESSION-1,assistant,ASSISTANT-1,cant_make_it,

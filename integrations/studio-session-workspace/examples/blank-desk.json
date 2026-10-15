@@ -1,0 +1,66 @@
+{
+  "schema": "tjlabs.studio-session-desk.v1",
+  "workspace": {
+    "schema": "tjlabs.studio-session-study.v1",
+    "operation_id": "session-study",
+    "label": "Studio Session Workbench",
+    "editions": [],
+    "reviews": []
+  },
+  "session": {
+    "editionId": null,
+    "table": "rooms",
+    "sourceDraft": {
+      "id": "edition-1792042735242",
+      "label": "Source edition",
+      "receivedAt": "2026-10-15T05:38:55.242Z",
+      "notes": "",
+      "sources": {
+        "rooms": {
+          "name": "rooms.csv",
+          "text": "room_id,name\r\n",
+          "receiptSha256": null
+        },
+        "sessions": {
+          "name": "sessions.csv",
+          "text": "session_id,room_id,artist_id,booked_start,booked_end,actual_start,actual_end,status,billing_mode,hourly_rate_minor,package_minor,overtime_rate_minor,increment_minutes,currency,quote_reference\r\n",
+          "receiptSha256": null
+        },
+        "crew_rules": {
+          "name": "crew_rules.csv",
+          "text": "room_id,role,required_count\r\n",
+          "receiptSha256": null
+        },
+        "crew": {
+          "name": "crew.csv",
+          "text": "assignment_id,session_id,role,person_id,status,replacement_id\r\n",
+          "receiptSha256": null
+        },
+        "reports": {
+          "name": "reports.csv",
+          "text": "report_id,session_id,status,signed_by,signed_at,reference\r\n",
+          "receiptSha256": null
+        },
+        "allocations": {
+          "name": "allocations.csv",
+          "text": "session_id,payer_id,rule,limit_minor,reference\r\n",
+          "receiptSha256": null
+        },
+        "invoice_lines": {
+          "name": "invoice_lines.csv",
+          "text": "line_id,invoice_id,session_id,payer_id,category,amount_minor,currency,reference\r\n",
+          "receiptSha256": null
+        },
+        "payments": {
+          "name": "payments.csv",
+          "text": "payment_id,invoice_id,kind,amount_minor,currency,reference\r\n",
+          "receiptSha256": null
+        }
+      }
+    },
+    "reviewDrafts": {},
+    "selectedAttention": null,
+    "receipts": [],
+    "notes": ""
+  }
+}
