@@ -1,0 +1,3 @@
+payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference
+RECEIPT-1,received,,NZD,60000,2026-10-20T15:00:00+13:00,Authored bank receipt,Authored marine operating example; no customer operating record
+REFUND-1,refund,RECEIPT-1,NZD,5000,2026-10-20T15:30:00+13:00,Authored actual refund receipt,Authored marine operating example; no customer operating record

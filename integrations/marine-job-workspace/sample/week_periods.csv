@@ -1,0 +1,3 @@
+week_id,technician_id,start_at,end_at,boundary_basis,recorded_at,reference
+WEEK-TECH-A,TECH-A,2026-10-19T00:00:00+13:00,2026-10-26T00:00:00+13:00,Authored New Zealand local Monday-to-Monday week with explicit +13:00 offsets; submission is a retained partial-week snapshot,2026-10-19T08:00:00+13:00,Authored marine operating example; no customer operating record
+WEEK-TECH-B,TECH-B,2026-10-19T00:00:00+13:00,2026-10-26T00:00:00+13:00,Authored New Zealand local Monday-to-Monday week with explicit +13:00 offsets; submission is a retained partial-week snapshot,2026-10-19T08:00:00+13:00,Authored marine operating example; no customer operating record

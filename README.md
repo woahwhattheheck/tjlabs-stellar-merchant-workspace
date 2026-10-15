@@ -16,6 +16,8 @@ roadmap, native acceptance and complete customer handover in one source.
 
 ## Choose a workflow
 
+The standalone [Marine Job Workbench](integrations/marine-job-workspace/README.md) preserves original vessel jobs, quote revisions, time and material corrections, selected customer handovers, weekly approvals and independent accounting/payment records through complete browser/native continuation.
+
 The standalone [Technician Day Workbench](integrations/technician-day-workspace/README.md) compares original/revised appointments, declared technician/bay windows and buffers, actual completion, quotes, invoices, deposits and refund allocations, retaining whole source editions and browser/native recovery.
 
 The standalone [Delivery Slot Workbench](integrations/delivery-slot-workspace/README.md) receives eight original supplier tables, preserves cut-off demand and explicit late selections, compares production and picking snapshots, and retains complete browser/native working copies.

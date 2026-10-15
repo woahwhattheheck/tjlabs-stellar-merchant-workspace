@@ -1,0 +1,5 @@
+line_id,revision_id,description,amount_minor,reference
+QA1,A1,Original shaft-alignment work quote,80000,Authored marine operating example; no customer operating record
+QA2,A2,Revised alignment and replacement scope,100000,Authored marine operating example; no customer operating record
+QB1,B1,Bilge-pump work,30000,Authored marine operating example; no customer operating record
+QC1,C1,Engine inspection work,50000,Authored marine operating example; no customer operating record
