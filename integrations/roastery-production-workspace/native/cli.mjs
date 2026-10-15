@@ -16,3 +16,4 @@ for(const command of commands){const at=command.at||new Date().toISOString();swi
 const plan=core.analyse(workspace),directory=resolve(outDir);await mkdir(directory);
 const outputs={"Roastery_Complete_Workspace.json":JSON.stringify(workspace,null,2)+"\n","Roastery_Plan.json":JSON.stringify(plan,null,2)+"\n","Roastery_Roast_Batches.csv":core.csv(plan.batches,["batch_id","lot_id","profile_id","green_g","planned_roasted_g","unallocated_roasted_g","earliest_due"]),"Roastery_Working_Report.html":'<!doctype html><meta charset="utf-8"><title>Roastery report</title><main>'+core.report(workspace)+'</main>',"Run.json":JSON.stringify({node:process.version,commands:file,log},null,2)+"\n"};
 for(const [name,body]of Object.entries(outputs))await writeFile(join(directory,name),body,{flag:"wx"});console.log(JSON.stringify({directory,files:Object.keys(outputs),issues:plan.issues,totals:plan.totals},null,2));
+if(plan.issues.length)process.exitCode=1;

@@ -8,13 +8,13 @@
     },
     {
       "path": "src/roastery-core.js",
-      "bytes": 17998,
-      "sha256": "4444d58c28b9e64a91a670589121d6c3e749e1ec6704e6346cdb682663f897fd"
+      "bytes": 25804,
+      "sha256": "284dc629243a8d2cfa3478927c138eb04f28ad2a62af0d856fe788c8ac4395df"
     },
     {
       "path": "src/roastery-core.mjs",
-      "bytes": 18029,
-      "sha256": "6df1187f58b2d0e2c34a2844dbdfd91d125225ce69bced496f229746cec18403"
+      "bytes": 25835,
+      "sha256": "d536d9a487e0ab40a5e41aa99ca28782a9f1ee29e23ef73f18cacb01b711aca7"
     },
     {
       "path": "src/browser-store.js",
@@ -23,8 +23,8 @@
     },
     {
       "path": "src/operator.js",
-      "bytes": 15292,
-      "sha256": "c99f3d41f44f1963d4c389149fc304bcb82da212b891924bfc0a31eabfa16be7"
+      "bytes": 15843,
+      "sha256": "8873f625f5d0f8a777a6619cd859d69c67f1ae6ba9f55d81ed604f9dff899e51"
     },
     {
       "path": "src/style.css",
@@ -48,8 +48,8 @@
     },
     {
       "path": "native/cli.mjs",
-      "bytes": 2293,
-      "sha256": "80de82e7d200a4381a06ce866adf5580bed06821b751406bdb883e93119da9f9"
+      "bytes": 2335,
+      "sha256": "1cf19224dd77c51ece81eb808fd39d77a365cc70b000ec547e2f7166ed569fd1"
     },
     {
       "path": "native/README.md",
@@ -63,8 +63,8 @@
     },
     {
       "path": "docs/OPERATOR.md",
-      "bytes": 8264,
-      "sha256": "d9213c76fb02a5c9855a9a30085133d73f171127afb73c642938fd0ce7c1f635"
+      "bytes": 8592,
+      "sha256": "3aafa9dba3dcec84bb543446041c4cbb3aa99ff50aee8c40247117f30f7511e5"
     },
     {
       "path": "examples/worked-workspace.json",
@@ -78,13 +78,13 @@
     },
     {
       "path": "Roastery_Production_Desk.html",
-      "bytes": 44144,
-      "sha256": "1f5d77d46cb4aa919922ae57b4e67de080507ea45a20a3db6ef498a050ba860d"
+      "bytes": 52501,
+      "sha256": "2504a9fca14096ae1395011ebc46e4af00730c034364390c4e99854d520a7979"
     },
     {
       "path": "Roastery_Worked_Example.html",
-      "bytes": 55213,
-      "sha256": "8a7dd4aed18c0c893ed71f207aafdad106727709e7a9344c5096a6890237ed15"
+      "bytes": 63693,
+      "sha256": "2393ee437a92dec54aad9dad1a9d714d6ccfa9c9e5b15397d56f2ebfaed23120"
     },
     {
       "path": "examples/originals/lots.csv",

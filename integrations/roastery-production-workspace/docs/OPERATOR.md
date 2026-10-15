@@ -69,3 +69,5 @@ The output directory must not already exist. Build writes blank/worked standalon
 The actual production core was executed against the authored seven-table example. Focused checks cover packaged and roasted allocation, capacity, exact component mass, whole JSON reopen, aggregate stock shortage, freeze rejection, edition binding and append-only outcome correction. The assembled browser script compiles. The retained receiving result identifies its runtime and authored inputs.
 
 For ordinary browser receiving, use the worked HTML: apply a changed source, review and freeze it, enter an unfinished outcome, export/reopen, save in two tabs, export the competing copy, then record a measured outcome and export the report. Check desktop and a narrow window. Actual browser/Node results belong to the operation that runs them.
+
+Complete workspace imports validate session drafts, source bindings, frozen plan records, outcome references and prospect field shapes before replacing current work. Unknown presentation-table selections return to orders. Each profile shows its published contact route, current systems, qualification context and source notes.

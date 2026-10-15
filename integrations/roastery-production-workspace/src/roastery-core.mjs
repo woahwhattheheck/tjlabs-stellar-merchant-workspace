@@ -21,7 +21,90 @@ function parseCSV(text){
 }
 function csv(rows,headers){return [headers,...rows.map(r=>headers.map(k=>r[k]??""))].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\r\n")+"\r\n"}
 function empty(){return {schema:"tjlabs.roastery-workspace.v1",caseName:"New roastery",tables:Object.fromEntries(Object.keys(columns).map(k=>[k,[]])),captures:[],bindings:{},frozenPlans:[],outcomes:[],notes:"",session:{selectedPlan:"",outcomeDraft:{},table:"orders"}}}
-function reopen(value){const w=clone(value);if(w.schema!=="tjlabs.roastery-workspace.v1")throw Error("Unknown workspace schema");for(const k of Object.keys(columns)){if(!Array.isArray(w.tables?.[k]))throw Error("Missing table "+k);if(w.tables[k].some(r=>r===null||typeof r!=="object"||Array.isArray(r)))throw Error("Invalid row in "+k)}for(const k of ["captures","frozenPlans","outcomes"])if(!Array.isArray(w[k]))throw Error("Missing "+k);w.bindings??={};w.session??={selectedPlan:"",outcomeDraft:{},table:"orders"};w.notes=String(w.notes??"");return w}
+function reopen(value){
+ const w=clone(value),own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
+ const object=(v,label)=>{if(!v||typeof v!=="object"||Array.isArray(v))throw Error(label+" must be an object");return v};
+ const text=(v,label,nonempty=false)=>{if(typeof v!=="string"||(nonempty&&!v.trim()))throw Error(label+" must be "+(nonempty?"a nonempty ":"a ")+"string");return v};
+ const strings=(v,label)=>{if(!Array.isArray(v)||v.some(x=>typeof x!=="string"))throw Error(label+" must be a string array");return v};
+ const rows=(v,label)=>{if(!Array.isArray(v))throw Error(label+" must be an array");for(const r of v)object(r,label+" row");return v};
+ const optionalText=(o,keys,label)=>{for(const k of keys)if(own(o,k)&&o[k]!==undefined)text(o[k],label+"."+k)};
+ const dictionary=(v,label)=>Object.assign(Object.create(null),object(v===undefined?{}:v,label));
+ const tables=(v,label)=>{object(v,label);for(const k of Object.keys(columns)){rows(v[k],label+"."+k);for(const r of v[k])for(const key of columns[k])if(own(r,key)&&!["string","number"].includes(typeof r[key]))throw Error(label+"."+k+"."+key+" must be a scalar");}return v};
+ const unique=(values,key,label)=>{const m=new Map;for(const v of values){const id=text(v[key],label+"."+key,true);if(m.has(id))throw Error("Duplicate "+label+" "+id);m.set(id,v)}return m};
+ object(w,"Workspace");if(w.schema!=="tjlabs.roastery-workspace.v1")throw Error("Unknown workspace schema");
+ w.caseName=String(w.caseName??"New roastery");w.notes=String(w.notes??"");tables(w.tables,"tables");
+ rows(w.captures,"captures");rows(w.frozenPlans,"frozenPlans");rows(w.outcomes,"outcomes");
+ const captures=unique(w.captures,"id","capture"),plans=unique(w.frozenPlans,"id","frozen plan");
+ for(const [i,c]of w.captures.entries()){
+  if(c.id!=="capture-"+(i+1))throw Error("Unexpected capture sequence");
+  if(!own(columns,c.table))throw Error("Unknown capture table");optionalText(c,["filename","text","capturedAt"],"capture");
+  for(const k of ["filename","text","capturedAt"])text(c[k],"capture."+k);
+ }
+ const bindings=(v,label)=>{v=dictionary(v,label);for(const [table,id]of Object.entries(v)){if(!own(columns,table)||typeof id!=="string"||!captures.has(id)||captures.get(id).table!==table)throw Error("Invalid "+label+" source binding");}return v};
+ w.bindings=bindings(w.bindings,"bindings");
+ for(const [i,p]of w.frozenPlans.entries()){
+  if(p.id!=="plan-"+(i+1))throw Error("Unexpected frozen plan sequence");
+  text(p.reviewer,"plan.reviewer",true);for(const k of ["note","createdAt","inputIdentity"])text(p[k],"plan."+k);
+  tables(p.tables,"plan.tables");p.bindings=bindings(p.bindings,"plan.bindings");
+  if(p.inputIdentity!==JSON.stringify({tables:p.tables,bindings:p.bindings}))throw Error("Frozen input identity differs");
+  object(p.result,"plan.result");
+  for(const k of ["issues","orders","components","batches","lots","roastedStock","packagedStock"])rows(p.result[k],"plan.result."+k);
+  strings(p.result.warnings,"plan.result.warnings");object(p.result.totals,"plan.result.totals");
+  const batches=unique(p.result.batches,"batch_id","batch"),lots=unique(p.tables.lots,"lot_id","frozen lot"),profiles=unique(p.tables.profiles,"profile_id","frozen profile");
+  for(const l of p.tables.lots)dec(l.green_g,"Frozen green grams");
+  for(const b of batches.values()){
+   if(!lots.has(b.lot_id)||!profiles.has(b.profile_id))throw Error("Frozen batch refers to an unknown lot/profile");
+   for(const k of ["green_g","planned_roasted_g","planned_loss_g","unallocated_roasted_g"])dec(b[k],"Frozen batch "+k);
+   if(dec(b.green_g)===0n||dec(b.planned_roasted_g)>dec(b.green_g))throw Error("Invalid frozen batch weight");
+   rows(b.allocations,"batch.allocations");for(const a of b.allocations){for(const k of ["line_id","order_id","sku","due_date"])text(a[k],"allocation."+k);dec(a.roasted_g,"Allocated roasted grams");}
+  }
+ }
+ const outcomesById=unique(w.outcomes,"id","outcome"),latest=new Map;
+ for(const [i,o]of w.outcomes.entries()){
+  if(o.id!=="outcome-"+(i+1))throw Error("Unexpected outcome sequence");
+  const p=plans.get(o.planId);if(!p||!p.result.batches.some(b=>b.batch_id===o.batchId))throw Error("Outcome refers to an unknown plan/batch");
+  const g=dec(o.green_g,"Actual green grams"),r=dec(o.roasted_g,"Actual roasted grams");if(g===0n||r>g)throw Error("Invalid outcome weight");
+  text(o.reference,"outcome.reference",true);text(o.note,"outcome.note");text(o.recordedAt,"outcome.recordedAt");
+  const key=JSON.stringify([o.planId,o.batchId]),prior=latest.get(key)||null;
+  if(o.supersedes!==prior)throw Error("Outcome correction does not retain the preceding record");latest.set(key,o.id);
+ }
+ w.session=dictionary(w.session,"session");
+ if(typeof w.session.table!=="string"||!own(columns,w.session.table))w.session.table="orders";
+ for(const k of ["reviewer","reviewNote","selectedPlan","selectedBatch"])if(w.session[k]===undefined)w.session[k]="";else text(w.session[k],"session."+k);
+ for(const k of ["tableDrafts","sourceNames"]){w.session[k]=dictionary(w.session[k],"session."+k);for(const [table,v]of Object.entries(w.session[k])){if(!own(columns,table))throw Error("Unknown table in "+k);text(v,k+"."+table);}}
+ w.session.outcomeDraft=dictionary(w.session.outcomeDraft,"session.outcomeDraft");for(const v of Object.values(w.session.outcomeDraft))text(v,"Legacy outcome draft");
+ w.session.outcomeDrafts=dictionary(w.session.outcomeDrafts,"session.outcomeDrafts");
+ for(const [key,draft]of Object.entries(w.session.outcomeDrafts)){
+  let pair;try{pair=JSON.parse(key)}catch{throw Error("Invalid outcome draft identity")}
+  if(!Array.isArray(pair)||pair.length!==2||pair.some(v=>typeof v!=="string")||JSON.stringify(pair)!==key)throw Error("Invalid outcome draft identity");
+  const [planId,batchId]=pair,p=plans.get(planId);
+  if((planId&&!p)||(batchId&&(!p||!p.result.batches.some(b=>b.batch_id===batchId))))throw Error("Outcome draft refers to an unknown plan/batch");
+  object(draft,"Outcome draft");for(const v of Object.values(draft))text(v,"Outcome draft field");
+ }
+ const selected=plans.get(w.session.selectedPlan);
+ if(!selected){w.session.selectedPlan="";w.session.selectedBatch=""}else if(!selected.result.batches.some(b=>b.batch_id===w.session.selectedBatch))w.session.selectedBatch="";
+ if(w.prospectProgramme!==undefined){
+  const pg=object(w.prospectProgramme,"prospectProgramme");rows(pg.profiles,"prospectProgramme.profiles");unique(pg.profiles,"id","prospect");
+  optionalText(pg,["schema","operation","operation_id","preparedOn"],"programme");
+  if(pg.commercial!==undefined)object(pg.commercial,"programme.commercial");
+  for(const p of pg.profiles){
+   for(const k of ["company","location","cohort"])text(p[k],"prospect."+k);
+   optionalText(p,["website"],"prospect");
+   if(p.contact!==undefined){object(p.contact,"contact");for(const k of ["name","role","email","phone","route","url"])if(p.contact[k]!==undefined&&p.contact[k]!==null)text(p.contact[k],"contact."+k);}
+   for(const k of ["fit","currentTools","proposedPilot","opening"])if(p[k]!==undefined)object(p[k],"prospect."+k);
+   if(p.fit)optionalText(p.fit,["priority","reason","buyingSignal"],"fit");
+   if(p.currentTools)optionalText(p.currentTools,["observed","retain"],"currentTools");
+   if(p.proposedPilot){optionalText(p.proposedPilot,["scope","acceptance","commercialAngle"],"pilot");if(p.proposedPilot.steps!==undefined)strings(p.proposedPilot.steps,"pilot.steps");}
+   if(p.opening)optionalText(p.opening,["subject","body"],"opening");
+   for(const k of ["qualification","sourceNotes"])if(p[k]!==undefined)strings(p[k],"prospect."+k);
+   if(p.observations!==undefined){if(!Array.isArray(p.observations))throw Error("observations must be an array");for(const o of p.observations)if(typeof o!=="string"){object(o,"observation");text(o.text,"observation.text");if(o.source!==undefined)text(o.source,"observation.source");}}
+   if(p.sources!==undefined){rows(p.sources,"prospect.sources");for(const s of p.sources){text(s.url,"source.url",true);optionalText(s,["id","observedOn","supports","webRef","retrievalContext"],"source");}}
+  }
+ }
+ w.prospectWorking=dictionary(w.prospectWorking,"prospectWorking");
+ for(const state of Object.values(w.prospectWorking)){object(state,"Prospect working record");optionalText(state,["status","scope","reviewDate","notes"],"prospectWorking");}
+ return w;
+}
 function receive(w,table,text,filename,at){w=reopen(w);if(!columns[table])throw Error("Unknown table");const p=parseCSV(text);const missing=columns[table].filter(k=>!p.headers.includes(k));if(missing.length)throw Error("Missing columns: "+missing.join(", "));const id="capture-"+(w.captures.length+1);w.captures.push({id,table,filename:String(filename||table+".csv"),text:String(text),capturedAt:String(at||"")});w.tables[table]=p.rows;w.bindings[table]=id;return w}
 function inputs(w){return JSON.stringify({tables:w.tables,bindings:w.bindings})}
 function analyse(w){
