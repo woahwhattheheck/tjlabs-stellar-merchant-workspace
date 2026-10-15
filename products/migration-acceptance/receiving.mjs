@@ -466,7 +466,7 @@ class Course{
           });
         })()
       ]);
-      await this.saveTail;
+      await retry('JOURNAL_CLOSE_PENDING',async()=>{await this.save();});
     }).finally(()=>{this.closing=null;});return this.closing;
   }
   async run(){

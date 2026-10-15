@@ -124,11 +124,11 @@
     },
     {
       "path": "products/clickhouse-acceptance-workbench/receiving.mjs",
-      "blob": "2fa4a0995c70a5b624268b334fe3e30c0f24cc0c"
+      "blob": "38668d97b4d5697b8ae76d0367aa7c0d96196daf"
     },
     {
       "path": "products/clickhouse-acceptance-workbench/RECEIVING.md",
-      "blob": "f351157fbd6904a996c979242413cd60186721c2"
+      "blob": "3e911329871bd3d33f3b00966cbed873ec385e24"
     }
   ]
 }

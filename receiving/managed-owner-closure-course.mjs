@@ -12,7 +12,7 @@ export async function runManagedOwnerClosureCourse(files,C){
     const start=s.indexOf('class Course{'),end=s.indexOf('\nexport async function main',start);
     need(start>=0&&end>start,'COMPLETE_CLASS_REQUIRED',product);
     const events=[],disk=new Map(),pendingPrimary=deferred(),pendingManager=deferred(),pendingOther=deferred(),pendingFirstWrite=deferred();
-    let failReceiptWrite=true,managerFailure=true,serialMode=false,serialFailure=false,serialHold=false,saveActive=0,maxSaveActive=0,leaseReleased=false;
+    let failReceiptWrite=true,finalWriteFailures=0,managerFailure=true,serialMode=false,serialFailure=false,serialHold=false,saveActive=0,maxSaveActive=0,leaseReleased=false;
     const now=()=>new Date().toISOString(),err=e=>({code:e.code??'AUTHORED_ERROR',message:e.message});
     const identity=async path=>{need(disk.has(path),'ENOENT');const b=C.utf8Encode(JSON.stringify(disk.get(path),null,2)+'\n');return{bytes:b.length,sha256:C.sha256(b)};};
     const save=async(path,value,{immutable=false}={})=>{
@@ -21,6 +21,7 @@ export async function runManagedOwnerClosureCourse(files,C){
       if(path.endsWith('/operation.json')){
         saveActive++;maxSaveActive=Math.max(maxSaveActive,saveActive);
         try{
+          if(finalWriteFailures>0&&snapshot.hosts?.receiving?.starts?.[0]?.closed){finalWriteFailures--;events.push('final-journal-failure');throw Error('authored final close journal outage');}
           if(serialMode){events.push('write-begin-'+snapshot.counter);if(serialHold){serialHold=false;await pendingFirstWrite.promise;}if(serialFailure){serialFailure=false;throw Error('authored operation write failure');}}
           if(failReceiptWrite&&Object.keys(snapshot.files??{}).some(p=>p.includes('receiving-')&&p.endsWith('-closed.json'))){failReceiptWrite=false;throw Error('authored lost receipt journal write');}
           disk.set(path,snapshot);if(serialMode)events.push('write-end-'+snapshot.counter);
@@ -71,6 +72,11 @@ export async function runManagedOwnerClosureCourse(files,C){
     check(!finished&&events.includes('observer-closed'),product+': Applications closes independently while manager or other retained owners remain pending');
     pendingManager.release();pendingOther.release();await first;
     check(h.state.hosts.primary.starts[0].closed&&h.state.hosts.receiving.starts[0].closed&&maxSaveActive===1,product+': all exact proofs complete with serialized durable operation writes');
+    h.state.hosts.receiving.starts[0].closed=false;
+    h.apps={close:async()=>events.push('late-observer-closed')};
+    finalWriteFailures=2;
+    await h.close();
+    check(finalWriteFailures===0&&disk.get(h.path).hosts.receiving.starts[0].closed&&events.filter(v=>v==='final-journal-failure').length===2,product+': final run-closed and diagnostic writes can fail before complete durable closure retries');
     const callsBefore=stopCalls.length;h.state.hosts.receiving.starts[0].closed=false;
     await h.stop('receiving');check(stopCalls.length===callsBefore&&h.state.hosts.receiving.starts[0].closed,product+': cold retained-proof replay marks the same original run closed without another native Stop');
     h.state.hosts.selected=makeHost('selected');h.state.hosts.selected.starts[0].dispatch='selected';

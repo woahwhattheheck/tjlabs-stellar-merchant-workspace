@@ -133,11 +133,11 @@
     },
     {
       "path": "products/replication-workbench/receiving.mjs",
-      "blob": "868e1cd4e6cdffcbdadd14b421208a83668bcb61"
+      "blob": "b4eba57ebf6a97ac130a1f9b79dd5f4c89d48c17"
     },
     {
       "path": "products/replication-workbench/RECEIVING.md",
-      "blob": "430ad01602178c599c0b268ed7e84effae48b4cd"
+      "blob": "f30b8cf8590169ceca56b01081c27ec1400980ac"
     }
   ]
 }

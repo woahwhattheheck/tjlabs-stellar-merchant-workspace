@@ -294,3 +294,5 @@ node receiving/managed-owner-closure-course-cli.mjs
 ```
 
 It executes all five complete receiver classes through explicit filesystem, Applications and held-owner adapters, including lost journal acknowledgements and immutable proof replay. Continue the original equipped receiving operation for actual process/browser closure and the exact rendered-product inspection already required above.
+
+After every owner closes, the receiver retries a final complete journal snapshot until it is durable. A rejected run-closed write followed by a rejected diagnostic write therefore keeps the same lease and completes once storage recovers, using the already saved original proof.
