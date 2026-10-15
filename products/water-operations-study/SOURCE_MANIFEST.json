@@ -1865,8 +1865,8 @@
     },
     {
       "path": "receiving/run-resumable-export.mjs",
-      "bytes": 5047,
-      "sha256": "eb9a87106967fc5610ce38e7b594dc1702886aa1e99a673e546825b9c037bbfc"
+      "bytes": 5088,
+      "sha256": "0ce4d4f74a2d9ed4452301f405a5458cfe7bfab346797c25027cf904643e4596"
     },
     {
       "path": "receiving/source-bytes-course.cjs",
