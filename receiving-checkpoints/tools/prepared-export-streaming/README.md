@@ -39,3 +39,19 @@ A pending publication records its parent and exact next commit before updating t
 After a whole runtime loss, read the latest committed progress.json at its exact commit. Construct resumeState with schema `commons.git-archive-publisher-state.v1`, the chosen branch/directory, that commit as head, and copy sourceIndex, sourceIndexHead, identity, extraFilesSha256, partBytes, parts and complete from progress. Set committedParts to parts.length, verifiedMembers to0 and pendingPublication to null. The complete replay verifies that exact committed prefix before adding any later output; uncommitted blobs can safely be recomputed. The final streamed manifest keeps the same independent part schema used by the ordinary ZIP range reader.
 
 Final companion files are copied and bound by a sorted-path UTF-8 SHA-256 before streaming. That identity is retained in publication state, durable progress and the final manifest. A changed companion cannot be silently accepted when reusing a completed commit. Older incomplete states without the identity may adopt the chosen companions because no final companion publication exists yet; completed states and pending final commits require their original companion identity. If recovering an older completed publication, read its actual companions from the exact committed tree before deriving that identity.
+
+## Emit prepared payloads, then reopen the ordinary archive
+
+For complete retained histories, `streamPreparedPayloads(index, readObject, sink, options)` avoids a second inflation of every prepared member during ZIP emission. It checks every original encoded fragment and complete payload reference, canonical base64, exact packed lengths, archive layout and complete export manifest. It emits the same ordinary ZIP bytes. Its receipt explicitly records `memberVerification: "prepared-payload-identities"` and `requiresOrdinaryReadback: true`.
+
+Use the existing `readCompleteExportRanges` on the resulting exact archive before delivering it. That independent pass checks actual local/directory layout, whole ZIP SHA, every original size/CRC/SHA and one-to-one manifest membership. The original `streamPreparedExport` API retains its full original-member validation and unchanged default behavior.
+
+The native command composes the two operations:
+
+```sh
+node finish-prepared.mjs --checkpoint /absolute/checkpoint.json --manifest-sha256 EXACT_SHA256 --output /absolute/Complete_Source_Handover.zip --verification ordinary
+```
+
+This mode writes and syncs a provisional ZIP, reopens that actual file through exact ranges, and publishes it only after the ordinary read succeeds. Its final receipt includes the observed ordinary readback and marks that member verification complete. It keeps one encoded input fragment, bounded inflated chunks and directory metadata instead of allocating a complete ZIP. Existing calls without the optional flag keep the original behavior. Existing Git archive publication and active receiving runs are unchanged.
+
+`verify-packed-readback.cjs` compares a complete maintained source bank and actual generated desk against the ordinary ZIP builder, independently reopens all members, and checks altered input, output failure and a deliberately false raw identity. The false raw identity demonstrates that the paired ordinary pass observes actual content rather than accepting prepared declarations.
