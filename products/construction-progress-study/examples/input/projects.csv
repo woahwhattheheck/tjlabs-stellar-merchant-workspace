@@ -1,0 +1,3 @@
+project_id,contractor_id,client_id,site_name,site_address,currency,currency_decimals,rounding_mode,tax_rounding,timezone,start_at,end_at,cohort_key,source_ref
+P1,BUILDER,CLIENT,Authored measured refurbishment,Authored site,EUR,2,half_up,line,Europe/Brussels,2026-08-01T00:00:00Z,2026-12-01T00:00:00Z,same-project-work,authored/projects/P1
+P2,BUILDER,CLIENT,Authored milestone renovation,Authored site,EUR,2,half_up,line,Europe/Brussels,2026-08-01T00:00:00Z,2026-12-01T00:00:00Z,same-project-work,authored/projects/P2

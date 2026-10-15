@@ -1,0 +1,5 @@
+milestone_id,project_id,contract_version_id,sequence,label,trigger_type,condition_ref,amount_basis,basis_scope,percentage,amount,currency,due_at,achieved_at,approval_id,invoice_id,status,recorded_at,available_at,source_ref
+DEP1,P1,CV1,1,signature,signature,authored signed term DEP1,fixed,accepted_contract_net,,500,EUR,2026-08-01T12:00:00Z,2026-08-01T09:00:00Z,AP-DEP1,,achieved,2026-08-01T11:00:00Z,2026-08-01T11:00:00Z,authored/payment_milestones/DEP1
+MP1,P2,CV2,1,signature,signature,authored signed term MP1,percent,accepted_contract_net,10,,EUR,2026-08-01T12:00:00Z,2026-08-01T09:00:00Z,AP-MP1,,achieved,2026-08-01T11:00:00Z,2026-08-01T11:00:00Z,authored/payment_milestones/MP1
+MP2,P2,CV2,2,start,start,authored signed term MP2,percent,accepted_contract_net,20,,EUR,2026-08-10T12:00:00Z,2026-08-10T09:00:00Z,AP-MP2,,achieved,2026-08-10T11:00:00Z,2026-08-10T11:00:00Z,authored/payment_milestones/MP2
+MP3,P2,CV2,3,reception,reception,authored signed term MP3,balance,accepted_contract_net,,,EUR,2026-10-10T12:00:00Z,,,,planned,2026-10-10T11:00:00Z,2026-10-10T11:00:00Z,authored/payment_milestones/MP3

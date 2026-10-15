@@ -1,0 +1,3728 @@
+{
+  "schema": "construction.source-comparison/v1",
+  "study_sha256": "3b7115300166945c18c2c09ca566ab9cdb7d329ece40bd4f38c16e00523fc06c",
+  "data_class": "authored_course",
+  "scope": {
+    "source": "Complete authored agreements, progress, milestones, invoices, bank observations and supplier records",
+    "returned": "Mapped independent trial records; exact source counterpart retained"
+  },
+  "complete_extract_selection": true,
+  "construction": {
+    "schema": "construction.progress-study/v1",
+    "as_of": "2026-10-15T12:00:00Z",
+    "decision_at": "2026-10-15T12:00:00Z",
+    "data_class": "authored_course",
+    "availability": [
+      {
+        "kind": "organisations",
+        "extract_id": "extract-7d22c15f6ab994ca0d9b69cc698ae0d7",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 3
+      },
+      {
+        "kind": "people",
+        "extract_id": "extract-37edbd4112beec7821de0baa34321c2d",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 3
+      },
+      {
+        "kind": "authorities",
+        "extract_id": "extract-dae177ae9c71a236f3dcf16d2991f351",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 2
+      },
+      {
+        "kind": "projects",
+        "extract_id": "extract-f7e5b73a47de623f69885e57d09014ec",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 2
+      },
+      {
+        "kind": "contract_versions",
+        "extract_id": "extract-95ed3df06bd1d77266dfade85a95c3ef",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 2
+      },
+      {
+        "kind": "contract_lines",
+        "extract_id": "extract-9d7c548164340da8e3e45e06bd282dae",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 2
+      },
+      {
+        "kind": "contract_events",
+        "extract_id": "extract-bf55277fa80f2f05c7597e1dc49681db",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 0
+      },
+      {
+        "kind": "variations",
+        "extract_id": "extract-a4cb4cb1793ac9f05427019ff41f88ec",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 2
+      },
+      {
+        "kind": "variation_lines",
+        "extract_id": "extract-943bdadd343a548b651569ff55c348ca",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 2
+      },
+      {
+        "kind": "approvals",
+        "extract_id": "extract-9a2f192a56f867395f0bec5d40b281f9",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 6
+      },
+      {
+        "kind": "measurements",
+        "extract_id": "extract-104d50dd6ce18b86e7677c518e962c39",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 3
+      },
+      {
+        "kind": "progress_claims",
+        "extract_id": "extract-f9937bbd50774ed4f1afab812641be19",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 2
+      },
+      {
+        "kind": "claim_lines",
+        "extract_id": "extract-28d51dbebc75a428c58b281ea2e0a214",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 3
+      },
+      {
+        "kind": "certifications",
+        "extract_id": "extract-572e9b3127a61f5e7d8422085cbdee64",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 2
+      },
+      {
+        "kind": "certification_lines",
+        "extract_id": "extract-835f856bb3cb3d5b6bb55ddc9e3e9d8d",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 3
+      },
+      {
+        "kind": "retention_events",
+        "extract_id": "extract-6f839b95f3968091235c98a8e6ef53ed",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 3
+      },
+      {
+        "kind": "invoices",
+        "extract_id": "extract-0780bf7bf3281bdfd99e4d1b9355bf74",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 4
+      },
+      {
+        "kind": "invoice_lines",
+        "extract_id": "extract-082b68af2b8995e5f471590c5e67b2b0",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 9
+      },
+      {
+        "kind": "accounting_events",
+        "extract_id": "extract-8a85bb5eb159484e522642039722b5c4",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 4
+      },
+      {
+        "kind": "commitments",
+        "extract_id": "extract-fbcafdf5f3a6ecad7d5861342a9778eb",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 1
+      },
+      {
+        "kind": "commitment_lines",
+        "extract_id": "extract-c08316785278820161282b049ad57dc9",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 1
+      },
+      {
+        "kind": "deliveries",
+        "extract_id": "extract-d0734833ae1c587245ba8af19545db0d",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 1
+      },
+      {
+        "kind": "cost_invoices",
+        "extract_id": "extract-d6db71233f1cf7b6c2a58e956fb21cd2",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 1
+      },
+      {
+        "kind": "cost_invoice_lines",
+        "extract_id": "extract-9a4e98d651a4e8085043bf58e1e138dc",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 1
+      },
+      {
+        "kind": "cost_payments",
+        "extract_id": "extract-07e155df552099a2ebb28f53172760a9",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 1
+      },
+      {
+        "kind": "reports",
+        "extract_id": "extract-0bf7598e70410567b5ba8eadd86db077",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 1
+      },
+      {
+        "kind": "report_inputs",
+        "extract_id": "extract-9320b597c486e226e466772f8b7567aa",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 1
+      },
+      {
+        "kind": "effort",
+        "extract_id": "extract-56e10f3c319ce27915f780d858e1cc74",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 16
+      },
+      {
+        "kind": "source_documents",
+        "extract_id": "extract-ede26f541023b84f190e7e62456f5322",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 0
+      },
+      {
+        "kind": "payment_milestones",
+        "extract_id": "extract-fcd081bf49f5f666cc77b16e811e406b",
+        "available_at": "2026-10-14T12:00:00Z",
+        "known_at_cutoff": true,
+        "retained_rows": 4
+      }
+    ],
+    "summary": {
+      "retained_claims": 2,
+      "included_claims": 2,
+      "excluded_claims": 0,
+      "unresolved_claims": 0,
+      "prepared_claims": 2,
+      "submitted_claims": 2,
+      "rejected_claims": 0,
+      "certified_claims": 2,
+      "complete_claims": 2,
+      "complete_fraction": {
+        "numerator": "1",
+        "denominator": "1",
+        "decimal": "1"
+      },
+      "denominator": 2,
+      "projects": 2
+    },
+    "excluded": [],
+    "unresolved": [],
+    "projects": [
+      {
+        "id": "P1",
+        "site_name": "Authored measured refurbishment",
+        "currency": "EUR",
+        "valid": true,
+        "issues": [],
+        "contracts": [
+          "CV1"
+        ],
+        "claims": [
+          "C1",
+          "C2"
+        ],
+        "invoiced_net": {
+          "numerator": "11975",
+          "denominator": "2",
+          "decimal": "5987.5"
+        },
+        "actual_client_cash": {
+          "complete": true,
+          "totals": {
+            "EUR": {
+              "numerator": "4598",
+              "denominator": "1",
+              "decimal": "4598"
+            }
+          },
+          "unique_cash_events": 2,
+          "records": [
+            {
+              "id": "PAY-D1",
+              "family": "accounting_events",
+              "event_type": "receipt",
+              "invoice_id": "D1",
+              "amount": {
+                "numerator": "605",
+                "denominator": "1",
+                "decimal": "605"
+              },
+              "currency": "EUR",
+              "external_transaction_id": "bank-PAY-D1",
+              "observation_ids": [
+                "PAY-D1"
+              ]
+            },
+            {
+              "id": "PAY-I1",
+              "family": "accounting_events",
+              "event_type": "receipt",
+              "invoice_id": "I1",
+              "amount": {
+                "numerator": "3993",
+                "denominator": "1",
+                "decimal": "3993"
+              },
+              "currency": "EUR",
+              "external_transaction_id": "bank-PAY-I1",
+              "observation_ids": [
+                "PAY-I1"
+              ]
+            },
+            {
+              "id": "APPLY-D1",
+              "family": "accounting_events",
+              "event_type": "deposit_application",
+              "invoice_id": "I1",
+              "amount": {
+                "numerator": "605",
+                "denominator": "1",
+                "decimal": "605"
+              },
+              "currency": "EUR",
+              "external_transaction_id": "deposit-apply-1",
+              "observation_ids": [
+                "APPLY-D1"
+              ]
+            }
+          ],
+          "issues": [],
+          "conflicts": [],
+          "future_ids": []
+        },
+        "actual_supplier_cash": {
+          "complete": true,
+          "totals": {
+            "EUR": {
+              "numerator": "500",
+              "denominator": "1",
+              "decimal": "500"
+            }
+          },
+          "unique_cash_events": 1,
+          "records": [
+            {
+              "id": "CP1",
+              "family": "cost_payments",
+              "event_type": "payment",
+              "invoice_id": "CI1",
+              "amount": {
+                "numerator": "500",
+                "denominator": "1",
+                "decimal": "500"
+              },
+              "currency": "EUR",
+              "external_transaction_id": "supplier-bank-1",
+              "observation_ids": [
+                "CP1"
+              ]
+            }
+          ],
+          "issues": [],
+          "conflicts": [],
+          "future_ids": []
+        },
+        "retention": {
+          "complete": true,
+          "issues": [],
+          "unresolved_event_ids": [],
+          "held": {
+            "numerator": "625",
+            "denominator": "2",
+            "decimal": "312.5"
+          },
+          "release_due": {
+            "numerator": "0",
+            "denominator": "1",
+            "decimal": "0"
+          },
+          "released": {
+            "numerator": "50",
+            "denominator": "1",
+            "decimal": "50"
+          },
+          "received": {
+            "numerator": "0",
+            "denominator": "1",
+            "decimal": "0"
+          },
+          "remaining_held": {
+            "numerator": "525",
+            "denominator": "2",
+            "decimal": "262.5"
+          },
+          "released_not_received": {
+            "numerator": "50",
+            "denominator": "1",
+            "decimal": "50"
+          },
+          "applicability": "true"
+        },
+        "costs": {
+          "project_id": "P1",
+          "currency": "EUR",
+          "valid": true,
+          "issues": [],
+          "invoices": [
+            {
+              "id": "CI1",
+              "project_id": "P1",
+              "party_id": "SUPPLIER",
+              "number": "SUP1",
+              "invoice_type": "invoice",
+              "currency": "EUR",
+              "issued_at": "2026-08-06T12:00:00Z",
+              "status": "issued",
+              "valid": true,
+              "reconciled": true,
+              "issues": [],
+              "net": {
+                "numerator": "660",
+                "denominator": "1",
+                "decimal": "660"
+              },
+              "tax": {
+                "numerator": "693",
+                "denominator": "5",
+                "decimal": "138.6"
+              },
+              "gross": {
+                "numerator": "3993",
+                "denominator": "5",
+                "decimal": "798.6"
+              },
+              "accounting_effect": {
+                "numerator": "3993",
+                "denominator": "5",
+                "decimal": "798.6"
+              },
+              "lines": [
+                {
+                  "id": "CIL1",
+                  "scope_key": "tiles",
+                  "milestone_id": "",
+                  "commitment_line_id": "POL1",
+                  "line_type": "work",
+                  "net": {
+                    "numerator": "660",
+                    "denominator": "1",
+                    "decimal": "660"
+                  },
+                  "tax": {
+                    "numerator": "693",
+                    "denominator": "5",
+                    "decimal": "138.6"
+                  },
+                  "gross": {
+                    "numerator": "3993",
+                    "denominator": "5",
+                    "decimal": "798.6"
+                  },
+                  "expected_net": {
+                    "numerator": "660",
+                    "denominator": "1",
+                    "decimal": "660"
+                  },
+                  "quantity": {
+                    "numerator": "6",
+                    "denominator": "1",
+                    "decimal": "6"
+                  },
+                  "valid": true,
+                  "issues": []
+                }
+              ]
+            }
+          ],
+          "lines": [
+            {
+              "id": "POL1",
+              "commitment_id": "PO1",
+              "supplier_id": "SUPPLIER",
+              "scope_key": "tiles",
+              "unit": "pack",
+              "ordered_quantity": {
+                "numerator": "10",
+                "denominator": "1",
+                "decimal": "10"
+              },
+              "accepted_delivery_quantity": {
+                "numerator": "6",
+                "denominator": "1",
+                "decimal": "6"
+              },
+              "invoiced_quantity": {
+                "numerator": "6",
+                "denominator": "1",
+                "decimal": "6"
+              },
+              "delivered_uninvoiced_quantity": {
+                "numerator": "0",
+                "denominator": "1",
+                "decimal": "0"
+              },
+              "outstanding_uninvoiced_quantity": {
+                "numerator": "4",
+                "denominator": "1",
+                "decimal": "4"
+              },
+              "outstanding_uninvoiced_net": {
+                "numerator": "400",
+                "denominator": "1",
+                "decimal": "400"
+              },
+              "valid": true,
+              "issues": []
+            }
+          ],
+          "actual_invoiced_net": {
+            "numerator": "660",
+            "denominator": "1",
+            "decimal": "660"
+          },
+          "outstanding_uninvoiced_commitment_net": {
+            "numerator": "400",
+            "denominator": "1",
+            "decimal": "400"
+          },
+          "forward_committed_cost_net": {
+            "numerator": "1060",
+            "denominator": "1",
+            "decimal": "1060"
+          },
+          "meaning": "Actual supplier invoice net plus only the unconsumed commitment quantity at its agreed rate. Delivery moves exposure into delivered-uninvoiced work. Paid cash remains separate."
+        }
+      },
+      {
+        "id": "P2",
+        "site_name": "Authored milestone renovation",
+        "currency": "EUR",
+        "valid": true,
+        "issues": [],
+        "contracts": [
+          "CV2"
+        ],
+        "claims": [],
+        "invoiced_net": {
+          "numerator": "500",
+          "denominator": "1",
+          "decimal": "500"
+        },
+        "actual_client_cash": {
+          "complete": true,
+          "totals": {
+            "EUR": {
+              "numerator": "605",
+              "denominator": "1",
+              "decimal": "605"
+            }
+          },
+          "unique_cash_events": 1,
+          "records": [
+            {
+              "id": "PAY-P2",
+              "family": "accounting_events",
+              "event_type": "receipt",
+              "invoice_id": "P2-I1",
+              "amount": {
+                "numerator": "605",
+                "denominator": "1",
+                "decimal": "605"
+              },
+              "currency": "EUR",
+              "external_transaction_id": "bank-PAY-P2",
+              "observation_ids": [
+                "PAY-P2"
+              ]
+            }
+          ],
+          "issues": [],
+          "conflicts": [],
+          "future_ids": []
+        },
+        "actual_supplier_cash": {
+          "complete": true,
+          "totals": {},
+          "unique_cash_events": 0,
+          "records": [],
+          "issues": [],
+          "conflicts": [],
+          "future_ids": []
+        },
+        "retention": {
+          "complete": true,
+          "issues": [],
+          "unresolved_event_ids": [],
+          "held": {
+            "numerator": "0",
+            "denominator": "1",
+            "decimal": "0"
+          },
+          "release_due": {
+            "numerator": "0",
+            "denominator": "1",
+            "decimal": "0"
+          },
+          "released": {
+            "numerator": "0",
+            "denominator": "1",
+            "decimal": "0"
+          },
+          "received": {
+            "numerator": "0",
+            "denominator": "1",
+            "decimal": "0"
+          },
+          "remaining_held": {
+            "numerator": "0",
+            "denominator": "1",
+            "decimal": "0"
+          },
+          "released_not_received": {
+            "numerator": "0",
+            "denominator": "1",
+            "decimal": "0"
+          },
+          "applicability": "false"
+        },
+        "costs": {
+          "project_id": "P2",
+          "currency": "EUR",
+          "valid": true,
+          "issues": [],
+          "invoices": [],
+          "lines": [],
+          "actual_invoiced_net": {
+            "numerator": "0",
+            "denominator": "1",
+            "decimal": "0"
+          },
+          "outstanding_uninvoiced_commitment_net": {
+            "numerator": "0",
+            "denominator": "1",
+            "decimal": "0"
+          },
+          "forward_committed_cost_net": {
+            "numerator": "0",
+            "denominator": "1",
+            "decimal": "0"
+          },
+          "meaning": "Actual supplier invoice net plus only the unconsumed commitment quantity at its agreed rate. Delivery moves exposure into delivered-uninvoiced work. Paid cash remains separate."
+        }
+      }
+    ],
+    "contracts": [
+      {
+        "valid": true,
+        "issues": [],
+        "id": "CV1",
+        "project_id": "P1",
+        "billing_basis": "mixed",
+        "certification_required": "true",
+        "retention_applicable": "true",
+        "deposit_applicable": "true",
+        "pricing": {
+          "issues": [],
+          "lines": [
+            {
+              "id": "SCOPE1",
+              "issues": [],
+              "net": {
+                "numerator": "10000",
+                "denominator": "1",
+                "decimal": "10000"
+              },
+              "tax": {
+                "numerator": "2100",
+                "denominator": "1",
+                "decimal": "2100"
+              },
+              "gross": {
+                "numerator": "12100",
+                "denominator": "1",
+                "decimal": "12100"
+              },
+              "rate": {
+                "numerator": "21",
+                "denominator": "100",
+                "decimal": "0.21"
+              },
+              "base": {
+                "numerator": "10000",
+                "denominator": "1",
+                "decimal": "10000"
+              },
+              "discount": {
+                "numerator": "0",
+                "denominator": "1",
+                "decimal": "0"
+              },
+              "tax_code": "actual-standard",
+              "tax_rate": "21",
+              "contract_discount": {
+                "numerator": "0",
+                "denominator": "1",
+                "decimal": "0"
+              }
+            }
+          ],
+          "net": {
+            "numerator": "10000",
+            "denominator": "1",
+            "decimal": "10000"
+          },
+          "tax": {
+            "numerator": "2100",
+            "denominator": "1",
+            "decimal": "2100"
+          },
+          "gross": {
+            "numerator": "12100",
+            "denominator": "1",
+            "decimal": "12100"
+          },
+          "groups": [
+            {
+              "key": "actual-standard\u000021/100",
+              "net": {
+                "numerator": "10000",
+                "denominator": "1",
+                "decimal": "10000"
+              },
+              "rate": {
+                "numerator": "21",
+                "denominator": "100",
+                "decimal": "0.21"
+              },
+              "tax_code": "actual-standard"
+            }
+          ],
+          "basis": {
+            "currency": "EUR",
+            "precision": 2,
+            "rounding": "half_up",
+            "tax_rounding": "line",
+            "price_basis": "exclusive",
+            "discount_kind": "none",
+            "discount_value": ""
+          }
+        },
+        "lines": [
+          "SCOPE1"
+        ]
+      },
+      {
+        "valid": true,
+        "issues": [],
+        "id": "CV2",
+        "project_id": "P2",
+        "billing_basis": "milestone",
+        "certification_required": "false",
+        "retention_applicable": "false",
+        "deposit_applicable": "true",
+        "pricing": {
+          "issues": [],
+          "lines": [
+            {
+              "id": "SCOPE2",
+              "issues": [],
+              "net": {
+                "numerator": "5000",
+                "denominator": "1",
+                "decimal": "5000"
+              },
+              "tax": {
+                "numerator": "1050",
+                "denominator": "1",
+                "decimal": "1050"
+              },
+              "gross": {
+                "numerator": "6050",
+                "denominator": "1",
+                "decimal": "6050"
+              },
+              "rate": {
+                "numerator": "21",
+                "denominator": "100",
+                "decimal": "0.21"
+              },
+              "base": {
+                "numerator": "5000",
+                "denominator": "1",
+                "decimal": "5000"
+              },
+              "discount": {
+                "numerator": "0",
+                "denominator": "1",
+                "decimal": "0"
+              },
+              "tax_code": "actual-standard",
+              "tax_rate": "21",
+              "contract_discount": {
+                "numerator": "0",
+                "denominator": "1",
+                "decimal": "0"
+              }
+            }
+          ],
+          "net": {
+            "numerator": "5000",
+            "denominator": "1",
+            "decimal": "5000"
+          },
+          "tax": {
+            "numerator": "1050",
+            "denominator": "1",
+            "decimal": "1050"
+          },
+          "gross": {
+            "numerator": "6050",
+            "denominator": "1",
+            "decimal": "6050"
+          },
+          "groups": [
+            {
+              "key": "actual-standard\u000021/100",
+              "net": {
+                "numerator": "5000",
+                "denominator": "1",
+                "decimal": "5000"
+              },
+              "rate": {
+                "numerator": "21",
+                "denominator": "100",
+                "decimal": "0.21"
+              },
+              "tax_code": "actual-standard"
+            }
+          ],
+          "basis": {
+            "currency": "EUR",
+            "precision": 2,
+            "rounding": "half_up",
+            "tax_rounding": "line",
+            "price_basis": "exclusive",
+            "discount_kind": "none",
+            "discount_value": ""
+          }
+        },
+        "lines": [
+          "SCOPE2"
+        ]
+      }
+    ],
+    "variations": [
+      {
+        "id": "V1",
+        "project_id": "P1",
+        "status": "instructed",
+        "instruction_supported": true,
+        "quantity_approved": true,
+        "price_approved": false,
+        "unpriced": true,
+        "valid": false,
+        "issues": [
+          "VARIATION_PRICE_UNAGREED"
+        ],
+        "pricing": {
+          "issues": [],
+          "lines": [
+            {
+              "id": "VL1",
+              "issues": [],
+              "net": {
+                "numerator": "500",
+                "denominator": "1",
+                "decimal": "500"
+              },
+              "tax": {
+                "numerator": "105",
+                "denominator": "1",
+                "decimal": "105"
+              },
+              "gross": {
+                "numerator": "605",
+                "denominator": "1",
+                "decimal": "605"
+              },
+              "rate": {
+                "numerator": "21",
+                "denominator": "100",
+                "decimal": "0.21"
+              },
+              "base": {
+                "numerator": "500",
+                "denominator": "1",
+                "decimal": "500"
+              },
+              "discount": {
+                "numerator": "0",
+                "denominator": "1",
+                "decimal": "0"
+              },
+              "tax_code": "actual-standard",
+              "tax_rate": "21",
+              "contract_discount": {
+                "numerator": "0",
+                "denominator": "1",
+                "decimal": "0"
+              }
+            }
+          ],
+          "net": {
+            "numerator": "500",
+            "denominator": "1",
+            "decimal": "500"
+          },
+          "tax": {
+            "numerator": "105",
+            "denominator": "1",
+            "decimal": "105"
+          },
+          "gross": {
+            "numerator": "605",
+            "denominator": "1",
+            "decimal": "605"
+          },
+          "groups": [
+            {
+              "key": "actual-standard\u000021/100",
+              "net": {
+                "numerator": "500",
+                "denominator": "1",
+                "decimal": "500"
+              },
+              "rate": {
+                "numerator": "21",
+                "denominator": "100",
+                "decimal": "0.21"
+              },
+              "tax_code": "actual-standard"
+            }
+          ],
+          "basis": {
+            "currency": "EUR",
+            "precision": 2,
+            "rounding": "half_up",
+            "tax_rounding": "line",
+            "price_basis": "exclusive",
+            "discount_kind": "none",
+            "discount_value": ""
+          }
+        },
+        "quantity_approval": {
+          "valid": true,
+          "issues": [],
+          "id": "AP-V1-Q",
+          "actor_id": "OWNER",
+          "decided_at": "2026-09-15T10:00:00Z"
+        },
+        "price_approval": {
+          "valid": false,
+          "issues": [
+            "APPROVAL_IDENTITY_OR_SCOPE"
+          ],
+          "id": ""
+        }
+      },
+      {
+        "id": "V2",
+        "project_id": "P1",
+        "status": "approved",
+        "instruction_supported": true,
+        "quantity_approved": true,
+        "price_approved": true,
+        "unpriced": false,
+        "valid": true,
+        "issues": [],
+        "pricing": {
+          "issues": [],
+          "lines": [
+            {
+              "id": "VL2",
+              "issues": [],
+              "net": {
+                "numerator": "250",
+                "denominator": "1",
+                "decimal": "250"
+              },
+              "tax": {
+                "numerator": "105",
+                "denominator": "2",
+                "decimal": "52.5"
+              },
+              "gross": {
+                "numerator": "605",
+                "denominator": "2",
+                "decimal": "302.5"
+              },
+              "rate": {
+                "numerator": "21",
+                "denominator": "100",
+                "decimal": "0.21"
+              },
+              "base": {
+                "numerator": "250",
+                "denominator": "1",
+                "decimal": "250"
+              },
+              "discount": {
+                "numerator": "0",
+                "denominator": "1",
+                "decimal": "0"
+              },
+              "tax_code": "actual-standard",
+              "tax_rate": "21",
+              "contract_discount": {
+                "numerator": "0",
+                "denominator": "1",
+                "decimal": "0"
+              }
+            }
+          ],
+          "net": {
+            "numerator": "250",
+            "denominator": "1",
+            "decimal": "250"
+          },
+          "tax": {
+            "numerator": "105",
+            "denominator": "2",
+            "decimal": "52.5"
+          },
+          "gross": {
+            "numerator": "605",
+            "denominator": "2",
+            "decimal": "302.5"
+          },
+          "groups": [
+            {
+              "key": "actual-standard\u000021/100",
+              "net": {
+                "numerator": "250",
+                "denominator": "1",
+                "decimal": "250"
+              },
+              "rate": {
+                "numerator": "21",
+                "denominator": "100",
+                "decimal": "0.21"
+              },
+              "tax_code": "actual-standard"
+            }
+          ],
+          "basis": {
+            "currency": "EUR",
+            "precision": 2,
+            "rounding": "half_up",
+            "tax_rounding": "line",
+            "price_basis": "exclusive",
+            "discount_kind": "none",
+            "discount_value": ""
+          }
+        },
+        "quantity_approval": {
+          "valid": true,
+          "issues": [],
+          "id": "AP-V2-Q",
+          "actor_id": "OWNER",
+          "decided_at": "2026-09-16T10:00:00Z"
+        },
+        "price_approval": {
+          "valid": true,
+          "issues": [],
+          "id": "AP-V2-P",
+          "actor_id": "OWNER",
+          "decided_at": "2026-09-16T10:00:00Z"
+        }
+      }
+    ],
+    "measurements": [
+      {
+        "id": "M1",
+        "project_id": "P1",
+        "scope_key": "walls",
+        "unit": "m2",
+        "quantity": {
+          "numerator": "40",
+          "denominator": "1",
+          "decimal": "40"
+        },
+        "status": "approved",
+        "superseded": false,
+        "valid": true,
+        "issues": []
+      },
+      {
+        "id": "M2",
+        "project_id": "P1",
+        "scope_key": "walls",
+        "unit": "m2",
+        "quantity": {
+          "numerator": "20",
+          "denominator": "1",
+          "decimal": "20"
+        },
+        "status": "approved",
+        "superseded": false,
+        "valid": true,
+        "issues": []
+      },
+      {
+        "id": "M3",
+        "project_id": "P1",
+        "scope_key": "approved-extra",
+        "unit": "m2",
+        "quantity": {
+          "numerator": "5",
+          "denominator": "1",
+          "decimal": "5"
+        },
+        "status": "approved",
+        "superseded": false,
+        "valid": true,
+        "issues": []
+      }
+    ],
+    "milestones": [
+      {
+        "id": "DEP1",
+        "project_id": "P1",
+        "contract_version_id": "CV1",
+        "label": "signature",
+        "sequence": "1",
+        "trigger_type": "signature",
+        "basis_scope": "accepted_contract_net",
+        "amount_basis": "fixed",
+        "amount": {
+          "numerator": "500",
+          "denominator": "1",
+          "decimal": "500"
+        },
+        "currency": "EUR",
+        "achieved_at": "2026-08-01T09:00:00Z",
+        "valid": true,
+        "issues": [],
+        "approval": {
+          "valid": true,
+          "issues": [],
+          "id": "AP-DEP1",
+          "actor_id": "OWNER",
+          "decided_at": "2026-08-01T10:00:00Z"
+        }
+      },
+      {
+        "id": "MP1",
+        "project_id": "P2",
+        "contract_version_id": "CV2",
+        "label": "signature",
+        "sequence": "1",
+        "trigger_type": "signature",
+        "basis_scope": "accepted_contract_net",
+        "amount_basis": "percent",
+        "amount": {
+          "numerator": "500",
+          "denominator": "1",
+          "decimal": "500"
+        },
+        "currency": "EUR",
+        "achieved_at": "2026-08-01T09:00:00Z",
+        "valid": true,
+        "issues": [],
+        "approval": {
+          "valid": true,
+          "issues": [],
+          "id": "AP-MP1",
+          "actor_id": "OWNER",
+          "decided_at": "2026-08-01T10:00:00Z"
+        }
+      },
+      {
+        "id": "MP2",
+        "project_id": "P2",
+        "contract_version_id": "CV2",
+        "label": "start",
+        "sequence": "2",
+        "trigger_type": "start",
+        "basis_scope": "accepted_contract_net",
+        "amount_basis": "percent",
+        "amount": {
+          "numerator": "1000",
+          "denominator": "1",
+          "decimal": "1000"
+        },
+        "currency": "EUR",
+        "achieved_at": "2026-08-10T09:00:00Z",
+        "valid": true,
+        "issues": [],
+        "approval": {
+          "valid": true,
+          "issues": [],
+          "id": "AP-MP2",
+          "actor_id": "OWNER",
+          "decided_at": "2026-08-10T10:00:00Z"
+        }
+      },
+      {
+        "id": "MP3",
+        "project_id": "P2",
+        "contract_version_id": "CV2",
+        "label": "reception",
+        "sequence": "3",
+        "trigger_type": "reception",
+        "basis_scope": "accepted_contract_net",
+        "amount_basis": "balance",
+        "amount": {
+          "numerator": "3500",
+          "denominator": "1",
+          "decimal": "3500"
+        },
+        "currency": "EUR",
+        "achieved_at": "",
+        "valid": false,
+        "issues": [
+          "MILESTONE_NOT_OBSERVED_ACHIEVED",
+          "APPROVAL_IDENTITY_OR_SCOPE",
+          "MILESTONE_NOT_ELIGIBLE"
+        ],
+        "approval": {
+          "valid": false,
+          "issues": [
+            "APPROVAL_IDENTITY_OR_SCOPE"
+          ],
+          "id": ""
+        }
+      }
+    ],
+    "claims": [
+      {
+        "id": "C1",
+        "project_id": "P1",
+        "contract_version_id": "CV1",
+        "number": "1",
+        "status": "submitted",
+        "period_from": "2026-08-01T00:00:00Z",
+        "period_until": "2026-09-01T00:00:00Z",
+        "valuation_at": "2026-09-01T10:00:00Z",
+        "prepared_at": "2026-09-01T11:00:00Z",
+        "submitted_at": "2026-09-02T09:00:00Z",
+        "currency": "EUR",
+        "certification_required": "true",
+        "retention_applicable": "true",
+        "deposit_applicable": "true",
+        "superseded": false,
+        "valid": true,
+        "issues": [],
+        "lines": [
+          {
+            "id": "CL1",
+            "scope_key": "walls",
+            "unit": "m2",
+            "quantity_mode": "cumulative",
+            "quantity": {
+              "numerator": "40",
+              "denominator": "1",
+              "decimal": "40"
+            },
+            "claimed_net": {
+              "numerator": "4000",
+              "denominator": "1",
+              "decimal": "4000"
+            },
+            "expected_net": {
+              "numerator": "4000",
+              "denominator": "1",
+              "decimal": "4000"
+            },
+            "milestone_id": "",
+            "valid": true,
+            "issues": []
+          }
+        ],
+        "claimed_net": {
+          "numerator": "4000",
+          "denominator": "1",
+          "decimal": "4000"
+        },
+        "population": "included"
+      },
+      {
+        "id": "C2",
+        "project_id": "P1",
+        "contract_version_id": "CV1",
+        "number": "2",
+        "status": "submitted",
+        "period_from": "2026-09-01T00:00:00Z",
+        "period_until": "2026-10-01T00:00:00Z",
+        "valuation_at": "2026-10-01T10:00:00Z",
+        "prepared_at": "2026-10-01T11:00:00Z",
+        "submitted_at": "2026-10-02T09:00:00Z",
+        "currency": "EUR",
+        "certification_required": "true",
+        "retention_applicable": "true",
+        "deposit_applicable": "true",
+        "superseded": false,
+        "valid": true,
+        "issues": [],
+        "lines": [
+          {
+            "id": "CL2",
+            "scope_key": "walls",
+            "unit": "m2",
+            "quantity_mode": "cumulative",
+            "quantity": {
+              "numerator": "60",
+              "denominator": "1",
+              "decimal": "60"
+            },
+            "claimed_net": {
+              "numerator": "6000",
+              "denominator": "1",
+              "decimal": "6000"
+            },
+            "expected_net": {
+              "numerator": "6000",
+              "denominator": "1",
+              "decimal": "6000"
+            },
+            "milestone_id": "",
+            "valid": true,
+            "issues": []
+          },
+          {
+            "id": "CL3",
+            "scope_key": "approved-extra",
+            "unit": "m2",
+            "quantity_mode": "period",
+            "quantity": {
+              "numerator": "5",
+              "denominator": "1",
+              "decimal": "5"
+            },
+            "claimed_net": {
+              "numerator": "250",
+              "denominator": "1",
+              "decimal": "250"
+            },
+            "expected_net": {
+              "numerator": "250",
+              "denominator": "1",
+              "decimal": "250"
+            },
+            "milestone_id": "",
+            "valid": true,
+            "issues": []
+          }
+        ],
+        "claimed_net": {
+          "numerator": "6250",
+          "denominator": "1",
+          "decimal": "6250"
+        },
+        "population": "included"
+      }
+    ],
+    "certificates": [
+      {
+        "id": "CERT1",
+        "project_id": "P1",
+        "claim_id": "C1",
+        "number": "CERT1",
+        "currency": "EUR",
+        "certified_at": "2026-09-03T10:00:00Z",
+        "status": "certified",
+        "reversed": false,
+        "valid": true,
+        "issues": [],
+        "lines": [
+          {
+            "id": "CE1",
+            "claim_line_id": "CL1",
+            "scope_key": "walls",
+            "quantity_mode": "cumulative",
+            "source_certified_net": {
+              "numerator": "4000",
+              "denominator": "1",
+              "decimal": "4000"
+            },
+            "expected_net": {
+              "numerator": "4000",
+              "denominator": "1",
+              "decimal": "4000"
+            },
+            "prior_certified_net": {
+              "numerator": "0",
+              "denominator": "1",
+              "decimal": "0"
+            },
+            "period_movement": {
+              "numerator": "4000",
+              "denominator": "1",
+              "decimal": "4000"
+            },
+            "valid": true,
+            "issues": []
+          }
+        ],
+        "period_movement": {
+          "numerator": "4000",
+          "denominator": "1",
+          "decimal": "4000"
+        }
+      },
+      {
+        "id": "CERT2",
+        "project_id": "P1",
+        "claim_id": "C2",
+        "number": "CERT2",
+        "currency": "EUR",
+        "certified_at": "2026-10-03T10:00:00Z",
+        "status": "certified",
+        "reversed": false,
+        "valid": true,
+        "issues": [],
+        "lines": [
+          {
+            "id": "CE2",
+            "claim_line_id": "CL2",
+            "scope_key": "walls",
+            "quantity_mode": "cumulative",
+            "source_certified_net": {
+              "numerator": "6000",
+              "denominator": "1",
+              "decimal": "6000"
+            },
+            "expected_net": {
+              "numerator": "6000",
+              "denominator": "1",
+              "decimal": "6000"
+            },
+            "prior_certified_net": {
+              "numerator": "4000",
+              "denominator": "1",
+              "decimal": "4000"
+            },
+            "period_movement": {
+              "numerator": "2000",
+              "denominator": "1",
+              "decimal": "2000"
+            },
+            "valid": true,
+            "issues": []
+          },
+          {
+            "id": "CE3",
+            "claim_line_id": "CL3",
+            "scope_key": "approved-extra",
+            "quantity_mode": "period",
+            "source_certified_net": {
+              "numerator": "250",
+              "denominator": "1",
+              "decimal": "250"
+            },
+            "expected_net": {
+              "numerator": "250",
+              "denominator": "1",
+              "decimal": "250"
+            },
+            "prior_certified_net": {
+              "numerator": "0",
+              "denominator": "1",
+              "decimal": "0"
+            },
+            "period_movement": {
+              "numerator": "250",
+              "denominator": "1",
+              "decimal": "250"
+            },
+            "valid": true,
+            "issues": []
+          }
+        ],
+        "period_movement": {
+          "numerator": "2250",
+          "denominator": "1",
+          "decimal": "2250"
+        }
+      }
+    ],
+    "retention": [
+      {
+        "id": "H1",
+        "project_id": "P1",
+        "claim_id": "C1",
+        "certification_id": "CERT1",
+        "invoice_id": "I1",
+        "event_type": "held",
+        "currency": "EUR",
+        "amount": {
+          "numerator": "200",
+          "denominator": "1",
+          "decimal": "200"
+        },
+        "contract_version_id": "CV1",
+        "effective_at": "2026-09-03T11:00:00Z",
+        "valid": true,
+        "issues": []
+      },
+      {
+        "id": "H2",
+        "project_id": "P1",
+        "claim_id": "C2",
+        "certification_id": "CERT2",
+        "invoice_id": "I2",
+        "event_type": "held",
+        "currency": "EUR",
+        "amount": {
+          "numerator": "225",
+          "denominator": "2",
+          "decimal": "112.5"
+        },
+        "contract_version_id": "CV1",
+        "effective_at": "2026-10-03T11:00:00Z",
+        "valid": true,
+        "issues": []
+      },
+      {
+        "id": "REL1",
+        "project_id": "P1",
+        "claim_id": "C2",
+        "certification_id": "CERT2",
+        "invoice_id": "I2",
+        "event_type": "released",
+        "currency": "EUR",
+        "amount": {
+          "numerator": "50",
+          "denominator": "1",
+          "decimal": "50"
+        },
+        "contract_version_id": "CV1",
+        "effective_at": "2026-10-03T11:00:00Z",
+        "valid": true,
+        "issues": []
+      }
+    ],
+    "invoices": [
+      {
+        "id": "D1",
+        "project_id": "P1",
+        "party_id": "CLIENT",
+        "number": "D1",
+        "invoice_type": "invoice",
+        "currency": "EUR",
+        "issued_at": "2026-08-02T12:00:00Z",
+        "status": "issued",
+        "valid": true,
+        "reconciled": true,
+        "issues": [],
+        "net": {
+          "numerator": "500",
+          "denominator": "1",
+          "decimal": "500"
+        },
+        "tax": {
+          "numerator": "105",
+          "denominator": "1",
+          "decimal": "105"
+        },
+        "gross": {
+          "numerator": "605",
+          "denominator": "1",
+          "decimal": "605"
+        },
+        "accounting_effect": {
+          "numerator": "605",
+          "denominator": "1",
+          "decimal": "605"
+        },
+        "lines": [
+          {
+            "id": "D1L",
+            "scope_key": "advance",
+            "milestone_id": "DEP1",
+            "commitment_line_id": "",
+            "line_type": "deposit",
+            "net": {
+              "numerator": "500",
+              "denominator": "1",
+              "decimal": "500"
+            },
+            "tax": {
+              "numerator": "105",
+              "denominator": "1",
+              "decimal": "105"
+            },
+            "gross": {
+              "numerator": "605",
+              "denominator": "1",
+              "decimal": "605"
+            },
+            "expected_net": {
+              "numerator": "500",
+              "denominator": "1",
+              "decimal": "500"
+            },
+            "quantity": {
+              "numerator": "1",
+              "denominator": "1",
+              "decimal": "1"
+            },
+            "valid": true,
+            "issues": []
+          }
+        ],
+        "cash": {
+          "complete": true,
+          "totals": {
+            "EUR": {
+              "numerator": "605",
+              "denominator": "1",
+              "decimal": "605"
+            }
+          },
+          "unique_cash_events": 1,
+          "records": [
+            {
+              "id": "PAY-D1",
+              "family": "accounting_events",
+              "event_type": "receipt",
+              "invoice_id": "D1",
+              "amount": {
+                "numerator": "605",
+                "denominator": "1",
+                "decimal": "605"
+              },
+              "currency": "EUR",
+              "external_transaction_id": "bank-PAY-D1",
+              "observation_ids": [
+                "PAY-D1"
+              ]
+            }
+          ],
+          "issues": [],
+          "conflicts": [],
+          "future_ids": []
+        },
+        "actual_net_receipts": {
+          "numerator": "605",
+          "denominator": "1",
+          "decimal": "605"
+        },
+        "outstanding_gross": {
+          "numerator": "0",
+          "denominator": "1",
+          "decimal": "0"
+        }
+      },
+      {
+        "id": "I1",
+        "project_id": "P1",
+        "party_id": "CLIENT",
+        "number": "I1",
+        "invoice_type": "invoice",
+        "currency": "EUR",
+        "issued_at": "2026-09-04T12:00:00Z",
+        "status": "issued",
+        "valid": true,
+        "reconciled": true,
+        "issues": [],
+        "net": {
+          "numerator": "3300",
+          "denominator": "1",
+          "decimal": "3300"
+        },
+        "tax": {
+          "numerator": "693",
+          "denominator": "1",
+          "decimal": "693"
+        },
+        "gross": {
+          "numerator": "3993",
+          "denominator": "1",
+          "decimal": "3993"
+        },
+        "accounting_effect": {
+          "numerator": "3993",
+          "denominator": "1",
+          "decimal": "3993"
+        },
+        "lines": [
+          {
+            "id": "I1W",
+            "scope_key": "walls",
+            "milestone_id": "",
+            "commitment_line_id": "",
+            "line_type": "work",
+            "net": {
+              "numerator": "4000",
+              "denominator": "1",
+              "decimal": "4000"
+            },
+            "tax": {
+              "numerator": "840",
+              "denominator": "1",
+              "decimal": "840"
+            },
+            "gross": {
+              "numerator": "4840",
+              "denominator": "1",
+              "decimal": "4840"
+            },
+            "expected_net": {
+              "numerator": "4000",
+              "denominator": "1",
+              "decimal": "4000"
+            },
+            "quantity": {
+              "numerator": "40",
+              "denominator": "1",
+              "decimal": "40"
+            },
+            "valid": true,
+            "issues": []
+          },
+          {
+            "id": "I1R",
+            "scope_key": "walls-retention",
+            "milestone_id": "",
+            "commitment_line_id": "",
+            "line_type": "retention_deduction",
+            "net": {
+              "numerator": "-200",
+              "denominator": "1",
+              "decimal": "−200"
+            },
+            "tax": {
+              "numerator": "-42",
+              "denominator": "1",
+              "decimal": "−42"
+            },
+            "gross": {
+              "numerator": "-242",
+              "denominator": "1",
+              "decimal": "−242"
+            },
+            "expected_net": {
+              "numerator": "-200",
+              "denominator": "1",
+              "decimal": "−200"
+            },
+            "quantity": {
+              "numerator": "1",
+              "denominator": "1",
+              "decimal": "1"
+            },
+            "valid": true,
+            "issues": []
+          },
+          {
+            "id": "I1D",
+            "scope_key": "advance",
+            "milestone_id": "DEP1",
+            "commitment_line_id": "",
+            "line_type": "deposit_application",
+            "net": {
+              "numerator": "-500",
+              "denominator": "1",
+              "decimal": "−500"
+            },
+            "tax": {
+              "numerator": "-105",
+              "denominator": "1",
+              "decimal": "−105"
+            },
+            "gross": {
+              "numerator": "-605",
+              "denominator": "1",
+              "decimal": "−605"
+            },
+            "expected_net": {
+              "numerator": "-500",
+              "denominator": "1",
+              "decimal": "−500"
+            },
+            "quantity": {
+              "numerator": "1",
+              "denominator": "1",
+              "decimal": "1"
+            },
+            "valid": true,
+            "issues": []
+          }
+        ],
+        "cash": {
+          "complete": true,
+          "totals": {
+            "EUR": {
+              "numerator": "3993",
+              "denominator": "1",
+              "decimal": "3993"
+            }
+          },
+          "unique_cash_events": 1,
+          "records": [
+            {
+              "id": "PAY-I1",
+              "family": "accounting_events",
+              "event_type": "receipt",
+              "invoice_id": "I1",
+              "amount": {
+                "numerator": "3993",
+                "denominator": "1",
+                "decimal": "3993"
+              },
+              "currency": "EUR",
+              "external_transaction_id": "bank-PAY-I1",
+              "observation_ids": [
+                "PAY-I1"
+              ]
+            },
+            {
+              "id": "APPLY-D1",
+              "family": "accounting_events",
+              "event_type": "deposit_application",
+              "invoice_id": "I1",
+              "amount": {
+                "numerator": "605",
+                "denominator": "1",
+                "decimal": "605"
+              },
+              "currency": "EUR",
+              "external_transaction_id": "deposit-apply-1",
+              "observation_ids": [
+                "APPLY-D1"
+              ]
+            }
+          ],
+          "issues": [],
+          "conflicts": [],
+          "future_ids": []
+        },
+        "actual_net_receipts": {
+          "numerator": "3993",
+          "denominator": "1",
+          "decimal": "3993"
+        },
+        "outstanding_gross": {
+          "numerator": "0",
+          "denominator": "1",
+          "decimal": "0"
+        }
+      },
+      {
+        "id": "I2",
+        "project_id": "P1",
+        "party_id": "CLIENT",
+        "number": "I2",
+        "invoice_type": "invoice",
+        "currency": "EUR",
+        "issued_at": "2026-10-04T12:00:00Z",
+        "status": "issued",
+        "valid": true,
+        "reconciled": true,
+        "issues": [],
+        "net": {
+          "numerator": "4375",
+          "denominator": "2",
+          "decimal": "2187.5"
+        },
+        "tax": {
+          "numerator": "45937",
+          "denominator": "100",
+          "decimal": "459.37"
+        },
+        "gross": {
+          "numerator": "264687",
+          "denominator": "100",
+          "decimal": "2646.87"
+        },
+        "accounting_effect": {
+          "numerator": "264687",
+          "denominator": "100",
+          "decimal": "2646.87"
+        },
+        "lines": [
+          {
+            "id": "I2W",
+            "scope_key": "walls",
+            "milestone_id": "",
+            "commitment_line_id": "",
+            "line_type": "work",
+            "net": {
+              "numerator": "2000",
+              "denominator": "1",
+              "decimal": "2000"
+            },
+            "tax": {
+              "numerator": "420",
+              "denominator": "1",
+              "decimal": "420"
+            },
+            "gross": {
+              "numerator": "2420",
+              "denominator": "1",
+              "decimal": "2420"
+            },
+            "expected_net": {
+              "numerator": "2000",
+              "denominator": "1",
+              "decimal": "2000"
+            },
+            "quantity": {
+              "numerator": "20",
+              "denominator": "1",
+              "decimal": "20"
+            },
+            "valid": true,
+            "issues": []
+          },
+          {
+            "id": "I2V",
+            "scope_key": "approved-extra",
+            "milestone_id": "",
+            "commitment_line_id": "",
+            "line_type": "work",
+            "net": {
+              "numerator": "250",
+              "denominator": "1",
+              "decimal": "250"
+            },
+            "tax": {
+              "numerator": "105",
+              "denominator": "2",
+              "decimal": "52.5"
+            },
+            "gross": {
+              "numerator": "605",
+              "denominator": "2",
+              "decimal": "302.5"
+            },
+            "expected_net": {
+              "numerator": "250",
+              "denominator": "1",
+              "decimal": "250"
+            },
+            "quantity": {
+              "numerator": "5",
+              "denominator": "1",
+              "decimal": "5"
+            },
+            "valid": true,
+            "issues": []
+          },
+          {
+            "id": "I2R",
+            "scope_key": "walls-retention",
+            "milestone_id": "",
+            "commitment_line_id": "",
+            "line_type": "retention_deduction",
+            "net": {
+              "numerator": "-225",
+              "denominator": "2",
+              "decimal": "−112.5"
+            },
+            "tax": {
+              "numerator": "-2363",
+              "denominator": "100",
+              "decimal": "−23.63"
+            },
+            "gross": {
+              "numerator": "-13613",
+              "denominator": "100",
+              "decimal": "−136.13"
+            },
+            "expected_net": {
+              "numerator": "-225",
+              "denominator": "2",
+              "decimal": "−112.5"
+            },
+            "quantity": {
+              "numerator": "1",
+              "denominator": "1",
+              "decimal": "1"
+            },
+            "valid": true,
+            "issues": []
+          },
+          {
+            "id": "I2REL",
+            "scope_key": "retention-release",
+            "milestone_id": "",
+            "commitment_line_id": "",
+            "line_type": "retention_release",
+            "net": {
+              "numerator": "50",
+              "denominator": "1",
+              "decimal": "50"
+            },
+            "tax": {
+              "numerator": "21",
+              "denominator": "2",
+              "decimal": "10.5"
+            },
+            "gross": {
+              "numerator": "121",
+              "denominator": "2",
+              "decimal": "60.5"
+            },
+            "expected_net": {
+              "numerator": "50",
+              "denominator": "1",
+              "decimal": "50"
+            },
+            "quantity": {
+              "numerator": "1",
+              "denominator": "1",
+              "decimal": "1"
+            },
+            "valid": true,
+            "issues": []
+          }
+        ],
+        "cash": {
+          "complete": true,
+          "totals": {},
+          "unique_cash_events": 0,
+          "records": [],
+          "issues": [],
+          "conflicts": [],
+          "future_ids": []
+        },
+        "actual_net_receipts": {
+          "numerator": "0",
+          "denominator": "1",
+          "decimal": "0"
+        },
+        "outstanding_gross": {
+          "numerator": "264687",
+          "denominator": "100",
+          "decimal": "2646.87"
+        }
+      },
+      {
+        "id": "P2-I1",
+        "project_id": "P2",
+        "party_id": "CLIENT",
+        "number": "P2-I1",
+        "invoice_type": "invoice",
+        "currency": "EUR",
+        "issued_at": "2026-08-02T12:00:00Z",
+        "status": "issued",
+        "valid": true,
+        "reconciled": true,
+        "issues": [],
+        "net": {
+          "numerator": "500",
+          "denominator": "1",
+          "decimal": "500"
+        },
+        "tax": {
+          "numerator": "105",
+          "denominator": "1",
+          "decimal": "105"
+        },
+        "gross": {
+          "numerator": "605",
+          "denominator": "1",
+          "decimal": "605"
+        },
+        "accounting_effect": {
+          "numerator": "605",
+          "denominator": "1",
+          "decimal": "605"
+        },
+        "lines": [
+          {
+            "id": "P2L1",
+            "scope_key": "whole-renovation",
+            "milestone_id": "MP1",
+            "commitment_line_id": "",
+            "line_type": "milestone",
+            "net": {
+              "numerator": "500",
+              "denominator": "1",
+              "decimal": "500"
+            },
+            "tax": {
+              "numerator": "105",
+              "denominator": "1",
+              "decimal": "105"
+            },
+            "gross": {
+              "numerator": "605",
+              "denominator": "1",
+              "decimal": "605"
+            },
+            "expected_net": {
+              "numerator": "500",
+              "denominator": "1",
+              "decimal": "500"
+            },
+            "quantity": {
+              "numerator": "1",
+              "denominator": "1",
+              "decimal": "1"
+            },
+            "valid": true,
+            "issues": []
+          }
+        ],
+        "cash": {
+          "complete": true,
+          "totals": {
+            "EUR": {
+              "numerator": "605",
+              "denominator": "1",
+              "decimal": "605"
+            }
+          },
+          "unique_cash_events": 1,
+          "records": [
+            {
+              "id": "PAY-P2",
+              "family": "accounting_events",
+              "event_type": "receipt",
+              "invoice_id": "P2-I1",
+              "amount": {
+                "numerator": "605",
+                "denominator": "1",
+                "decimal": "605"
+              },
+              "currency": "EUR",
+              "external_transaction_id": "bank-PAY-P2",
+              "observation_ids": [
+                "PAY-P2"
+              ]
+            }
+          ],
+          "issues": [],
+          "conflicts": [],
+          "future_ids": []
+        },
+        "actual_net_receipts": {
+          "numerator": "605",
+          "denominator": "1",
+          "decimal": "605"
+        },
+        "outstanding_gross": {
+          "numerator": "0",
+          "denominator": "1",
+          "decimal": "0"
+        }
+      }
+    ],
+    "accounting": {
+      "client": {
+        "complete": true,
+        "totals": {
+          "EUR": {
+            "numerator": "5203",
+            "denominator": "1",
+            "decimal": "5203"
+          }
+        },
+        "unique_cash_events": 3,
+        "records": [
+          {
+            "id": "PAY-D1",
+            "family": "accounting_events",
+            "event_type": "receipt",
+            "invoice_id": "D1",
+            "amount": {
+              "numerator": "605",
+              "denominator": "1",
+              "decimal": "605"
+            },
+            "currency": "EUR",
+            "external_transaction_id": "bank-PAY-D1",
+            "observation_ids": [
+              "PAY-D1"
+            ]
+          },
+          {
+            "id": "PAY-I1",
+            "family": "accounting_events",
+            "event_type": "receipt",
+            "invoice_id": "I1",
+            "amount": {
+              "numerator": "3993",
+              "denominator": "1",
+              "decimal": "3993"
+            },
+            "currency": "EUR",
+            "external_transaction_id": "bank-PAY-I1",
+            "observation_ids": [
+              "PAY-I1"
+            ]
+          },
+          {
+            "id": "PAY-P2",
+            "family": "accounting_events",
+            "event_type": "receipt",
+            "invoice_id": "P2-I1",
+            "amount": {
+              "numerator": "605",
+              "denominator": "1",
+              "decimal": "605"
+            },
+            "currency": "EUR",
+            "external_transaction_id": "bank-PAY-P2",
+            "observation_ids": [
+              "PAY-P2"
+            ]
+          },
+          {
+            "id": "APPLY-D1",
+            "family": "accounting_events",
+            "event_type": "deposit_application",
+            "invoice_id": "I1",
+            "amount": {
+              "numerator": "605",
+              "denominator": "1",
+              "decimal": "605"
+            },
+            "currency": "EUR",
+            "external_transaction_id": "deposit-apply-1",
+            "observation_ids": [
+              "APPLY-D1"
+            ]
+          }
+        ],
+        "issues": [],
+        "conflicts": [],
+        "future_ids": []
+      },
+      "supplier": {
+        "complete": true,
+        "totals": {
+          "EUR": {
+            "numerator": "500",
+            "denominator": "1",
+            "decimal": "500"
+          }
+        },
+        "unique_cash_events": 1,
+        "records": [
+          {
+            "id": "CP1",
+            "family": "cost_payments",
+            "event_type": "payment",
+            "invoice_id": "CI1",
+            "amount": {
+              "numerator": "500",
+              "denominator": "1",
+              "decimal": "500"
+            },
+            "currency": "EUR",
+            "external_transaction_id": "supplier-bank-1",
+            "observation_ids": [
+              "CP1"
+            ]
+          }
+        ],
+        "issues": [],
+        "conflicts": [],
+        "future_ids": []
+      }
+    },
+    "reports": [
+      {
+        "id": "REPORT1",
+        "project_id": "P1",
+        "decision_at": "2026-09-05T12:00:00Z",
+        "knowledge_at": "2026-09-05T12:00:00Z",
+        "prepared_at": "2026-09-05T12:00:00Z",
+        "complete": true,
+        "issues": [],
+        "inputs": [
+          {
+            "id": "RI1",
+            "family": "invoice_lines",
+            "row_id": "I1W",
+            "valid": true,
+            "issues": []
+          }
+        ]
+      }
+    ],
+    "effort_summary": {
+      "pairs": [
+        {
+          "project_id": "P1",
+          "cohort_key": "same-project-work",
+          "comparable": true,
+          "baseline_person_minutes": {
+            "numerator": "80",
+            "denominator": "1",
+            "decimal": "80"
+          },
+          "current_person_minutes": {
+            "numerator": "64",
+            "denominator": "1",
+            "decimal": "64"
+          },
+          "change_person_minutes": {
+            "numerator": "-16",
+            "denominator": "1",
+            "decimal": "−16"
+          },
+          "issues": [],
+          "record_ids": [
+            "existing_process-collection",
+            "existing_process-measurement",
+            "existing_process-transcription",
+            "existing_process-approval",
+            "existing_process-correction",
+            "existing_process-duplicate_entry",
+            "existing_process-finance_reconciliation",
+            "existing_process-feedback",
+            "study_process-collection",
+            "study_process-measurement",
+            "study_process-transcription",
+            "study_process-approval",
+            "study_process-correction",
+            "study_process-duplicate_entry",
+            "study_process-finance_reconciliation",
+            "study_process-feedback"
+          ]
+        }
+      ],
+      "records": [
+        {
+          "id": "existing_process-collection",
+          "project_id": "P1",
+          "work_key": "collection-one-claim",
+          "cohort_key": "same-project-work",
+          "method": "existing_process",
+          "phase": "collection",
+          "person_id": "OPS",
+          "minutes": {
+            "numerator": "10",
+            "denominator": "1",
+            "decimal": "10"
+          },
+          "recurring": true,
+          "period_from": "2026-09-01T00:00:00Z",
+          "period_until": "2026-09-11T00:00:00Z",
+          "from": 1788681600000,
+          "until": 1788683400000,
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "existing_process-measurement",
+          "project_id": "P1",
+          "work_key": "measurement-one-claim",
+          "cohort_key": "same-project-work",
+          "method": "existing_process",
+          "phase": "measurement",
+          "person_id": "OPS",
+          "minutes": {
+            "numerator": "10",
+            "denominator": "1",
+            "decimal": "10"
+          },
+          "recurring": true,
+          "period_from": "2026-09-01T00:00:00Z",
+          "period_until": "2026-09-11T00:00:00Z",
+          "from": 1788685200000,
+          "until": 1788687000000,
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "existing_process-transcription",
+          "project_id": "P1",
+          "work_key": "transcription-one-claim",
+          "cohort_key": "same-project-work",
+          "method": "existing_process",
+          "phase": "transcription",
+          "person_id": "OPS",
+          "minutes": {
+            "numerator": "10",
+            "denominator": "1",
+            "decimal": "10"
+          },
+          "recurring": true,
+          "period_from": "2026-09-01T00:00:00Z",
+          "period_until": "2026-09-11T00:00:00Z",
+          "from": 1788688800000,
+          "until": 1788690600000,
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "existing_process-approval",
+          "project_id": "P1",
+          "work_key": "approval-one-claim",
+          "cohort_key": "same-project-work",
+          "method": "existing_process",
+          "phase": "approval",
+          "person_id": "OPS",
+          "minutes": {
+            "numerator": "10",
+            "denominator": "1",
+            "decimal": "10"
+          },
+          "recurring": true,
+          "period_from": "2026-09-01T00:00:00Z",
+          "period_until": "2026-09-11T00:00:00Z",
+          "from": 1788692400000,
+          "until": 1788694200000,
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "existing_process-correction",
+          "project_id": "P1",
+          "work_key": "correction-one-claim",
+          "cohort_key": "same-project-work",
+          "method": "existing_process",
+          "phase": "correction",
+          "person_id": "OPS",
+          "minutes": {
+            "numerator": "10",
+            "denominator": "1",
+            "decimal": "10"
+          },
+          "recurring": true,
+          "period_from": "2026-09-01T00:00:00Z",
+          "period_until": "2026-09-11T00:00:00Z",
+          "from": 1788696000000,
+          "until": 1788697800000,
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "existing_process-duplicate_entry",
+          "project_id": "P1",
+          "work_key": "duplicate_entry-one-claim",
+          "cohort_key": "same-project-work",
+          "method": "existing_process",
+          "phase": "duplicate_entry",
+          "person_id": "OPS",
+          "minutes": {
+            "numerator": "10",
+            "denominator": "1",
+            "decimal": "10"
+          },
+          "recurring": true,
+          "period_from": "2026-09-01T00:00:00Z",
+          "period_until": "2026-09-11T00:00:00Z",
+          "from": 1788699600000,
+          "until": 1788701400000,
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "existing_process-finance_reconciliation",
+          "project_id": "P1",
+          "work_key": "finance_reconciliation-one-claim",
+          "cohort_key": "same-project-work",
+          "method": "existing_process",
+          "phase": "finance_reconciliation",
+          "person_id": "OPS",
+          "minutes": {
+            "numerator": "10",
+            "denominator": "1",
+            "decimal": "10"
+          },
+          "recurring": true,
+          "period_from": "2026-09-01T00:00:00Z",
+          "period_until": "2026-09-11T00:00:00Z",
+          "from": 1788703200000,
+          "until": 1788705000000,
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "existing_process-feedback",
+          "project_id": "P1",
+          "work_key": "feedback-one-claim",
+          "cohort_key": "same-project-work",
+          "method": "existing_process",
+          "phase": "feedback",
+          "person_id": "OPS",
+          "minutes": {
+            "numerator": "10",
+            "denominator": "1",
+            "decimal": "10"
+          },
+          "recurring": true,
+          "period_from": "2026-09-01T00:00:00Z",
+          "period_until": "2026-09-11T00:00:00Z",
+          "from": 1788706800000,
+          "until": 1788708600000,
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "study_process-collection",
+          "project_id": "P1",
+          "work_key": "collection-one-claim",
+          "cohort_key": "same-project-work",
+          "method": "study_process",
+          "phase": "collection",
+          "person_id": "OPS",
+          "minutes": {
+            "numerator": "7",
+            "denominator": "1",
+            "decimal": "7"
+          },
+          "recurring": true,
+          "period_from": "2026-10-01T00:00:00Z",
+          "period_until": "2026-10-11T00:00:00Z",
+          "from": 1791273600000,
+          "until": 1791275400000,
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "study_process-measurement",
+          "project_id": "P1",
+          "work_key": "measurement-one-claim",
+          "cohort_key": "same-project-work",
+          "method": "study_process",
+          "phase": "measurement",
+          "person_id": "OPS",
+          "minutes": {
+            "numerator": "7",
+            "denominator": "1",
+            "decimal": "7"
+          },
+          "recurring": true,
+          "period_from": "2026-10-01T00:00:00Z",
+          "period_until": "2026-10-11T00:00:00Z",
+          "from": 1791277200000,
+          "until": 1791279000000,
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "study_process-transcription",
+          "project_id": "P1",
+          "work_key": "transcription-one-claim",
+          "cohort_key": "same-project-work",
+          "method": "study_process",
+          "phase": "transcription",
+          "person_id": "OPS",
+          "minutes": {
+            "numerator": "7",
+            "denominator": "1",
+            "decimal": "7"
+          },
+          "recurring": true,
+          "period_from": "2026-10-01T00:00:00Z",
+          "period_until": "2026-10-11T00:00:00Z",
+          "from": 1791280800000,
+          "until": 1791282600000,
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "study_process-approval",
+          "project_id": "P1",
+          "work_key": "approval-one-claim",
+          "cohort_key": "same-project-work",
+          "method": "study_process",
+          "phase": "approval",
+          "person_id": "OPS",
+          "minutes": {
+            "numerator": "15",
+            "denominator": "1",
+            "decimal": "15"
+          },
+          "recurring": true,
+          "period_from": "2026-10-01T00:00:00Z",
+          "period_until": "2026-10-11T00:00:00Z",
+          "from": 1791284400000,
+          "until": 1791286200000,
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "study_process-correction",
+          "project_id": "P1",
+          "work_key": "correction-one-claim",
+          "cohort_key": "same-project-work",
+          "method": "study_process",
+          "phase": "correction",
+          "person_id": "OPS",
+          "minutes": {
+            "numerator": "7",
+            "denominator": "1",
+            "decimal": "7"
+          },
+          "recurring": true,
+          "period_from": "2026-10-01T00:00:00Z",
+          "period_until": "2026-10-11T00:00:00Z",
+          "from": 1791288000000,
+          "until": 1791289800000,
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "study_process-duplicate_entry",
+          "project_id": "P1",
+          "work_key": "duplicate_entry-one-claim",
+          "cohort_key": "same-project-work",
+          "method": "study_process",
+          "phase": "duplicate_entry",
+          "person_id": "OPS",
+          "minutes": {
+            "numerator": "7",
+            "denominator": "1",
+            "decimal": "7"
+          },
+          "recurring": true,
+          "period_from": "2026-10-01T00:00:00Z",
+          "period_until": "2026-10-11T00:00:00Z",
+          "from": 1791291600000,
+          "until": 1791293400000,
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "study_process-finance_reconciliation",
+          "project_id": "P1",
+          "work_key": "finance_reconciliation-one-claim",
+          "cohort_key": "same-project-work",
+          "method": "study_process",
+          "phase": "finance_reconciliation",
+          "person_id": "OPS",
+          "minutes": {
+            "numerator": "7",
+            "denominator": "1",
+            "decimal": "7"
+          },
+          "recurring": true,
+          "period_from": "2026-10-01T00:00:00Z",
+          "period_until": "2026-10-11T00:00:00Z",
+          "from": 1791295200000,
+          "until": 1791297000000,
+          "valid": true,
+          "issues": []
+        },
+        {
+          "id": "study_process-feedback",
+          "project_id": "P1",
+          "work_key": "feedback-one-claim",
+          "cohort_key": "same-project-work",
+          "method": "study_process",
+          "phase": "feedback",
+          "person_id": "OPS",
+          "minutes": {
+            "numerator": "7",
+            "denominator": "1",
+            "decimal": "7"
+          },
+          "recurring": true,
+          "period_from": "2026-10-01T00:00:00Z",
+          "period_until": "2026-10-11T00:00:00Z",
+          "from": 1791298800000,
+          "until": 1791300600000,
+          "valid": true,
+          "issues": []
+        }
+      ],
+      "future_ids": [],
+      "paired_cohorts": 1,
+      "baseline_person_minutes": {
+        "numerator": "80",
+        "denominator": "1",
+        "decimal": "80"
+      },
+      "current_person_minutes": {
+        "numerator": "64",
+        "denominator": "1",
+        "decimal": "64"
+      },
+      "change_person_minutes": {
+        "numerator": "-16",
+        "denominator": "1",
+        "decimal": "−16"
+      },
+      "all_observed_current_person_minutes": {
+        "numerator": "64",
+        "denominator": "1",
+        "decimal": "64"
+      },
+      "setup_current_person_minutes": {
+        "numerator": "0",
+        "denominator": "1",
+        "decimal": "0"
+      },
+      "issues": [],
+      "meaning": "Signed change is current minus baseline active person-minutes for matched project/cohort periods with complete recurring phase coverage. Unmatched current work remains in the complete current total; setup is separate. No time-to-cash extrapolation."
+    },
+    "issues": [
+      {
+        "code": "VARIATION_PRICE_UNAGREED",
+        "kind": "variations",
+        "id": "V1",
+        "detail": "Review the exact linked source and chronological context.",
+        "source": null
+      },
+      {
+        "code": "MILESTONE_NOT_OBSERVED_ACHIEVED",
+        "kind": "milestones",
+        "id": "MP3",
+        "detail": "Review the exact linked source and chronological context.",
+        "source": null
+      },
+      {
+        "code": "APPROVAL_IDENTITY_OR_SCOPE",
+        "kind": "milestones",
+        "id": "MP3",
+        "detail": "Review the exact linked source and chronological context.",
+        "source": null
+      },
+      {
+        "code": "MILESTONE_NOT_ELIGIBLE",
+        "kind": "milestones",
+        "id": "MP3",
+        "detail": "Review the exact linked source and chronological context.",
+        "source": null
+      }
+    ],
+    "limits": "Exact supplied-record study; actual signed contracts and source decisions control. No statutory VAT or retention default, no automatic approval/certificate/invoice/payment, and no claim that a pre/post time change establishes causality or cash saving."
+  },
+  "counts": {
+    "organisations": {
+      "source": 3,
+      "returned": 3
+    },
+    "people": {
+      "source": 3,
+      "returned": 3
+    },
+    "authorities": {
+      "source": 2,
+      "returned": 2
+    },
+    "projects": {
+      "source": 2,
+      "returned": 2
+    },
+    "contract_versions": {
+      "source": 2,
+      "returned": 2
+    },
+    "contract_lines": {
+      "source": 2,
+      "returned": 2
+    },
+    "contract_events": {
+      "source": 0,
+      "returned": 0
+    },
+    "variations": {
+      "source": 2,
+      "returned": 2
+    },
+    "variation_lines": {
+      "source": 2,
+      "returned": 2
+    },
+    "approvals": {
+      "source": 6,
+      "returned": 6
+    },
+    "measurements": {
+      "source": 3,
+      "returned": 3
+    },
+    "progress_claims": {
+      "source": 2,
+      "returned": 2
+    },
+    "claim_lines": {
+      "source": 3,
+      "returned": 3
+    },
+    "certifications": {
+      "source": 2,
+      "returned": 2
+    },
+    "certification_lines": {
+      "source": 3,
+      "returned": 3
+    },
+    "retention_events": {
+      "source": 3,
+      "returned": 3
+    },
+    "invoices": {
+      "source": 4,
+      "returned": 4
+    },
+    "invoice_lines": {
+      "source": 9,
+      "returned": 9
+    },
+    "accounting_events": {
+      "source": 4,
+      "returned": 4
+    },
+    "commitments": {
+      "source": 1,
+      "returned": 1
+    },
+    "commitment_lines": {
+      "source": 1,
+      "returned": 1
+    },
+    "deliveries": {
+      "source": 1,
+      "returned": 1
+    },
+    "cost_invoices": {
+      "source": 1,
+      "returned": 1
+    },
+    "cost_invoice_lines": {
+      "source": 1,
+      "returned": 1
+    },
+    "cost_payments": {
+      "source": 1,
+      "returned": 1
+    },
+    "reports": {
+      "source": 1,
+      "returned": 1
+    },
+    "report_inputs": {
+      "source": 1,
+      "returned": 1
+    },
+    "effort": {
+      "source": 16,
+      "returned": 16
+    },
+    "source_documents": {
+      "source": 0,
+      "returned": 0
+    },
+    "payment_milestones": {
+      "source": 4,
+      "returned": 4
+    }
+  },
+  "document_comparisons": [
+    {
+      "kind": "organisations",
+      "source_id": "BUILDER",
+      "returned_id": "BUILDER",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "organisations",
+      "source_id": "CLIENT",
+      "returned_id": "CLIENT",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "organisations",
+      "source_id": "SUPPLIER",
+      "returned_id": "SUPPLIER",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "people",
+      "source_id": "OWNER",
+      "returned_id": "OWNER",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "people",
+      "source_id": "OPS",
+      "returned_id": "OPS",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "people",
+      "source_id": "FIN",
+      "returned_id": "FIN",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "authorities",
+      "source_id": "AUTH-OWNER",
+      "returned_id": "AUTH-OWNER",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "authorities",
+      "source_id": "AUTH-OPS",
+      "returned_id": "AUTH-OPS",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "projects",
+      "source_id": "P1",
+      "returned_id": "P1",
+      "source_sha256": [
+        "f09753deebe1ecaf163525111bc78a9169204c13989596c7fcb0aaf50ae05a47"
+      ],
+      "returned_sha256": [
+        "f09753deebe1ecaf163525111bc78a9169204c13989596c7fcb0aaf50ae05a47"
+      ],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "exact_bytes_match"
+    },
+    {
+      "kind": "projects",
+      "source_id": "P2",
+      "returned_id": "P2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "contract_versions",
+      "source_id": "CV1",
+      "returned_id": "CV1",
+      "source_sha256": [
+        "79b8a651edf1b3ad8ef2b1a16b8924c4a97380b4e67adfa0f35ce11de8212f7f"
+      ],
+      "returned_sha256": [
+        "79b8a651edf1b3ad8ef2b1a16b8924c4a97380b4e67adfa0f35ce11de8212f7f"
+      ],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "exact_bytes_match"
+    },
+    {
+      "kind": "contract_versions",
+      "source_id": "CV2",
+      "returned_id": "CV2",
+      "source_sha256": [
+        "4a3d046a56d7225ba7cb4fdb20ed2918c87537486c10f2c13c0300da69aa8c3f"
+      ],
+      "returned_sha256": [
+        "4a3d046a56d7225ba7cb4fdb20ed2918c87537486c10f2c13c0300da69aa8c3f"
+      ],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "exact_bytes_match"
+    },
+    {
+      "kind": "contract_lines",
+      "source_id": "SCOPE1",
+      "returned_id": "SCOPE1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "contract_lines",
+      "source_id": "SCOPE2",
+      "returned_id": "SCOPE2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "variations",
+      "source_id": "V1",
+      "returned_id": "V1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "variations",
+      "source_id": "V2",
+      "returned_id": "V2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "variation_lines",
+      "source_id": "VL1",
+      "returned_id": "VL1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "variation_lines",
+      "source_id": "VL2",
+      "returned_id": "VL2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "approvals",
+      "source_id": "AP-V1-Q",
+      "returned_id": "AP-V1-Q",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "approvals",
+      "source_id": "AP-V2-Q",
+      "returned_id": "AP-V2-Q",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "approvals",
+      "source_id": "AP-V2-P",
+      "returned_id": "AP-V2-P",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "approvals",
+      "source_id": "AP-DEP1",
+      "returned_id": "AP-DEP1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "approvals",
+      "source_id": "AP-MP1",
+      "returned_id": "AP-MP1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "approvals",
+      "source_id": "AP-MP2",
+      "returned_id": "AP-MP2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "measurements",
+      "source_id": "M1",
+      "returned_id": "M1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "measurements",
+      "source_id": "M2",
+      "returned_id": "M2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "measurements",
+      "source_id": "M3",
+      "returned_id": "M3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "progress_claims",
+      "source_id": "C1",
+      "returned_id": "C1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "progress_claims",
+      "source_id": "C2",
+      "returned_id": "C2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "claim_lines",
+      "source_id": "CL1",
+      "returned_id": "CL1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "claim_lines",
+      "source_id": "CL2",
+      "returned_id": "CL2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "claim_lines",
+      "source_id": "CL3",
+      "returned_id": "CL3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "certifications",
+      "source_id": "CERT1",
+      "returned_id": "CERT1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "certifications",
+      "source_id": "CERT2",
+      "returned_id": "CERT2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "certification_lines",
+      "source_id": "CE1",
+      "returned_id": "CE1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "certification_lines",
+      "source_id": "CE2",
+      "returned_id": "CE2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "certification_lines",
+      "source_id": "CE3",
+      "returned_id": "CE3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "retention_events",
+      "source_id": "H1",
+      "returned_id": "H1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "retention_events",
+      "source_id": "H2",
+      "returned_id": "H2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "retention_events",
+      "source_id": "REL1",
+      "returned_id": "REL1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "invoices",
+      "source_id": "D1",
+      "returned_id": "D1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "invoices",
+      "source_id": "I1",
+      "returned_id": "I1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "invoices",
+      "source_id": "I2",
+      "returned_id": "I2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "invoices",
+      "source_id": "P2-I1",
+      "returned_id": "P2-I1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "invoice_lines",
+      "source_id": "D1L",
+      "returned_id": "D1L",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "invoice_lines",
+      "source_id": "I1W",
+      "returned_id": "I1W",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "invoice_lines",
+      "source_id": "I1R",
+      "returned_id": "I1R",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "invoice_lines",
+      "source_id": "I1D",
+      "returned_id": "I1D",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "invoice_lines",
+      "source_id": "I2W",
+      "returned_id": "I2W",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "invoice_lines",
+      "source_id": "I2V",
+      "returned_id": "I2V",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "invoice_lines",
+      "source_id": "I2R",
+      "returned_id": "I2R",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "invoice_lines",
+      "source_id": "I2REL",
+      "returned_id": "I2REL",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "invoice_lines",
+      "source_id": "P2L1",
+      "returned_id": "P2L1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "accounting_events",
+      "source_id": "PAY-D1",
+      "returned_id": "PAY-D1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "accounting_events",
+      "source_id": "PAY-I1",
+      "returned_id": "PAY-I1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "accounting_events",
+      "source_id": "PAY-P2",
+      "returned_id": "PAY-P2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "accounting_events",
+      "source_id": "APPLY-D1",
+      "returned_id": "APPLY-D1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "commitments",
+      "source_id": "PO1",
+      "returned_id": "PO1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "commitment_lines",
+      "source_id": "POL1",
+      "returned_id": "POL1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "deliveries",
+      "source_id": "DEL1",
+      "returned_id": "DEL1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "cost_invoices",
+      "source_id": "CI1",
+      "returned_id": "CI1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "cost_invoice_lines",
+      "source_id": "CIL1",
+      "returned_id": "CIL1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "cost_payments",
+      "source_id": "CP1",
+      "returned_id": "CP1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "reports",
+      "source_id": "REPORT1",
+      "returned_id": "REPORT1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "report_inputs",
+      "source_id": "RI1",
+      "returned_id": "RI1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "existing_process-collection",
+      "returned_id": "existing_process-collection",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "existing_process-measurement",
+      "returned_id": "existing_process-measurement",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "existing_process-transcription",
+      "returned_id": "existing_process-transcription",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "existing_process-approval",
+      "returned_id": "existing_process-approval",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "existing_process-correction",
+      "returned_id": "existing_process-correction",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "existing_process-duplicate_entry",
+      "returned_id": "existing_process-duplicate_entry",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "existing_process-finance_reconciliation",
+      "returned_id": "existing_process-finance_reconciliation",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "existing_process-feedback",
+      "returned_id": "existing_process-feedback",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "study_process-collection",
+      "returned_id": "study_process-collection",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "study_process-measurement",
+      "returned_id": "study_process-measurement",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "study_process-transcription",
+      "returned_id": "study_process-transcription",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "study_process-approval",
+      "returned_id": "study_process-approval",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "study_process-correction",
+      "returned_id": "study_process-correction",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "study_process-duplicate_entry",
+      "returned_id": "study_process-duplicate_entry",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "study_process-finance_reconciliation",
+      "returned_id": "study_process-finance_reconciliation",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "effort",
+      "source_id": "study_process-feedback",
+      "returned_id": "study_process-feedback",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "payment_milestones",
+      "source_id": "DEP1",
+      "returned_id": "DEP1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "payment_milestones",
+      "source_id": "MP1",
+      "returned_id": "MP1",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "payment_milestones",
+      "source_id": "MP2",
+      "returned_id": "MP2",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    },
+    {
+      "kind": "payment_milestones",
+      "source_id": "MP3",
+      "returned_id": "MP3",
+      "source_sha256": [],
+      "returned_sha256": [],
+      "missing_sha256": [],
+      "additional_sha256": [],
+      "state": "unobserved"
+    }
+  ],
+  "findings": [],
+  "comparison_state": "selected_fields_match",
+  "reviews": [],
+  "role_reviews": [
+    {
+      "role": "operations",
+      "latest": null
+    },
+    {
+      "role": "finance",
+      "latest": null
+    }
+  ],
+  "decision": "unreviewed",
+  "limits": "Independent supplied-record construction study. Approved contract scope, measured work, authorised pricing, certification, retained balances, issued invoices and actual cash remain distinct. The desk observes supplied records and does not issue approvals, certificates, invoices or payments."
+}

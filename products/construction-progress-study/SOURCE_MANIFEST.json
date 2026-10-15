@@ -1,0 +1,650 @@
+{
+  "schema": "construction.source-manifest/v1",
+  "files": [
+    {
+      "path": "DELIVERY.md",
+      "bytes": 1613,
+      "sha256": "f3dbc2b0c558299047dfe56ffb63f3d4dd2874b4cd3aade426e249bca9d78a20"
+    },
+    {
+      "path": "DOMAIN_CONTRACT.md",
+      "bytes": 8166,
+      "sha256": "e28b9422fcd548fcc574359f6fc3194c75fe71535849a9992e9b145f0da23708"
+    },
+    {
+      "path": "DOMAIN_HEADERS.json",
+      "bytes": 8723,
+      "sha256": "f65b07a2a8280644b15032f5c8705f5058d67947954e913504b00f4648fc8f79"
+    },
+    {
+      "path": "INSTALLED_OPERATION.md",
+      "bytes": 5436,
+      "sha256": "ddd40b2ca18d1c5d2153a90c6613e77213b200401dd2d2960ec26ddfdf3c7bcd"
+    },
+    {
+      "path": "INSTALLED_RECEIVING.md",
+      "bytes": 1660,
+      "sha256": "065a620472bb111afee45fccb7a3d7825ae06c60add47e8df3a6dd5e539460da"
+    },
+    {
+      "path": "MEASUREMENT.md",
+      "bytes": 2963,
+      "sha256": "ce1867f5fa018ece95a7085de0dabbb9d1027933ec8eae57914ec0a53d4812b9"
+    },
+    {
+      "path": "NATIVE.md",
+      "bytes": 5156,
+      "sha256": "83d5746f2f8ccc9cbf6cbf41cb9ca9f2c7ec1b71939c95bfc0e1783d3d1af4f1"
+    },
+    {
+      "path": "OPERATOR.md",
+      "bytes": 5692,
+      "sha256": "53878cb7f790723a893f0be5cf7280d2f7693a80016e89a9cebabe1cc4b7c80e"
+    },
+    {
+      "path": "PRODUCT_CONTEXT.md",
+      "bytes": 932,
+      "sha256": "98ddc3717b5df0d5c9f36445427771ac397b87d6717f4889a834a5246de4be5e"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3478,
+      "sha256": "841c04f8ff77394a6fca3638ea61a0ccabbd8a3b1a0149b6ead542c33a5b8f39"
+    },
+    {
+      "path": "RECEIVING.md",
+      "bytes": 3222,
+      "sha256": "6f47cfb19c106b9c2e5ad8550a0eb77cf29b2d084e79d2f0f0ba36a46b5c99e4"
+    },
+    {
+      "path": "SOURCE_INTAKE.md",
+      "bytes": 5255,
+      "sha256": "5597c32d0cf4e0385dbf1b4badc44e5dcf9eaac68d56e10d9c8b837921296ff7"
+    },
+    {
+      "path": "application-provider.mjs",
+      "bytes": 4072,
+      "sha256": "9e649cc4ca3a03074be60a3ccc0d968b592449e19f31ab102db2cbb8b1c687ed"
+    },
+    {
+      "path": "binary.cjs",
+      "bytes": 1021,
+      "sha256": "99479b36e6f6e2e08da08d9faf25f02ca0f344df41902b08e8df06a1c6acf291"
+    },
+    {
+      "path": "construction-history.cjs",
+      "bytes": 4278,
+      "sha256": "5a197b8dbba37ce47181d9bcce27c7667af86da9ad89abf34f2d7c186ea14d54"
+    },
+    {
+      "path": "construction-math.cjs",
+      "bytes": 6618,
+      "sha256": "96c600d04dea6d8e9fa3dfb1e9ae26215066ec0eb54b3078b4deae241ced08a3"
+    },
+    {
+      "path": "construction-pricing.cjs",
+      "bytes": 4331,
+      "sha256": "892012064ae5855436aed4d32815a9c9c4e46695fdabfff429153fe3e2b76494"
+    },
+    {
+      "path": "construction.cjs",
+      "bytes": 72508,
+      "sha256": "dabef1c0a849de0a2f5bbdd4076df27c429bfe448ffe3b43bf4f605941005263"
+    },
+    {
+      "path": "core.cjs",
+      "bytes": 34830,
+      "sha256": "03f2cadd472bd19c894abddfc312deecd0abfec0f92138713178db19493e5cd3"
+    },
+    {
+      "path": "csv.cjs",
+      "bytes": 1550,
+      "sha256": "945ce2b5c97de19b8cfc912c24d9ebd76b20a06938fc45e4f3a18bed67842e8e"
+    },
+    {
+      "path": "examples/build-course.cjs",
+      "bytes": 24363,
+      "sha256": "6ff7f18fc6d307a22a928c931514b2204cf931997af71cff2a2a7c0e8264f580"
+    },
+    {
+      "path": "examples/complete-report.md",
+      "bytes": 6070,
+      "sha256": "3ff11ee629ff533bc0d45ea04dd1327e1aabcd9c42a5b51a69b5d92bb2659db1"
+    },
+    {
+      "path": "examples/complete.study.json",
+      "bytes": 126390,
+      "sha256": "ed91d379e0f0041257c7aab295e628ccf12d92ddbe5291ee221570d80716408e"
+    },
+    {
+      "path": "examples/input/accounting_events.csv",
+      "bytes": 870,
+      "sha256": "a8df48d867a9dea3da7bd545e7abd3606426c642a79a884adc5865da0734b023"
+    },
+    {
+      "path": "examples/input/approvals.csv",
+      "bytes": 1149,
+      "sha256": "d3165fcf567ce50d326ee470f903b8f687256a140660e7ef1a65b2665dc50213"
+    },
+    {
+      "path": "examples/input/authorities.csv",
+      "bytes": 715,
+      "sha256": "65c344c192031ebf35e948a16f34caccc0ca45bef61b822385368c30bc752b0c"
+    },
+    {
+      "path": "examples/input/certification_lines.csv",
+      "bytes": 506,
+      "sha256": "9682fefbfeacd3cd8e01d01f82e5d11eaf8c6763eb38d10b50540a312e3fa76b"
+    },
+    {
+      "path": "examples/input/certifications.csv",
+      "bytes": 413,
+      "sha256": "2310f6972cd3a8edddf0a3bdd68835fc241b957693cf250b028570b0c79da26e"
+    },
+    {
+      "path": "examples/input/claim_lines.csv",
+      "bytes": 544,
+      "sha256": "4d6d4a563e13591a9af9206a472115eae65c7816636d69ee658edd016b9ef90d"
+    },
+    {
+      "path": "examples/input/commitment_lines.csv",
+      "bytes": 212,
+      "sha256": "e69c8c0721f40cfc53596812a9edf27afba90e1a31ffea8367c1e720018efa65"
+    },
+    {
+      "path": "examples/input/commitments.csv",
+      "bytes": 314,
+      "sha256": "0a8fcdee5b81cb995dd4cd4ac9cc559c5afaf684e29428d8191bb556cd04766f"
+    },
+    {
+      "path": "examples/input/contract_events.csv",
+      "bytes": 126,
+      "sha256": "256d26c1f38da6fef76003e6e4d75a27e5a5e1cafdbf9cd7d8251ae585be7c93"
+    },
+    {
+      "path": "examples/input/contract_lines.csv",
+      "bytes": 431,
+      "sha256": "4c167de5cf68dce7d3747835de36f6ca557b28ca8691d29ca21355665e93608e"
+    },
+    {
+      "path": "examples/input/contract_versions.csv",
+      "bytes": 1021,
+      "sha256": "04ffb13d52387f0d36032f77203d5615c6a8f4b1d7d6c30dced499fb79bd781d"
+    },
+    {
+      "path": "examples/input/cost_invoice_lines.csv",
+      "bytes": 253,
+      "sha256": "90e8613278d2bbbb47e0fc53ca0ab51c8783391cbcb2a82cc09276549b34b2cb"
+    },
+    {
+      "path": "examples/input/cost_invoices.csv",
+      "bytes": 340,
+      "sha256": "fd5b62397b486942ca0fd8dace84a87713f0ea1d02cbd580585a6aa7a8a92e91"
+    },
+    {
+      "path": "examples/input/cost_payments.csv",
+      "bytes": 356,
+      "sha256": "cdbcc1585a73446080e101673f417dffa61d9ed7cafe691a71649f65529961a4"
+    },
+    {
+      "path": "examples/input/deliveries.csv",
+      "bytes": 318,
+      "sha256": "05114cfa4fc0f7523d526d43b2466965571ed1ff80f93053298d206b632f6318"
+    },
+    {
+      "path": "examples/input/effort.csv",
+      "bytes": 4881,
+      "sha256": "b9d313761955b30fedd601d124a30035b609e4c2d4e662b24628cd2c59472202"
+    },
+    {
+      "path": "examples/input/invoice_lines.csv",
+      "bytes": 1378,
+      "sha256": "4a3e603bfa3cc4890836744b652b3f0fd70354210c678430c737acc2d82903f5"
+    },
+    {
+      "path": "examples/input/invoices.csv",
+      "bytes": 1042,
+      "sha256": "a15fa02d4e44b5b42a11952d59bdf063ec05623e8f50704d812ee580b3618b53"
+    },
+    {
+      "path": "examples/input/measurements.csv",
+      "bytes": 815,
+      "sha256": "edabe7ca8a74d691ef2c6a69369c628364852538cef39d8a9f1d262d64f9919a"
+    },
+    {
+      "path": "examples/input/organisations.csv",
+      "bytes": 299,
+      "sha256": "a22d2b5cd5dd9e0326001479b15355cfbdef0349a2be890c0c943bd1f574decb"
+    },
+    {
+      "path": "examples/input/payment_milestones.csv",
+      "bytes": 1110,
+      "sha256": "5c302b64d05aa76f65c3e0c7f5c4f762b3fa57869d22f6dcc0ce84ecee220e18"
+    },
+    {
+      "path": "examples/input/people.csv",
+      "bytes": 262,
+      "sha256": "bc413fd8b440bdd39273a1f5b80723700c8257257015a0ffbb6ec3f4f765518f"
+    },
+    {
+      "path": "examples/input/progress_claims.csv",
+      "bytes": 589,
+      "sha256": "9f57d89bab39f5022646dd91b325b1ed39807850e5a3d6a40b8c7638304e5af4"
+    },
+    {
+      "path": "examples/input/projects.csv",
+      "bytes": 520,
+      "sha256": "ab6b47143078a00dcdd5beb2e1210368f8fbe4520ad7fb7909a7bd066d9204d5"
+    },
+    {
+      "path": "examples/input/report_inputs.csv",
+      "bytes": 186,
+      "sha256": "b577eaf905e4e426d5bba500510127ec86c6c702c75acd2c7466b01872beeca8"
+    },
+    {
+      "path": "examples/input/reports.csv",
+      "bytes": 282,
+      "sha256": "4023a4110ee44deb56c572471393a6b862535800ff5b8456807c12ddee7ce446"
+    },
+    {
+      "path": "examples/input/retention_events.csv",
+      "bytes": 694,
+      "sha256": "bcf2342fdc31cef94bb2446c8bd19ef40d48d4238d5b86e53b2f9f0fb5f4e932"
+    },
+    {
+      "path": "examples/input/source_documents.csv",
+      "bytes": 165,
+      "sha256": "78edc636b551b92f5693fc88ac4d2ef9618d3ae13bff2db4ff0ab05b9c2b59d6"
+    },
+    {
+      "path": "examples/input/variation_lines.csv",
+      "bytes": 348,
+      "sha256": "a535b88c5052701820ad1563959a8f20fc2913907016daabfa19f0fa523cca06"
+    },
+    {
+      "path": "examples/input/variations.csv",
+      "bytes": 563,
+      "sha256": "0c42063946b80e09f5d546fb98c52778695d93c67160a5380dd0946fbf4b0e6a"
+    },
+    {
+      "path": "host/client.mjs",
+      "bytes": 4362,
+      "sha256": "5367ba0988e6010701d1914c5d105ca2c0b2e20cc611e6f204bd28a048ccba20"
+    },
+    {
+      "path": "host/codec.mjs",
+      "bytes": 28418,
+      "sha256": "ab609271b0bcb6aac8b732db7b437edd69bb7865dcaea4fd5cf1ec162de15c45"
+    },
+    {
+      "path": "host/domain.mjs",
+      "bytes": 4981,
+      "sha256": "11f5a6ec64aabf63d66fec77807f319123bf3a6be1b7f20e9bf5523ac5df35eb"
+    },
+    {
+      "path": "host/export-core.mjs",
+      "bytes": 4475,
+      "sha256": "f4f252fd18fccdb4f7a35bc455fb1f190ef0178a6f0e4d8580fd60d332666b47"
+    },
+    {
+      "path": "host/export.mjs",
+      "bytes": 1610,
+      "sha256": "5ae74580efd46e48583800a991adf39fd5bd0e27fa69b90197e5f4d2b85ab281"
+    },
+    {
+      "path": "host/io.mjs",
+      "bytes": 3160,
+      "sha256": "a63eef872d339dae00aea89f88ef4b6722d28cb409b1e2667ba8a985cbd4ab6c"
+    },
+    {
+      "path": "host/model.cjs",
+      "bytes": 5109,
+      "sha256": "3fe035783ee2e8679598c294a7768e6a1a0ba42618c501ff6575f942c18221ee"
+    },
+    {
+      "path": "host/server.mjs",
+      "bytes": 7075,
+      "sha256": "fc6d3df8e37b9036206383e19ba0438e8a9a99315a00ba2a821ac501b60b81d3"
+    },
+    {
+      "path": "host/store.mjs",
+      "bytes": 5697,
+      "sha256": "495287b93f0ccef5c277bd663b2d0cda08a493dde8efcb98d4a4cf91a3873a37"
+    },
+    {
+      "path": "installed-cli.mjs",
+      "bytes": 4639,
+      "sha256": "cd6106d48d994927724a6070bf5274536e7268b1d30b57c6a32a448c27369792"
+    },
+    {
+      "path": "managed.mjs",
+      "bytes": 2640,
+      "sha256": "b4f772cabfc99dc69543be7a683ae7e4f4764f3d827e09484434979f73ded776"
+    },
+    {
+      "path": "mcp.mjs",
+      "bytes": 9216,
+      "sha256": "5a1d1f4c17e826d1dcc3ccd6f5ef46f805677613705c9a47ba56025706b2440f"
+    },
+    {
+      "path": "merchant-provider.mjs",
+      "bytes": 2517,
+      "sha256": "b5c4ef4d24eb0fb9a48fba00bda2a9a8d28ca267d18f1282b7e77b56f6fc2013"
+    },
+    {
+      "path": "native/construction-desk.cjs",
+      "bytes": 8744,
+      "sha256": "89bf40bc6c8cdf9d6b4aeae41ee0bfecd1dd590be16d875f6f0afd563728a680"
+    },
+    {
+      "path": "native/receive-installed.mjs",
+      "bytes": 4502,
+      "sha256": "e9704b06088c7f9e476afb99e1bd5ea63a98b44b280fee417cbb8d02f1a9e338"
+    },
+    {
+      "path": "operator/browser-course.cjs",
+      "bytes": 14098,
+      "sha256": "550324218606dc155098715b190703011acbc939c29b42fd841a9f82ccddac80"
+    },
+    {
+      "path": "operator/desk.js",
+      "bytes": 65063,
+      "sha256": "8472138c51bf27914b13ad3db3f355201fa331f4054351fc010609ee1e792db4"
+    },
+    {
+      "path": "operator/installed-desk.js",
+      "bytes": 67996,
+      "sha256": "70d2521ada9c1de0b5288ccd8c3914ee8934b4059f238adf1ef29c830f1fb619"
+    },
+    {
+      "path": "operator/native-course.cjs",
+      "bytes": 11427,
+      "sha256": "2bcea59ff7934804b868a66910e79c81d6802b59913c80b22446a341b0572fae"
+    },
+    {
+      "path": "operator/render-desk.cjs",
+      "bytes": 6224,
+      "sha256": "3e5f25ec695a0b6859130aca7a7bcf66c8950439700ca6048e9625eb8d6c87ff"
+    },
+    {
+      "path": "operator/run-course.cjs",
+      "bytes": 810,
+      "sha256": "5380af4d1478e209c3f5a87dc8248dbe8a985664416d52e2b9a1843441ea38f4"
+    },
+    {
+      "path": "package.json",
+      "bytes": 225,
+      "sha256": "40a7a3687493f72d5bdf129a3a97c8d663bd13aaa7d60c5cc935c6cda6bbad89"
+    },
+    {
+      "path": "rational.cjs",
+      "bytes": 1350,
+      "sha256": "b2b38848a914a327cfecc271cf53ca0b52a6186b1d28bd38b3dc8677ca9974a2"
+    },
+    {
+      "path": "receiving/EXPORT_COMPRESSION.md",
+      "bytes": 3821,
+      "sha256": "cef70170ae6a89ec48e54346db3436d90d44873766ed95cb1b9b6e8b2889e831"
+    },
+    {
+      "path": "receiving/export-compression-course.cjs",
+      "bytes": 3733,
+      "sha256": "19084ef82ccf28202b2a48d8fe5fc0cccce7b4f89043d52da73d60f2c6ede921"
+    },
+    {
+      "path": "receiving/host-course.cjs",
+      "bytes": 8884,
+      "sha256": "3a54eca60fcc029d1d71e0beb6d8e7a155003813147479b5ec2d39d2002e32fa"
+    },
+    {
+      "path": "receiving/portable-course.cjs",
+      "bytes": 13898,
+      "sha256": "9fdc1a313e1dd2a5aa36be1e43ad37ee6052eb72aed0f3426cc0a200e74c87b9"
+    },
+    {
+      "path": "runtime.mjs",
+      "bytes": 2482,
+      "sha256": "a1da72bcffbaffb291a4ccbe09136a05541651d28473c003cd18e082169eb090"
+    },
+    {
+      "path": "session.cjs",
+      "bytes": 8547,
+      "sha256": "f271689563acf8397b5365e6c6588994bedc6ff60f98b8f780dc872e523b2acd"
+    },
+    {
+      "path": "setup.mjs",
+      "bytes": 2649,
+      "sha256": "e2246c08fd9c84121d3fa8ea59ad830df3c06a2e67579f17d6a64ab044e06c93"
+    },
+    {
+      "path": "sha256.cjs",
+      "bytes": 19696,
+      "sha256": "f37a1319db3aa8b9bd15ae2fea89cf0b79677e2a2eb295e63efa4d34f8308230"
+    },
+    {
+      "path": "src/archive.mjs",
+      "bytes": 515,
+      "sha256": "dc1ccb5c870812160f3a15b4f84516c545307d61adff4955cb817a382a10c802"
+    },
+    {
+      "path": "src/build-installed.mjs",
+      "bytes": 8754,
+      "sha256": "995b28286e931c2143bcb605cf27ead6cce8cae0c3241bd7e311d09823962581"
+    },
+    {
+      "path": "src/connected_zip.cjs",
+      "bytes": 13178,
+      "sha256": "4903eb16215d3015388b62788670da9f23872d65e94422ff22cbf09863f9dd08"
+    },
+    {
+      "path": "src/managed-storage.mjs",
+      "bytes": 7823,
+      "sha256": "42c48e56bc6b2f3fac0fe4b2e936eb3049106e0e63e90f7df7fd8d6f993197c8"
+    },
+    {
+      "path": "src/managed.js",
+      "bytes": 14342,
+      "sha256": "84eec6f2c40c083d8cda19a4ff9f85ef092a1e436fec4eed23e0b0791e0d8ee3"
+    },
+    {
+      "path": "src/session-cache.cjs",
+      "bytes": 2425,
+      "sha256": "31918d561d7c4ccde1d849a7db2236e067d8b8971522c9b78ff88db4d50af966"
+    },
+    {
+      "path": "src/session.mjs",
+      "bytes": 3880,
+      "sha256": "1f260ed493948d3e76deaff6fe25a3f8935f6472c41eeda7ea6f2b924a743ade"
+    },
+    {
+      "path": "templates/accounting_events.csv",
+      "bytes": 201,
+      "sha256": "deb8074b0d6c267163df133895dd2630026d47eb188f7d13a9d9c81a3a384d23"
+    },
+    {
+      "path": "templates/approvals.csv",
+      "bytes": 178,
+      "sha256": "5a275bb21050010c60fa94d32d53eaf1034da4e5eb6994cd3c37965c3d01e770"
+    },
+    {
+      "path": "templates/authorities.csv",
+      "bytes": 132,
+      "sha256": "e151bdcacd04127e2597aa711f7fad8e16dc06e2fad2d36b47043dfbdbbd533e"
+    },
+    {
+      "path": "templates/certification_lines.csv",
+      "bytes": 137,
+      "sha256": "40907aa7f8507d9b524420707fbf0bd78e6c545aeab6b0d6820f8936ab075271"
+    },
+    {
+      "path": "templates/certifications.csv",
+      "bytes": 147,
+      "sha256": "eaf8e983af5d00ef41d8faf5f18ee44a73b8ff8f30c9cc5071ef19c376293c55"
+    },
+    {
+      "path": "templates/claim_lines.csv",
+      "bytes": 227,
+      "sha256": "bbb7a7f9ee4d4f7db5005f39251c29b24b13b2f9d7b175223184d20f4be22d43"
+    },
+    {
+      "path": "templates/commitment_lines.csv",
+      "bytes": 114,
+      "sha256": "4248f513daa852021a5f5b7580c1d29b59023ada096b1a78140d36793a8cbe79"
+    },
+    {
+      "path": "templates/commitments.csv",
+      "bytes": 160,
+      "sha256": "ac3894fed7ad0988fc2fc6959fe8fc8747898a41bdffaed95b551f724f3207ce"
+    },
+    {
+      "path": "templates/contract_events.csv",
+      "bytes": 126,
+      "sha256": "256d26c1f38da6fef76003e6e4d75a27e5a5e1cafdbf9cd7d8251ae585be7c93"
+    },
+    {
+      "path": "templates/contract_lines.csv",
+      "bytes": 165,
+      "sha256": "983687c99bb7d4c9e5bf4be2b9e49786a35e1832b14bd2f6e11ff91adf252bda"
+    },
+    {
+      "path": "templates/contract_versions.csv",
+      "bytes": 346,
+      "sha256": "e1ad900a61a7c2523c7f84d96b0de1174d8fd6a2fcecb8786594b33609cf5225"
+    },
+    {
+      "path": "templates/cost_invoice_lines.csv",
+      "bytes": 148,
+      "sha256": "6fcf6de3b78bdd3f2491778b24522d273c715c907ed2b0c4ac6db57ae9bf98fd"
+    },
+    {
+      "path": "templates/cost_invoices.csv",
+      "bytes": 171,
+      "sha256": "05e52f827b09cd10a717c3b4f5c323a7e6fd7004aaddd2346bf1cf168c0ff1bd"
+    },
+    {
+      "path": "templates/cost_payments.csv",
+      "bytes": 202,
+      "sha256": "29413ddad73fbc8441e2a807f072ca26b0f73c73b907687a69ffe71c3c1321e9"
+    },
+    {
+      "path": "templates/deliveries.csv",
+      "bytes": 170,
+      "sha256": "6dd6f7c6ddd654013e762f802cbe13615aaf71082dfa0022f13eb3159350c6ac"
+    },
+    {
+      "path": "templates/effort.csv",
+      "bytes": 184,
+      "sha256": "789c287c4170b7ef030edb65c3834bb0ff2e24e82ee1c504d42d38b4cc2e1489"
+    },
+    {
+      "path": "templates/invoice_lines.csv",
+      "bytes": 213,
+      "sha256": "54f7716389b4382bd761f72c37ee9a647c2b414311c5a5ed2dff81e777682625"
+    },
+    {
+      "path": "templates/invoices.csv",
+      "bytes": 215,
+      "sha256": "11681ce37f273710e97563a58542422cfac680d613fdbf17c68eb61db94ca065"
+    },
+    {
+      "path": "templates/measurements.csv",
+      "bytes": 216,
+      "sha256": "6d59115fd8d108ea76e966a795da2d01e11aeeed7fa42ef78a263573e7eb86b1"
+    },
+    {
+      "path": "templates/organisations.csv",
+      "bytes": 86,
+      "sha256": "70828459baa42ee03a9c3cc29fc6c26ef7353a484b9459837d9748a2ac240c92"
+    },
+    {
+      "path": "templates/payment_milestones.csv",
+      "bytes": 224,
+      "sha256": "ea2220596adc836955daf90072265c89d6ba5d250de2c90d0293a42665168e37"
+    },
+    {
+      "path": "templates/people.csv",
+      "bytes": 48,
+      "sha256": "d205d94af427b9aa7428cbf6dc081ec6810ed07e639880659fb1d97b4a2aaee6"
+    },
+    {
+      "path": "templates/progress_claims.csv",
+      "bytes": 183,
+      "sha256": "8fca4017bf9636c444eb8a884995569da7d3251703410596375275e0d5627063"
+    },
+    {
+      "path": "templates/projects.csv",
+      "bytes": 160,
+      "sha256": "fb7aeabee512f62c286787727f1a4f1a314624b3a17a66a00a1b968d7e6c92cc"
+    },
+    {
+      "path": "templates/report_inputs.csv",
+      "bytes": 63,
+      "sha256": "69ff79a64464a27f233183f29cd28c10be5d56129fcdcd19e2d7fe611b40f9ba"
+    },
+    {
+      "path": "templates/reports.csv",
+      "bytes": 114,
+      "sha256": "ae417621f48926923c68fea96bce08d96c02d47c746c3445a66b5ac0bd6768b8"
+    },
+    {
+      "path": "templates/retention_events.csv",
+      "bytes": 221,
+      "sha256": "8bf3b9090b886d94ef23e7904de9e200eec88ebb068ae1c745057e05327d09a7"
+    },
+    {
+      "path": "templates/source_documents.csv",
+      "bytes": 165,
+      "sha256": "78edc636b551b92f5693fc88ac4d2ef9618d3ae13bff2db4ff0ab05b9c2b59d6"
+    },
+    {
+      "path": "templates/variation_lines.csv",
+      "bytes": 153,
+      "sha256": "63a311d175fe743ad53372b97177c68dbc9faf0b8d0c8db84aae4ef4642c7c60"
+    },
+    {
+      "path": "templates/variations.csv",
+      "bytes": 190,
+      "sha256": "717b539b47b1f4d3850bd7d69a6f94e0d2b892737d5878204ab5fe8d9c1271e4"
+    },
+    {
+      "path": "tools.mjs",
+      "bytes": 5313,
+      "sha256": "a6da197d1274df316a692b9c8e6bc557545e5791b3a664b641915aec7ea438fe"
+    },
+    {
+      "path": "vendor/PAKO_LICENSE.txt",
+      "bytes": 1104,
+      "sha256": "a04665b3b2de56c66730c1f720f528175739e4104f79073614aa611da1e85539"
+    },
+    {
+      "path": "vendor/pako.cjs",
+      "bytes": 238806,
+      "sha256": "e3c8f46f5a741598157ba051a9a0c043bcdc879c1867d3268e4058d4fae5fe3e"
+    },
+    {
+      "path": "verification/browser-course.json",
+      "bytes": 2326,
+      "sha256": "699fc2ba78770413484dfa16df30a04c2c74b31439447fbd78aa7818bf32d270"
+    },
+    {
+      "path": "verification/complete-analysis.json",
+      "bytes": 101922,
+      "sha256": "1d28038726ac2dfca4200732cd77595c366cc7141dc92a9e9c09d94012ff5458"
+    },
+    {
+      "path": "verification/model-course.json",
+      "bytes": 2616,
+      "sha256": "8104298415702d0e8cd78c12b3d344cd013a518c2e438393056a319f4ec17d2c"
+    },
+    {
+      "path": "verification/native-course.json",
+      "bytes": 1552,
+      "sha256": "dafb1a4d9bb0b99c8f9deafadfcdebc853079783985a82f0995b19a3cf28b9fe"
+    },
+    {
+      "path": "zip.cjs",
+      "bytes": 2008,
+      "sha256": "0db36ea7dfaa084be2da89e185576017d596f33b8a174ec61199ee17bc0ea1a9"
+    }
+  ]
+}

@@ -1,0 +1,2 @@
+delivery_id,project_id,commitment_line_id,delivery_note_number,quantity,unit,delivered_at,accepted_at,accepted_by,status,reverses_id,recorded_at,available_at,source_ref
+DEL1,P1,POL1,DN1,6,pack,2026-08-05T09:00:00Z,2026-08-05T10:00:00Z,OPS,accepted,,2026-08-05T10:01:00Z,2026-08-05T10:02:00Z,authored/deliveries/DEL1

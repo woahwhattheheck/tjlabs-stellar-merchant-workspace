@@ -1,0 +1,4 @@
+measurement_id,project_id,scope_key,contract_line_id,variation_line_id,unit,quantity,period_from,period_until,measured_at,measured_by,approved_by,approved_at,recorded_at,available_at,supersedes_id,status,source_ref
+M1,P1,walls,SCOPE1,,m2,40,2026-08-01T00:00:00Z,2026-09-01T00:00:00Z,2026-09-01T08:00:00Z,OPS,OWNER,2026-09-01T09:00:00Z,2026-09-01T09:01:00Z,2026-09-01T09:02:00Z,,approved,authored/measurements/M1
+M2,P1,walls,SCOPE1,,m2,20,2026-09-01T00:00:00Z,2026-10-01T00:00:00Z,2026-10-01T08:00:00Z,OPS,OWNER,2026-10-01T09:00:00Z,2026-10-01T09:01:00Z,2026-10-01T09:02:00Z,,approved,authored/measurements/M2
+M3,P1,approved-extra,,VL2,m2,5,2026-09-16T00:00:00Z,2026-10-01T00:00:00Z,2026-10-01T08:00:00Z,OPS,OWNER,2026-10-01T09:00:00Z,2026-10-01T09:01:00Z,2026-10-01T09:02:00Z,,approved,authored/measurements/M3

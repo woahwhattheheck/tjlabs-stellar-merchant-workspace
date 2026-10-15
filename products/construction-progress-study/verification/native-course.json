@@ -1,0 +1,30 @@
+{
+  "schema": "construction.source-native-course/v1",
+  "runtime": "Actual Node command source with injected filesystem/path/crypto in V8; actual OS receiving remains separate",
+  "checks": [
+    "Native creates the complete two-project construction session",
+    "Native scope change uses shared source",
+    "Native round trip retains unfinished browser input",
+    "Native exposes full cohort and unmatched work",
+    "One named review does not replace the other role",
+    "Both study reviews bind the exact complete source",
+    "Native retains arbitrary original media bytes",
+    "Binary media hash is exact",
+    "Native records an exact typed evidence link",
+    "Source availability correction retains exact prior metadata",
+    "Unlink preserves media and prior complete study",
+    "Native applies declared construction population plan",
+    "Native line correction retains exact prior scope",
+    "Native rejects a correction from a differently ordered extract and retains exact input",
+    "Native record identity cannot cross studies",
+    "Native new-table record uses an explicit null extract binding",
+    "Different existing native outputs are preserved",
+    "Complete editable study archive exports",
+    "Readable complete workflow and exact media export together",
+    "Native builds complete offline operator",
+    "Native source builder reads and retains one exact manifest",
+    "Normal and reversed source order reproduce identical HTML",
+    "Native exports full application dependency closure"
+  ],
+  "output_count": 170
+}

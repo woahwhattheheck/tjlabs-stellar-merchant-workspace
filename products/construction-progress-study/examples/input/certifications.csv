@@ -1,0 +1,3 @@
+certification_id,claim_id,project_id,certificate_number,certified_at,certified_by,status,reverses_id,currency,recorded_at,available_at,source_ref
+CERT1,C1,P1,CERT1,2026-09-03T10:00:00Z,OWNER,certified,,EUR,2026-09-03T10:01:00Z,2026-09-03T10:02:00Z,authored/certifications/CERT1
+CERT2,C2,P1,CERT2,2026-10-03T10:00:00Z,OWNER,certified,,EUR,2026-10-03T10:01:00Z,2026-10-03T10:02:00Z,authored/certifications/CERT2

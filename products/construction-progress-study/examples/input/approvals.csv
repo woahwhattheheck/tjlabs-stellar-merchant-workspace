@@ -1,0 +1,7 @@
+approval_id,project_id,subject_type,subject_id,approval_type,decision,actor_id,decided_at,recorded_at,available_at,quantity_limit,amount_limit,currency,supersedes_id,source_ref
+AP-V1-Q,P1,variations,V1,approve_quantity,approved,OWNER,2026-09-15T10:00:00Z,2026-09-15T10:01:00Z,2026-09-15T10:02:00Z,10,,EUR,,authored/approvals/AP-V1-Q
+AP-V2-Q,P1,variations,V2,approve_quantity,approved,OWNER,2026-09-16T10:00:00Z,2026-09-16T10:01:00Z,2026-09-16T10:02:00Z,5,,EUR,,authored/approvals/AP-V2-Q
+AP-V2-P,P1,variations,V2,approve_price,approved,OWNER,2026-09-16T10:00:00Z,2026-09-16T10:01:00Z,2026-09-16T10:02:00Z,,250,EUR,,authored/approvals/AP-V2-P
+AP-DEP1,P1,payment_milestones,DEP1,approve_milestone,approved,OWNER,2026-08-01T10:00:00Z,2026-08-01T10:01:00Z,2026-08-01T10:02:00Z,,500,EUR,,authored/approvals/AP-DEP1
+AP-MP1,P2,payment_milestones,MP1,approve_milestone,approved,OWNER,2026-08-01T10:00:00Z,2026-08-01T10:01:00Z,2026-08-01T10:02:00Z,,5000,EUR,,authored/approvals/AP-MP1
+AP-MP2,P2,payment_milestones,MP2,approve_milestone,approved,OWNER,2026-08-10T10:00:00Z,2026-08-10T10:01:00Z,2026-08-10T10:02:00Z,,5000,EUR,,authored/approvals/AP-MP2

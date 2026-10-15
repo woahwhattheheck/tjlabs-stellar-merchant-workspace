@@ -1,0 +1,4 @@
+certification_line_id,certification_id,claim_line_id,scope_key,quantity_mode,quantity,certified_net,tax_code,tax_rate,reason,source_ref
+CE1,CERT1,CL1,walls,cumulative,40,4000,actual-standard,21,Actual authored certification,authored/certification_lines/CE1
+CE2,CERT2,CL2,walls,cumulative,60,6000,actual-standard,21,Actual authored certification,authored/certification_lines/CE2
+CE3,CERT2,CL3,approved-extra,period,5,250,actual-standard,21,Actual authored certification,authored/certification_lines/CE3

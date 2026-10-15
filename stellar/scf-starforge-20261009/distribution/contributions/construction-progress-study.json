@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "construction-progress-study",
+  "description": "Complete thirty-family construction progress study with contract editions, measurements, variations, claims, certifications, retention, invoices, reconciled cash, supplier commitments, historical reports and complete recurring effort.",
+  "components": [
+    "products/construction-progress-study"
+  ],
+  "commands": {
+    "construction-workspace": "products/construction-progress-study/installed-cli.mjs",
+    "construction-managed": "products/construction-progress-study/managed.mjs"
+  },
+  "commandDescriptions": {
+    "construction-workspace": "Create, receive and export complete Construction Progress Study sessions",
+    "construction-managed": "Open the complete construction progress study through Applications"
+  },
+  "exports": {
+    "./products/construction": "./source/products/construction-progress-study/runtime.mjs",
+    "./products/construction/client": "./source/products/construction-progress-study/host/client.mjs",
+    "./products/construction/server": "./source/products/construction-progress-study/host/server.mjs"
+  },
+  "applicationProviders": {
+    "construction-progress-study": "products/construction-progress-study/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "construction-progress-study": "products/construction-progress-study/merchant-provider.mjs"
+  }
+}
