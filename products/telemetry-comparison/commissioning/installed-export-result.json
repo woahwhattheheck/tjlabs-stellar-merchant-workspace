@@ -1,0 +1,16 @@
+{
+  "schema": "stellar-forge.telemetry-export-course.v1",
+  "runtime": "Production source in V8",
+  "members": 112,
+  "bytes": 4469881,
+  "sha256": "be3df84f33a7106aae14e18dfde35c8c4d5dff1e65602529f03e9cb991c124ea",
+  "sourceFiles": 81,
+  "reports": 3,
+  "originals": 5,
+  "checks": [
+    "All source, original, current/shared/standalone sessions and report files retained",
+    "Every ZIP member checked against complete export manifest",
+    "Complete selected request history included"
+  ],
+  "sourceSha256": "55279d373826a96438903dd1e8faa69f33d1d20bab3a2da17ae48ecd9e437568"
+}

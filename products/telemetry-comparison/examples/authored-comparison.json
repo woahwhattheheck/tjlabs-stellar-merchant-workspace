@@ -1,0 +1,354 @@
+{
+  "schema": "tjlabs.telemetry-comparison.v1",
+  "leftEditionId": "f7cd7b40816407bae9ff4d7fc57071e5ffde9d0e0060f43f72413caf0d60e0fb",
+  "rightEditionId": "6e71bf11ed11e29a5806cbe500d1eaf00319f0f4642dda84896d489afd71ecaa",
+  "leftName": "Owner-corrected measurements with baseline predictions",
+  "rightName": "Candidate predictions on identical corrected measurements",
+  "contexts": [],
+  "rows": [
+    {
+      "pointId": "rack-inlet",
+      "runId": "pod-model",
+      "leftTotalPairs": 8,
+      "rightTotalPairs": 8,
+      "commonPairs": 8,
+      "leftOnlyPairs": 0,
+      "rightOnlyPairs": 0,
+      "changedObservationCount": 0,
+      "comparable": true,
+      "reasons": [],
+      "leftCommonMetrics": {
+        "bias": {
+          "value": "-0.8125",
+          "exact": {
+            "numerator": "-13",
+            "denominator": "16"
+          }
+        },
+        "mae": {
+          "value": "0.8125",
+          "exact": {
+            "numerator": "13",
+            "denominator": "16"
+          }
+        },
+        "mse": {
+          "value": "0.78125",
+          "exact": {
+            "numerator": "25",
+            "denominator": "32"
+          }
+        },
+        "rmse": {
+          "value": "0.883883476483",
+          "approximate": true,
+          "method": "JavaScript square root of exact MSE"
+        },
+        "maxAbsoluteError": {
+          "value": "1",
+          "exact": {
+            "numerator": "1",
+            "denominator": "1"
+          }
+        }
+      },
+      "rightCommonMetrics": {
+        "bias": {
+          "value": "0",
+          "exact": {
+            "numerator": "0",
+            "denominator": "1"
+          }
+        },
+        "mae": {
+          "value": "0",
+          "exact": {
+            "numerator": "0",
+            "denominator": "1"
+          }
+        },
+        "mse": {
+          "value": "0",
+          "exact": {
+            "numerator": "0",
+            "denominator": "1"
+          }
+        },
+        "rmse": {
+          "value": "0.00000000000",
+          "approximate": true,
+          "method": "JavaScript square root of exact MSE"
+        },
+        "maxAbsoluteError": {
+          "value": "0",
+          "exact": {
+            "numerator": "0",
+            "denominator": "1"
+          }
+        }
+      },
+      "maeDelta": {
+        "value": "-0.8125",
+        "exact": {
+          "numerator": "-13",
+          "denominator": "16"
+        }
+      },
+      "commonObservationIds": [
+        "120193d5e6d7f11140a55cede1de643c3534e1219d5a072fbff3f0dc71962dd5",
+        "9bc3c7881ae3f524b11c005cdd08a69a61fd7808f980cef136178a3edf65a2a9",
+        "b24bbc397bd7731ccc948171ca993832616739c238dcb4641d78ed8dad29298d",
+        "bbd9344a9ae5f94c3a9fd1e2b5591372453a5e88038cfe6dc246b1b095b7d792",
+        "5e945e3e4a973923f7e3b429db516801cdbfdeb087af2c37df8f37e0f972f643",
+        "682f8515df1867f21093954db258dc38ca8eda61507a2a11f568bc19540eabf1",
+        "b8d71e26566d68b8a31c9a54f776a49d7a1dc0ebc45135ef1c5ac4e392837518",
+        "94e788f4e90d07be895e55010fde3c26d49fc69cd7ccec300d3fb2052c92fa88"
+      ]
+    },
+    {
+      "pointId": "pdu-power",
+      "runId": "pod-model",
+      "leftTotalPairs": 8,
+      "rightTotalPairs": 8,
+      "commonPairs": 8,
+      "leftOnlyPairs": 0,
+      "rightOnlyPairs": 0,
+      "changedObservationCount": 0,
+      "comparable": true,
+      "reasons": [],
+      "leftCommonMetrics": {
+        "bias": {
+          "value": "0.2",
+          "exact": {
+            "numerator": "1",
+            "denominator": "5"
+          }
+        },
+        "mae": {
+          "value": "0.2",
+          "exact": {
+            "numerator": "1",
+            "denominator": "5"
+          }
+        },
+        "mse": {
+          "value": "0.04",
+          "exact": {
+            "numerator": "1",
+            "denominator": "25"
+          }
+        },
+        "rmse": {
+          "value": "0.200000000000",
+          "approximate": true,
+          "method": "JavaScript square root of exact MSE"
+        },
+        "maxAbsoluteError": {
+          "value": "0.2",
+          "exact": {
+            "numerator": "1",
+            "denominator": "5"
+          }
+        }
+      },
+      "rightCommonMetrics": {
+        "bias": {
+          "value": "0",
+          "exact": {
+            "numerator": "0",
+            "denominator": "1"
+          }
+        },
+        "mae": {
+          "value": "0",
+          "exact": {
+            "numerator": "0",
+            "denominator": "1"
+          }
+        },
+        "mse": {
+          "value": "0",
+          "exact": {
+            "numerator": "0",
+            "denominator": "1"
+          }
+        },
+        "rmse": {
+          "value": "0.00000000000",
+          "approximate": true,
+          "method": "JavaScript square root of exact MSE"
+        },
+        "maxAbsoluteError": {
+          "value": "0",
+          "exact": {
+            "numerator": "0",
+            "denominator": "1"
+          }
+        }
+      },
+      "maeDelta": {
+        "value": "-0.2",
+        "exact": {
+          "numerator": "-1",
+          "denominator": "5"
+        }
+      },
+      "commonObservationIds": [
+        "594df524682882d89895b5f2ed75334e84d48e180123ff476290fe309005a14d",
+        "d477e0d69799174ad1f9b2e262024ddac4422f408d8f0aeb5193ac85044c22dd",
+        "1c43b1a5b08e157c9556e1ab7e1f7db85ae8d426f5447482decc69eb2efd9afc",
+        "f00fca94811b7b35a84500584b328bf155d4b272241665487a584f551fa5959a",
+        "5e83cb2b52bc32b2b49ab47f3f52c58fa5f6eafe4144ef37624301eacb6162a3",
+        "9c131edd5a89aedec4fcd5b7414f5eec523cc054f12b910eee8406b278cae692",
+        "658c156ab6e5c24a41924f2bbe8d87e59b682a5d550e61981646de3810d9a356",
+        "e313893db4523ee5fd7f8d4f0605421394b13918286575fd509e34c4ee212413"
+      ]
+    },
+    {
+      "pointId": "humidity",
+      "runId": "pod-model",
+      "leftTotalPairs": 8,
+      "rightTotalPairs": 8,
+      "commonPairs": 8,
+      "leftOnlyPairs": 0,
+      "rightOnlyPairs": 0,
+      "changedObservationCount": 0,
+      "comparable": true,
+      "reasons": [],
+      "leftCommonMetrics": {
+        "bias": {
+          "value": "1",
+          "exact": {
+            "numerator": "1",
+            "denominator": "1"
+          }
+        },
+        "mae": {
+          "value": "1",
+          "exact": {
+            "numerator": "1",
+            "denominator": "1"
+          }
+        },
+        "mse": {
+          "value": "1",
+          "exact": {
+            "numerator": "1",
+            "denominator": "1"
+          }
+        },
+        "rmse": {
+          "value": "1.00000000000",
+          "approximate": true,
+          "method": "JavaScript square root of exact MSE"
+        },
+        "maxAbsoluteError": {
+          "value": "1",
+          "exact": {
+            "numerator": "1",
+            "denominator": "1"
+          }
+        }
+      },
+      "rightCommonMetrics": {
+        "bias": {
+          "value": "0",
+          "exact": {
+            "numerator": "0",
+            "denominator": "1"
+          }
+        },
+        "mae": {
+          "value": "0",
+          "exact": {
+            "numerator": "0",
+            "denominator": "1"
+          }
+        },
+        "mse": {
+          "value": "0",
+          "exact": {
+            "numerator": "0",
+            "denominator": "1"
+          }
+        },
+        "rmse": {
+          "value": "0.00000000000",
+          "approximate": true,
+          "method": "JavaScript square root of exact MSE"
+        },
+        "maxAbsoluteError": {
+          "value": "0",
+          "exact": {
+            "numerator": "0",
+            "denominator": "1"
+          }
+        }
+      },
+      "maeDelta": {
+        "value": "-1",
+        "exact": {
+          "numerator": "-1",
+          "denominator": "1"
+        }
+      },
+      "commonObservationIds": [
+        "7aeae22dafdf3c32bb73d93c1938db980e4216cf98ac2238daf585800eb2ba68",
+        "c6a8dde0fe2a15702d4211d074b187c0418de66e5beb430e86d59d18a279ae87",
+        "8e5ef7a526dea0182c26fa1b9a279fd4d6c38d95289dea387848c2992e6fe389",
+        "d687a31e553d84e933ab97b26707fb90f4c6bae55f0eade74bb598f158c01972",
+        "71fc321e0456c55923d18d9737dabfdbcc8d0001c21ad0e72d742ae6945ad488",
+        "554a7f130e72b97c69be2af51f6c4fe6cfed47c9bdbbe5d2b0a2e6ad7f27096e",
+        "39f0ad081e89d92e46d7ea998049ea9631d58a5822b59307536a93aee4c46df5",
+        "47df77fe336f7b47133c4763305775f244f08b5352354b573d9162eab5b39ba6"
+      ]
+    }
+  ],
+  "leftScope": {
+    "siteId": "AUTHORED-SITE",
+    "podId": "POD-A",
+    "clockId": "UTC",
+    "timeFormat": "iso-offset",
+    "start": "2026-10-01T00:00:00Z",
+    "end": "2026-10-01T00:08:00Z",
+    "cadenceMs": 60000
+  },
+  "rightScope": {
+    "siteId": "AUTHORED-SITE",
+    "podId": "POD-A",
+    "clockId": "UTC",
+    "timeFormat": "iso-offset",
+    "start": "2026-10-01T00:00:00Z",
+    "end": "2026-10-01T00:08:00Z",
+    "cadenceMs": 60000
+  },
+  "leftModels": [
+    {
+      "id": "pod-model",
+      "model": {
+        "id": "AUTHORED-NO-PHYSICS",
+        "version": "authored-baseline",
+        "calibrationStart": "2026-09-30T00:00:00Z",
+        "calibrationEnd": "2026-10-01T00:00:00Z",
+        "calibrationClockId": "UTC",
+        "note": "These predictions are authored values, not a fitted model."
+      },
+      "calibrationOverlapsEvaluation": false
+    }
+  ],
+  "rightModels": [
+    {
+      "id": "pod-model",
+      "model": {
+        "id": "AUTHORED-NO-PHYSICS",
+        "version": "authored-candidate",
+        "calibrationStart": "2026-09-30T00:00:00Z",
+        "calibrationEnd": "2026-10-01T00:00:00Z",
+        "calibrationClockId": "UTC",
+        "note": "These predictions are authored values, not a fitted model."
+      },
+      "calibrationOverlapsEvaluation": false
+    }
+  ],
+  "interpretation": "Candidate minus baseline residual metrics on the common unchanged measured occurrences only. Other coverage, model/calibration contexts and full reports remain separate. This is not an operational improvement or savings claim."
+}

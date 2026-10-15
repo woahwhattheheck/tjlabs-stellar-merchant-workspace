@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "telemetry-comparison",
+  "description": "Complete telemetry comparison with managed editable sessions and retained original recovery",
+  "components": [
+    "products/telemetry-comparison"
+  ],
+  "commands": {
+    "telemetry-workspace": "products/telemetry-comparison/cli.mjs",
+    "telemetry-managed": "products/telemetry-comparison/managed.mjs"
+  },
+  "commandDescriptions": {
+    "telemetry-workspace": "Create, receive and export complete telemetry comparison sessions",
+    "telemetry-managed": "Open the managed telemetry operator through Applications"
+  },
+  "exports": {
+    "./products/telemetry": "./source/products/telemetry-comparison/runtime.mjs",
+    "./products/telemetry/client": "./source/products/telemetry-comparison/host/client.mjs",
+    "./products/telemetry/server": "./source/products/telemetry-comparison/host/server.mjs"
+  },
+  "applicationProviders": {
+    "telemetry-comparison": "products/telemetry-comparison/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "telemetry-comparison": "products/telemetry-comparison/merchant-provider.mjs"
+  }
+}

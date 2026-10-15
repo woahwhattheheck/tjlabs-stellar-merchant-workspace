@@ -1,0 +1,16 @@
+{
+  "name": "telemetry-comparison-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "demo": "node native/telemetry-cli.mjs demo",
+    "receive": "node native/run-telemetry-course.mjs",
+    "build:desk": "node native/build-desk.mjs",
+    "receive:operator": "node native/receive-operator.mjs",
+    "receive:installed": "node native/receive-installed.mjs"
+  }
+}

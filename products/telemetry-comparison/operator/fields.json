@@ -1,0 +1,34 @@
+{
+  "inputSchema": "tjlabs.telemetry-input.v1",
+  "tables": {
+    "points": [
+      "id",
+      "label",
+      "quantity",
+      "unit",
+      "lower",
+      "upper"
+    ],
+    "streams": [
+      "id",
+      "sourceId",
+      "role",
+      "runId",
+      "format",
+      "arrayPointer",
+      "layout",
+      "timeField",
+      "timeFormat",
+      "clockId",
+      "pointField",
+      "valueField",
+      "unitField",
+      "unit",
+      "qualityField"
+    ]
+  },
+  "help": {
+    "points": "Declare each measured point, physical quantity and target unit. Optional lower/upper values are owner-supplied review limits, retained as exact decimal text.",
+    "streams": "Declare each original observation or prediction stream. Wide streams use explicit columns; long streams use point/value/unit selectors. Predictions retain their logical run identity, model version and calibration window."
+  }
+}
