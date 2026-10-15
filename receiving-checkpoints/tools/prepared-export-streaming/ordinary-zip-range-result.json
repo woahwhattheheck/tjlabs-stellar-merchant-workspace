@@ -1,0 +1,77 @@
+{
+  "actualCompleteSourceCourse": {
+    "schema": "commons.ordinary-zip-range-course.v1",
+    "sourceFiles": 664,
+    "members": 668,
+    "bytes": 7853967,
+    "sha256": "20e421399764edb524a09d1a020b76a9126255d43ae55d57947d6a97b2335281",
+    "uncompressedBytes": 20189781,
+    "transportBytes": 7853967,
+    "directoryBytes": 81170,
+    "parts": 17,
+    "sourceStats": {
+      "fetchedParts": 35,
+      "textBytes": 21593912,
+      "decodedBytes": 16195434,
+      "cachedParts": 2,
+      "declaredParts": 17
+    },
+    "maxCapturedBytes": 1024,
+    "maxInflatedChunkBytes": 65536,
+    "ordinaryComparison": "Every member name, mode, CRC, size, compression, packed size and SHA equals production readZip",
+    "rejected": [
+      "trailing archive byte",
+      "local/central name mismatch",
+      "overlapping member offsets",
+      "UTF-8 name scalar",
+      "normalized path collision",
+      "declared expanded capacity",
+      "trailing DEFLATE payload",
+      "changed original chunk text",
+      "changed whole archive identity"
+    ],
+    "elapsedMs": 124633
+  },
+  "actualOriginalManifestCourse": {
+    "schema": "commons.ordinary-zip-range-receipt.v1",
+    "bytes": 71291,
+    "sha256": "52f607cbfc8594f83b424ceaae298eb83d88221eedc837d3653ddf6aa4711f37",
+    "members": 4,
+    "uncompressedBytes": 274650,
+    "directoryBytes": 293,
+    "transportBytes": 71291,
+    "rangeRequests": 10,
+    "maxCapturedBytes": 577,
+    "maxInflatedChunkBytes": 65536,
+    "exportManifest": {
+      "bytes": 577,
+      "sha256": "cd05f2d2abe5329149fe88b24b4fb5ee8fed76eea2b4123d968cb530b850a994",
+      "members": 3
+    },
+    "changedManifestRejected": true
+  },
+  "originalSource": {
+    "files": 664,
+    "source": {
+      "bytes": 10269181,
+      "sha256": "5ab66ebde2b3d87780ea4dfa64180a0ce1fbbfafadb8fca1e96e5308f11c2f8e"
+    },
+    "html": {
+      "bytes": 3001589,
+      "sha256": "ebc0737de730f334f1b3e35b379a9ebf21c3f4195180b34cf52dbd752fa11ca7"
+    },
+    "executed658": {
+      "source": {
+        "bytes": 9982266,
+        "sha256": "e0264d15818218e5e84de2155ca887efd7e2e35086f419feedcbf81643f3f99b"
+      },
+      "html": {
+        "bytes": 2880102,
+        "sha256": "2cc9958d60e44513fe4e79a33b0956400fa09054cc3c7ac6ff25c42007ce8920"
+      },
+      "files": 658,
+      "donorFilesUnchanged": 612
+    }
+  },
+  "note": "The full 668-member course ran the same core reader at b9534130. The subsequent wrapper adds original EXPORT_MANIFEST comparison; its focused actual inventory course is recorded separately. The final executable uses the small ordinary archive for the final wrong-whole-SHA negative case, avoiding a redundant second full application read."
+}

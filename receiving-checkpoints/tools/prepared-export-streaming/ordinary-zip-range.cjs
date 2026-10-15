@@ -125,4 +125,30 @@ async function readZipRanges(source,options={}){
  return {schema:'commons.ordinary-zip-range-receipt.v1',...archive,members,
    uncompressedBytes,directoryBytes:centralLength,transportBytes,rangeRequests:requests,maxCapturedBytes,maxInflatedChunkBytes};
 }
-module.exports={readZipRanges};
+async function readCompleteExportRanges(source,options={}){
+ let manifest,manifestIdentity;
+ const capture=options.captureEntry,visit=options.visitEntry;
+ if(capture!==undefined&&typeof capture!=='function'||visit!==undefined&&typeof visit!=='function')
+ fail('Export capture and visitor must be functions');
+ const receipt=await readZipRanges(source,{...options,
+ captureEntry:entry=>entry.name==='EXPORT_MANIFEST.json'?true:capture?capture(entry):false,
+ visitEntry:async entry=>{
+  if(entry.name==='EXPORT_MANIFEST.json'){
+   manifest=T.parse(T.decode(entry.data));
+   manifestIdentity={bytes:entry.bytes,sha256:entry.sha256};
+  }
+  if(visit)await visit(entry);
+ }});
+ if(!manifest||!Array.isArray(manifest.files)||manifest.files.length!==receipt.members.length-1)
+ fail('Complete export manifest membership differs');
+ const originals=new Map(receipt.members.filter(e=>e.name!=='EXPORT_MANIFEST.json').map(e=>[e.name,e]));
+ for(const item of manifest.files){
+  const original=originals.get(item?.path);
+  if(!original||item.bytes!==original.bytes||item.sha256!==original.sha256)
+  fail('Complete export manifest member differs: '+item?.path);
+  originals.delete(item.path);
+ }
+ if(originals.size)fail('Complete export manifest omits members');
+ return {...receipt,exportManifest:{...manifestIdentity,members:manifest.files.length}};
+}
+module.exports={readZipRanges,readCompleteExportRanges};

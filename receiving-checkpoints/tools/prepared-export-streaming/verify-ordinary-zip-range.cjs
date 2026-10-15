@@ -52,7 +52,7 @@ async function verifyOrdinaryZipRange(files,workingHtml){
   const bad=createStreamedArchiveSource(manifest,p=>Promise.resolve(objects[p.path].replace(/^./,objects[p.path][0]==='A'?'B':'A')));
   await bad.read(0,1);
  });
- await rejects('changed whole archive identity',()=>readZipRanges(source,{...options,expectedSha256:'0'.repeat(64)}));
+ await rejects('changed whole archive identity',()=>parse(tiny,{expectedSha256:'0'.repeat(64)}));
  return {schema:'commons.ordinary-zip-range-course.v1',sourceFiles:Object.keys(files).length,members:visits,
  ...archiveIdentity,uncompressedBytes:receipt.uncompressedBytes,transportBytes:receipt.transportBytes,
  directoryBytes:receipt.directoryBytes,parts:manifest.parts.length,sourceStats:source.stats(),
