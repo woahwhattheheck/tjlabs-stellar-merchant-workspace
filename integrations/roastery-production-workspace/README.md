@@ -1,3 +1,7 @@
+# Installed roastery production workspace
+
+Open **Applications → Roastery production** through the maintained `roastery-production-workspace` source selection. [OPERATING.md](OPERATING.md) covers create/open/resume, complete drafts and prior periods, native/MCP operations and retained handover. [INSTALLED_RECEIVING.md](INSTALLED_RECEIVING.md) continues the original native/rendered receiving operation. The complete original product below remains included.
+
 # Roastery production workspace
 
 A complete offline production desk for retaining original order and inventory CSVs, allocating packaged and roasted stock, calculating batch charges, reviewing an immutable input edition and recording actual batch outcomes.
