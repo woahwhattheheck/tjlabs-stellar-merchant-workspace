@@ -140,7 +140,7 @@ function toFields(row) {
   return [
     field(resource.serviceName, 9),
     field(Array.isArray(resource.tags) ? resource.tags.filter(x => typeof x === 'string').slice(0,16).join(' ') : '', 7),
-    field(input.toolName, 8),
+    field(input.tool, 8),
     field(input.description, 4),
     field(resource.description, 4),
     field(parameters, 2),
