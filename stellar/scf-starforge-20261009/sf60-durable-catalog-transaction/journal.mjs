@@ -108,7 +108,7 @@ function applyOperation(state, operation) {
     const {candidate,authority,provenance} = operation;
     if (!plain(candidate) || !idText(candidate.sellerId) || !plain(provenance) ||
         provenance.sellerId !== candidate.sellerId || !['signed_export','settlement_hook'].includes(provenance.authority)) fail('JOURNAL_AUTHORITY_INVALID');
-    const trustResult = trust.ingest(candidate,hydratePolicy(authority));
+    const trustResult = trust.ingest(candidate,hydratePolicy(authority), { lastUpdated: provenance.observedAt });
     if (trustResult.decision !== 'accepted') fail('TRUST_'+trustResult.reason);
     const life = lifecycle.upsert(candidate.entry,provenance,candidate.sequence);
     if (life.decision !== 'accepted') fail('LIFECYCLE_'+life.reason);
@@ -330,6 +330,8 @@ export class DurableCatalogTransaction {
   }
   list(params) {this.#assert();return this.#state.catalog.list(params);}
   search(params) {this.#assert();return this.#state.catalog.search(params);}
+  listDiscovery(params) {this.#assert();return this.#state.catalog.listDiscovery(params);}
+  searchDiscovery(params) {this.#assert();return this.#state.catalog.searchDiscovery(params);}
   history(id) {this.#assert();return this.#state.lifecycle.history(id);}
   lookupCatalogKey(key) {this.#assert();return clone(this.#state.byCatalog.get(key)??null);}
   inspectRevisions(input) {

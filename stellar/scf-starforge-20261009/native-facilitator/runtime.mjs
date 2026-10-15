@@ -169,7 +169,8 @@ async function createConfiguredNative(c,{environment,readiness,ownership}) {
       return {result,headers:structuredClone(outcomes.get(result)?.headers ?? {}),
         extensionResponses:structuredClone(outcomes.get(result)?.extensionResponses ?? {})};
     },
-    catalog:catalog ? Object.freeze({list:catalog.list,search:catalog.search,status:catalog.status}) : null,
+    catalog:catalog ? Object.freeze({list:catalog.list,search:catalog.search,
+      listDiscovery:catalog.listDiscovery,searchDiscovery:catalog.searchDiscovery,status:catalog.status}) : null,
     status, drain,probeReadiness:readiness.probe,
     waitForIdle,drainGraceMs:c.limits.drainGraceMs });
 }

@@ -145,7 +145,7 @@ export class CatalogTrustBoundary {
     return { decision, reason, auditHead: this.#auditHead, ...extra };
   }
 
-  ingest(candidate, authority) {
+  ingest(candidate, authority, { lastUpdated } = {}) {
     const sellerId = candidate?.sellerId;
     const sequence = candidate?.sequence;
     const entry = candidate?.entry;
@@ -214,7 +214,7 @@ export class CatalogTrustBoundary {
       return this.#finish('quarantine', 'RESOURCE_SELLER_CONFLICT', { ...facts, catalogKey, owner: previous.sellerId });
     }
 
-    this.#catalog.insertValidated(validatedEntry);
+    this.#catalog.insertValidated(validatedEntry, { lastUpdated });
 
     this.#sellerSigners.set(sellerId, signer);
     this.#originOwners.set(origin, sellerId);
