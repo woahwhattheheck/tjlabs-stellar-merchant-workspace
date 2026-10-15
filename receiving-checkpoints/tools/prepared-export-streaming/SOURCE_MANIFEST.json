@@ -38,6 +38,11 @@
       "sha256": "bb0ac53232978c576b7d9c63db99c5ee734d05b4e103c1df6f07507dbbf66538"
     },
     {
+      "path": "git-ordinary-publication-result.json",
+      "bytes": 3095,
+      "sha256": "6573abe65026bcfb5ba5985cc909332f8d3427e8cf5d64c68aef61eb01f6b115"
+    },
+    {
       "path": "git-publication-companion-result.json",
       "bytes": 433,
       "sha256": "188b504167adb7570426b71d5d57982845ddc4c3d229a59619b79ce1cfe9ef2a"
@@ -121,6 +126,11 @@
       "path": "vendor/pako.cjs",
       "bytes": 238806,
       "sha256": "e3c8f46f5a741598157ba051a9a0c043bcdc879c1867d3268e4058d4fae5fe3e"
+    },
+    {
+      "path": "verify-git-ordinary-publication.cjs",
+      "bytes": 9941,
+      "sha256": "83d88760b61179da349a4905c8801d3509b79d0bde1ebf45d351f204cdc61cf5"
     },
     {
       "path": "verify-ordinary-zip-range.cjs",
