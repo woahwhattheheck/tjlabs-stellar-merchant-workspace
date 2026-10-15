@@ -47,6 +47,16 @@ const damaged=JSON.parse(JSON.stringify(packed));damaged.records[0][1]='Changed 
 const continued=await api.plan(packed,{operationId:'plan-packed-continuation',expectedRevision:packed.revision,id:'week-five',label:'Fifth week',start:'2026-10-29',end:'2026-11-04',previousPeriodId:'week-four'});
 check(continued.workspace.revision===w.revision+1&&(await api.open(await api.pack(continued.workspace))).periods.length===5,'A compact saved workspace continues through the original operation API');
 
+
+const groupTargets=[targets[0],{...targets[0],id:'coffee-small',label:'Coffee 100g',expected:{...targets[0].expected,sku:'C100',variant:'100g'},pack:{quantity:'100',unit:'g'}}];
+let gw=(await api.create({id:'grouped-source-course',label:'Grouped original response',targets:groupTargets,profile})).workspace;
+gw=(await api.plan(gw,{operationId:'group-period',expectedRevision:gw.revision,id:'group-week',label:'Grouped week',start:'2026-10-01',end:'2026-10-07',previousPeriodId:null})).workspace;
+const groupInput={operationId:'one-original-call',expectedRevision:gw.revision,periodId:'group-week',id:'original-response-group',targets:groupTargets.map(t=>({targetId:t.id,replaceCaptureId:null})),responseText:response([item('12.50'),item('8.00',{sku:'C100',variant:'100g',sourcePack:{quantity:'100',unit:'g'}})]),providerStatus:200,requestUrl:targets[0].url,source:{kind:'engineering-fixture'},requestId:'original-shared-request'};
+gw=(await api.captureGroup(gw,groupInput)).workspace;
+check((await api.captureGroup(gw,groupInput)).reused&&(await api.report(await api.pack(gw),'group-week')).summary.ready===2,'One original response atomically receives all selected variants and reopens unchanged');
+await expectError(()=>api.captureGroup(gw,{...groupInput,id:'replacement-group',operationId:'stale-group-replacement',expectedRevision:gw.revision}),'CATALOG_CONFLICT');
+check((await api.open(gw)).periods[0].captures.length===2,'A stale target replacement rejects the complete group without partial captures');
+
 return {checks,workspace:w,report:r};
 }
 

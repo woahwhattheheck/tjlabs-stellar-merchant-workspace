@@ -85,7 +85,7 @@ starforge catalog-workflow inspect \
   --workspace /private/catalog/workspace-002.json
 ~~~
 
-The apply command accepts saveCatalog, plan, capture and decide. Each operation retains operationId and expectedRevision. The same operation and complete arguments reopen the original result. Changed work under that identity returns a conflict.
+The apply command accepts saveCatalog, plan, capture, captureGroup and decide. Each operation retains operationId and expectedRevision. The same operation and complete arguments reopen the original result. Changed work under that identity returns a conflict.
 
 ## Join the actual API-pass response
 
@@ -167,3 +167,26 @@ Library consumers can use engine.pack(workspace) and engine.unpack(workspace). T
 Browser saves use transactional IndexedDB. A current revision replaces the saved head only when its prior logical identity still matches; a conflicting tab keeps a separate recoverable branch. Subsequent edits can continue that selected branch. Browser quotas and private browsing policies vary. If storage is unavailable or full, the current complete revision stays open and the screen asks for a complete-file download. The ordinary downloaded workspace carries all original data independently of browser storage.
 
 The CLI accepts complete source/workspace files up to 256 MiB. Runtime memory and source-response sizes determine practical catalog capacity in addition to target count. Share native calls across variants, retain the complete provider originals, and review actual file sizes when agreeing a large customer population. Compact storage reduces repeated source copies; expanded exports intentionally include the full logical representation.
+
+## Receive one original source for all its variants
+
+Use captureGroup when one original response contains several selected variants. The source body, native manifest, original request and extracted candidates are retained once in that operation. Each selected target receives its own stable capture identity and keeps independent review decisions. The entire selection is applied together: a stale replacement identity or a target with another requested URL rejects the whole group.
+
+For import-export, the input JSON can contain a targets array instead of targetId. Retain each selected target's actual current capture ID in replaceCaptureId; use null for a first capture. All selected targets must belong to the same period and the exact original requested URL. The original id identifies this response group; per-target capture IDs are derived deterministically from it unless explicitly supplied.
+
+~~~json
+{
+  "operationId": "receive-original-page-1",
+  "expectedRevision": 2,
+  "periodId": "2026-10-week-3",
+  "id": "original-page-1",
+  "requestId": "original-native-request",
+  "requestUrl": "https://example.com/product",
+  "targets": [
+    {"targetId": "product-variant-one", "replaceCaptureId": null},
+    {"targetId": "product-variant-two", "replaceCaptureId": null}
+  ]
+}
+~~~
+
+Use the same four-file import-export command shown above. A native response is read once, then all selected variants receive it together. For library callers the equivalent method is engine.captureGroup(workspace, input); apply also accepts action captureGroup. Keep the exact full input for interrupted-operation recovery. Repeating the same operation and complete arguments reopens its original result. Old single-target capture operations and expanded workspaces continue to open.
