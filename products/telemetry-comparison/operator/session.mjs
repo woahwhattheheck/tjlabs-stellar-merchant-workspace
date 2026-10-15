@@ -5,7 +5,14 @@ export function createSessionAPI(api, codec, options={}) {
  const need=(v,m)=>{if(!v)throw Error(m);};
  const id=options.id||(()=>typeof crypto!=="undefined"&&crypto.randomUUID?crypto.randomUUID():"local-"+Date.now().toString(36)+"-"+Math.random().toString(36).slice(2));
  const now=options.now||(()=>new Date().toISOString());
- const known=new WeakSet(), sharedCache=new WeakMap(), archive=options.archive;
+ const sharedCache=new WeakMap(), archive=options.archive;
+ const known=new WeakSet(),workspaceSizes=new WeakMap(),knownBackups=new WeakSet();
+ function freeze(x){if(x&&typeof x==="object"&&!Object.isFrozen(x)){for(const value of Object.values(x))freeze(value);Object.freeze(x);}return x;}
+ function workspaceSize(w){w=checkedWorkspace(w);if(!workspaceSizes.has(w))workspaceSizes.set(w,encode(JSON.stringify(w)).length);return workspaceSizes.get(w);}
+ function metadata(s){const refs=[];function ref(w){const at=refs.length;refs.push(checkedWorkspace(w));return {$telemetryWorkspace:at};}const value={...s,workspace:ref(s.workspace),backups:s.backups.map(b=>({...b,snapshot:{...b.snapshot,workspace:ref(b.snapshot.workspace)}}))};return {value,refs};}
+ function size(s){const {value,refs}=metadata(s);let bytes=encode(JSON.stringify(value)).length;for(let i=0;i<refs.length;i++)bytes+=workspaceSize(refs[i])-encode(JSON.stringify({$telemetryWorkspace:i})).length;return bytes;}
+ function copy(s){const {value,refs}=metadata(s),out=clone(value);out.workspace=refs[out.workspace.$telemetryWorkspace];for(const b of out.backups)b.snapshot.workspace=refs[b.snapshot.workspace.$telemetryWorkspace];return out;}
+
  function sharedWorkspace(workspace){need(archive,"Shared workspace support is absent from this application edition.");const valid=checkedWorkspace(workspace);let value=sharedCache.get(valid);if(!value){value=api.parseJSON(archive.serialize(valid).content);const freeze=x=>{if(x&&typeof x==="object"&&!Object.isFrozen(x)){for(const child of Object.values(x))freeze(child);Object.freeze(x);}return x;};freeze(value);sharedCache.set(valid,value);}return value;}
  function checkedWorkspace(w){if(known.has(w))return w;const valid=api.validateWorkspace(w);known.add(valid);return valid;}
  function blankDraft(input){return {name:"",parentEditionId:null,rawInput:JSON.stringify(input,null,2),actor:"",note:"",mapping:{sourceId:"",format:"csv",arrayPointer:"",target:"",raw:"{}",mode:"append"},selectedEditionId:"",leftEditionId:"",rightEditionId:"",review:{decision:"needs-work",reviewer:"",note:""},view:"input",rowEdit:null,inputGroup:"points",sourcePage:0,pages:{},reportSection:"summary"};}
@@ -16,8 +23,8 @@ export function createSessionAPI(api, codec, options={}) {
   need(d.mapping&&["sourceId","format","arrayPointer","target","raw","mode"].every(k=>typeof d.mapping[k]==="string"),"Mapping draft is incomplete.");
   need(d.review&&["decision","reviewer","note"].every(k=>typeof d.review[k]==="string"),"Review draft is incomplete.");
   s.workspace=checkedWorkspace(s.workspace);
-  for(const b of s.backups){need(b&&typeof b.id==="string"&&typeof b.reason==="string"&&typeof b.at==="string"&&typeof b.sha256==="string"&&b.snapshot,"Retained backup is incomplete.");need(hash(JSON.stringify(b.snapshot))===b.sha256,"Retained backup identity changed.");need(!b.snapshot.backups,"Backups must contain direct complete snapshots, not recursive histories.");b.snapshot.workspace=checkedWorkspace(b.snapshot.workspace);}
-  const bytes=encode(JSON.stringify(s)).length;need(bytes<=limit,"Complete operator session exceeds "+limit+" bytes. Export the current session and begin a separate workspace.");
+  for(const b of s.backups){need(b&&typeof b.id==="string"&&typeof b.reason==="string"&&typeof b.at==="string"&&typeof b.sha256==="string"&&b.snapshot,"Retained backup is incomplete.");need(!b.snapshot.backups,"Backups must contain direct complete snapshots, not recursive histories.");if(!knownBackups.has(b)){need(hash(JSON.stringify(b.snapshot))===b.sha256,"Retained backup identity changed.");b.snapshot.workspace=checkedWorkspace(b.snapshot.workspace);freeze(b);knownBackups.add(b);}}
+  const bytes=size(s);need(bytes<=limit,"Complete operator session exceeds "+limit+" bytes. Export the current session and begin a separate workspace.");
   return s;
  }
  function payload(s){validate(s);return clone(s);}
@@ -34,12 +41,12 @@ export function createSessionAPI(api, codec, options={}) {
   if(e.schema==="commons.telemetry-operator-shared-carrier.v1"){need(archive,"Shared workspace support is absent from this application edition.");const expand=snapshot=>{need(snapshot&&snapshot.workspaceArchive&&!Object.prototype.hasOwnProperty.call(snapshot,"workspace"),"Shared snapshot requires exactly its retained workspace archive.");return Object.fromEntries(Object.entries(snapshot).map(([key,value])=>key==="workspaceArchive"?["workspace",archive.receive(JSON.stringify(value))]:[key,value]));};const expanded=expand(restored);need(Array.isArray(expanded.backups),"Shared session history is incomplete.");expanded.backups=expanded.backups.map(b=>({...b,snapshot:expand(b.snapshot)}));return validate(expanded);}
   return validate(restored);
  }
- function backup(s,reason){const snapshot=clone(s);delete snapshot.backups;return {id:id(),reason,at:now(),sha256:hash(JSON.stringify(snapshot)),snapshot};}
- function replace(current,incoming,reason){validate(current);validate(incoming);const n=clone(incoming),all=[...current.backups,...incoming.backups,backup(current,reason)];n.backups=[];const seen=new Map();for(const b of all){if(seen.has(b.id)){need(seen.get(b.id)===JSON.stringify(b),"Backup identifier has conflicting original content.");continue;}seen.set(b.id,JSON.stringify(b));n.backups.push(b);}n.updatedAt=now();return validate(n);}
- function restoreBackup(current,backupId){const b=current.backups.find(x=>x.id===backupId);need(b,"Selected prior session is absent.");return replace(current,{...clone(b.snapshot),backups:[]},"Before restoring "+backupId);}
+ function backup(s,reason){const snapshot={...copy(s)};delete snapshot.backups;return {id:id(),reason,at:now(),sha256:hash(JSON.stringify(snapshot)),snapshot};}
+ function replace(current,incoming,reason){validate(current);validate(incoming);const n=copy(incoming),all=[...current.backups,...incoming.backups,backup(current,reason)];n.backups=[];const seen=new Map();for(const b of all){if(seen.has(b.id)){need(seen.get(b.id)===JSON.stringify(b),"Backup identifier has conflicting original content.");continue;}seen.set(b.id,JSON.stringify(b));n.backups.push(b);}n.updatedAt=now();return validate(n);}
+ function restoreBackup(current,backupId){const b=current.backups.find(x=>x.id===backupId);need(b,"Selected prior session is absent.");return replace(current,{...clone({...b.snapshot,workspace:null}),workspace:b.snapshot.workspace,backups:[]},"Before restoring "+backupId);}
  function draftFingerprint(s){return hash(JSON.stringify({workspaceRoot:s.workspace.rootSha256,rawInput:s.draft.rawInput,name:s.draft.name,parentEditionId:s.draft.parentEditionId,actor:s.draft.actor,note:s.draft.note}));}
  function preview(s){validate(s);need(s.draft.name.trim(),"Name this telemetry edition.");const input=api.parseJSON(s.draft.rawInput);return {binding:draftFingerprint(s),input,report:api.analyse(input,s.workspace),name:s.draft.name};}
  function meta(s,operationId){return {operationId:operationId||id(),expectedRoot:s.workspace.rootSha256,at:now()};}
- function save(s,p){need(p&&p.binding===draftFingerprint(s),"The current input or workspace changed. Preview the complete edition again.");const n={...clone(s),workspace:s.workspace},r=api.saveEdition(n.workspace,{name:n.draft.name,input:api.parseJSON(n.draft.rawInput),parentEditionId:n.draft.parentEditionId,preparedBy:n.draft.actor,note:n.draft.note},meta(n));n.workspace=r.workspace;n.draft.selectedEditionId=r.editionId;n.draft.parentEditionId=r.editionId;n.updatedAt=now();return {session:validate(n),editionId:r.editionId,report:r.report};}
- return {schema,limit,create,validate,pack,packShared,receive,replace,restoreBackup,backup,blankDraft,draftFingerprint,preview,save,meta,checkedWorkspace};
+ function save(s,p){need(p&&p.binding===draftFingerprint(s),"The current input or workspace changed. Preview the complete edition again.");const n=copy(s),r=api.saveEdition(n.workspace,{name:n.draft.name,input:api.parseJSON(n.draft.rawInput),parentEditionId:n.draft.parentEditionId,preparedBy:n.draft.actor,note:n.draft.note},meta(n));n.workspace=r.workspace;n.draft.selectedEditionId=r.editionId;n.draft.parentEditionId=r.editionId;n.updatedAt=now();return {session:validate(n),editionId:r.editionId,report:r.report};}
+ return {schema,limit,create,validate,pack,packShared,receive,replace,restoreBackup,backup,blankDraft,draftFingerprint,preview,save,meta,checkedWorkspace,copy,size};
 }

@@ -12,6 +12,14 @@ The first course uses the real private filesystem, writer lease, loopback listen
 
 Build selection `telemetry-comparison` through the maintained distribution BUILDING.md, install it, and open **Applications → Telemetry comparison**. Create a new private workspace with **New workspace label**, then Start/Open. Open a second authored course directory through the same route and continue both independently.
 
+## Successor storage and migration
+
+Use this complete successor source through the same receiving operation as the existing installation. Before upgrading, keep an original version 1 browser recovery containing unfinished input, mapping/review drafts and a pending save. Close older openings after saving a complete recovery JSON so IndexedDB can upgrade. Reopen through the current private Applications link. Recover that exact original request; confirm its ID, original base and complete successor remain unchanged. The migration retains the complete predecessor as a proposal.
+
+Open two tabs with independently changed drafts. Save competing browser copies, select a branch explicitly, download both complete proposals and reopen them through **Open complete recovery JSON**. Inspect their original pending identities and all prior branches. Exercise storage failure with actual browser storage controls and verify the selected recovery survives while the current editor can still export its complete JSON.
+
+Export the saved host handover and reopen all three working formats: ordinary, prior compact and full-session shared-node. The installed CLI receive path accepts each. The maintained offline operator still exposes its independent browser copies, conflict proposals, emergency recovery and original legacy import.
+
 ## Actual rendered operation
 
 Use a normal desktop viewport and a narrow phone viewport. Look at the rendered screenshots. Operate every original section: retain actual authorized files or the clearly authored example, inspect full source rows, declare the clock and units, preserve unfinished structured/raw input, freeze complete reports, compare common observations, save a named review, and reopen older sessions. Check empty/populated/error/progress states, wide-table scrolling and complete visible text.

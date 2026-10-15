@@ -1,0 +1,11 @@
+# Transactional installed telemetry successor
+
+The complete 70-file Commons telemetry successor from PR37935, merge 75af0660597f664cc1b170ba07f35fcf178a2017 (source head e0ab15c399fd2b176adee6e8160e4bc12923135f), is composed into the existing Merchant application from PR2092, merge 9d293da6dd1b207d56bf74a4995dc4b644df8f88. Both complete histories and all MIT notices are retained. Changed installed preimages are under history/before-transactional-install.
+
+The original numerical engine, source intake and mapping, immutable report editions, cohort comparison, review semantics, native tools and complete operator remain the same domain. Existing Applications, private host, native and MCP registration/API paths continue unchanged. The new full-session shared-node carrier is accepted alongside ordinary and previous compact files.
+
+The maintained standalone operator stores complete proposals transactionally, sharing exact immutable workspace archives. Installed recovery uses the same archive engine while preserving its existing recovery schema, installation binding, original pending request, host base edition, full editor and every prior branch. IndexedDB database tjlabs.telemetry.managed.v1 upgrades from version 1 to 2; the old sessions store remains. The first successful save retains the complete old row as an immutable proposal before selecting a successor in the same transaction. An expected-head conflict retains the complete proposed row without advancing the selected head. Quota failure aborts the entire transaction. Every retained proposal is available as ordinary complete recovery JSON. Explicit selection retains both complete branch preimages.
+
+New storage references are internal. Exported JSON remains complete, independent and reopenable. The selected host edition exports ordinary, previous compact and full-session shared-node working copies, complete editable HTML, every original, report, retained host request/edition and complete maintained source.
+
+commissioning/installed-upgrade-result.json records executed production controller/model/archive/storage courses in V8 with explicit DOM, transport and IndexedDB adapters. Actual filesystem, HTTP, browser IndexedDB and rendered delivery continue through INSTALLED_RECEIVING.md and the existing equipped receiving operation.
