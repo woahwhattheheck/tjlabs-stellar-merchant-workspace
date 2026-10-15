@@ -1,7 +1,7 @@
 {
   "schema": "shipment-review.alias-course.v1",
   "execution": "Actual production observations parser",
-  "authored_raw_output": "{\n  \"documents\": [\n    {\n      \"document\": \"DOC-A\",\n      \"shipment\": \"SHIP-A\"\n    },\n    {\n      \"document\": \"DOC-B\",\n      \"shipment\": \"SHIP-B\"\n    }\n  ],\n  \"fields\": [\n    {\n      \"shipment\": \"SHIP-A\",\n      \"field\": \"quantity\",\n      \"value\": 90,\n      \"owner\": \"Parsela-proposed\"\n    },\n    {\n      \"shipment\": \"SHIP-A\",\n      \"field\": \"consignee\",\n      \"value\": \"Example Alpha reviewed\",\n      \"owner\": \"locked\"\n    },\n    {\n      \"shipment\": \"SHIP-B\",\n      \"field\": \"reference_number\",\n      \"value\": 9007199254740993,\n      \"owner\": \"human-edited\"\n    }\n  ],\n  \"gates\": [\n    {\n      \"shipment\": \"SHIP-A\",\n      \"gate\": \"invoice-ready\",\n      \"status\": \"BLOCKED\",\n      \"missing\": [\n        \"po_number\"\n      ]\n    },\n    {\n      \"shipment\": \"SHIP-B\",\n      \"gate\": \"invoice-ready\",\n      \"status\": \"READY\",\n      \"missing\": []\n    }\n  ]\n}",
+  "authored_raw_output": "{\n  \"documents\": [\n    {\n      \"document\": \"DOC-A\",\n      \"shipment\": \"SHIP-A\"\n    },\n    {\n      \"document\": \"DOC-B\",\n      \"shipment\": \"SHIP-B\"\n    }\n  ],\n  \"fields\": [\n    {\n      \"shipment\": \"SHIP-A\",\n      \"field\": \"quantity\",\n      \"value\": 90,\n      \"owner\": \"provider-proposed\"\n    },\n    {\n      \"shipment\": \"SHIP-A\",\n      \"field\": \"consignee\",\n      \"value\": \"Example Alpha reviewed\",\n      \"owner\": \"locked\"\n    },\n    {\n      \"shipment\": \"SHIP-B\",\n      \"field\": \"reference_number\",\n      \"value\": 9007199254740993,\n      \"owner\": \"human-edited\"\n    }\n  ],\n  \"gates\": [\n    {\n      \"shipment\": \"SHIP-A\",\n      \"gate\": \"invoice-ready\",\n      \"status\": \"BLOCKED\",\n      \"missing\": [\n        \"po_number\"\n      ]\n    },\n    {\n      \"shipment\": \"SHIP-B\",\n      \"gate\": \"invoice-ready\",\n      \"status\": \"READY\",\n      \"missing\": []\n    }\n  ]\n}",
   "mapping": {
     "id": "canonical",
     "title": "Worked interchange mapping",
@@ -24,7 +24,7 @@
       },
       "values": [
         {
-          "observed": "Parsela-proposed",
+          "observed": "provider-proposed",
           "canonical": "proposed"
         },
         {

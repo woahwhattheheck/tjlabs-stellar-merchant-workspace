@@ -1,5 +1,5 @@
 // MIT. The original replayable command journal is authoritative.
-import core from './runtime/shipment-review.cjs';
+import core from './runtime/cached-review.cjs';
 import * as codec from './host/codec.mjs';
 import {createShipmentCommissioningSessionAPI} from './src/session.mjs';
 const sessions=createShipmentCommissioningSessionAPI(core,codec);

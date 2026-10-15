@@ -400,7 +400,7 @@
       "expected_case_hash": "196238c18692821486e8e8bb87359af86500f82e1c2e9c9d5ac356e89b2dac89",
       "status": "approved",
       "reviewer": "TJL authored-case reviewer",
-      "note": "Reviewed fictional reference against the authored input sequence. No Parsela service or customer outputs used.",
+      "note": "Reviewed fictional reference against the authored input sequence. No provider service or customer outputs used.",
       "source_refs": [
         {
           "original_id": "operator-edit",
@@ -450,7 +450,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 8,
-    "expected_hash": "4545692be14b4996a116426144e003662730f6eb2886d00946e29ba2ccd8fea8"
+    "expected_hash": "a29c960a4969d8381235272a73941b4283e69662972cf1043eb2a0ab86fc92dc"
   },
   {
     "id": "op-010",
@@ -465,7 +465,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 9,
-    "expected_hash": "c5a9732b33f17a0fd56beade5e18b5a0bdf3b2485cea2797cde456dd11c3f266"
+    "expected_hash": "9762c329bd44f513da1fc4eaf8ead40aff5fa06055bb74005a12a40fedb8925e"
   },
   {
     "id": "op-011",
@@ -481,7 +481,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 10,
-    "expected_hash": "e7a854ae6efe87f80cd6c3a6427b0510d737c28a6f88992c238b90a01051ee19"
+    "expected_hash": "9ca20596902bc208eac6532009317027fec4f89ed3ebff562ef73f1eef78bcf1"
   },
   {
     "id": "op-012",
@@ -498,7 +498,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 11,
-    "expected_hash": "29fbac0b45ec05fd05e43b29572ac812faa0f4a23561690598402ddb80f4b7b6"
+    "expected_hash": "812ac566e538f1994a4af1c18d1aee8b34bf868b98ce05675c34af18ba36fd9a"
   },
   {
     "id": "op-013",
@@ -514,7 +514,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 12,
-    "expected_hash": "c09ec4891ea2fef8e14e4b98df74c442d953a99e6bd05c37da22dd26db1d5a3e"
+    "expected_hash": "f75aa39fa5a3ad8f4f10cd5a379560dd06ecbd78ba906ade36923d1128409083"
   },
   {
     "id": "op-014",
@@ -531,7 +531,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 13,
-    "expected_hash": "59e7a2f2829c98f69ae7dcb4e9362fb49da66d43b296f41317675debac638e6c"
+    "expected_hash": "a58650e1bee24fc367eceacbb9d0f5e0184c1f27e1edacd746787d02161a70f3"
   },
   {
     "id": "op-015",
@@ -547,7 +547,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 14,
-    "expected_hash": "ed05dfbbd6d117d3ab24e1195a4a989eb9a1322ad87be98dce4f06495ae39f49"
+    "expected_hash": "f690fce617d64540089749b3066b9d7aeef076ce816affe1492dc8befcfb5feb"
   },
   {
     "id": "op-016",
@@ -564,7 +564,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 15,
-    "expected_hash": "6d6b7d8939a689ead2fcb18d773fe590788296cdf30ec6532ca19827fea2ca9d"
+    "expected_hash": "52e4ad9c72d5ee8c55fb6fe4d1da19a9a93ff500ac68191e39dad20d269b29bb"
   },
   {
     "id": "op-017",
@@ -580,7 +580,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 16,
-    "expected_hash": "903051ea2baf1290b67b4c89c2e4f04e33c4ce18c02ae5c0728d19a16eca2e91"
+    "expected_hash": "e38eba6e29c37f16e9ff97bdcdbc16beef7562b09c19a0c659cb0f87fc20d948"
   },
   {
     "id": "op-018",
@@ -597,7 +597,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 17,
-    "expected_hash": "f3982d5d6d908b81118df10253faa76db2b4b654d0095799736a6e2bb7694f22"
+    "expected_hash": "7deaa3f95be4b116ffc6207009f93757af3cc02e03cdfedda0509b45ad667d4e"
   },
   {
     "id": "op-019",
@@ -612,7 +612,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 18,
-    "expected_hash": "a08ed415534743c4f24923473690ab6a32d6d3e453fd94d1570321f0d946ff06"
+    "expected_hash": "f0d85bd145e7b4a07ae0312e35352467532c651b4d1d73f21417a1f2b420c5e5"
   },
   {
     "id": "op-020",
@@ -628,7 +628,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 19,
-    "expected_hash": "1049ee341fe727f9fdbff489b60fffe68a61d3b6ea802828921672cdfd7cf0df"
+    "expected_hash": "f85023b6e2483fa9fc379aad510c7c65d1e8fb2248f959daa42e9ceb9e169dab"
   },
   {
     "id": "op-021",
@@ -645,7 +645,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 20,
-    "expected_hash": "6b2cc76d109247b65980b48f9259afd080f3ec87e3119a2c36705a68f7251154"
+    "expected_hash": "97ca60793af1c6e59b69c2a7e90afc78ca898bc75cd4569c5076f6c605d99362"
   },
   {
     "id": "op-022",
@@ -661,7 +661,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 21,
-    "expected_hash": "15f3b04fc38bc69ff1e74f27f8f8353e8890c7a748fe1e7ee2ffa6f4585a5ec0"
+    "expected_hash": "82f7256add2303eccbc16f39c127dc6d9768e7020df267c043427422376c1f33"
   },
   {
     "id": "op-023",
@@ -678,7 +678,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 22,
-    "expected_hash": "617882ac5393d6674fa66b8a5f996b08f9df3efac9cf2cc46c52bda47f0e4433"
+    "expected_hash": "7173d9e355ca7ed81941d2afac272cdf82fb3dbcdafb45ebeef26814779cb972"
   },
   {
     "id": "op-024",
@@ -694,7 +694,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 23,
-    "expected_hash": "2cfe07187981a335c2350a8aa8cfffcfee14a76e382460aba9e0fb4b63efcb7c"
+    "expected_hash": "fecdd3240201bf7375e6c908c44d370ddc44887122379baa17da6a03bfe9cc45"
   },
   {
     "id": "op-025",
@@ -711,7 +711,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 24,
-    "expected_hash": "e5cb3fbb19058a6b299a20f24e09e58c765e9ee1453766c6a317b238f04a37db"
+    "expected_hash": "c62e4a87330e93d21a56a7fe26d906bb70491d7d69198b4bdb21be589d4dd386"
   },
   {
     "id": "op-026",
@@ -727,7 +727,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 25,
-    "expected_hash": "5aa587871bc50d49e7205ac1e708d277331b6c4b7844e1c36ad75258fdca5ca3"
+    "expected_hash": "07348abe3b568c30efca770defb143bdf14601abc10c5e55f207e4fee98e261a"
   },
   {
     "id": "op-027",
@@ -744,7 +744,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 26,
-    "expected_hash": "7ae7263b36c405ab21eee9dcca29e28cd90f2d747079ee50851daf656f857571"
+    "expected_hash": "0cda615d01ae6e203c5fc1163e74e756e094db3acc32b1edf30c9e8ccf8e8a14"
   },
   {
     "id": "op-028",
@@ -754,7 +754,7 @@
       "expected_run_hash": "c1ec2d2822e18dde892d700486e69401baded49f5d95c52b6e4d82ab59b445cb",
       "status": "accepted",
       "reviewer": "TJL authored-case reviewer",
-      "note": "All agreed authored checkpoint observations match. This acceptance concerns the example, not Parsela performance.",
+      "note": "All agreed authored checkpoint observations match. This acceptance concerns the example, not provider performance.",
       "source_refs": [
         {
           "original_id": "observed-B-late",
@@ -765,7 +765,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 27,
-    "expected_hash": "8b8713211c9aa226fb247590a36cb5fa50ebde64b41e3409ea9e8d65767ce068"
+    "expected_hash": "e04e9afbe48b6098583de19f4071b0147476d4bc7b4ebecc7ef87716feb77ee2"
   },
   {
     "id": "op-029",
@@ -785,7 +785,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 28,
-    "expected_hash": "7d8b007cf847f15241c9bfda32d5696914393af5d7872826ff5b79365251f368"
+    "expected_hash": "e7c9f9b498b01aa202afe45f0b95c656ab96baff4ba2d85788808a197626e4c4"
   },
   {
     "id": "op-030",
@@ -805,7 +805,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 29,
-    "expected_hash": "f03e73439f6158b8904423074869344cf5e48954f8d60065068f4cd82625e252"
+    "expected_hash": "13785c6f419e9d76aa619d58a4757054484ff92d470d0e8c51a49fd4d338884d"
   },
   {
     "id": "op-031",
@@ -825,7 +825,7 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 30,
-    "expected_hash": "217b1bf80b8ad83701c84c7e40132f9caae93fb1770cd561fe9b615eb558a84a"
+    "expected_hash": "9051932498038047ec9c36fb98a98628a02404b62015be0b191b4cbfe9964b97"
   },
   {
     "id": "op-032",
@@ -845,6 +845,6 @@
     "actor": "TJL worked-course operator",
     "at": "2026-10-15T00:40:00Z",
     "expected_revision": 31,
-    "expected_hash": "47847eefb9b7e407965989dc872256ca3bc54993fa96f08b141a1e3ce17569ad"
+    "expected_hash": "6dc7e617eaae0e269f0c76e1075bf5f94323f51fb4b021ca6a6e4c64f3fa0a20"
   }
 ]
