@@ -1,0 +1,5 @@
+id,organisation_id,name,role,source_ref
+OFFICE,OP,Authored OFFICE,Declared actor; authority is separate,authored/people
+HOST-MGR,HOST,Authored HOST-MGR,Declared actor; authority is separate,authored/people
+AD-OWNER,ADV,Authored AD-OWNER,Declared actor; authority is separate,authored/people
+RIVAL-OWNER,RIVAL,Authored RIVAL-OWNER,Declared actor; authority is separate,authored/people

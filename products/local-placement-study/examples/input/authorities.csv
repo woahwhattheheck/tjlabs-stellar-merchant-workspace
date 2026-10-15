@@ -1,0 +1,5 @@
+id,person_id,organisation_id,venue_id,scope,effective_from,effective_until,recorded_at,payload_sha256,source_ref
+AUTH-H,HOST-MGR,HOST,,host_placement|creative_approval,2026-10-01T00:00:00Z,,2026-10-01T00:00:00Z,83dc45810a2144af544ded9261b61ca34c46e951d064a56b4350d1bb89405878,authored/signed-authority/AUTH-H
+AUTH-O,OFFICE,OP,,booking|finance,2026-10-01T00:00:00Z,,2026-10-01T00:00:00Z,f92afb9476162e7c0aed513288e1545810b4e2454cfaac583b523e80653d1104,authored/signed-authority/AUTH-O
+AUTH-A,AD-OWNER,ADV,,creative_approval,2026-10-01T00:00:00Z,,2026-10-01T00:00:00Z,11e90559df765fcc182b90c49c5ebe7b7950a11eed8a2dae7621b949e9f61d56,authored/signed-authority/AUTH-A
+AUTH-R,RIVAL-OWNER,RIVAL,,creative_approval,2026-10-01T00:00:00Z,,2026-10-01T00:00:00Z,48814e9cd07fe4d5ac4dbac243b0a08439a1e9ba51e893c34e821d718c777a5d,authored/signed-authority/AUTH-R

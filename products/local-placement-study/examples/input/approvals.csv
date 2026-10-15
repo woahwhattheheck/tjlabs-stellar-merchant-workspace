@@ -1,0 +1,9 @@
+id,creative_id,venue_id,role,decision,effective_at,recorded_at,actor_id,authority_id,payload_sha256,source_ref
+CR1-V1-host,CR1,V1,host,approved,2026-10-01T00:00:00Z,2026-10-01T00:00:00Z,HOST-MGR,AUTH-H,afced761c42692699a5671aa6f4b48700a18d1cd4778005f10feee6e280ba051,authored/approval
+CR1-V1-advertiser,CR1,V1,advertiser,approved,2026-10-01T00:00:00Z,2026-10-01T00:00:00Z,AD-OWNER,AUTH-A,afced761c42692699a5671aa6f4b48700a18d1cd4778005f10feee6e280ba051,authored/approval
+CR1-V2-host,CR1,V2,host,approved,2026-10-01T00:00:00Z,2026-10-01T00:00:00Z,HOST-MGR,AUTH-H,afced761c42692699a5671aa6f4b48700a18d1cd4778005f10feee6e280ba051,authored/approval
+CR1-V2-advertiser,CR1,V2,advertiser,approved,2026-10-01T00:00:00Z,2026-10-01T00:00:00Z,AD-OWNER,AUTH-A,afced761c42692699a5671aa6f4b48700a18d1cd4778005f10feee6e280ba051,authored/approval
+CR2-V1-host,CR2,V1,host,approved,2026-10-01T00:00:00Z,2026-10-01T00:00:00Z,HOST-MGR,AUTH-H,7ea7902c812bb9b97ac3c94fe353c1f7816a4e5b4a63c8817aa9a7f93d31de3f,authored/approval
+CR2-V1-advertiser,CR2,V1,advertiser,approved,2026-10-01T00:00:00Z,2026-10-01T00:00:00Z,RIVAL-OWNER,AUTH-R,7ea7902c812bb9b97ac3c94fe353c1f7816a4e5b4a63c8817aa9a7f93d31de3f,authored/approval
+CR2-V2-host,CR2,V2,host,approved,2026-10-01T00:00:00Z,2026-10-01T00:00:00Z,HOST-MGR,AUTH-H,7ea7902c812bb9b97ac3c94fe353c1f7816a4e5b4a63c8817aa9a7f93d31de3f,authored/approval
+CR2-V2-advertiser,CR2,V2,advertiser,approved,2026-10-01T00:00:00Z,2026-10-01T00:00:00Z,RIVAL-OWNER,AUTH-R,7ea7902c812bb9b97ac3c94fe353c1f7816a4e5b4a63c8817aa9a7f93d31de3f,authored/approval

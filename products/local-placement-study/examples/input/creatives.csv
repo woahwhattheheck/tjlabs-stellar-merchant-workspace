@@ -1,0 +1,3 @@
+id,campaign_id,version,supersedes_id,duration_seconds,categories,payload_sha256,created_at,recorded_at,source_ref
+CR1,C1,1,,15,HVAC,afced761c42692699a5671aa6f4b48700a18d1cd4778005f10feee6e280ba051,2026-10-01T00:00:00Z,2026-10-01T00:00:00Z,authored/creative/CR1
+CR2,C2,1,,15,HVAC,7ea7902c812bb9b97ac3c94fe353c1f7816a4e5b4a63c8817aa9a7f93d31de3f,2026-10-01T00:00:00Z,2026-10-01T00:00:00Z,authored/creative/CR2

@@ -1,0 +1,3 @@
+id,advertiser_id,number,currency,start_at,end_at,minimum_end_at,required_venue_count,recorded_at,agreement_sha256,source_ref
+C1,A,C1,USD,2026-10-01T00:00:00Z,2026-12-31T00:00:00Z,2026-12-31T00:00:00Z,3,2026-10-01T00:00:00Z,be615e7def1f414c6e819e4e8ddd7e418f735483d1bd7685e3ffd967235ceb19,authored/campaign/C1
+C2,B,C2,USD,2026-10-01T00:00:00Z,2026-12-31T00:00:00Z,2026-12-31T00:00:00Z,1,2026-10-01T00:00:00Z,f51b9812c493c5f37d32c7ddf87f73138d4175f5b34396574699ca5ca5f9d1c4,authored/campaign/C2

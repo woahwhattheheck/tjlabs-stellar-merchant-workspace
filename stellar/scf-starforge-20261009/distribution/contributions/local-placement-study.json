@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "local-placement-study",
+  "description": "Complete twenty-five-family local placement study with venue authority, dated agreements, physical inventory, exact creative approvals, scheduled and actual display, historical reports, invoices/payment observations and recurring effort with recoverable editing",
+  "components": [
+    "products/local-placement-study"
+  ],
+  "commands": {
+    "placement-workspace": "products/local-placement-study/installed-cli.mjs",
+    "placement-managed": "products/local-placement-study/managed.mjs"
+  },
+  "commandDescriptions": {
+    "placement-workspace": "Create, receive and export complete Local Placement Study sessions",
+    "placement-managed": "Open the complete local placement study through Applications"
+  },
+  "exports": {
+    "./products/placement": "./source/products/local-placement-study/runtime.mjs",
+    "./products/placement/client": "./source/products/local-placement-study/host/client.mjs",
+    "./products/placement/server": "./source/products/local-placement-study/host/server.mjs"
+  },
+  "applicationProviders": {
+    "local-placement-study": "products/local-placement-study/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "local-placement-study": "products/local-placement-study/merchant-provider.mjs"
+  }
+}
