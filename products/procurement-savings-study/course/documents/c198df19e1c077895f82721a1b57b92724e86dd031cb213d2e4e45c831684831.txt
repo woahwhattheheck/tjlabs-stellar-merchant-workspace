@@ -1,0 +1,16 @@
+{
+  "data_class": "authored_course",
+  "kind": "mapping_cases",
+  "record_id": "MAP4",
+  "observed_fields": {
+    "spend_record_id": "SP3",
+    "initiative_record_id": "I4",
+    "supplier_id": "SUP",
+    "term_record_id": "T4",
+    "item_id": "ITEM3",
+    "decided_at": "2026-10-05T09:00:00Z",
+    "inputs_complete": "true",
+    "expected_inputs": "5",
+    "proposed_by": "PROC"
+  }
+}

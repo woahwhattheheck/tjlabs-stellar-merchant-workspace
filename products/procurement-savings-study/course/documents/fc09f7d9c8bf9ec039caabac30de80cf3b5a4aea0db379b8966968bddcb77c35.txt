@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "calculation_inputs",
+  "record_id": "CI3-15",
+  "observed_fields": {
+    "calculation_case_record_id": "CALC3",
+    "family": "fx_rates",
+    "record_id": "FX-A",
+    "row_sha256": "d3fe0238870600318909c611cb00327cad48cc8b227b05a3be581913be56826d"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "data_class": "authored_course",
+  "kind": "policies",
+  "record_id": "POL",
+  "observed_fields": {
+    "operator_id": "OP",
+    "reporting_currency": "USD",
+    "effect_method": "current_price_volume_with_interaction",
+    "one_time_treatment": "subtract",
+    "recurring_treatment": "subtract",
+    "method_document_id": "document-4e23a85e4b8a2a42512e7844d3cc0640",
+    "approved_by": "FIN",
+    "approved_at": "2026-08-01T09:00:00Z",
+    "valid_from": "2026-08-01T09:00:00Z"
+  }
+}

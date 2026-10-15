@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "sites",
+  "record_id": "SITE",
+  "observed_fields": {
+    "site_id": "SITE",
+    "operator_id": "OP",
+    "name": "North works",
+    "valid_from": "2026-08-01T09:00:00Z"
+  }
+}

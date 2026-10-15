@@ -1,0 +1,22 @@
+{
+  "data_class": "authored_course",
+  "kind": "spend_lines",
+  "record_id": "SP1",
+  "observed_fields": {
+    "operator_id": "OP",
+    "site_id": "SITE",
+    "source_system": "AP",
+    "external_transaction_ref": "INV-SP1",
+    "external_line_ref": "1",
+    "transaction_at": "2026-10-03T09:00:00Z",
+    "posted_at": "2026-10-04T09:00:00Z",
+    "supplier_ref": "S-001",
+    "contract_ref": "C-ITEM1",
+    "item_ref": "ITEM1",
+    "quantity": "8000",
+    "unit": "each",
+    "unit_price": "92",
+    "net_amount": "736000",
+    "currency": "USD"
+  }
+}

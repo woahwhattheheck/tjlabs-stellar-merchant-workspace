@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "calculation_inputs",
+  "record_id": "CI3-41",
+  "observed_fields": {
+    "calculation_case_record_id": "CALC3",
+    "family": "commercial_terms",
+    "record_id": "T1",
+    "row_sha256": "96e96532b8f5490582de5f5401646e8552a6fb787e19aaf41a1d1f53e9cbb506"
+  }
+}

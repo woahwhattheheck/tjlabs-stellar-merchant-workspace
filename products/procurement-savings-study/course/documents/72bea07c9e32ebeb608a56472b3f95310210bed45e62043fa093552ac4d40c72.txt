@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "calculation_inputs",
+  "record_id": "CI3-13",
+  "observed_fields": {
+    "calculation_case_record_id": "CALC3",
+    "family": "unit_conversions",
+    "record_id": "PACK",
+    "row_sha256": "1536567ecca1b0028bf6f519f8f53c14a89bd368148ecf0cf98e24bf3dde1a04"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "calculation_inputs",
+  "record_id": "CI1-56",
+  "observed_fields": {
+    "calculation_case_record_id": "CALC1",
+    "family": "spend_lines",
+    "record_id": "SP1-ALIAS",
+    "row_sha256": "77aa36a332d371599ae42644accca0e3151b86422149ea883a1ffddcff44a743"
+  }
+}

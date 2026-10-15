@@ -1,0 +1,18 @@
+{
+  "data_class": "authored_course",
+  "kind": "effort",
+  "record_id": "E-44",
+  "observed_fields": {
+    "member_id": "MEM3",
+    "phase": "procurement_submission",
+    "method": "study_process",
+    "person_id": "PROC",
+    "started_at": "2026-10-10T15:00:00.000Z",
+    "ended_at": "2026-10-10T15:03:00.000Z",
+    "person_minutes": "3",
+    "work_key": "study_process-I3-procurement_submission",
+    "matched_group_id": "matched-I3-procurement_submission",
+    "population_complete": "true",
+    "phase_complete": "true"
+  }
+}

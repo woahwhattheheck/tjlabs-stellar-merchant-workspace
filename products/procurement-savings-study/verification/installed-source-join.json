@@ -1,0 +1,60 @@
+{
+  "schema": "procurement-savings.installed-source-join/v1",
+  "upstream_donor": {
+    "files": 612,
+    "bytes": 9629844,
+    "sha256": "90bf14d1bfe8ff57ee4871a9795ded2843009a92f50117f1fdc6645ca4567f2c",
+    "all_source_files_unchanged": true
+  },
+  "framework_source": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "product": "products/distribution-lot-order-study",
+    "head": "710bfa6703031892daed620b1fd880aa6c124f81"
+  },
+  "changes": [
+    "Procurement-specific 11 Merchant tools and 52 typed result collections",
+    "All 33 original canonical families and frozen calculation input readers",
+    "Same private writer and exact saved state/request identity",
+    "Complete original Procurement operator joined with installed carrier, emergency and atomic branch storage",
+    "Complete resumable export with durable prepared ZIP inventory and interruption rejection"
+  ],
+  "source_files": [
+    "AGENTS.md",
+    "INSTALLED_OPERATION.md",
+    "INSTALLED_RECEIVING.md",
+    "application-provider.mjs",
+    "host/client.mjs",
+    "host/codec.mjs",
+    "host/domain.mjs",
+    "host/export-core.mjs",
+    "host/export.mjs",
+    "host/io.mjs",
+    "host/model.cjs",
+    "host/server.mjs",
+    "host/store.mjs",
+    "installed-cli.mjs",
+    "managed.mjs",
+    "mcp.mjs",
+    "merchant-provider.mjs",
+    "native/receive-installed.mjs",
+    "operator/installed-desk.js",
+    "package.json",
+    "receiving/bootstrap.cjs",
+    "receiving/checkpoint-reader.cjs",
+    "receiving/complete-archive-readback.cjs",
+    "receiving/host-course.cjs",
+    "receiving/portable-course.cjs",
+    "receiving/source-bytes-course.cjs",
+    "runtime.mjs",
+    "setup.mjs",
+    "src/archive.mjs",
+    "src/build-installed.mjs",
+    "src/connected_zip.cjs",
+    "src/core-cache.cjs",
+    "src/managed-storage.mjs",
+    "src/managed.js",
+    "src/session-cache.cjs",
+    "src/session.mjs",
+    "tools.mjs"
+  ]
+}

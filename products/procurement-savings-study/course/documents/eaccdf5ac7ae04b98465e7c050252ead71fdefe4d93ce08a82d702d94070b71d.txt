@@ -1,0 +1,18 @@
+{
+  "data_class": "authored_course",
+  "kind": "effort",
+  "record_id": "E-58",
+  "observed_fields": {
+    "member_id": "MEM4",
+    "phase": "exception_resolution",
+    "method": "study_process",
+    "person_id": "PROC",
+    "started_at": "2026-10-10T17:20:00.000Z",
+    "ended_at": "2026-10-10T17:24:00.000Z",
+    "person_minutes": "4",
+    "work_key": "study_process-I4-exception_resolution",
+    "matched_group_id": "matched-I4-exception_resolution",
+    "population_complete": "true",
+    "phase_complete": "true"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "data_class": "authored_course",
+  "kind": "initiatives",
+  "record_id": "I1",
+  "observed_fields": {
+    "initiative_id": "I1",
+    "operator_id": "OP",
+    "site_id": "SITE",
+    "owner_id": "PROC",
+    "description": "Component purchase price",
+    "category": "ITEM1",
+    "started_at": "2026-09-01T09:00:00Z",
+    "policy_record_id": "POL"
+  }
+}

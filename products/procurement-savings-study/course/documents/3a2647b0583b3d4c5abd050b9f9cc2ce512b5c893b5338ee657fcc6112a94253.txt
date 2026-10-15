@@ -1,0 +1,1 @@
+USD 3,000 original recurring transaction. Explicit approved allocations: initiative I1 USD 2,000 and I2 USD 1,000. No inferred split.

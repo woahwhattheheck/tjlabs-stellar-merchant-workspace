@@ -1,0 +1,19 @@
+{
+  "data_class": "authored_course",
+  "kind": "commercial_terms",
+  "record_id": "T3",
+  "observed_fields": {
+    "initiative_record_id": "I3",
+    "supplier_id": "SUP",
+    "item_id": "ITEM3",
+    "unit_price": "90",
+    "unit": "each",
+    "currency": "USD",
+    "specification": "new-service",
+    "delivery_terms": "delivered",
+    "payment_terms": "net30",
+    "valid_from": "2026-10-01T00:00:00Z",
+    "agreed_by": "PROC",
+    "agreed_at": "2026-09-04T09:00:00Z"
+  }
+}

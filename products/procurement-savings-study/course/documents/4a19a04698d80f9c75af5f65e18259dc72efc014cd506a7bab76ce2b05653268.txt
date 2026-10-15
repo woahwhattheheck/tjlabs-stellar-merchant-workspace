@@ -1,0 +1,18 @@
+{
+  "data_class": "authored_course",
+  "kind": "effort",
+  "record_id": "E-7",
+  "observed_fields": {
+    "member_id": "MEM1",
+    "phase": "reconciliation",
+    "method": "existing_process",
+    "person_id": "PROC",
+    "started_at": "2026-09-10T09:00:00.000Z",
+    "ended_at": "2026-09-10T09:12:00.000Z",
+    "person_minutes": "12",
+    "work_key": "existing_process-I1-reconciliation",
+    "matched_group_id": "matched-I1-reconciliation",
+    "population_complete": "true",
+    "phase_complete": "true"
+  }
+}

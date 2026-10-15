@@ -1,0 +1,5 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,initiative_event_id,initiative_record_id,event_at,state,actor_id,reason
+STATE1,STATE1,1,,active,2026-09-01T09:00:00Z,2026-09-01T09:00:00Z,document-0dd629f11a98f210c887e13ca737b5ec,authored/initiative_events/STATE1,STATE1,I1,2026-09-01T09:00:00Z,active,PROC,Actual started initiative
+STATE2,STATE2,1,,active,2026-09-01T09:00:00Z,2026-09-01T09:00:00Z,document-c09793d009440ae8b045edf26e3c96f8,authored/initiative_events/STATE2,STATE2,I2,2026-09-01T09:00:00Z,active,PROC,Actual started initiative
+STATE3,STATE3,1,,active,2026-09-01T09:00:00Z,2026-09-01T09:00:00Z,document-1969b213d23365c4279237223a997219,authored/initiative_events/STATE3,STATE3,I3,2026-09-01T09:00:00Z,active,PROC,Actual started initiative
+STATE4,STATE4,1,,active,2026-09-01T09:00:00Z,2026-09-01T09:00:00Z,document-987c7b13a9bdb3f8d02526e77528f00e,authored/initiative_events/STATE4,STATE4,I4,2026-09-01T09:00:00Z,paused,PROC,Actual programme pause; prior activity and purchases remain in scope

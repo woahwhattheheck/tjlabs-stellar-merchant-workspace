@@ -1,0 +1,14 @@
+{
+  "data_class": "authored_course",
+  "kind": "baseline_reviews",
+  "record_id": "BR3",
+  "observed_fields": {
+    "baseline_record_id": "B3",
+    "baseline_basis_sha256": "07d3804f9f65f373a6a6ea02ba9fa5654045dcafe1d1c2ad0e1db1b4cdae365b",
+    "reviewed_at": "2026-09-03T09:00:00Z",
+    "reviewed_by": "FIN",
+    "decision": "accepted",
+    "comparability": "normalized",
+    "notes": "Actual authored Finance decision on exact evidence"
+  }
+}

@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,supplier_id,operator_id,name,legal_identity,valid_from,valid_to
+SUP,SUP,1,,active,2026-08-01T09:00:00Z,2026-08-01T09:00:00Z,document-335345cd17ce29143caa712c90da526d,authored/suppliers/SUP,SUP,OP,Authored supply partner,AUTHORED-CO-001,2026-08-01T09:00:00Z,

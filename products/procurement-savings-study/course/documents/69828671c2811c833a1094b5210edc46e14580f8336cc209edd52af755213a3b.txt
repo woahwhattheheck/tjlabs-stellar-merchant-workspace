@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "calculation_inputs",
+  "record_id": "CI3-21",
+  "observed_fields": {
+    "calculation_case_record_id": "CALC3",
+    "family": "initiatives",
+    "record_id": "I1",
+    "row_sha256": "b7c4172e90b71220dd87a71c6f0ab026787b4719733dd3595cf9e42bfe753ed3"
+  }
+}

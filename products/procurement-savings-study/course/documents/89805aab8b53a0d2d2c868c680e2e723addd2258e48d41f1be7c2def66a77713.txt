@@ -1,0 +1,18 @@
+{
+  "data_class": "authored_course",
+  "kind": "effort",
+  "record_id": "E-18",
+  "observed_fields": {
+    "member_id": "MEM2",
+    "phase": "source_capture",
+    "method": "study_process",
+    "person_id": "PROC",
+    "started_at": "2026-10-10T10:40:00.000Z",
+    "ended_at": "2026-10-10T10:46:00.000Z",
+    "person_minutes": "6",
+    "work_key": "study_process-I2-source_capture",
+    "matched_group_id": "matched-I2-source_capture",
+    "population_complete": "true",
+    "phase_complete": "true"
+  }
+}

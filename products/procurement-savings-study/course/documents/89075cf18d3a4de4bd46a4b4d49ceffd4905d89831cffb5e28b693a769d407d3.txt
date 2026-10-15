@@ -1,0 +1,13 @@
+{
+  "data_class": "authored_course",
+  "kind": "items",
+  "record_id": "ITEM3",
+  "observed_fields": {
+    "item_id": "ITEM3",
+    "operator_id": "OP",
+    "name": "ITEM3",
+    "base_unit": "each",
+    "specification": "new-service",
+    "valid_from": "2026-08-01T09:00:00Z"
+  }
+}

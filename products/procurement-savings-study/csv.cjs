@@ -1,0 +1,7 @@
+'use strict';
+function parse(text){const raw=text.charCodeAt(0)===0xfeff?text.slice(1):text,rows=[];let row=[],v='',quoted=false,closed=false,line=1,start=1;for(let i=0;i<raw.length;i++){const ch=raw[i];if(quoted){if(ch==='"'){if(raw[i+1]==='"'){v+='"';i++;}else{quoted=false;closed=true;}}else{v+=ch;if(ch==='\r'||ch==='\n'&&raw[i-1]!=='\r')line++;}continue;}if(ch==='"'){if(v!==''||closed)throw Error('Unexpected quote at line '+line);quoted=true;continue;}if(ch===','||ch==='\n'||ch==='\r'){row.push(v);v='';closed=false;if(ch!==','){if(ch==='\r'&&raw[i+1]==='\n')i++;rows.push({values:row,line_start:start,line_end:line});row=[];line++;start=line;}continue;}if(closed)throw Error('Unexpected text after closing quote at line '+line);v+=ch;}if(quoted)throw Error('Unclosed quoted field');if(row.length||v!==''||closed)rows.push({values:[...row,v],line_start:start,line_end:line});return rows;}
+const cell=x=>{const s=String(x??'');return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+function csv(table){return table.map(r=>r.map(cell).join(',')).join('\r\n')+'\r\n';}
+
+function table(text){const rows=parse(text);if(!rows.length)throw Error('CSV is empty');const header=rows[0].values;if(header.some(x=>!x)||new Set(header).size!==header.length)throw Error('Every column requires a unique nonempty name');const data=rows.slice(1).filter(x=>!x.values.every(v=>v===''));for(const r of data)if(r.values.length!==header.length)throw Error('Wrong field count at line '+r.line_start);return{header,rows:data};}
+module.exports={parse,csv,table};

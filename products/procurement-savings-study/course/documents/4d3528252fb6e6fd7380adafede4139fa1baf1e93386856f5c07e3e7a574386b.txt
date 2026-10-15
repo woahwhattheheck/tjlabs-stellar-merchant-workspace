@@ -1,0 +1,15 @@
+{
+  "data_class": "authored_course",
+  "kind": "adjustment_assignments",
+  "record_id": "CA1",
+  "observed_fields": {
+    "adjustment_record_id": "CREDIT1",
+    "assignment_record_id": "A1",
+    "quantity_delta": "-100",
+    "amount_delta": "-9200",
+    "unit": "each",
+    "currency": "USD",
+    "attributed_at": "2026-10-07T09:00:00Z",
+    "attributed_by": "PROC"
+  }
+}

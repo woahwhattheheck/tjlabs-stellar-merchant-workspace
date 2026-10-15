@@ -1,0 +1,22 @@
+{
+  "data_class": "authored_course",
+  "kind": "spend_lines",
+  "record_id": "BASE-AP3",
+  "observed_fields": {
+    "operator_id": "OP",
+    "site_id": "SITE",
+    "source_system": "AP",
+    "external_transaction_ref": "OLD-3",
+    "external_line_ref": "1",
+    "transaction_at": "2026-08-10T09:00:00Z",
+    "posted_at": "2026-08-11T09:00:00Z",
+    "supplier_ref": "SUP legacy label",
+    "contract_ref": "old-contract-3",
+    "item_ref": "ITEM3",
+    "quantity": "10",
+    "unit": "each",
+    "unit_price": "120",
+    "net_amount": "1200",
+    "currency": "USD"
+  }
+}
