@@ -51,8 +51,8 @@ function keyOf(entry) {
   if (!checked.ok) throw new TypeError(`Invalid resource URL: ${checked.reason}`);
   const url = checked.url;
   if (info.type === 'mcp') {
-    if (typeof info.tool !== 'string' || !MCP_TOOL_NAME.test(info.tool) || !plain(info.inputSchema)) throw new TypeError('Invalid MCP tool');
-    return ['mcp',url.href,info.tool].join('|');
+    if (typeof info.toolName !== 'string' || !MCP_TOOL_NAME.test(info.toolName) || !plain(info.inputSchema)) throw new TypeError('Invalid MCP tool');
+    return ['mcp',url.href,info.toolName].join('|');
   }
   if (!['GET','HEAD','DELETE','POST','PUT','PATCH'].includes(info.method)) throw new TypeError('Invalid HTTP method');
   // Different concrete path parameter values collapse to the same canonical entry.
@@ -78,3 +78,4 @@ export function projectCatalogSearchEntry(entry) {
   projected.resource = sanitizeResourceSearchMetadata(projected.resource);
   return { id, entry: projected };
 }
+
