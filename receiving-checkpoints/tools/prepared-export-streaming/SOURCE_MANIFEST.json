@@ -49,8 +49,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 4452,
-      "sha256": "488cc9944f537f55c9a0d893c1c65056327cc0fdfd0f537202e80eac36e7a100"
+      "bytes": 7944,
+      "sha256": "17cebc038d6d205d9f3ffbdf443742668cbec3bbb580681df1b5e5ac9111370a"
     },
     {
       "path": "full-source-result.json",
@@ -86,6 +86,56 @@
       "path": "default-codec-result.json",
       "bytes": 1178,
       "sha256": "80661fb0a281bf39ed5082ab2f97632238f9fbbedce32902014ee896786a4fe3"
+    },
+    {
+      "path": "publish-prepared-git.cjs",
+      "bytes": 9111,
+      "sha256": "a47832ed78736a7c34da8bcddb40be886ae6cf5e3997708b6c45fb0131feaff2"
+    },
+    {
+      "path": "git-publication-result.json",
+      "bytes": 442,
+      "sha256": "0cea80c9a20bb38487a691a6886cc17f1b33ec2ddb1e3218c31521a142dc1eb3"
+    },
+    {
+      "path": "git-publication-double-loss-result.json",
+      "bytes": 612,
+      "sha256": "6c889c7c73960b819c61783a53966bb991275cdd1f714a215b0364b0551921f8"
+    },
+    {
+      "path": "git-publication-companion-result.json",
+      "bytes": 433,
+      "sha256": "188b504167adb7570426b71d5d57982845ddc4c3d229a59619b79ce1cfe9ef2a"
+    },
+    {
+      "path": "ordinary-zip-range.cjs",
+      "bytes": 9833,
+      "sha256": "86c0ee5ddf471e7e3552da5d01215fccc7deb32896b2f372cb574d1322a7c990"
+    },
+    {
+      "path": "streamed-archive-source.cjs",
+      "bytes": 4108,
+      "sha256": "5ed5d330f9cdb0ece100a7fb63be637b37021b533f87c10d8b7cf0f8529af9b3"
+    },
+    {
+      "path": "read-streamed-archive.mjs",
+      "bytes": 1547,
+      "sha256": "2b4829c10c3fda16cd5543dac89275900d40dfc290ccad8ee3cc9ea7153a857d"
+    },
+    {
+      "path": "verify-ordinary-zip-range.cjs",
+      "bytes": 5775,
+      "sha256": "828d738bfddea7e5be9ae1b796c1e0aeed565f73708f88106b1cbd7c4952139b"
+    },
+    {
+      "path": "ORDINARY_ZIP_RANGE.md",
+      "bytes": 3931,
+      "sha256": "5b9474845be0dcaec83d355ee40ebd79bd5efdb4f0bf24352eed8adafd938a6b"
+    },
+    {
+      "path": "ordinary-zip-range-result.json",
+      "bytes": 2667,
+      "sha256": "810ba070719da84f383bd426eee386c63a620337d06dffd325653f14f8842a42"
     }
   ]
 }

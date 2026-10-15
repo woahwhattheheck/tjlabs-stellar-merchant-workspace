@@ -1,0 +1,13 @@
+{
+  "schema": "commons.git-archive-publication-execution.v1",
+  "members": 4,
+  "parts": 16,
+  "bytes": 15373,
+  "sha256": "6c34aa8522562bf6c4467df77372f1a28c9fda0f949cffba2c3d38b365182283",
+  "acceptedRefResponseLostReconciled": true,
+  "interruptionAfterAcknowledgedBlobRetained": true,
+  "earlyReplayRetainsUnvisitedPrefix": true,
+  "resumeReusesAcknowledgedBlobs": true,
+  "ordinaryPublishedZIPAllMembersExact": true,
+  "blobCalls": 17
+}
