@@ -1,0 +1,3 @@
+payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference
+P-A,received,,USD,5000,2026-10-19T10:00:00-06:00,Recorded card deposit,Receipt A
+P-C,received,,USD,5000,2026-10-19T12:05:00-06:00,Recorded deposit,Receipt C

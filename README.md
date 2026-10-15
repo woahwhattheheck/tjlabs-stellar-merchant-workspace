@@ -16,6 +16,8 @@ roadmap, native acceptance and complete customer handover in one source.
 
 ## Choose a workflow
 
+The standalone [Technician Day Workbench](integrations/technician-day-workspace/README.md) compares original/revised appointments, declared technician/bay windows and buffers, actual completion, quotes, invoices, deposits and refund allocations, retaining whole source editions and browser/native recovery.
+
 The standalone [Delivery Slot Workbench](integrations/delivery-slot-workspace/README.md) receives eight original supplier tables, preserves cut-off demand and explicit late selections, compares production and picking snapshots, and retains complete browser/native working copies.
 
 The standalone [Studio Session Workbench](integrations/studio-session-workspace/README.md) receives eight declared studio CSV sources, compares session/crew/report/payer/payment records, retains original editions and unfinished work, and continues through native output and full browser reopening.

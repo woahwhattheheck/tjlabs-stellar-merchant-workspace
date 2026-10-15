@@ -1,0 +1,2107 @@
+{
+  "schema": "tjlabs.detail-day-native-receiving.v1",
+  "checks": [
+    {
+      "name": "Actual browser model adopts appended native current workspace",
+      "passed": true
+    },
+    {
+      "name": "All unfinished settings, source text, review fields, blank label and selected edition survive",
+      "passed": true
+    },
+    {
+      "name": "Exact original input and command bytes survive native publication",
+      "passed": true
+    },
+    {
+      "name": "All eight source receipts and BOM/CRLF remain complete",
+      "passed": true
+    },
+    {
+      "name": "Current full wrapper serializes and reopens through actual browser model",
+      "passed": true
+    },
+    {
+      "name": "Native review binds the actual source edition and preserves every browser draft",
+      "passed": true
+    },
+    {
+      "name": "Native source and review attempts retain complete ordered continuation",
+      "passed": true
+    },
+    {
+      "name": "Malformed source rejects with accepted core and all pending fields unchanged",
+      "passed": true
+    },
+    {
+      "name": "Malformed original bytes and exact source command remain recoverable",
+      "passed": true
+    },
+    {
+      "name": "Rejected current output reopens through actual browser model",
+      "passed": true
+    },
+    {
+      "name": "Unreadable command retains its exact bytes and prior complete continuation",
+      "passed": true
+    },
+    {
+      "name": "Read-only native report keeps full current wrapper and continuation",
+      "passed": true
+    },
+    {
+      "name": "An existing output directory cannot overwrite saved work",
+      "passed": true
+    },
+    {
+      "name": "Separate current core output is exactly the wrapper's authoritative core",
+      "passed": true
+    },
+    {
+      "name": "Every original, received byte file, report and export matches its package manifest",
+      "passed": true
+    }
+  ],
+  "summary": {
+    "checks": 15,
+    "manifestMembers": 170,
+    "acceptedEditions": 2,
+    "reviewRecords": 1,
+    "unfinishedReviewDrafts": 1
+  },
+  "completed": {
+    "exitCode": 0,
+    "attempt": {
+      "schema": "tjlabs.detail-day-native-attempt.v1",
+      "state": "completed",
+      "action": "receive",
+      "error": null
+    },
+    "operationId": "authored-detail-day",
+    "editions": 2,
+    "files": 40,
+    "out": "/detail-native-receiving/completed"
+  },
+  "reviewed": {
+    "exitCode": 0,
+    "attempt": {
+      "schema": "tjlabs.detail-day-native-attempt.v1",
+      "state": "completed",
+      "action": "review",
+      "error": null
+    },
+    "operationId": "authored-detail-day",
+    "editions": 2,
+    "files": 32,
+    "out": "/detail-native-receiving/reviewed"
+  },
+  "rejected": {
+    "exitCode": 1,
+    "attempt": {
+      "schema": "tjlabs.detail-day-native-attempt.v1",
+      "state": "rejected",
+      "action": "receive",
+      "error": "booking_revisions: archive_codec: invalid UTF-8 lead byte"
+    },
+    "operationId": "authored-detail-day",
+    "editions": 2,
+    "files": 40,
+    "out": "/detail-native-receiving/rejected"
+  },
+  "commandRejected": {
+    "exitCode": 1,
+    "attempt": {
+      "schema": "tjlabs.detail-day-native-attempt.v1",
+      "state": "rejected",
+      "action": "report",
+      "error": "archive_codec: invalid UTF-8 lead byte"
+    },
+    "operationId": "authored-detail-day",
+    "editions": 2,
+    "files": 32,
+    "out": "/detail-native-receiving/command-rejected"
+  },
+  "reportOnly": {
+    "exitCode": 0,
+    "attempt": {
+      "schema": "tjlabs.detail-day-native-attempt.v1",
+      "state": "completed",
+      "action": "report",
+      "error": null
+    },
+    "operationId": "authored-detail-day",
+    "editions": 2,
+    "files": 31,
+    "out": "/detail-native-receiving/report-only"
+  },
+  "input": {
+    "schema": "tjlabs.detail-day-desk.v1",
+    "workspace": {
+      "schema": "tjlabs.detail-day-study.v1",
+      "id": "authored-detail-day",
+      "label": "Authored technician day study",
+      "editions": [
+        {
+          "id": "E1",
+          "label": "Authored original day",
+          "receivedAt": "2026-10-20T14:00:00-06:00",
+          "settings": {
+            "dayStart": "2026-10-20T00:00:00-06:00",
+            "dayEnd": "2026-10-21T00:00:00-06:00",
+            "asOf": "2026-10-20T14:00:00-06:00"
+          },
+          "notes": "All people, jobs, monetary amounts and observations in this worked source are authored examples.",
+          "sources": {
+            "resources": {
+              "name": "resources.csv",
+              "text": "resource_id,name,kind,reference\r\nTECH-A,Technician A,technician,Authored roster\r\nBAY-A,Shop bay A,bay,Authored bay\r\n",
+              "bytes": 116,
+              "sha256": "30f27babd54fc4ba5419d3ccc20c2c95ed44215bb7eb2c00ad150bae73d687cd"
+            },
+            "availability": {
+              "name": "availability.csv",
+              "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW1,TECH-A,available,2026-10-20T08:00:00-06:00,2026-10-20T12:00:00-06:00,Roster morning\r\nW2,TECH-A,available,2026-10-20T12:00:00-06:00,2026-10-20T18:00:00-06:00,Roster afternoon\r\nBLOCK,TECH-A,blocked,2026-10-20T12:00:00-06:00,2026-10-20T12:30:00-06:00,Declared lunch\r\nBAY,BAY-A,available,2026-10-20T08:00:00-06:00,2026-10-20T18:00:00-06:00,Bay hours\r\n",
+              "bytes": 405,
+              "sha256": "709bfaa2de4a99e407a96eb5480841b9d6abb07de155f00d9db2a2db73805dd2"
+            },
+            "booking_revisions": {
+              "name": "booking_revisions.csv",
+              "text": "revision_id,job_id,revision,recorded_at,status,customer_id,vehicle_id,location_id,technician_id,bay_id,start_at,end_at,technician_before_minutes,technician_after_minutes,bay_before_minutes,bay_after_minutes,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:00:00-06:00,2026-10-20T11:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:30:00-06:00,2026-10-20T11:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-06:00,confirmed,CUSTOMER-B,SEDAN-B,ADDRESS-B,TECH-A,,2026-10-20T11:30:00-06:00,2026-10-20T13:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-06:00,confirmed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-06:00,postponed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Weather postponement; retain deposit pending written rebooking,Authored booking\r\n",
+              "bytes": 1272,
+              "sha256": "b8c2f18c9a29d6c453bc94ecc0d145e9eac9be9f6b9ebcd3cf719cb304a1ba52"
+            },
+            "quoted_lines": {
+              "name": "quoted_lines.csv",
+              "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed full detail,25000,Original approved quote\r\nQA2,A2,Agreed full detail,25000,Same amount approved with new time\r\nQB,B1,Agreed interior detail,18000,Approved quote\r\nQC,C1,Agreed truck detail,30000,Original approved quote\r\n",
+              "bytes": 289,
+              "sha256": "e298d0a5938bc4df0313af7796de2ad41fc97164bb50d4f97e15aa74d29666d0"
+            },
+            "completions": {
+              "name": "completions.csv",
+              "text": "observation_id,job_id,status,technician_id,bay_id,started_at,finished_at,observed_at,authorization,reference\r\nCA,JOB-A,completed,TECH-A,,2026-10-20T09:40:00-06:00,2026-10-20T11:50:00-06:00,2026-10-20T11:55:00-06:00,Observed actual times,Technician completion\r\nCB,JOB-B,in_progress,TECH-A,,2026-10-20T11:45:00-06:00,,2026-10-20T12:15:00-06:00,Status snapshot,Current field update\r\n",
+              "bytes": 380,
+              "sha256": "ec2bcdca9281c3a91e1d218ac1f5c4366212d03fc01fa21ce8cffe89973e0bb7"
+            },
+            "invoice_lines": {
+              "name": "invoice_lines.csv",
+              "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIA1,INV-A,JOB-A,USD,25000,Agreed full detail,2026-10-20T12:00:00-06:00,Invoice original\r\nIA2,INV-A,JOB-A,USD,1000,Recorded charge requiring source review,2026-10-20T12:00:00-06:00,Invoice original\r\n",
+              "bytes": 279,
+              "sha256": "f1ed0e9999d31b7efe522e2e1fb67e9343b383d65038b6996946808d1deef696"
+            },
+            "payments": {
+              "name": "payments.csv",
+              "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nP-A,received,,USD,5000,2026-10-19T10:00:00-06:00,Recorded card deposit,Receipt A\r\nP-C,received,,USD,5000,2026-10-19T12:05:00-06:00,Recorded deposit,Receipt C\r\n",
+              "bytes": 245,
+              "sha256": "e945957660b6468a369359352c86c777bb806788f191cbdd517ae3503b75c849"
+            },
+            "allocations": {
+              "name": "allocations.csv",
+              "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,P-A,JOB-A,INV-A,deposit,5000,2026-10-20T12:00:00-06:00,Apply recorded deposit to original invoice,Allocation A\r\nAL-C,P-C,JOB-C,,deposit,5000,2026-10-19T12:10:00-06:00,Retain against the original booking until written transfer,Allocation C\r\n",
+              "bytes": 348,
+              "sha256": "7a8ae75401621275303ee20852b446d30445164c929483d53eab67d4fe8c5608"
+            }
+          },
+          "sourceHash": "1c42e4a40b85689972215d9a038a5aad24bae3b57c388c22f59abe97be57ff49"
+        }
+      ],
+      "reviews": []
+    },
+    "session": {
+      "editionId": "E1",
+      "table": "resources",
+      "resourceId": null,
+      "sourceDraft": {
+        "id": "E2",
+        "label": "Next complete corrected day",
+        "receivedAt": "2026-10-20T15:00:00-06:00",
+        "settings": {
+          "dayStart": "2026-10-20T00:00:00-06:00",
+          "dayEnd": "2026-10-21T00:00:00-06:00",
+          "asOf": "unfinished offset"
+        },
+        "notes": "Uncommitted source edits remain separate from accepted editions.",
+        "sources": {
+          "resources": {
+            "name": "resources.csv",
+            "text": "resource_id,name,kind,reference\r\nTECH-A,Technician A,technician,Authored roster\r\nBAY-A,Shop bay A,bay,Authored bay\r\n",
+            "receiptSha256": null
+          },
+          "availability": {
+            "name": "availability.csv",
+            "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW1,TECH-A,available,2026-10-20T08:00:00-06:00,2026-10-20T12:00:00-06:00,Roster morning\r\nW2,TECH-A,available,2026-10-20T12:00:00-06:00,2026-10-20T18:00:00-06:00,Roster afternoon\r\nBLOCK,TECH-A,blocked,2026-10-20T12:00:00-06:00,2026-10-20T12:30:00-06:00,Declared lunch\r\nBAY,BAY-A,available,2026-10-20T08:00:00-06:00,2026-10-20T18:00:00-06:00,Bay hours\r\n",
+            "receiptSha256": null
+          },
+          "booking_revisions": {
+            "name": "booking_revisions.csv",
+            "text": "revision_id,job_id,revision,recorded_at,status,customer_id,vehicle_id,location_id,technician_id,bay_id,start_at,end_at,technician_before_minutes,technician_after_minutes,bay_before_minutes,bay_after_minutes,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:00:00-06:00,2026-10-20T11:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:30:00-06:00,2026-10-20T11:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-06:00,confirmed,CUSTOMER-B,SEDAN-B,ADDRESS-B,TECH-A,,2026-10-20T11:30:00-06:00,2026-10-20T13:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-06:00,confirmed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-06:00,postponed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Weather postponement; retain deposit pending written rebooking,Authored booking\r\n",
+            "receiptSha256": null
+          },
+          "quoted_lines": {
+            "name": "quoted_lines.csv",
+            "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed full detail,25000,Original approved quote\r\nQA2,A2,Agreed full detail,25000,Same amount approved with new time\r\nQB,B1,Agreed interior detail,18000,Approved quote\r\nQC,C1,Agreed truck detail,30000,Original approved quote\r\n",
+            "receiptSha256": null
+          },
+          "completions": {
+            "name": "completions.csv",
+            "text": "observation_id,job_id,status,technician_id,bay_id,started_at,finished_at,observed_at,authorization,reference\r\nCA,JOB-A,completed,TECH-A,,2026-10-20T09:40:00-06:00,2026-10-20T11:50:00-06:00,2026-10-20T11:55:00-06:00,Observed actual times,Technician completion\r\nCB,JOB-B,in_progress,TECH-A,,2026-10-20T11:45:00-06:00,,2026-10-20T12:15:00-06:00,Status snapshot,Current field update\r\n",
+            "receiptSha256": null
+          },
+          "invoice_lines": {
+            "name": "invoice_lines.csv",
+            "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIA1,INV-A,JOB-A,USD,25000,Agreed full detail,2026-10-20T12:00:00-06:00,Invoice original\r\nIA2,INV-A,JOB-A,USD,1000,Recorded charge requiring source review,2026-10-20T12:00:00-06:00,Invoice original\r\n",
+            "receiptSha256": null
+          },
+          "payments": {
+            "name": "payments.csv",
+            "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nP-A,received,,USD,5000,2026-10-19T10:00:00-06:00,Recorded card deposit,Receipt A\r\nP-C,received,,USD,5000,2026-10-19T12:05:00-06:00,Recorded deposit,Receipt C\r\nUnfinished literal receipt draft",
+            "receiptSha256": null
+          },
+          "allocations": {
+            "name": "allocations.csv",
+            "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,P-A,JOB-A,INV-A,deposit,5000,2026-10-20T12:00:00-06:00,Apply recorded deposit to original invoice,Allocation A\r\nAL-C,P-C,JOB-C,,deposit,5000,2026-10-19T12:10:00-06:00,Retain against the original booking until written transfer,Allocation C\r\n",
+            "receiptSha256": null
+          }
+        }
+      },
+      "reviewDrafts": {
+        "[\"E1\",\"booking\",\"JOB-A\"]": {
+          "editionId": "E1",
+          "subjectType": "booking",
+          "subjectId": "JOB-A",
+          "disposition": "investigate",
+          "reviewer": "",
+          "reason": "Unfinished invoice and deposit review",
+          "evidence": "",
+          "previousReviewId": null
+        }
+      },
+      "selectedSubject": null,
+      "receipts": [
+        {
+          "sha256": "1320b5dc13aa91dbac6eabc346cb655592aef8244a8ed04b8c4b3bdd59b8af4c",
+          "bytes": 3,
+          "dataBase64": "/w0K",
+          "names": [
+            "earlier-unreadable-source.bin"
+          ],
+          "receivedAt": "2026-10-15T06:00:00Z",
+          "error": "Retained original malformed UTF-8"
+        }
+      ],
+      "notes": "Unfinished technician handoff — literal café note\r\nSecond line.",
+      "labelDraft": ""
+    }
+  },
+  "current": {
+    "schema": "tjlabs.detail-day-desk.v1",
+    "workspace": {
+      "schema": "tjlabs.detail-day-study.v1",
+      "id": "authored-detail-day",
+      "label": "Authored technician day study",
+      "editions": [
+        {
+          "id": "E1",
+          "label": "Authored original day",
+          "receivedAt": "2026-10-20T14:00:00-06:00",
+          "settings": {
+            "dayStart": "2026-10-20T00:00:00-06:00",
+            "dayEnd": "2026-10-21T00:00:00-06:00",
+            "asOf": "2026-10-20T14:00:00-06:00"
+          },
+          "notes": "All people, jobs, monetary amounts and observations in this worked source are authored examples.",
+          "sources": {
+            "resources": {
+              "name": "resources.csv",
+              "text": "resource_id,name,kind,reference\r\nTECH-A,Technician A,technician,Authored roster\r\nBAY-A,Shop bay A,bay,Authored bay\r\n",
+              "bytes": 116,
+              "sha256": "30f27babd54fc4ba5419d3ccc20c2c95ed44215bb7eb2c00ad150bae73d687cd"
+            },
+            "availability": {
+              "name": "availability.csv",
+              "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW1,TECH-A,available,2026-10-20T08:00:00-06:00,2026-10-20T12:00:00-06:00,Roster morning\r\nW2,TECH-A,available,2026-10-20T12:00:00-06:00,2026-10-20T18:00:00-06:00,Roster afternoon\r\nBLOCK,TECH-A,blocked,2026-10-20T12:00:00-06:00,2026-10-20T12:30:00-06:00,Declared lunch\r\nBAY,BAY-A,available,2026-10-20T08:00:00-06:00,2026-10-20T18:00:00-06:00,Bay hours\r\n",
+              "bytes": 405,
+              "sha256": "709bfaa2de4a99e407a96eb5480841b9d6abb07de155f00d9db2a2db73805dd2"
+            },
+            "booking_revisions": {
+              "name": "booking_revisions.csv",
+              "text": "revision_id,job_id,revision,recorded_at,status,customer_id,vehicle_id,location_id,technician_id,bay_id,start_at,end_at,technician_before_minutes,technician_after_minutes,bay_before_minutes,bay_after_minutes,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:00:00-06:00,2026-10-20T11:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:30:00-06:00,2026-10-20T11:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-06:00,confirmed,CUSTOMER-B,SEDAN-B,ADDRESS-B,TECH-A,,2026-10-20T11:30:00-06:00,2026-10-20T13:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-06:00,confirmed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-06:00,postponed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Weather postponement; retain deposit pending written rebooking,Authored booking\r\n",
+              "bytes": 1272,
+              "sha256": "b8c2f18c9a29d6c453bc94ecc0d145e9eac9be9f6b9ebcd3cf719cb304a1ba52"
+            },
+            "quoted_lines": {
+              "name": "quoted_lines.csv",
+              "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed full detail,25000,Original approved quote\r\nQA2,A2,Agreed full detail,25000,Same amount approved with new time\r\nQB,B1,Agreed interior detail,18000,Approved quote\r\nQC,C1,Agreed truck detail,30000,Original approved quote\r\n",
+              "bytes": 289,
+              "sha256": "e298d0a5938bc4df0313af7796de2ad41fc97164bb50d4f97e15aa74d29666d0"
+            },
+            "completions": {
+              "name": "completions.csv",
+              "text": "observation_id,job_id,status,technician_id,bay_id,started_at,finished_at,observed_at,authorization,reference\r\nCA,JOB-A,completed,TECH-A,,2026-10-20T09:40:00-06:00,2026-10-20T11:50:00-06:00,2026-10-20T11:55:00-06:00,Observed actual times,Technician completion\r\nCB,JOB-B,in_progress,TECH-A,,2026-10-20T11:45:00-06:00,,2026-10-20T12:15:00-06:00,Status snapshot,Current field update\r\n",
+              "bytes": 380,
+              "sha256": "ec2bcdca9281c3a91e1d218ac1f5c4366212d03fc01fa21ce8cffe89973e0bb7"
+            },
+            "invoice_lines": {
+              "name": "invoice_lines.csv",
+              "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIA1,INV-A,JOB-A,USD,25000,Agreed full detail,2026-10-20T12:00:00-06:00,Invoice original\r\nIA2,INV-A,JOB-A,USD,1000,Recorded charge requiring source review,2026-10-20T12:00:00-06:00,Invoice original\r\n",
+              "bytes": 279,
+              "sha256": "f1ed0e9999d31b7efe522e2e1fb67e9343b383d65038b6996946808d1deef696"
+            },
+            "payments": {
+              "name": "payments.csv",
+              "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nP-A,received,,USD,5000,2026-10-19T10:00:00-06:00,Recorded card deposit,Receipt A\r\nP-C,received,,USD,5000,2026-10-19T12:05:00-06:00,Recorded deposit,Receipt C\r\n",
+              "bytes": 245,
+              "sha256": "e945957660b6468a369359352c86c777bb806788f191cbdd517ae3503b75c849"
+            },
+            "allocations": {
+              "name": "allocations.csv",
+              "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,P-A,JOB-A,INV-A,deposit,5000,2026-10-20T12:00:00-06:00,Apply recorded deposit to original invoice,Allocation A\r\nAL-C,P-C,JOB-C,,deposit,5000,2026-10-19T12:10:00-06:00,Retain against the original booking until written transfer,Allocation C\r\n",
+              "bytes": 348,
+              "sha256": "7a8ae75401621275303ee20852b446d30445164c929483d53eab67d4fe8c5608"
+            }
+          },
+          "sourceHash": "1c42e4a40b85689972215d9a038a5aad24bae3b57c388c22f59abe97be57ff49"
+        },
+        {
+          "id": "native-source-edition",
+          "label": "Authored original-file intake",
+          "receivedAt": "2026-10-15T06:00:00Z",
+          "settings": {
+            "dayStart": "2026-10-20T00:00:00-06:00",
+            "dayEnd": "2026-10-21T00:00:00-06:00",
+            "asOf": "2026-10-20T14:00:00-06:00"
+          },
+          "notes": "Authored exact file intake; browser drafts remain independent.",
+          "sources": {
+            "resources": {
+              "name": "resources.csv",
+              "text": "resource_id,name,kind,reference\r\nTECH-A,Technician A,technician,Authored roster\r\nBAY-A,Shop bay A,bay,Authored bay\r\n",
+              "bytes": 116,
+              "sha256": "30f27babd54fc4ba5419d3ccc20c2c95ed44215bb7eb2c00ad150bae73d687cd"
+            },
+            "availability": {
+              "name": "availability.csv",
+              "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW1,TECH-A,available,2026-10-20T08:00:00-06:00,2026-10-20T12:00:00-06:00,Roster morning\r\nW2,TECH-A,available,2026-10-20T12:00:00-06:00,2026-10-20T18:00:00-06:00,Roster afternoon\r\nBLOCK,TECH-A,blocked,2026-10-20T12:00:00-06:00,2026-10-20T12:30:00-06:00,Declared lunch\r\nBAY,BAY-A,available,2026-10-20T08:00:00-06:00,2026-10-20T18:00:00-06:00,Bay hours\r\n",
+              "bytes": 405,
+              "sha256": "709bfaa2de4a99e407a96eb5480841b9d6abb07de155f00d9db2a2db73805dd2"
+            },
+            "booking_revisions": {
+              "name": "booking_revisions.csv",
+              "text": "﻿revision_id,job_id,revision,recorded_at,status,customer_id,vehicle_id,location_id,technician_id,bay_id,start_at,end_at,technician_before_minutes,technician_after_minutes,bay_before_minutes,bay_after_minutes,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:00:00-06:00,2026-10-20T11:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:30:00-06:00,2026-10-20T11:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-06:00,confirmed,CUSTOMER-B,SEDAN-B,ADDRESS-B,TECH-A,,2026-10-20T11:30:00-06:00,2026-10-20T13:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-06:00,confirmed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-06:00,postponed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Weather postponement; retain deposit pending written rebooking,Authored booking\r\n",
+              "bytes": 1275,
+              "sha256": "b9fce91a81d442f1fedfe6cb0a4fb651a7a4190e8e6eabcc209008c5339a3f08"
+            },
+            "quoted_lines": {
+              "name": "quoted_lines.csv",
+              "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed full detail,25000,Original approved quote\r\nQA2,A2,Agreed full detail,25000,Same amount approved with new time\r\nQB,B1,Agreed interior detail,18000,Approved quote\r\nQC,C1,Agreed truck detail,30000,Original approved quote\r\n",
+              "bytes": 289,
+              "sha256": "e298d0a5938bc4df0313af7796de2ad41fc97164bb50d4f97e15aa74d29666d0"
+            },
+            "completions": {
+              "name": "completions.csv",
+              "text": "observation_id,job_id,status,technician_id,bay_id,started_at,finished_at,observed_at,authorization,reference\r\nCA,JOB-A,completed,TECH-A,,2026-10-20T09:40:00-06:00,2026-10-20T11:50:00-06:00,2026-10-20T11:55:00-06:00,Observed actual times,Technician completion\r\nCB,JOB-B,in_progress,TECH-A,,2026-10-20T11:45:00-06:00,,2026-10-20T12:15:00-06:00,Status snapshot,Current field update\r\n",
+              "bytes": 380,
+              "sha256": "ec2bcdca9281c3a91e1d218ac1f5c4366212d03fc01fa21ce8cffe89973e0bb7"
+            },
+            "invoice_lines": {
+              "name": "invoice_lines.csv",
+              "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIA1,INV-A,JOB-A,USD,25000,Agreed full detail,2026-10-20T12:00:00-06:00,Invoice original\r\nIA2,INV-A,JOB-A,USD,1000,Recorded charge requiring source review,2026-10-20T12:00:00-06:00,Invoice original\r\n",
+              "bytes": 279,
+              "sha256": "f1ed0e9999d31b7efe522e2e1fb67e9343b383d65038b6996946808d1deef696"
+            },
+            "payments": {
+              "name": "payments.csv",
+              "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nP-A,received,,USD,5000,2026-10-19T10:00:00-06:00,Recorded card deposit,Receipt A\r\nP-C,received,,USD,5000,2026-10-19T12:05:00-06:00,Recorded deposit,Receipt C\r\n",
+              "bytes": 245,
+              "sha256": "e945957660b6468a369359352c86c777bb806788f191cbdd517ae3503b75c849"
+            },
+            "allocations": {
+              "name": "allocations.csv",
+              "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,P-A,JOB-A,INV-A,deposit,5000,2026-10-20T12:00:00-06:00,Apply recorded deposit to original invoice,Allocation A\r\nAL-C,P-C,JOB-C,,deposit,5000,2026-10-19T12:10:00-06:00,Retain against the original booking until written transfer,Allocation C\r\n",
+              "bytes": 348,
+              "sha256": "7a8ae75401621275303ee20852b446d30445164c929483d53eab67d4fe8c5608"
+            }
+          },
+          "sourceHash": "45e805a0848e369396f640db692ecacdb9d90d0c7a0209af1d814f4b3a5cd328"
+        }
+      ],
+      "reviews": []
+    },
+    "session": {
+      "editionId": "E1",
+      "table": "resources",
+      "resourceId": null,
+      "sourceDraft": {
+        "id": "E2",
+        "label": "Next complete corrected day",
+        "receivedAt": "2026-10-20T15:00:00-06:00",
+        "settings": {
+          "dayStart": "2026-10-20T00:00:00-06:00",
+          "dayEnd": "2026-10-21T00:00:00-06:00",
+          "asOf": "unfinished offset"
+        },
+        "notes": "Uncommitted source edits remain separate from accepted editions.",
+        "sources": {
+          "resources": {
+            "name": "resources.csv",
+            "text": "resource_id,name,kind,reference\r\nTECH-A,Technician A,technician,Authored roster\r\nBAY-A,Shop bay A,bay,Authored bay\r\n",
+            "receiptSha256": null
+          },
+          "availability": {
+            "name": "availability.csv",
+            "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW1,TECH-A,available,2026-10-20T08:00:00-06:00,2026-10-20T12:00:00-06:00,Roster morning\r\nW2,TECH-A,available,2026-10-20T12:00:00-06:00,2026-10-20T18:00:00-06:00,Roster afternoon\r\nBLOCK,TECH-A,blocked,2026-10-20T12:00:00-06:00,2026-10-20T12:30:00-06:00,Declared lunch\r\nBAY,BAY-A,available,2026-10-20T08:00:00-06:00,2026-10-20T18:00:00-06:00,Bay hours\r\n",
+            "receiptSha256": null
+          },
+          "booking_revisions": {
+            "name": "booking_revisions.csv",
+            "text": "revision_id,job_id,revision,recorded_at,status,customer_id,vehicle_id,location_id,technician_id,bay_id,start_at,end_at,technician_before_minutes,technician_after_minutes,bay_before_minutes,bay_after_minutes,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:00:00-06:00,2026-10-20T11:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:30:00-06:00,2026-10-20T11:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-06:00,confirmed,CUSTOMER-B,SEDAN-B,ADDRESS-B,TECH-A,,2026-10-20T11:30:00-06:00,2026-10-20T13:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-06:00,confirmed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-06:00,postponed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Weather postponement; retain deposit pending written rebooking,Authored booking\r\n",
+            "receiptSha256": null
+          },
+          "quoted_lines": {
+            "name": "quoted_lines.csv",
+            "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed full detail,25000,Original approved quote\r\nQA2,A2,Agreed full detail,25000,Same amount approved with new time\r\nQB,B1,Agreed interior detail,18000,Approved quote\r\nQC,C1,Agreed truck detail,30000,Original approved quote\r\n",
+            "receiptSha256": null
+          },
+          "completions": {
+            "name": "completions.csv",
+            "text": "observation_id,job_id,status,technician_id,bay_id,started_at,finished_at,observed_at,authorization,reference\r\nCA,JOB-A,completed,TECH-A,,2026-10-20T09:40:00-06:00,2026-10-20T11:50:00-06:00,2026-10-20T11:55:00-06:00,Observed actual times,Technician completion\r\nCB,JOB-B,in_progress,TECH-A,,2026-10-20T11:45:00-06:00,,2026-10-20T12:15:00-06:00,Status snapshot,Current field update\r\n",
+            "receiptSha256": null
+          },
+          "invoice_lines": {
+            "name": "invoice_lines.csv",
+            "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIA1,INV-A,JOB-A,USD,25000,Agreed full detail,2026-10-20T12:00:00-06:00,Invoice original\r\nIA2,INV-A,JOB-A,USD,1000,Recorded charge requiring source review,2026-10-20T12:00:00-06:00,Invoice original\r\n",
+            "receiptSha256": null
+          },
+          "payments": {
+            "name": "payments.csv",
+            "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nP-A,received,,USD,5000,2026-10-19T10:00:00-06:00,Recorded card deposit,Receipt A\r\nP-C,received,,USD,5000,2026-10-19T12:05:00-06:00,Recorded deposit,Receipt C\r\nUnfinished literal receipt draft",
+            "receiptSha256": null
+          },
+          "allocations": {
+            "name": "allocations.csv",
+            "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,P-A,JOB-A,INV-A,deposit,5000,2026-10-20T12:00:00-06:00,Apply recorded deposit to original invoice,Allocation A\r\nAL-C,P-C,JOB-C,,deposit,5000,2026-10-19T12:10:00-06:00,Retain against the original booking until written transfer,Allocation C\r\n",
+            "receiptSha256": null
+          }
+        }
+      },
+      "reviewDrafts": {
+        "[\"E1\",\"booking\",\"JOB-A\"]": {
+          "editionId": "E1",
+          "subjectType": "booking",
+          "subjectId": "JOB-A",
+          "disposition": "investigate",
+          "reviewer": "",
+          "reason": "Unfinished invoice and deposit review",
+          "evidence": "",
+          "previousReviewId": null
+        }
+      },
+      "selectedSubject": null,
+      "receipts": [
+        {
+          "sha256": "1320b5dc13aa91dbac6eabc346cb655592aef8244a8ed04b8c4b3bdd59b8af4c",
+          "bytes": 3,
+          "dataBase64": "/w0K",
+          "names": [
+            "earlier-unreadable-source.bin"
+          ],
+          "receivedAt": "2026-10-15T06:00:00Z",
+          "error": "Retained original malformed UTF-8"
+        }
+      ],
+      "notes": "Unfinished technician handoff — literal café note\r\nSecond line.",
+      "labelDraft": ""
+    },
+    "nativeContinuation": {
+      "schema": "tjlabs.detail-day-native-continuation.v1",
+      "command": {
+        "action": "receive",
+        "input": {
+          "id": "native-source-edition",
+          "label": "Authored original-file intake",
+          "receivedAt": "2026-10-15T06:00:00Z",
+          "settings": {
+            "dayStart": "2026-10-20T00:00:00-06:00",
+            "dayEnd": "2026-10-21T00:00:00-06:00",
+            "asOf": "2026-10-20T14:00:00-06:00"
+          },
+          "notes": "Authored exact file intake; browser drafts remain independent."
+        },
+        "sourceFiles": {
+          "resources": {
+            "path": "resources.csv",
+            "name": "resources.csv"
+          },
+          "availability": {
+            "path": "availability.csv",
+            "name": "availability.csv"
+          },
+          "booking_revisions": {
+            "path": "booking_revisions.csv",
+            "name": "booking_revisions.csv"
+          },
+          "quoted_lines": {
+            "path": "quoted_lines.csv",
+            "name": "quoted_lines.csv"
+          },
+          "completions": {
+            "path": "completions.csv",
+            "name": "completions.csv"
+          },
+          "invoice_lines": {
+            "path": "invoice_lines.csv",
+            "name": "invoice_lines.csv"
+          },
+          "payments": {
+            "path": "payments.csv",
+            "name": "payments.csv"
+          },
+          "allocations": {
+            "path": "allocations.csv",
+            "name": "allocations.csv"
+          }
+        }
+      },
+      "commandBytes": {
+        "bytes": 1186,
+        "sha256": "5f3e80cc42b06295f138376b3e32133812bc4e7b959779df3bad16b9e912b56a",
+        "dataBase64": "ewogICJhY3Rpb24iOiAicmVjZWl2ZSIsCiAgImlucHV0IjogewogICAgImlkIjogIm5hdGl2ZS1zb3VyY2UtZWRpdGlvbiIsCiAgICAibGFiZWwiOiAiQXV0aG9yZWQgb3JpZ2luYWwtZmlsZSBpbnRha2UiLAogICAgInJlY2VpdmVkQXQiOiAiMjAyNi0xMC0xNVQwNjowMDowMFoiLAogICAgInNldHRpbmdzIjogewogICAgICAiZGF5U3RhcnQiOiAiMjAyNi0xMC0yMFQwMDowMDowMC0wNjowMCIsCiAgICAgICJkYXlFbmQiOiAiMjAyNi0xMC0yMVQwMDowMDowMC0wNjowMCIsCiAgICAgICJhc09mIjogIjIwMjYtMTAtMjBUMTQ6MDA6MDAtMDY6MDAiCiAgICB9LAogICAgIm5vdGVzIjogIkF1dGhvcmVkIGV4YWN0IGZpbGUgaW50YWtlOyBicm93c2VyIGRyYWZ0cyByZW1haW4gaW5kZXBlbmRlbnQuIgogIH0sCiAgInNvdXJjZUZpbGVzIjogewogICAgInJlc291cmNlcyI6IHsKICAgICAgInBhdGgiOiAicmVzb3VyY2VzLmNzdiIsCiAgICAgICJuYW1lIjogInJlc291cmNlcy5jc3YiCiAgICB9LAogICAgImF2YWlsYWJpbGl0eSI6IHsKICAgICAgInBhdGgiOiAiYXZhaWxhYmlsaXR5LmNzdiIsCiAgICAgICJuYW1lIjogImF2YWlsYWJpbGl0eS5jc3YiCiAgICB9LAogICAgImJvb2tpbmdfcmV2aXNpb25zIjogewogICAgICAicGF0aCI6ICJib29raW5nX3JldmlzaW9ucy5jc3YiLAogICAgICAibmFtZSI6ICJib29raW5nX3JldmlzaW9ucy5jc3YiCiAgICB9LAogICAgInF1b3RlZF9saW5lcyI6IHsKICAgICAgInBhdGgiOiAicXVvdGVkX2xpbmVzLmNzdiIsCiAgICAgICJuYW1lIjogInF1b3RlZF9saW5lcy5jc3YiCiAgICB9LAogICAgImNvbXBsZXRpb25zIjogewogICAgICAicGF0aCI6ICJjb21wbGV0aW9ucy5jc3YiLAogICAgICAibmFtZSI6ICJjb21wbGV0aW9ucy5jc3YiCiAgICB9LAogICAgImludm9pY2VfbGluZXMiOiB7CiAgICAgICJwYXRoIjogImludm9pY2VfbGluZXMuY3N2IiwKICAgICAgIm5hbWUiOiAiaW52b2ljZV9saW5lcy5jc3YiCiAgICB9LAogICAgInBheW1lbnRzIjogewogICAgICAicGF0aCI6ICJwYXltZW50cy5jc3YiLAogICAgICAibmFtZSI6ICJwYXltZW50cy5jc3YiCiAgICB9LAogICAgImFsbG9jYXRpb25zIjogewogICAgICAicGF0aCI6ICJhbGxvY2F0aW9ucy5jc3YiLAogICAgICAibmFtZSI6ICJhbGxvY2F0aW9ucy5jc3YiCiAgICB9CiAgfQp9Cg=="
+      },
+      "attempt": {
+        "schema": "tjlabs.detail-day-native-attempt.v1",
+        "state": "completed",
+        "action": "receive",
+        "error": null
+      },
+      "receipts": [
+        {
+          "table": "resources",
+          "name": "resources.csv",
+          "bytes": 116,
+          "sha256": "30f27babd54fc4ba5419d3ccc20c2c95ed44215bb7eb2c00ad150bae73d687cd",
+          "dataBase64": "cmVzb3VyY2VfaWQsbmFtZSxraW5kLHJlZmVyZW5jZQ0KVEVDSC1BLFRlY2huaWNpYW4gQSx0ZWNobmljaWFuLEF1dGhvcmVkIHJvc3Rlcg0KQkFZLUEsU2hvcCBiYXkgQSxiYXksQXV0aG9yZWQgYmF5DQo=",
+          "error": null
+        },
+        {
+          "table": "availability",
+          "name": "availability.csv",
+          "bytes": 405,
+          "sha256": "709bfaa2de4a99e407a96eb5480841b9d6abb07de155f00d9db2a2db73805dd2",
+          "dataBase64": "d2luZG93X2lkLHJlc291cmNlX2lkLHN0YXRlLHN0YXJ0X2F0LGVuZF9hdCxyZWZlcmVuY2UNClcxLFRFQ0gtQSxhdmFpbGFibGUsMjAyNi0xMC0yMFQwODowMDowMC0wNjowMCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLFJvc3RlciBtb3JuaW5nDQpXMixURUNILUEsYXZhaWxhYmxlLDIwMjYtMTAtMjBUMTI6MDA6MDAtMDY6MDAsMjAyNi0xMC0yMFQxODowMDowMC0wNjowMCxSb3N0ZXIgYWZ0ZXJub29uDQpCTE9DSyxURUNILUEsYmxvY2tlZCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLDIwMjYtMTAtMjBUMTI6MzA6MDAtMDY6MDAsRGVjbGFyZWQgbHVuY2gNCkJBWSxCQVktQSxhdmFpbGFibGUsMjAyNi0xMC0yMFQwODowMDowMC0wNjowMCwyMDI2LTEwLTIwVDE4OjAwOjAwLTA2OjAwLEJheSBob3Vycw0K",
+          "error": null
+        },
+        {
+          "table": "booking_revisions",
+          "name": "booking_revisions.csv",
+          "bytes": 1275,
+          "sha256": "b9fce91a81d442f1fedfe6cb0a4fb651a7a4190e8e6eabcc209008c5339a3f08",
+          "dataBase64": "77u/cmV2aXNpb25faWQsam9iX2lkLHJldmlzaW9uLHJlY29yZGVkX2F0LHN0YXR1cyxjdXN0b21lcl9pZCx2ZWhpY2xlX2lkLGxvY2F0aW9uX2lkLHRlY2huaWNpYW5faWQsYmF5X2lkLHN0YXJ0X2F0LGVuZF9hdCx0ZWNobmljaWFuX2JlZm9yZV9taW51dGVzLHRlY2huaWNpYW5fYWZ0ZXJfbWludXRlcyxiYXlfYmVmb3JlX21pbnV0ZXMsYmF5X2FmdGVyX21pbnV0ZXMsY3VycmVuY3ksYXV0aG9yaXphdGlvbixyZWZlcmVuY2UNCkExLEpPQi1BLDEsMjAyNi0xMC0xOVQwOTowMDowMC0wNjowMCxjb25maXJtZWQsQ1VTVE9NRVItQSxTVVYtQSxBRERSRVNTLUEsVEVDSC1BLCwyMDI2LTEwLTIwVDA5OjAwOjAwLTA2OjAwLDIwMjYtMTAtMjBUMTE6MDA6MDAtMDY6MDAsMTUsMTUsMCwwLFVTRCxDdXN0b21lci1hcHByb3ZlZCBzZXJ2aWNlIHdpbmRvdyxBdXRob3JlZCBib29raW5nDQpBMixKT0ItQSwyLDIwMjYtMTAtMTlUMTA6MDA6MDAtMDY6MDAsY29uZmlybWVkLENVU1RPTUVSLUEsU1VWLUEsQUREUkVTUy1BLFRFQ0gtQSwsMjAyNi0xMC0yMFQwOTozMDowMC0wNjowMCwyMDI2LTEwLTIwVDExOjMwOjAwLTA2OjAwLDE1LDE1LDAsMCxVU0QsQ3VzdG9tZXItYXBwcm92ZWQgc2VydmljZSB3aW5kb3csQXV0aG9yZWQgYm9va2luZw0KQjEsSk9CLUIsMSwyMDI2LTEwLTE5VDExOjAwOjAwLTA2OjAwLGNvbmZpcm1lZCxDVVNUT01FUi1CLFNFREFOLUIsQUREUkVTUy1CLFRFQ0gtQSwsMjAyNi0xMC0yMFQxMTozMDowMC0wNjowMCwyMDI2LTEwLTIwVDEzOjMwOjAwLTA2OjAwLDE1LDE1LDAsMCxVU0QsQ3VzdG9tZXItYXBwcm92ZWQgc2VydmljZSB3aW5kb3csQXV0aG9yZWQgYm9va2luZw0KQzEsSk9CLUMsMSwyMDI2LTEwLTE5VDEyOjAwOjAwLTA2OjAwLGNvbmZpcm1lZCxDVVNUT01FUi1DLFRSVUNLLUMsQUREUkVTUy1DLFRFQ0gtQSwsMjAyNi0xMC0yMFQxNTowMDowMC0wNjowMCwyMDI2LTEwLTIwVDE3OjAwOjAwLTA2OjAwLDE1LDE1LDAsMCxVU0QsQ3VzdG9tZXItYXBwcm92ZWQgc2VydmljZSB3aW5kb3csQXV0aG9yZWQgYm9va2luZw0KQzIsSk9CLUMsMiwyMDI2LTEwLTIwVDA3OjAwOjAwLTA2OjAwLHBvc3Rwb25lZCxDVVNUT01FUi1DLFRSVUNLLUMsQUREUkVTUy1DLFRFQ0gtQSwsMjAyNi0xMC0yMFQxNTowMDowMC0wNjowMCwyMDI2LTEwLTIwVDE3OjAwOjAwLTA2OjAwLDE1LDE1LDAsMCxVU0QsV2VhdGhlciBwb3N0cG9uZW1lbnQ7IHJldGFpbiBkZXBvc2l0IHBlbmRpbmcgd3JpdHRlbiByZWJvb2tpbmcsQXV0aG9yZWQgYm9va2luZw0K",
+          "error": null
+        },
+        {
+          "table": "quoted_lines",
+          "name": "quoted_lines.csv",
+          "bytes": 289,
+          "sha256": "e298d0a5938bc4df0313af7796de2ad41fc97164bb50d4f97e15aa74d29666d0",
+          "dataBase64": "bGluZV9pZCxyZXZpc2lvbl9pZCxkZXNjcmlwdGlvbixhbW91bnRfbWlub3IscmVmZXJlbmNlDQpRQTEsQTEsQWdyZWVkIGZ1bGwgZGV0YWlsLDI1MDAwLE9yaWdpbmFsIGFwcHJvdmVkIHF1b3RlDQpRQTIsQTIsQWdyZWVkIGZ1bGwgZGV0YWlsLDI1MDAwLFNhbWUgYW1vdW50IGFwcHJvdmVkIHdpdGggbmV3IHRpbWUNClFCLEIxLEFncmVlZCBpbnRlcmlvciBkZXRhaWwsMTgwMDAsQXBwcm92ZWQgcXVvdGUNClFDLEMxLEFncmVlZCB0cnVjayBkZXRhaWwsMzAwMDAsT3JpZ2luYWwgYXBwcm92ZWQgcXVvdGUNCg==",
+          "error": null
+        },
+        {
+          "table": "completions",
+          "name": "completions.csv",
+          "bytes": 380,
+          "sha256": "ec2bcdca9281c3a91e1d218ac1f5c4366212d03fc01fa21ce8cffe89973e0bb7",
+          "dataBase64": "b2JzZXJ2YXRpb25faWQsam9iX2lkLHN0YXR1cyx0ZWNobmljaWFuX2lkLGJheV9pZCxzdGFydGVkX2F0LGZpbmlzaGVkX2F0LG9ic2VydmVkX2F0LGF1dGhvcml6YXRpb24scmVmZXJlbmNlDQpDQSxKT0ItQSxjb21wbGV0ZWQsVEVDSC1BLCwyMDI2LTEwLTIwVDA5OjQwOjAwLTA2OjAwLDIwMjYtMTAtMjBUMTE6NTA6MDAtMDY6MDAsMjAyNi0xMC0yMFQxMTo1NTowMC0wNjowMCxPYnNlcnZlZCBhY3R1YWwgdGltZXMsVGVjaG5pY2lhbiBjb21wbGV0aW9uDQpDQixKT0ItQixpbl9wcm9ncmVzcyxURUNILUEsLDIwMjYtMTAtMjBUMTE6NDU6MDAtMDY6MDAsLDIwMjYtMTAtMjBUMTI6MTU6MDAtMDY6MDAsU3RhdHVzIHNuYXBzaG90LEN1cnJlbnQgZmllbGQgdXBkYXRlDQo=",
+          "error": null
+        },
+        {
+          "table": "invoice_lines",
+          "name": "invoice_lines.csv",
+          "bytes": 279,
+          "sha256": "f1ed0e9999d31b7efe522e2e1fb67e9343b383d65038b6996946808d1deef696",
+          "dataBase64": "bGluZV9pZCxpbnZvaWNlX2lkLGpvYl9pZCxjdXJyZW5jeSxhbW91bnRfbWlub3IsZGVzY3JpcHRpb24saXNzdWVkX2F0LHJlZmVyZW5jZQ0KSUExLElOVi1BLEpPQi1BLFVTRCwyNTAwMCxBZ3JlZWQgZnVsbCBkZXRhaWwsMjAyNi0xMC0yMFQxMjowMDowMC0wNjowMCxJbnZvaWNlIG9yaWdpbmFsDQpJQTIsSU5WLUEsSk9CLUEsVVNELDEwMDAsUmVjb3JkZWQgY2hhcmdlIHJlcXVpcmluZyBzb3VyY2UgcmV2aWV3LDIwMjYtMTAtMjBUMTI6MDA6MDAtMDY6MDAsSW52b2ljZSBvcmlnaW5hbA0K",
+          "error": null
+        },
+        {
+          "table": "payments",
+          "name": "payments.csv",
+          "bytes": 245,
+          "sha256": "e945957660b6468a369359352c86c777bb806788f191cbdd517ae3503b75c849",
+          "dataBase64": "cGF5bWVudF9pZCxraW5kLHBhcmVudF9wYXltZW50X2lkLGN1cnJlbmN5LGFtb3VudF9taW5vcixvY2N1cnJlZF9hdCxtZXRob2QscmVmZXJlbmNlDQpQLUEscmVjZWl2ZWQsLFVTRCw1MDAwLDIwMjYtMTAtMTlUMTA6MDA6MDAtMDY6MDAsUmVjb3JkZWQgY2FyZCBkZXBvc2l0LFJlY2VpcHQgQQ0KUC1DLHJlY2VpdmVkLCxVU0QsNTAwMCwyMDI2LTEwLTE5VDEyOjA1OjAwLTA2OjAwLFJlY29yZGVkIGRlcG9zaXQsUmVjZWlwdCBDDQo=",
+          "error": null
+        },
+        {
+          "table": "allocations",
+          "name": "allocations.csv",
+          "bytes": 348,
+          "sha256": "7a8ae75401621275303ee20852b446d30445164c929483d53eab67d4fe8c5608",
+          "dataBase64": "YWxsb2NhdGlvbl9pZCxwYXltZW50X2lkLGpvYl9pZCxpbnZvaWNlX2lkLHB1cnBvc2UsYW1vdW50X21pbm9yLGF1dGhvcml6ZWRfYXQsYXV0aG9yaXphdGlvbixyZWZlcmVuY2UNCkFMLUEsUC1BLEpPQi1BLElOVi1BLGRlcG9zaXQsNTAwMCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLEFwcGx5IHJlY29yZGVkIGRlcG9zaXQgdG8gb3JpZ2luYWwgaW52b2ljZSxBbGxvY2F0aW9uIEENCkFMLUMsUC1DLEpPQi1DLCxkZXBvc2l0LDUwMDAsMjAyNi0xMC0xOVQxMjoxMDowMC0wNjowMCxSZXRhaW4gYWdhaW5zdCB0aGUgb3JpZ2luYWwgYm9va2luZyB1bnRpbCB3cml0dGVuIHRyYW5zZmVyLEFsbG9jYXRpb24gQw0K",
+          "error": null
+        }
+      ],
+      "previous": null
+    }
+  },
+  "reviewedCurrent": {
+    "schema": "tjlabs.detail-day-desk.v1",
+    "workspace": {
+      "schema": "tjlabs.detail-day-study.v1",
+      "id": "authored-detail-day",
+      "label": "Authored technician day study",
+      "editions": [
+        {
+          "id": "E1",
+          "label": "Authored original day",
+          "receivedAt": "2026-10-20T14:00:00-06:00",
+          "settings": {
+            "dayStart": "2026-10-20T00:00:00-06:00",
+            "dayEnd": "2026-10-21T00:00:00-06:00",
+            "asOf": "2026-10-20T14:00:00-06:00"
+          },
+          "notes": "All people, jobs, monetary amounts and observations in this worked source are authored examples.",
+          "sources": {
+            "resources": {
+              "name": "resources.csv",
+              "text": "resource_id,name,kind,reference\r\nTECH-A,Technician A,technician,Authored roster\r\nBAY-A,Shop bay A,bay,Authored bay\r\n",
+              "bytes": 116,
+              "sha256": "30f27babd54fc4ba5419d3ccc20c2c95ed44215bb7eb2c00ad150bae73d687cd"
+            },
+            "availability": {
+              "name": "availability.csv",
+              "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW1,TECH-A,available,2026-10-20T08:00:00-06:00,2026-10-20T12:00:00-06:00,Roster morning\r\nW2,TECH-A,available,2026-10-20T12:00:00-06:00,2026-10-20T18:00:00-06:00,Roster afternoon\r\nBLOCK,TECH-A,blocked,2026-10-20T12:00:00-06:00,2026-10-20T12:30:00-06:00,Declared lunch\r\nBAY,BAY-A,available,2026-10-20T08:00:00-06:00,2026-10-20T18:00:00-06:00,Bay hours\r\n",
+              "bytes": 405,
+              "sha256": "709bfaa2de4a99e407a96eb5480841b9d6abb07de155f00d9db2a2db73805dd2"
+            },
+            "booking_revisions": {
+              "name": "booking_revisions.csv",
+              "text": "revision_id,job_id,revision,recorded_at,status,customer_id,vehicle_id,location_id,technician_id,bay_id,start_at,end_at,technician_before_minutes,technician_after_minutes,bay_before_minutes,bay_after_minutes,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:00:00-06:00,2026-10-20T11:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:30:00-06:00,2026-10-20T11:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-06:00,confirmed,CUSTOMER-B,SEDAN-B,ADDRESS-B,TECH-A,,2026-10-20T11:30:00-06:00,2026-10-20T13:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-06:00,confirmed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-06:00,postponed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Weather postponement; retain deposit pending written rebooking,Authored booking\r\n",
+              "bytes": 1272,
+              "sha256": "b8c2f18c9a29d6c453bc94ecc0d145e9eac9be9f6b9ebcd3cf719cb304a1ba52"
+            },
+            "quoted_lines": {
+              "name": "quoted_lines.csv",
+              "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed full detail,25000,Original approved quote\r\nQA2,A2,Agreed full detail,25000,Same amount approved with new time\r\nQB,B1,Agreed interior detail,18000,Approved quote\r\nQC,C1,Agreed truck detail,30000,Original approved quote\r\n",
+              "bytes": 289,
+              "sha256": "e298d0a5938bc4df0313af7796de2ad41fc97164bb50d4f97e15aa74d29666d0"
+            },
+            "completions": {
+              "name": "completions.csv",
+              "text": "observation_id,job_id,status,technician_id,bay_id,started_at,finished_at,observed_at,authorization,reference\r\nCA,JOB-A,completed,TECH-A,,2026-10-20T09:40:00-06:00,2026-10-20T11:50:00-06:00,2026-10-20T11:55:00-06:00,Observed actual times,Technician completion\r\nCB,JOB-B,in_progress,TECH-A,,2026-10-20T11:45:00-06:00,,2026-10-20T12:15:00-06:00,Status snapshot,Current field update\r\n",
+              "bytes": 380,
+              "sha256": "ec2bcdca9281c3a91e1d218ac1f5c4366212d03fc01fa21ce8cffe89973e0bb7"
+            },
+            "invoice_lines": {
+              "name": "invoice_lines.csv",
+              "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIA1,INV-A,JOB-A,USD,25000,Agreed full detail,2026-10-20T12:00:00-06:00,Invoice original\r\nIA2,INV-A,JOB-A,USD,1000,Recorded charge requiring source review,2026-10-20T12:00:00-06:00,Invoice original\r\n",
+              "bytes": 279,
+              "sha256": "f1ed0e9999d31b7efe522e2e1fb67e9343b383d65038b6996946808d1deef696"
+            },
+            "payments": {
+              "name": "payments.csv",
+              "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nP-A,received,,USD,5000,2026-10-19T10:00:00-06:00,Recorded card deposit,Receipt A\r\nP-C,received,,USD,5000,2026-10-19T12:05:00-06:00,Recorded deposit,Receipt C\r\n",
+              "bytes": 245,
+              "sha256": "e945957660b6468a369359352c86c777bb806788f191cbdd517ae3503b75c849"
+            },
+            "allocations": {
+              "name": "allocations.csv",
+              "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,P-A,JOB-A,INV-A,deposit,5000,2026-10-20T12:00:00-06:00,Apply recorded deposit to original invoice,Allocation A\r\nAL-C,P-C,JOB-C,,deposit,5000,2026-10-19T12:10:00-06:00,Retain against the original booking until written transfer,Allocation C\r\n",
+              "bytes": 348,
+              "sha256": "7a8ae75401621275303ee20852b446d30445164c929483d53eab67d4fe8c5608"
+            }
+          },
+          "sourceHash": "1c42e4a40b85689972215d9a038a5aad24bae3b57c388c22f59abe97be57ff49"
+        },
+        {
+          "id": "native-source-edition",
+          "label": "Authored original-file intake",
+          "receivedAt": "2026-10-15T06:00:00Z",
+          "settings": {
+            "dayStart": "2026-10-20T00:00:00-06:00",
+            "dayEnd": "2026-10-21T00:00:00-06:00",
+            "asOf": "2026-10-20T14:00:00-06:00"
+          },
+          "notes": "Authored exact file intake; browser drafts remain independent.",
+          "sources": {
+            "resources": {
+              "name": "resources.csv",
+              "text": "resource_id,name,kind,reference\r\nTECH-A,Technician A,technician,Authored roster\r\nBAY-A,Shop bay A,bay,Authored bay\r\n",
+              "bytes": 116,
+              "sha256": "30f27babd54fc4ba5419d3ccc20c2c95ed44215bb7eb2c00ad150bae73d687cd"
+            },
+            "availability": {
+              "name": "availability.csv",
+              "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW1,TECH-A,available,2026-10-20T08:00:00-06:00,2026-10-20T12:00:00-06:00,Roster morning\r\nW2,TECH-A,available,2026-10-20T12:00:00-06:00,2026-10-20T18:00:00-06:00,Roster afternoon\r\nBLOCK,TECH-A,blocked,2026-10-20T12:00:00-06:00,2026-10-20T12:30:00-06:00,Declared lunch\r\nBAY,BAY-A,available,2026-10-20T08:00:00-06:00,2026-10-20T18:00:00-06:00,Bay hours\r\n",
+              "bytes": 405,
+              "sha256": "709bfaa2de4a99e407a96eb5480841b9d6abb07de155f00d9db2a2db73805dd2"
+            },
+            "booking_revisions": {
+              "name": "booking_revisions.csv",
+              "text": "﻿revision_id,job_id,revision,recorded_at,status,customer_id,vehicle_id,location_id,technician_id,bay_id,start_at,end_at,technician_before_minutes,technician_after_minutes,bay_before_minutes,bay_after_minutes,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:00:00-06:00,2026-10-20T11:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:30:00-06:00,2026-10-20T11:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-06:00,confirmed,CUSTOMER-B,SEDAN-B,ADDRESS-B,TECH-A,,2026-10-20T11:30:00-06:00,2026-10-20T13:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-06:00,confirmed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-06:00,postponed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Weather postponement; retain deposit pending written rebooking,Authored booking\r\n",
+              "bytes": 1275,
+              "sha256": "b9fce91a81d442f1fedfe6cb0a4fb651a7a4190e8e6eabcc209008c5339a3f08"
+            },
+            "quoted_lines": {
+              "name": "quoted_lines.csv",
+              "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed full detail,25000,Original approved quote\r\nQA2,A2,Agreed full detail,25000,Same amount approved with new time\r\nQB,B1,Agreed interior detail,18000,Approved quote\r\nQC,C1,Agreed truck detail,30000,Original approved quote\r\n",
+              "bytes": 289,
+              "sha256": "e298d0a5938bc4df0313af7796de2ad41fc97164bb50d4f97e15aa74d29666d0"
+            },
+            "completions": {
+              "name": "completions.csv",
+              "text": "observation_id,job_id,status,technician_id,bay_id,started_at,finished_at,observed_at,authorization,reference\r\nCA,JOB-A,completed,TECH-A,,2026-10-20T09:40:00-06:00,2026-10-20T11:50:00-06:00,2026-10-20T11:55:00-06:00,Observed actual times,Technician completion\r\nCB,JOB-B,in_progress,TECH-A,,2026-10-20T11:45:00-06:00,,2026-10-20T12:15:00-06:00,Status snapshot,Current field update\r\n",
+              "bytes": 380,
+              "sha256": "ec2bcdca9281c3a91e1d218ac1f5c4366212d03fc01fa21ce8cffe89973e0bb7"
+            },
+            "invoice_lines": {
+              "name": "invoice_lines.csv",
+              "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIA1,INV-A,JOB-A,USD,25000,Agreed full detail,2026-10-20T12:00:00-06:00,Invoice original\r\nIA2,INV-A,JOB-A,USD,1000,Recorded charge requiring source review,2026-10-20T12:00:00-06:00,Invoice original\r\n",
+              "bytes": 279,
+              "sha256": "f1ed0e9999d31b7efe522e2e1fb67e9343b383d65038b6996946808d1deef696"
+            },
+            "payments": {
+              "name": "payments.csv",
+              "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nP-A,received,,USD,5000,2026-10-19T10:00:00-06:00,Recorded card deposit,Receipt A\r\nP-C,received,,USD,5000,2026-10-19T12:05:00-06:00,Recorded deposit,Receipt C\r\n",
+              "bytes": 245,
+              "sha256": "e945957660b6468a369359352c86c777bb806788f191cbdd517ae3503b75c849"
+            },
+            "allocations": {
+              "name": "allocations.csv",
+              "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,P-A,JOB-A,INV-A,deposit,5000,2026-10-20T12:00:00-06:00,Apply recorded deposit to original invoice,Allocation A\r\nAL-C,P-C,JOB-C,,deposit,5000,2026-10-19T12:10:00-06:00,Retain against the original booking until written transfer,Allocation C\r\n",
+              "bytes": 348,
+              "sha256": "7a8ae75401621275303ee20852b446d30445164c929483d53eab67d4fe8c5608"
+            }
+          },
+          "sourceHash": "45e805a0848e369396f640db692ecacdb9d90d0c7a0209af1d814f4b3a5cd328"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "native-review",
+          "editionId": "native-source-edition",
+          "sourceHash": "45e805a0848e369396f640db692ecacdb9d90d0c7a0209af1d814f4b3a5cd328",
+          "subjectType": "booking",
+          "subjectId": "JOB-A",
+          "disposition": "investigate",
+          "reviewer": "Authored receiving operator",
+          "reason": "Read the original invoice line and written allocation before disposition.",
+          "evidence": "Authored course source; no actual customer payment.",
+          "previousReviewId": null,
+          "recordHash": "5dc83438510114457ddcc2a9bce527326bb932ac48eab213f453bafaa418dee4"
+        }
+      ]
+    },
+    "session": {
+      "editionId": "E1",
+      "table": "resources",
+      "resourceId": null,
+      "sourceDraft": {
+        "id": "E2",
+        "label": "Next complete corrected day",
+        "receivedAt": "2026-10-20T15:00:00-06:00",
+        "settings": {
+          "dayStart": "2026-10-20T00:00:00-06:00",
+          "dayEnd": "2026-10-21T00:00:00-06:00",
+          "asOf": "unfinished offset"
+        },
+        "notes": "Uncommitted source edits remain separate from accepted editions.",
+        "sources": {
+          "resources": {
+            "name": "resources.csv",
+            "text": "resource_id,name,kind,reference\r\nTECH-A,Technician A,technician,Authored roster\r\nBAY-A,Shop bay A,bay,Authored bay\r\n",
+            "receiptSha256": null
+          },
+          "availability": {
+            "name": "availability.csv",
+            "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW1,TECH-A,available,2026-10-20T08:00:00-06:00,2026-10-20T12:00:00-06:00,Roster morning\r\nW2,TECH-A,available,2026-10-20T12:00:00-06:00,2026-10-20T18:00:00-06:00,Roster afternoon\r\nBLOCK,TECH-A,blocked,2026-10-20T12:00:00-06:00,2026-10-20T12:30:00-06:00,Declared lunch\r\nBAY,BAY-A,available,2026-10-20T08:00:00-06:00,2026-10-20T18:00:00-06:00,Bay hours\r\n",
+            "receiptSha256": null
+          },
+          "booking_revisions": {
+            "name": "booking_revisions.csv",
+            "text": "revision_id,job_id,revision,recorded_at,status,customer_id,vehicle_id,location_id,technician_id,bay_id,start_at,end_at,technician_before_minutes,technician_after_minutes,bay_before_minutes,bay_after_minutes,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:00:00-06:00,2026-10-20T11:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:30:00-06:00,2026-10-20T11:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-06:00,confirmed,CUSTOMER-B,SEDAN-B,ADDRESS-B,TECH-A,,2026-10-20T11:30:00-06:00,2026-10-20T13:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-06:00,confirmed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-06:00,postponed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Weather postponement; retain deposit pending written rebooking,Authored booking\r\n",
+            "receiptSha256": null
+          },
+          "quoted_lines": {
+            "name": "quoted_lines.csv",
+            "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed full detail,25000,Original approved quote\r\nQA2,A2,Agreed full detail,25000,Same amount approved with new time\r\nQB,B1,Agreed interior detail,18000,Approved quote\r\nQC,C1,Agreed truck detail,30000,Original approved quote\r\n",
+            "receiptSha256": null
+          },
+          "completions": {
+            "name": "completions.csv",
+            "text": "observation_id,job_id,status,technician_id,bay_id,started_at,finished_at,observed_at,authorization,reference\r\nCA,JOB-A,completed,TECH-A,,2026-10-20T09:40:00-06:00,2026-10-20T11:50:00-06:00,2026-10-20T11:55:00-06:00,Observed actual times,Technician completion\r\nCB,JOB-B,in_progress,TECH-A,,2026-10-20T11:45:00-06:00,,2026-10-20T12:15:00-06:00,Status snapshot,Current field update\r\n",
+            "receiptSha256": null
+          },
+          "invoice_lines": {
+            "name": "invoice_lines.csv",
+            "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIA1,INV-A,JOB-A,USD,25000,Agreed full detail,2026-10-20T12:00:00-06:00,Invoice original\r\nIA2,INV-A,JOB-A,USD,1000,Recorded charge requiring source review,2026-10-20T12:00:00-06:00,Invoice original\r\n",
+            "receiptSha256": null
+          },
+          "payments": {
+            "name": "payments.csv",
+            "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nP-A,received,,USD,5000,2026-10-19T10:00:00-06:00,Recorded card deposit,Receipt A\r\nP-C,received,,USD,5000,2026-10-19T12:05:00-06:00,Recorded deposit,Receipt C\r\nUnfinished literal receipt draft",
+            "receiptSha256": null
+          },
+          "allocations": {
+            "name": "allocations.csv",
+            "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,P-A,JOB-A,INV-A,deposit,5000,2026-10-20T12:00:00-06:00,Apply recorded deposit to original invoice,Allocation A\r\nAL-C,P-C,JOB-C,,deposit,5000,2026-10-19T12:10:00-06:00,Retain against the original booking until written transfer,Allocation C\r\n",
+            "receiptSha256": null
+          }
+        }
+      },
+      "reviewDrafts": {
+        "[\"E1\",\"booking\",\"JOB-A\"]": {
+          "editionId": "E1",
+          "subjectType": "booking",
+          "subjectId": "JOB-A",
+          "disposition": "investigate",
+          "reviewer": "",
+          "reason": "Unfinished invoice and deposit review",
+          "evidence": "",
+          "previousReviewId": null
+        }
+      },
+      "selectedSubject": null,
+      "receipts": [
+        {
+          "sha256": "1320b5dc13aa91dbac6eabc346cb655592aef8244a8ed04b8c4b3bdd59b8af4c",
+          "bytes": 3,
+          "dataBase64": "/w0K",
+          "names": [
+            "earlier-unreadable-source.bin"
+          ],
+          "receivedAt": "2026-10-15T06:00:00Z",
+          "error": "Retained original malformed UTF-8"
+        }
+      ],
+      "notes": "Unfinished technician handoff — literal café note\r\nSecond line.",
+      "labelDraft": ""
+    },
+    "nativeContinuation": {
+      "schema": "tjlabs.detail-day-native-continuation.v1",
+      "command": {
+        "action": "review",
+        "input": {
+          "id": "native-review",
+          "editionId": "native-source-edition",
+          "subjectType": "booking",
+          "subjectId": "JOB-A",
+          "disposition": "investigate",
+          "reviewer": "Authored receiving operator",
+          "reason": "Read the original invoice line and written allocation before disposition.",
+          "evidence": "Authored course source; no actual customer payment.",
+          "previousReviewId": null
+        }
+      },
+      "commandBytes": {
+        "bytes": 440,
+        "sha256": "8abc8054b9f12c5366c93eb7c3ddafd67201c86c6137e16f2c1448289d402503",
+        "dataBase64": "ewogICJhY3Rpb24iOiAicmV2aWV3IiwKICAiaW5wdXQiOiB7CiAgICAiaWQiOiAibmF0aXZlLXJldmlldyIsCiAgICAiZWRpdGlvbklkIjogIm5hdGl2ZS1zb3VyY2UtZWRpdGlvbiIsCiAgICAic3ViamVjdFR5cGUiOiAiYm9va2luZyIsCiAgICAic3ViamVjdElkIjogIkpPQi1BIiwKICAgICJkaXNwb3NpdGlvbiI6ICJpbnZlc3RpZ2F0ZSIsCiAgICAicmV2aWV3ZXIiOiAiQXV0aG9yZWQgcmVjZWl2aW5nIG9wZXJhdG9yIiwKICAgICJyZWFzb24iOiAiUmVhZCB0aGUgb3JpZ2luYWwgaW52b2ljZSBsaW5lIGFuZCB3cml0dGVuIGFsbG9jYXRpb24gYmVmb3JlIGRpc3Bvc2l0aW9uLiIsCiAgICAiZXZpZGVuY2UiOiAiQXV0aG9yZWQgY291cnNlIHNvdXJjZTsgbm8gYWN0dWFsIGN1c3RvbWVyIHBheW1lbnQuIiwKICAgICJwcmV2aW91c1Jldmlld0lkIjogbnVsbAogIH0KfQo="
+      },
+      "attempt": {
+        "schema": "tjlabs.detail-day-native-attempt.v1",
+        "state": "completed",
+        "action": "review",
+        "error": null
+      },
+      "receipts": [],
+      "previous": {
+        "schema": "tjlabs.detail-day-native-continuation.v1",
+        "command": {
+          "action": "receive",
+          "input": {
+            "id": "native-source-edition",
+            "label": "Authored original-file intake",
+            "receivedAt": "2026-10-15T06:00:00Z",
+            "settings": {
+              "dayStart": "2026-10-20T00:00:00-06:00",
+              "dayEnd": "2026-10-21T00:00:00-06:00",
+              "asOf": "2026-10-20T14:00:00-06:00"
+            },
+            "notes": "Authored exact file intake; browser drafts remain independent."
+          },
+          "sourceFiles": {
+            "resources": {
+              "path": "resources.csv",
+              "name": "resources.csv"
+            },
+            "availability": {
+              "path": "availability.csv",
+              "name": "availability.csv"
+            },
+            "booking_revisions": {
+              "path": "booking_revisions.csv",
+              "name": "booking_revisions.csv"
+            },
+            "quoted_lines": {
+              "path": "quoted_lines.csv",
+              "name": "quoted_lines.csv"
+            },
+            "completions": {
+              "path": "completions.csv",
+              "name": "completions.csv"
+            },
+            "invoice_lines": {
+              "path": "invoice_lines.csv",
+              "name": "invoice_lines.csv"
+            },
+            "payments": {
+              "path": "payments.csv",
+              "name": "payments.csv"
+            },
+            "allocations": {
+              "path": "allocations.csv",
+              "name": "allocations.csv"
+            }
+          }
+        },
+        "commandBytes": {
+          "bytes": 1186,
+          "sha256": "5f3e80cc42b06295f138376b3e32133812bc4e7b959779df3bad16b9e912b56a",
+          "dataBase64": "ewogICJhY3Rpb24iOiAicmVjZWl2ZSIsCiAgImlucHV0IjogewogICAgImlkIjogIm5hdGl2ZS1zb3VyY2UtZWRpdGlvbiIsCiAgICAibGFiZWwiOiAiQXV0aG9yZWQgb3JpZ2luYWwtZmlsZSBpbnRha2UiLAogICAgInJlY2VpdmVkQXQiOiAiMjAyNi0xMC0xNVQwNjowMDowMFoiLAogICAgInNldHRpbmdzIjogewogICAgICAiZGF5U3RhcnQiOiAiMjAyNi0xMC0yMFQwMDowMDowMC0wNjowMCIsCiAgICAgICJkYXlFbmQiOiAiMjAyNi0xMC0yMVQwMDowMDowMC0wNjowMCIsCiAgICAgICJhc09mIjogIjIwMjYtMTAtMjBUMTQ6MDA6MDAtMDY6MDAiCiAgICB9LAogICAgIm5vdGVzIjogIkF1dGhvcmVkIGV4YWN0IGZpbGUgaW50YWtlOyBicm93c2VyIGRyYWZ0cyByZW1haW4gaW5kZXBlbmRlbnQuIgogIH0sCiAgInNvdXJjZUZpbGVzIjogewogICAgInJlc291cmNlcyI6IHsKICAgICAgInBhdGgiOiAicmVzb3VyY2VzLmNzdiIsCiAgICAgICJuYW1lIjogInJlc291cmNlcy5jc3YiCiAgICB9LAogICAgImF2YWlsYWJpbGl0eSI6IHsKICAgICAgInBhdGgiOiAiYXZhaWxhYmlsaXR5LmNzdiIsCiAgICAgICJuYW1lIjogImF2YWlsYWJpbGl0eS5jc3YiCiAgICB9LAogICAgImJvb2tpbmdfcmV2aXNpb25zIjogewogICAgICAicGF0aCI6ICJib29raW5nX3JldmlzaW9ucy5jc3YiLAogICAgICAibmFtZSI6ICJib29raW5nX3JldmlzaW9ucy5jc3YiCiAgICB9LAogICAgInF1b3RlZF9saW5lcyI6IHsKICAgICAgInBhdGgiOiAicXVvdGVkX2xpbmVzLmNzdiIsCiAgICAgICJuYW1lIjogInF1b3RlZF9saW5lcy5jc3YiCiAgICB9LAogICAgImNvbXBsZXRpb25zIjogewogICAgICAicGF0aCI6ICJjb21wbGV0aW9ucy5jc3YiLAogICAgICAibmFtZSI6ICJjb21wbGV0aW9ucy5jc3YiCiAgICB9LAogICAgImludm9pY2VfbGluZXMiOiB7CiAgICAgICJwYXRoIjogImludm9pY2VfbGluZXMuY3N2IiwKICAgICAgIm5hbWUiOiAiaW52b2ljZV9saW5lcy5jc3YiCiAgICB9LAogICAgInBheW1lbnRzIjogewogICAgICAicGF0aCI6ICJwYXltZW50cy5jc3YiLAogICAgICAibmFtZSI6ICJwYXltZW50cy5jc3YiCiAgICB9LAogICAgImFsbG9jYXRpb25zIjogewogICAgICAicGF0aCI6ICJhbGxvY2F0aW9ucy5jc3YiLAogICAgICAibmFtZSI6ICJhbGxvY2F0aW9ucy5jc3YiCiAgICB9CiAgfQp9Cg=="
+        },
+        "attempt": {
+          "schema": "tjlabs.detail-day-native-attempt.v1",
+          "state": "completed",
+          "action": "receive",
+          "error": null
+        },
+        "receipts": [
+          {
+            "table": "resources",
+            "name": "resources.csv",
+            "bytes": 116,
+            "sha256": "30f27babd54fc4ba5419d3ccc20c2c95ed44215bb7eb2c00ad150bae73d687cd",
+            "dataBase64": "cmVzb3VyY2VfaWQsbmFtZSxraW5kLHJlZmVyZW5jZQ0KVEVDSC1BLFRlY2huaWNpYW4gQSx0ZWNobmljaWFuLEF1dGhvcmVkIHJvc3Rlcg0KQkFZLUEsU2hvcCBiYXkgQSxiYXksQXV0aG9yZWQgYmF5DQo=",
+            "error": null
+          },
+          {
+            "table": "availability",
+            "name": "availability.csv",
+            "bytes": 405,
+            "sha256": "709bfaa2de4a99e407a96eb5480841b9d6abb07de155f00d9db2a2db73805dd2",
+            "dataBase64": "d2luZG93X2lkLHJlc291cmNlX2lkLHN0YXRlLHN0YXJ0X2F0LGVuZF9hdCxyZWZlcmVuY2UNClcxLFRFQ0gtQSxhdmFpbGFibGUsMjAyNi0xMC0yMFQwODowMDowMC0wNjowMCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLFJvc3RlciBtb3JuaW5nDQpXMixURUNILUEsYXZhaWxhYmxlLDIwMjYtMTAtMjBUMTI6MDA6MDAtMDY6MDAsMjAyNi0xMC0yMFQxODowMDowMC0wNjowMCxSb3N0ZXIgYWZ0ZXJub29uDQpCTE9DSyxURUNILUEsYmxvY2tlZCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLDIwMjYtMTAtMjBUMTI6MzA6MDAtMDY6MDAsRGVjbGFyZWQgbHVuY2gNCkJBWSxCQVktQSxhdmFpbGFibGUsMjAyNi0xMC0yMFQwODowMDowMC0wNjowMCwyMDI2LTEwLTIwVDE4OjAwOjAwLTA2OjAwLEJheSBob3Vycw0K",
+            "error": null
+          },
+          {
+            "table": "booking_revisions",
+            "name": "booking_revisions.csv",
+            "bytes": 1275,
+            "sha256": "b9fce91a81d442f1fedfe6cb0a4fb651a7a4190e8e6eabcc209008c5339a3f08",
+            "dataBase64": "77u/cmV2aXNpb25faWQsam9iX2lkLHJldmlzaW9uLHJlY29yZGVkX2F0LHN0YXR1cyxjdXN0b21lcl9pZCx2ZWhpY2xlX2lkLGxvY2F0aW9uX2lkLHRlY2huaWNpYW5faWQsYmF5X2lkLHN0YXJ0X2F0LGVuZF9hdCx0ZWNobmljaWFuX2JlZm9yZV9taW51dGVzLHRlY2huaWNpYW5fYWZ0ZXJfbWludXRlcyxiYXlfYmVmb3JlX21pbnV0ZXMsYmF5X2FmdGVyX21pbnV0ZXMsY3VycmVuY3ksYXV0aG9yaXphdGlvbixyZWZlcmVuY2UNCkExLEpPQi1BLDEsMjAyNi0xMC0xOVQwOTowMDowMC0wNjowMCxjb25maXJtZWQsQ1VTVE9NRVItQSxTVVYtQSxBRERSRVNTLUEsVEVDSC1BLCwyMDI2LTEwLTIwVDA5OjAwOjAwLTA2OjAwLDIwMjYtMTAtMjBUMTE6MDA6MDAtMDY6MDAsMTUsMTUsMCwwLFVTRCxDdXN0b21lci1hcHByb3ZlZCBzZXJ2aWNlIHdpbmRvdyxBdXRob3JlZCBib29raW5nDQpBMixKT0ItQSwyLDIwMjYtMTAtMTlUMTA6MDA6MDAtMDY6MDAsY29uZmlybWVkLENVU1RPTUVSLUEsU1VWLUEsQUREUkVTUy1BLFRFQ0gtQSwsMjAyNi0xMC0yMFQwOTozMDowMC0wNjowMCwyMDI2LTEwLTIwVDExOjMwOjAwLTA2OjAwLDE1LDE1LDAsMCxVU0QsQ3VzdG9tZXItYXBwcm92ZWQgc2VydmljZSB3aW5kb3csQXV0aG9yZWQgYm9va2luZw0KQjEsSk9CLUIsMSwyMDI2LTEwLTE5VDExOjAwOjAwLTA2OjAwLGNvbmZpcm1lZCxDVVNUT01FUi1CLFNFREFOLUIsQUREUkVTUy1CLFRFQ0gtQSwsMjAyNi0xMC0yMFQxMTozMDowMC0wNjowMCwyMDI2LTEwLTIwVDEzOjMwOjAwLTA2OjAwLDE1LDE1LDAsMCxVU0QsQ3VzdG9tZXItYXBwcm92ZWQgc2VydmljZSB3aW5kb3csQXV0aG9yZWQgYm9va2luZw0KQzEsSk9CLUMsMSwyMDI2LTEwLTE5VDEyOjAwOjAwLTA2OjAwLGNvbmZpcm1lZCxDVVNUT01FUi1DLFRSVUNLLUMsQUREUkVTUy1DLFRFQ0gtQSwsMjAyNi0xMC0yMFQxNTowMDowMC0wNjowMCwyMDI2LTEwLTIwVDE3OjAwOjAwLTA2OjAwLDE1LDE1LDAsMCxVU0QsQ3VzdG9tZXItYXBwcm92ZWQgc2VydmljZSB3aW5kb3csQXV0aG9yZWQgYm9va2luZw0KQzIsSk9CLUMsMiwyMDI2LTEwLTIwVDA3OjAwOjAwLTA2OjAwLHBvc3Rwb25lZCxDVVNUT01FUi1DLFRSVUNLLUMsQUREUkVTUy1DLFRFQ0gtQSwsMjAyNi0xMC0yMFQxNTowMDowMC0wNjowMCwyMDI2LTEwLTIwVDE3OjAwOjAwLTA2OjAwLDE1LDE1LDAsMCxVU0QsV2VhdGhlciBwb3N0cG9uZW1lbnQ7IHJldGFpbiBkZXBvc2l0IHBlbmRpbmcgd3JpdHRlbiByZWJvb2tpbmcsQXV0aG9yZWQgYm9va2luZw0K",
+            "error": null
+          },
+          {
+            "table": "quoted_lines",
+            "name": "quoted_lines.csv",
+            "bytes": 289,
+            "sha256": "e298d0a5938bc4df0313af7796de2ad41fc97164bb50d4f97e15aa74d29666d0",
+            "dataBase64": "bGluZV9pZCxyZXZpc2lvbl9pZCxkZXNjcmlwdGlvbixhbW91bnRfbWlub3IscmVmZXJlbmNlDQpRQTEsQTEsQWdyZWVkIGZ1bGwgZGV0YWlsLDI1MDAwLE9yaWdpbmFsIGFwcHJvdmVkIHF1b3RlDQpRQTIsQTIsQWdyZWVkIGZ1bGwgZGV0YWlsLDI1MDAwLFNhbWUgYW1vdW50IGFwcHJvdmVkIHdpdGggbmV3IHRpbWUNClFCLEIxLEFncmVlZCBpbnRlcmlvciBkZXRhaWwsMTgwMDAsQXBwcm92ZWQgcXVvdGUNClFDLEMxLEFncmVlZCB0cnVjayBkZXRhaWwsMzAwMDAsT3JpZ2luYWwgYXBwcm92ZWQgcXVvdGUNCg==",
+            "error": null
+          },
+          {
+            "table": "completions",
+            "name": "completions.csv",
+            "bytes": 380,
+            "sha256": "ec2bcdca9281c3a91e1d218ac1f5c4366212d03fc01fa21ce8cffe89973e0bb7",
+            "dataBase64": "b2JzZXJ2YXRpb25faWQsam9iX2lkLHN0YXR1cyx0ZWNobmljaWFuX2lkLGJheV9pZCxzdGFydGVkX2F0LGZpbmlzaGVkX2F0LG9ic2VydmVkX2F0LGF1dGhvcml6YXRpb24scmVmZXJlbmNlDQpDQSxKT0ItQSxjb21wbGV0ZWQsVEVDSC1BLCwyMDI2LTEwLTIwVDA5OjQwOjAwLTA2OjAwLDIwMjYtMTAtMjBUMTE6NTA6MDAtMDY6MDAsMjAyNi0xMC0yMFQxMTo1NTowMC0wNjowMCxPYnNlcnZlZCBhY3R1YWwgdGltZXMsVGVjaG5pY2lhbiBjb21wbGV0aW9uDQpDQixKT0ItQixpbl9wcm9ncmVzcyxURUNILUEsLDIwMjYtMTAtMjBUMTE6NDU6MDAtMDY6MDAsLDIwMjYtMTAtMjBUMTI6MTU6MDAtMDY6MDAsU3RhdHVzIHNuYXBzaG90LEN1cnJlbnQgZmllbGQgdXBkYXRlDQo=",
+            "error": null
+          },
+          {
+            "table": "invoice_lines",
+            "name": "invoice_lines.csv",
+            "bytes": 279,
+            "sha256": "f1ed0e9999d31b7efe522e2e1fb67e9343b383d65038b6996946808d1deef696",
+            "dataBase64": "bGluZV9pZCxpbnZvaWNlX2lkLGpvYl9pZCxjdXJyZW5jeSxhbW91bnRfbWlub3IsZGVzY3JpcHRpb24saXNzdWVkX2F0LHJlZmVyZW5jZQ0KSUExLElOVi1BLEpPQi1BLFVTRCwyNTAwMCxBZ3JlZWQgZnVsbCBkZXRhaWwsMjAyNi0xMC0yMFQxMjowMDowMC0wNjowMCxJbnZvaWNlIG9yaWdpbmFsDQpJQTIsSU5WLUEsSk9CLUEsVVNELDEwMDAsUmVjb3JkZWQgY2hhcmdlIHJlcXVpcmluZyBzb3VyY2UgcmV2aWV3LDIwMjYtMTAtMjBUMTI6MDA6MDAtMDY6MDAsSW52b2ljZSBvcmlnaW5hbA0K",
+            "error": null
+          },
+          {
+            "table": "payments",
+            "name": "payments.csv",
+            "bytes": 245,
+            "sha256": "e945957660b6468a369359352c86c777bb806788f191cbdd517ae3503b75c849",
+            "dataBase64": "cGF5bWVudF9pZCxraW5kLHBhcmVudF9wYXltZW50X2lkLGN1cnJlbmN5LGFtb3VudF9taW5vcixvY2N1cnJlZF9hdCxtZXRob2QscmVmZXJlbmNlDQpQLUEscmVjZWl2ZWQsLFVTRCw1MDAwLDIwMjYtMTAtMTlUMTA6MDA6MDAtMDY6MDAsUmVjb3JkZWQgY2FyZCBkZXBvc2l0LFJlY2VpcHQgQQ0KUC1DLHJlY2VpdmVkLCxVU0QsNTAwMCwyMDI2LTEwLTE5VDEyOjA1OjAwLTA2OjAwLFJlY29yZGVkIGRlcG9zaXQsUmVjZWlwdCBDDQo=",
+            "error": null
+          },
+          {
+            "table": "allocations",
+            "name": "allocations.csv",
+            "bytes": 348,
+            "sha256": "7a8ae75401621275303ee20852b446d30445164c929483d53eab67d4fe8c5608",
+            "dataBase64": "YWxsb2NhdGlvbl9pZCxwYXltZW50X2lkLGpvYl9pZCxpbnZvaWNlX2lkLHB1cnBvc2UsYW1vdW50X21pbm9yLGF1dGhvcml6ZWRfYXQsYXV0aG9yaXphdGlvbixyZWZlcmVuY2UNCkFMLUEsUC1BLEpPQi1BLElOVi1BLGRlcG9zaXQsNTAwMCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLEFwcGx5IHJlY29yZGVkIGRlcG9zaXQgdG8gb3JpZ2luYWwgaW52b2ljZSxBbGxvY2F0aW9uIEENCkFMLUMsUC1DLEpPQi1DLCxkZXBvc2l0LDUwMDAsMjAyNi0xMC0xOVQxMjoxMDowMC0wNjowMCxSZXRhaW4gYWdhaW5zdCB0aGUgb3JpZ2luYWwgYm9va2luZyB1bnRpbCB3cml0dGVuIHRyYW5zZmVyLEFsbG9jYXRpb24gQw0K",
+            "error": null
+          }
+        ],
+        "previous": null
+      }
+    }
+  },
+  "rejectedCurrent": {
+    "schema": "tjlabs.detail-day-desk.v1",
+    "workspace": {
+      "schema": "tjlabs.detail-day-study.v1",
+      "id": "authored-detail-day",
+      "label": "Authored technician day study",
+      "editions": [
+        {
+          "id": "E1",
+          "label": "Authored original day",
+          "receivedAt": "2026-10-20T14:00:00-06:00",
+          "settings": {
+            "dayStart": "2026-10-20T00:00:00-06:00",
+            "dayEnd": "2026-10-21T00:00:00-06:00",
+            "asOf": "2026-10-20T14:00:00-06:00"
+          },
+          "notes": "All people, jobs, monetary amounts and observations in this worked source are authored examples.",
+          "sources": {
+            "resources": {
+              "name": "resources.csv",
+              "text": "resource_id,name,kind,reference\r\nTECH-A,Technician A,technician,Authored roster\r\nBAY-A,Shop bay A,bay,Authored bay\r\n",
+              "bytes": 116,
+              "sha256": "30f27babd54fc4ba5419d3ccc20c2c95ed44215bb7eb2c00ad150bae73d687cd"
+            },
+            "availability": {
+              "name": "availability.csv",
+              "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW1,TECH-A,available,2026-10-20T08:00:00-06:00,2026-10-20T12:00:00-06:00,Roster morning\r\nW2,TECH-A,available,2026-10-20T12:00:00-06:00,2026-10-20T18:00:00-06:00,Roster afternoon\r\nBLOCK,TECH-A,blocked,2026-10-20T12:00:00-06:00,2026-10-20T12:30:00-06:00,Declared lunch\r\nBAY,BAY-A,available,2026-10-20T08:00:00-06:00,2026-10-20T18:00:00-06:00,Bay hours\r\n",
+              "bytes": 405,
+              "sha256": "709bfaa2de4a99e407a96eb5480841b9d6abb07de155f00d9db2a2db73805dd2"
+            },
+            "booking_revisions": {
+              "name": "booking_revisions.csv",
+              "text": "revision_id,job_id,revision,recorded_at,status,customer_id,vehicle_id,location_id,technician_id,bay_id,start_at,end_at,technician_before_minutes,technician_after_minutes,bay_before_minutes,bay_after_minutes,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:00:00-06:00,2026-10-20T11:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:30:00-06:00,2026-10-20T11:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-06:00,confirmed,CUSTOMER-B,SEDAN-B,ADDRESS-B,TECH-A,,2026-10-20T11:30:00-06:00,2026-10-20T13:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-06:00,confirmed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-06:00,postponed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Weather postponement; retain deposit pending written rebooking,Authored booking\r\n",
+              "bytes": 1272,
+              "sha256": "b8c2f18c9a29d6c453bc94ecc0d145e9eac9be9f6b9ebcd3cf719cb304a1ba52"
+            },
+            "quoted_lines": {
+              "name": "quoted_lines.csv",
+              "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed full detail,25000,Original approved quote\r\nQA2,A2,Agreed full detail,25000,Same amount approved with new time\r\nQB,B1,Agreed interior detail,18000,Approved quote\r\nQC,C1,Agreed truck detail,30000,Original approved quote\r\n",
+              "bytes": 289,
+              "sha256": "e298d0a5938bc4df0313af7796de2ad41fc97164bb50d4f97e15aa74d29666d0"
+            },
+            "completions": {
+              "name": "completions.csv",
+              "text": "observation_id,job_id,status,technician_id,bay_id,started_at,finished_at,observed_at,authorization,reference\r\nCA,JOB-A,completed,TECH-A,,2026-10-20T09:40:00-06:00,2026-10-20T11:50:00-06:00,2026-10-20T11:55:00-06:00,Observed actual times,Technician completion\r\nCB,JOB-B,in_progress,TECH-A,,2026-10-20T11:45:00-06:00,,2026-10-20T12:15:00-06:00,Status snapshot,Current field update\r\n",
+              "bytes": 380,
+              "sha256": "ec2bcdca9281c3a91e1d218ac1f5c4366212d03fc01fa21ce8cffe89973e0bb7"
+            },
+            "invoice_lines": {
+              "name": "invoice_lines.csv",
+              "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIA1,INV-A,JOB-A,USD,25000,Agreed full detail,2026-10-20T12:00:00-06:00,Invoice original\r\nIA2,INV-A,JOB-A,USD,1000,Recorded charge requiring source review,2026-10-20T12:00:00-06:00,Invoice original\r\n",
+              "bytes": 279,
+              "sha256": "f1ed0e9999d31b7efe522e2e1fb67e9343b383d65038b6996946808d1deef696"
+            },
+            "payments": {
+              "name": "payments.csv",
+              "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nP-A,received,,USD,5000,2026-10-19T10:00:00-06:00,Recorded card deposit,Receipt A\r\nP-C,received,,USD,5000,2026-10-19T12:05:00-06:00,Recorded deposit,Receipt C\r\n",
+              "bytes": 245,
+              "sha256": "e945957660b6468a369359352c86c777bb806788f191cbdd517ae3503b75c849"
+            },
+            "allocations": {
+              "name": "allocations.csv",
+              "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,P-A,JOB-A,INV-A,deposit,5000,2026-10-20T12:00:00-06:00,Apply recorded deposit to original invoice,Allocation A\r\nAL-C,P-C,JOB-C,,deposit,5000,2026-10-19T12:10:00-06:00,Retain against the original booking until written transfer,Allocation C\r\n",
+              "bytes": 348,
+              "sha256": "7a8ae75401621275303ee20852b446d30445164c929483d53eab67d4fe8c5608"
+            }
+          },
+          "sourceHash": "1c42e4a40b85689972215d9a038a5aad24bae3b57c388c22f59abe97be57ff49"
+        },
+        {
+          "id": "native-source-edition",
+          "label": "Authored original-file intake",
+          "receivedAt": "2026-10-15T06:00:00Z",
+          "settings": {
+            "dayStart": "2026-10-20T00:00:00-06:00",
+            "dayEnd": "2026-10-21T00:00:00-06:00",
+            "asOf": "2026-10-20T14:00:00-06:00"
+          },
+          "notes": "Authored exact file intake; browser drafts remain independent.",
+          "sources": {
+            "resources": {
+              "name": "resources.csv",
+              "text": "resource_id,name,kind,reference\r\nTECH-A,Technician A,technician,Authored roster\r\nBAY-A,Shop bay A,bay,Authored bay\r\n",
+              "bytes": 116,
+              "sha256": "30f27babd54fc4ba5419d3ccc20c2c95ed44215bb7eb2c00ad150bae73d687cd"
+            },
+            "availability": {
+              "name": "availability.csv",
+              "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW1,TECH-A,available,2026-10-20T08:00:00-06:00,2026-10-20T12:00:00-06:00,Roster morning\r\nW2,TECH-A,available,2026-10-20T12:00:00-06:00,2026-10-20T18:00:00-06:00,Roster afternoon\r\nBLOCK,TECH-A,blocked,2026-10-20T12:00:00-06:00,2026-10-20T12:30:00-06:00,Declared lunch\r\nBAY,BAY-A,available,2026-10-20T08:00:00-06:00,2026-10-20T18:00:00-06:00,Bay hours\r\n",
+              "bytes": 405,
+              "sha256": "709bfaa2de4a99e407a96eb5480841b9d6abb07de155f00d9db2a2db73805dd2"
+            },
+            "booking_revisions": {
+              "name": "booking_revisions.csv",
+              "text": "﻿revision_id,job_id,revision,recorded_at,status,customer_id,vehicle_id,location_id,technician_id,bay_id,start_at,end_at,technician_before_minutes,technician_after_minutes,bay_before_minutes,bay_after_minutes,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:00:00-06:00,2026-10-20T11:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:30:00-06:00,2026-10-20T11:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-06:00,confirmed,CUSTOMER-B,SEDAN-B,ADDRESS-B,TECH-A,,2026-10-20T11:30:00-06:00,2026-10-20T13:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-06:00,confirmed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-06:00,postponed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Weather postponement; retain deposit pending written rebooking,Authored booking\r\n",
+              "bytes": 1275,
+              "sha256": "b9fce91a81d442f1fedfe6cb0a4fb651a7a4190e8e6eabcc209008c5339a3f08"
+            },
+            "quoted_lines": {
+              "name": "quoted_lines.csv",
+              "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed full detail,25000,Original approved quote\r\nQA2,A2,Agreed full detail,25000,Same amount approved with new time\r\nQB,B1,Agreed interior detail,18000,Approved quote\r\nQC,C1,Agreed truck detail,30000,Original approved quote\r\n",
+              "bytes": 289,
+              "sha256": "e298d0a5938bc4df0313af7796de2ad41fc97164bb50d4f97e15aa74d29666d0"
+            },
+            "completions": {
+              "name": "completions.csv",
+              "text": "observation_id,job_id,status,technician_id,bay_id,started_at,finished_at,observed_at,authorization,reference\r\nCA,JOB-A,completed,TECH-A,,2026-10-20T09:40:00-06:00,2026-10-20T11:50:00-06:00,2026-10-20T11:55:00-06:00,Observed actual times,Technician completion\r\nCB,JOB-B,in_progress,TECH-A,,2026-10-20T11:45:00-06:00,,2026-10-20T12:15:00-06:00,Status snapshot,Current field update\r\n",
+              "bytes": 380,
+              "sha256": "ec2bcdca9281c3a91e1d218ac1f5c4366212d03fc01fa21ce8cffe89973e0bb7"
+            },
+            "invoice_lines": {
+              "name": "invoice_lines.csv",
+              "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIA1,INV-A,JOB-A,USD,25000,Agreed full detail,2026-10-20T12:00:00-06:00,Invoice original\r\nIA2,INV-A,JOB-A,USD,1000,Recorded charge requiring source review,2026-10-20T12:00:00-06:00,Invoice original\r\n",
+              "bytes": 279,
+              "sha256": "f1ed0e9999d31b7efe522e2e1fb67e9343b383d65038b6996946808d1deef696"
+            },
+            "payments": {
+              "name": "payments.csv",
+              "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nP-A,received,,USD,5000,2026-10-19T10:00:00-06:00,Recorded card deposit,Receipt A\r\nP-C,received,,USD,5000,2026-10-19T12:05:00-06:00,Recorded deposit,Receipt C\r\n",
+              "bytes": 245,
+              "sha256": "e945957660b6468a369359352c86c777bb806788f191cbdd517ae3503b75c849"
+            },
+            "allocations": {
+              "name": "allocations.csv",
+              "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,P-A,JOB-A,INV-A,deposit,5000,2026-10-20T12:00:00-06:00,Apply recorded deposit to original invoice,Allocation A\r\nAL-C,P-C,JOB-C,,deposit,5000,2026-10-19T12:10:00-06:00,Retain against the original booking until written transfer,Allocation C\r\n",
+              "bytes": 348,
+              "sha256": "7a8ae75401621275303ee20852b446d30445164c929483d53eab67d4fe8c5608"
+            }
+          },
+          "sourceHash": "45e805a0848e369396f640db692ecacdb9d90d0c7a0209af1d814f4b3a5cd328"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "native-review",
+          "editionId": "native-source-edition",
+          "sourceHash": "45e805a0848e369396f640db692ecacdb9d90d0c7a0209af1d814f4b3a5cd328",
+          "subjectType": "booking",
+          "subjectId": "JOB-A",
+          "disposition": "investigate",
+          "reviewer": "Authored receiving operator",
+          "reason": "Read the original invoice line and written allocation before disposition.",
+          "evidence": "Authored course source; no actual customer payment.",
+          "previousReviewId": null,
+          "recordHash": "5dc83438510114457ddcc2a9bce527326bb932ac48eab213f453bafaa418dee4"
+        }
+      ]
+    },
+    "session": {
+      "editionId": "E1",
+      "table": "resources",
+      "resourceId": null,
+      "sourceDraft": {
+        "id": "E2",
+        "label": "Next complete corrected day",
+        "receivedAt": "2026-10-20T15:00:00-06:00",
+        "settings": {
+          "dayStart": "2026-10-20T00:00:00-06:00",
+          "dayEnd": "2026-10-21T00:00:00-06:00",
+          "asOf": "unfinished offset"
+        },
+        "notes": "Uncommitted source edits remain separate from accepted editions.",
+        "sources": {
+          "resources": {
+            "name": "resources.csv",
+            "text": "resource_id,name,kind,reference\r\nTECH-A,Technician A,technician,Authored roster\r\nBAY-A,Shop bay A,bay,Authored bay\r\n",
+            "receiptSha256": null
+          },
+          "availability": {
+            "name": "availability.csv",
+            "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW1,TECH-A,available,2026-10-20T08:00:00-06:00,2026-10-20T12:00:00-06:00,Roster morning\r\nW2,TECH-A,available,2026-10-20T12:00:00-06:00,2026-10-20T18:00:00-06:00,Roster afternoon\r\nBLOCK,TECH-A,blocked,2026-10-20T12:00:00-06:00,2026-10-20T12:30:00-06:00,Declared lunch\r\nBAY,BAY-A,available,2026-10-20T08:00:00-06:00,2026-10-20T18:00:00-06:00,Bay hours\r\n",
+            "receiptSha256": null
+          },
+          "booking_revisions": {
+            "name": "booking_revisions.csv",
+            "text": "revision_id,job_id,revision,recorded_at,status,customer_id,vehicle_id,location_id,technician_id,bay_id,start_at,end_at,technician_before_minutes,technician_after_minutes,bay_before_minutes,bay_after_minutes,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:00:00-06:00,2026-10-20T11:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:30:00-06:00,2026-10-20T11:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-06:00,confirmed,CUSTOMER-B,SEDAN-B,ADDRESS-B,TECH-A,,2026-10-20T11:30:00-06:00,2026-10-20T13:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-06:00,confirmed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-06:00,postponed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Weather postponement; retain deposit pending written rebooking,Authored booking\r\n",
+            "receiptSha256": null
+          },
+          "quoted_lines": {
+            "name": "quoted_lines.csv",
+            "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed full detail,25000,Original approved quote\r\nQA2,A2,Agreed full detail,25000,Same amount approved with new time\r\nQB,B1,Agreed interior detail,18000,Approved quote\r\nQC,C1,Agreed truck detail,30000,Original approved quote\r\n",
+            "receiptSha256": null
+          },
+          "completions": {
+            "name": "completions.csv",
+            "text": "observation_id,job_id,status,technician_id,bay_id,started_at,finished_at,observed_at,authorization,reference\r\nCA,JOB-A,completed,TECH-A,,2026-10-20T09:40:00-06:00,2026-10-20T11:50:00-06:00,2026-10-20T11:55:00-06:00,Observed actual times,Technician completion\r\nCB,JOB-B,in_progress,TECH-A,,2026-10-20T11:45:00-06:00,,2026-10-20T12:15:00-06:00,Status snapshot,Current field update\r\n",
+            "receiptSha256": null
+          },
+          "invoice_lines": {
+            "name": "invoice_lines.csv",
+            "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIA1,INV-A,JOB-A,USD,25000,Agreed full detail,2026-10-20T12:00:00-06:00,Invoice original\r\nIA2,INV-A,JOB-A,USD,1000,Recorded charge requiring source review,2026-10-20T12:00:00-06:00,Invoice original\r\n",
+            "receiptSha256": null
+          },
+          "payments": {
+            "name": "payments.csv",
+            "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nP-A,received,,USD,5000,2026-10-19T10:00:00-06:00,Recorded card deposit,Receipt A\r\nP-C,received,,USD,5000,2026-10-19T12:05:00-06:00,Recorded deposit,Receipt C\r\nUnfinished literal receipt draft",
+            "receiptSha256": null
+          },
+          "allocations": {
+            "name": "allocations.csv",
+            "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,P-A,JOB-A,INV-A,deposit,5000,2026-10-20T12:00:00-06:00,Apply recorded deposit to original invoice,Allocation A\r\nAL-C,P-C,JOB-C,,deposit,5000,2026-10-19T12:10:00-06:00,Retain against the original booking until written transfer,Allocation C\r\n",
+            "receiptSha256": null
+          }
+        }
+      },
+      "reviewDrafts": {
+        "[\"E1\",\"booking\",\"JOB-A\"]": {
+          "editionId": "E1",
+          "subjectType": "booking",
+          "subjectId": "JOB-A",
+          "disposition": "investigate",
+          "reviewer": "",
+          "reason": "Unfinished invoice and deposit review",
+          "evidence": "",
+          "previousReviewId": null
+        }
+      },
+      "selectedSubject": null,
+      "receipts": [
+        {
+          "sha256": "1320b5dc13aa91dbac6eabc346cb655592aef8244a8ed04b8c4b3bdd59b8af4c",
+          "bytes": 3,
+          "dataBase64": "/w0K",
+          "names": [
+            "earlier-unreadable-source.bin"
+          ],
+          "receivedAt": "2026-10-15T06:00:00Z",
+          "error": "Retained original malformed UTF-8"
+        }
+      ],
+      "notes": "Unfinished technician handoff — literal café note\r\nSecond line.",
+      "labelDraft": ""
+    },
+    "nativeContinuation": {
+      "schema": "tjlabs.detail-day-native-continuation.v1",
+      "command": {
+        "action": "receive",
+        "input": {
+          "id": "malformed-source-edition",
+          "label": "Authored original-file intake",
+          "receivedAt": "2026-10-15T06:00:00Z",
+          "settings": {
+            "dayStart": "2026-10-20T00:00:00-06:00",
+            "dayEnd": "2026-10-21T00:00:00-06:00",
+            "asOf": "2026-10-20T14:00:00-06:00"
+          },
+          "notes": "Authored exact file intake; browser drafts remain independent."
+        },
+        "sourceFiles": {
+          "resources": {
+            "path": "resources.csv",
+            "name": "resources.csv"
+          },
+          "availability": {
+            "path": "availability.csv",
+            "name": "availability.csv"
+          },
+          "booking_revisions": {
+            "path": "malformed.bin",
+            "name": "booking_revisions.csv"
+          },
+          "quoted_lines": {
+            "path": "quoted_lines.csv",
+            "name": "quoted_lines.csv"
+          },
+          "completions": {
+            "path": "completions.csv",
+            "name": "completions.csv"
+          },
+          "invoice_lines": {
+            "path": "invoice_lines.csv",
+            "name": "invoice_lines.csv"
+          },
+          "payments": {
+            "path": "payments.csv",
+            "name": "payments.csv"
+          },
+          "allocations": {
+            "path": "allocations.csv",
+            "name": "allocations.csv"
+          }
+        }
+      },
+      "commandBytes": {
+        "bytes": 1181,
+        "sha256": "30ac5b7492546bcf546a4b919c1ca8bd622dd1c99f405b48f469524398f8a647",
+        "dataBase64": "ewogICJhY3Rpb24iOiAicmVjZWl2ZSIsCiAgImlucHV0IjogewogICAgImlkIjogIm1hbGZvcm1lZC1zb3VyY2UtZWRpdGlvbiIsCiAgICAibGFiZWwiOiAiQXV0aG9yZWQgb3JpZ2luYWwtZmlsZSBpbnRha2UiLAogICAgInJlY2VpdmVkQXQiOiAiMjAyNi0xMC0xNVQwNjowMDowMFoiLAogICAgInNldHRpbmdzIjogewogICAgICAiZGF5U3RhcnQiOiAiMjAyNi0xMC0yMFQwMDowMDowMC0wNjowMCIsCiAgICAgICJkYXlFbmQiOiAiMjAyNi0xMC0yMVQwMDowMDowMC0wNjowMCIsCiAgICAgICJhc09mIjogIjIwMjYtMTAtMjBUMTQ6MDA6MDAtMDY6MDAiCiAgICB9LAogICAgIm5vdGVzIjogIkF1dGhvcmVkIGV4YWN0IGZpbGUgaW50YWtlOyBicm93c2VyIGRyYWZ0cyByZW1haW4gaW5kZXBlbmRlbnQuIgogIH0sCiAgInNvdXJjZUZpbGVzIjogewogICAgInJlc291cmNlcyI6IHsKICAgICAgInBhdGgiOiAicmVzb3VyY2VzLmNzdiIsCiAgICAgICJuYW1lIjogInJlc291cmNlcy5jc3YiCiAgICB9LAogICAgImF2YWlsYWJpbGl0eSI6IHsKICAgICAgInBhdGgiOiAiYXZhaWxhYmlsaXR5LmNzdiIsCiAgICAgICJuYW1lIjogImF2YWlsYWJpbGl0eS5jc3YiCiAgICB9LAogICAgImJvb2tpbmdfcmV2aXNpb25zIjogewogICAgICAicGF0aCI6ICJtYWxmb3JtZWQuYmluIiwKICAgICAgIm5hbWUiOiAiYm9va2luZ19yZXZpc2lvbnMuY3N2IgogICAgfSwKICAgICJxdW90ZWRfbGluZXMiOiB7CiAgICAgICJwYXRoIjogInF1b3RlZF9saW5lcy5jc3YiLAogICAgICAibmFtZSI6ICJxdW90ZWRfbGluZXMuY3N2IgogICAgfSwKICAgICJjb21wbGV0aW9ucyI6IHsKICAgICAgInBhdGgiOiAiY29tcGxldGlvbnMuY3N2IiwKICAgICAgIm5hbWUiOiAiY29tcGxldGlvbnMuY3N2IgogICAgfSwKICAgICJpbnZvaWNlX2xpbmVzIjogewogICAgICAicGF0aCI6ICJpbnZvaWNlX2xpbmVzLmNzdiIsCiAgICAgICJuYW1lIjogImludm9pY2VfbGluZXMuY3N2IgogICAgfSwKICAgICJwYXltZW50cyI6IHsKICAgICAgInBhdGgiOiAicGF5bWVudHMuY3N2IiwKICAgICAgIm5hbWUiOiAicGF5bWVudHMuY3N2IgogICAgfSwKICAgICJhbGxvY2F0aW9ucyI6IHsKICAgICAgInBhdGgiOiAiYWxsb2NhdGlvbnMuY3N2IiwKICAgICAgIm5hbWUiOiAiYWxsb2NhdGlvbnMuY3N2IgogICAgfQogIH0KfQo="
+      },
+      "attempt": {
+        "schema": "tjlabs.detail-day-native-attempt.v1",
+        "state": "rejected",
+        "action": "receive",
+        "error": "booking_revisions: archive_codec: invalid UTF-8 lead byte"
+      },
+      "receipts": [
+        {
+          "table": "resources",
+          "name": "resources.csv",
+          "bytes": 116,
+          "sha256": "30f27babd54fc4ba5419d3ccc20c2c95ed44215bb7eb2c00ad150bae73d687cd",
+          "dataBase64": "cmVzb3VyY2VfaWQsbmFtZSxraW5kLHJlZmVyZW5jZQ0KVEVDSC1BLFRlY2huaWNpYW4gQSx0ZWNobmljaWFuLEF1dGhvcmVkIHJvc3Rlcg0KQkFZLUEsU2hvcCBiYXkgQSxiYXksQXV0aG9yZWQgYmF5DQo=",
+          "error": null
+        },
+        {
+          "table": "availability",
+          "name": "availability.csv",
+          "bytes": 405,
+          "sha256": "709bfaa2de4a99e407a96eb5480841b9d6abb07de155f00d9db2a2db73805dd2",
+          "dataBase64": "d2luZG93X2lkLHJlc291cmNlX2lkLHN0YXRlLHN0YXJ0X2F0LGVuZF9hdCxyZWZlcmVuY2UNClcxLFRFQ0gtQSxhdmFpbGFibGUsMjAyNi0xMC0yMFQwODowMDowMC0wNjowMCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLFJvc3RlciBtb3JuaW5nDQpXMixURUNILUEsYXZhaWxhYmxlLDIwMjYtMTAtMjBUMTI6MDA6MDAtMDY6MDAsMjAyNi0xMC0yMFQxODowMDowMC0wNjowMCxSb3N0ZXIgYWZ0ZXJub29uDQpCTE9DSyxURUNILUEsYmxvY2tlZCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLDIwMjYtMTAtMjBUMTI6MzA6MDAtMDY6MDAsRGVjbGFyZWQgbHVuY2gNCkJBWSxCQVktQSxhdmFpbGFibGUsMjAyNi0xMC0yMFQwODowMDowMC0wNjowMCwyMDI2LTEwLTIwVDE4OjAwOjAwLTA2OjAwLEJheSBob3Vycw0K",
+          "error": null
+        },
+        {
+          "table": "booking_revisions",
+          "name": "booking_revisions.csv",
+          "bytes": 3,
+          "sha256": "1320b5dc13aa91dbac6eabc346cb655592aef8244a8ed04b8c4b3bdd59b8af4c",
+          "dataBase64": "/w0K",
+          "error": "archive_codec: invalid UTF-8 lead byte"
+        },
+        {
+          "table": "quoted_lines",
+          "name": "quoted_lines.csv",
+          "bytes": 289,
+          "sha256": "e298d0a5938bc4df0313af7796de2ad41fc97164bb50d4f97e15aa74d29666d0",
+          "dataBase64": "bGluZV9pZCxyZXZpc2lvbl9pZCxkZXNjcmlwdGlvbixhbW91bnRfbWlub3IscmVmZXJlbmNlDQpRQTEsQTEsQWdyZWVkIGZ1bGwgZGV0YWlsLDI1MDAwLE9yaWdpbmFsIGFwcHJvdmVkIHF1b3RlDQpRQTIsQTIsQWdyZWVkIGZ1bGwgZGV0YWlsLDI1MDAwLFNhbWUgYW1vdW50IGFwcHJvdmVkIHdpdGggbmV3IHRpbWUNClFCLEIxLEFncmVlZCBpbnRlcmlvciBkZXRhaWwsMTgwMDAsQXBwcm92ZWQgcXVvdGUNClFDLEMxLEFncmVlZCB0cnVjayBkZXRhaWwsMzAwMDAsT3JpZ2luYWwgYXBwcm92ZWQgcXVvdGUNCg==",
+          "error": null
+        },
+        {
+          "table": "completions",
+          "name": "completions.csv",
+          "bytes": 380,
+          "sha256": "ec2bcdca9281c3a91e1d218ac1f5c4366212d03fc01fa21ce8cffe89973e0bb7",
+          "dataBase64": "b2JzZXJ2YXRpb25faWQsam9iX2lkLHN0YXR1cyx0ZWNobmljaWFuX2lkLGJheV9pZCxzdGFydGVkX2F0LGZpbmlzaGVkX2F0LG9ic2VydmVkX2F0LGF1dGhvcml6YXRpb24scmVmZXJlbmNlDQpDQSxKT0ItQSxjb21wbGV0ZWQsVEVDSC1BLCwyMDI2LTEwLTIwVDA5OjQwOjAwLTA2OjAwLDIwMjYtMTAtMjBUMTE6NTA6MDAtMDY6MDAsMjAyNi0xMC0yMFQxMTo1NTowMC0wNjowMCxPYnNlcnZlZCBhY3R1YWwgdGltZXMsVGVjaG5pY2lhbiBjb21wbGV0aW9uDQpDQixKT0ItQixpbl9wcm9ncmVzcyxURUNILUEsLDIwMjYtMTAtMjBUMTE6NDU6MDAtMDY6MDAsLDIwMjYtMTAtMjBUMTI6MTU6MDAtMDY6MDAsU3RhdHVzIHNuYXBzaG90LEN1cnJlbnQgZmllbGQgdXBkYXRlDQo=",
+          "error": null
+        },
+        {
+          "table": "invoice_lines",
+          "name": "invoice_lines.csv",
+          "bytes": 279,
+          "sha256": "f1ed0e9999d31b7efe522e2e1fb67e9343b383d65038b6996946808d1deef696",
+          "dataBase64": "bGluZV9pZCxpbnZvaWNlX2lkLGpvYl9pZCxjdXJyZW5jeSxhbW91bnRfbWlub3IsZGVzY3JpcHRpb24saXNzdWVkX2F0LHJlZmVyZW5jZQ0KSUExLElOVi1BLEpPQi1BLFVTRCwyNTAwMCxBZ3JlZWQgZnVsbCBkZXRhaWwsMjAyNi0xMC0yMFQxMjowMDowMC0wNjowMCxJbnZvaWNlIG9yaWdpbmFsDQpJQTIsSU5WLUEsSk9CLUEsVVNELDEwMDAsUmVjb3JkZWQgY2hhcmdlIHJlcXVpcmluZyBzb3VyY2UgcmV2aWV3LDIwMjYtMTAtMjBUMTI6MDA6MDAtMDY6MDAsSW52b2ljZSBvcmlnaW5hbA0K",
+          "error": null
+        },
+        {
+          "table": "payments",
+          "name": "payments.csv",
+          "bytes": 245,
+          "sha256": "e945957660b6468a369359352c86c777bb806788f191cbdd517ae3503b75c849",
+          "dataBase64": "cGF5bWVudF9pZCxraW5kLHBhcmVudF9wYXltZW50X2lkLGN1cnJlbmN5LGFtb3VudF9taW5vcixvY2N1cnJlZF9hdCxtZXRob2QscmVmZXJlbmNlDQpQLUEscmVjZWl2ZWQsLFVTRCw1MDAwLDIwMjYtMTAtMTlUMTA6MDA6MDAtMDY6MDAsUmVjb3JkZWQgY2FyZCBkZXBvc2l0LFJlY2VpcHQgQQ0KUC1DLHJlY2VpdmVkLCxVU0QsNTAwMCwyMDI2LTEwLTE5VDEyOjA1OjAwLTA2OjAwLFJlY29yZGVkIGRlcG9zaXQsUmVjZWlwdCBDDQo=",
+          "error": null
+        },
+        {
+          "table": "allocations",
+          "name": "allocations.csv",
+          "bytes": 348,
+          "sha256": "7a8ae75401621275303ee20852b446d30445164c929483d53eab67d4fe8c5608",
+          "dataBase64": "YWxsb2NhdGlvbl9pZCxwYXltZW50X2lkLGpvYl9pZCxpbnZvaWNlX2lkLHB1cnBvc2UsYW1vdW50X21pbm9yLGF1dGhvcml6ZWRfYXQsYXV0aG9yaXphdGlvbixyZWZlcmVuY2UNCkFMLUEsUC1BLEpPQi1BLElOVi1BLGRlcG9zaXQsNTAwMCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLEFwcGx5IHJlY29yZGVkIGRlcG9zaXQgdG8gb3JpZ2luYWwgaW52b2ljZSxBbGxvY2F0aW9uIEENCkFMLUMsUC1DLEpPQi1DLCxkZXBvc2l0LDUwMDAsMjAyNi0xMC0xOVQxMjoxMDowMC0wNjowMCxSZXRhaW4gYWdhaW5zdCB0aGUgb3JpZ2luYWwgYm9va2luZyB1bnRpbCB3cml0dGVuIHRyYW5zZmVyLEFsbG9jYXRpb24gQw0K",
+          "error": null
+        }
+      ],
+      "previous": {
+        "schema": "tjlabs.detail-day-native-continuation.v1",
+        "command": {
+          "action": "review",
+          "input": {
+            "id": "native-review",
+            "editionId": "native-source-edition",
+            "subjectType": "booking",
+            "subjectId": "JOB-A",
+            "disposition": "investigate",
+            "reviewer": "Authored receiving operator",
+            "reason": "Read the original invoice line and written allocation before disposition.",
+            "evidence": "Authored course source; no actual customer payment.",
+            "previousReviewId": null
+          }
+        },
+        "commandBytes": {
+          "bytes": 440,
+          "sha256": "8abc8054b9f12c5366c93eb7c3ddafd67201c86c6137e16f2c1448289d402503",
+          "dataBase64": "ewogICJhY3Rpb24iOiAicmV2aWV3IiwKICAiaW5wdXQiOiB7CiAgICAiaWQiOiAibmF0aXZlLXJldmlldyIsCiAgICAiZWRpdGlvbklkIjogIm5hdGl2ZS1zb3VyY2UtZWRpdGlvbiIsCiAgICAic3ViamVjdFR5cGUiOiAiYm9va2luZyIsCiAgICAic3ViamVjdElkIjogIkpPQi1BIiwKICAgICJkaXNwb3NpdGlvbiI6ICJpbnZlc3RpZ2F0ZSIsCiAgICAicmV2aWV3ZXIiOiAiQXV0aG9yZWQgcmVjZWl2aW5nIG9wZXJhdG9yIiwKICAgICJyZWFzb24iOiAiUmVhZCB0aGUgb3JpZ2luYWwgaW52b2ljZSBsaW5lIGFuZCB3cml0dGVuIGFsbG9jYXRpb24gYmVmb3JlIGRpc3Bvc2l0aW9uLiIsCiAgICAiZXZpZGVuY2UiOiAiQXV0aG9yZWQgY291cnNlIHNvdXJjZTsgbm8gYWN0dWFsIGN1c3RvbWVyIHBheW1lbnQuIiwKICAgICJwcmV2aW91c1Jldmlld0lkIjogbnVsbAogIH0KfQo="
+        },
+        "attempt": {
+          "schema": "tjlabs.detail-day-native-attempt.v1",
+          "state": "completed",
+          "action": "review",
+          "error": null
+        },
+        "receipts": [],
+        "previous": {
+          "schema": "tjlabs.detail-day-native-continuation.v1",
+          "command": {
+            "action": "receive",
+            "input": {
+              "id": "native-source-edition",
+              "label": "Authored original-file intake",
+              "receivedAt": "2026-10-15T06:00:00Z",
+              "settings": {
+                "dayStart": "2026-10-20T00:00:00-06:00",
+                "dayEnd": "2026-10-21T00:00:00-06:00",
+                "asOf": "2026-10-20T14:00:00-06:00"
+              },
+              "notes": "Authored exact file intake; browser drafts remain independent."
+            },
+            "sourceFiles": {
+              "resources": {
+                "path": "resources.csv",
+                "name": "resources.csv"
+              },
+              "availability": {
+                "path": "availability.csv",
+                "name": "availability.csv"
+              },
+              "booking_revisions": {
+                "path": "booking_revisions.csv",
+                "name": "booking_revisions.csv"
+              },
+              "quoted_lines": {
+                "path": "quoted_lines.csv",
+                "name": "quoted_lines.csv"
+              },
+              "completions": {
+                "path": "completions.csv",
+                "name": "completions.csv"
+              },
+              "invoice_lines": {
+                "path": "invoice_lines.csv",
+                "name": "invoice_lines.csv"
+              },
+              "payments": {
+                "path": "payments.csv",
+                "name": "payments.csv"
+              },
+              "allocations": {
+                "path": "allocations.csv",
+                "name": "allocations.csv"
+              }
+            }
+          },
+          "commandBytes": {
+            "bytes": 1186,
+            "sha256": "5f3e80cc42b06295f138376b3e32133812bc4e7b959779df3bad16b9e912b56a",
+            "dataBase64": "ewogICJhY3Rpb24iOiAicmVjZWl2ZSIsCiAgImlucHV0IjogewogICAgImlkIjogIm5hdGl2ZS1zb3VyY2UtZWRpdGlvbiIsCiAgICAibGFiZWwiOiAiQXV0aG9yZWQgb3JpZ2luYWwtZmlsZSBpbnRha2UiLAogICAgInJlY2VpdmVkQXQiOiAiMjAyNi0xMC0xNVQwNjowMDowMFoiLAogICAgInNldHRpbmdzIjogewogICAgICAiZGF5U3RhcnQiOiAiMjAyNi0xMC0yMFQwMDowMDowMC0wNjowMCIsCiAgICAgICJkYXlFbmQiOiAiMjAyNi0xMC0yMVQwMDowMDowMC0wNjowMCIsCiAgICAgICJhc09mIjogIjIwMjYtMTAtMjBUMTQ6MDA6MDAtMDY6MDAiCiAgICB9LAogICAgIm5vdGVzIjogIkF1dGhvcmVkIGV4YWN0IGZpbGUgaW50YWtlOyBicm93c2VyIGRyYWZ0cyByZW1haW4gaW5kZXBlbmRlbnQuIgogIH0sCiAgInNvdXJjZUZpbGVzIjogewogICAgInJlc291cmNlcyI6IHsKICAgICAgInBhdGgiOiAicmVzb3VyY2VzLmNzdiIsCiAgICAgICJuYW1lIjogInJlc291cmNlcy5jc3YiCiAgICB9LAogICAgImF2YWlsYWJpbGl0eSI6IHsKICAgICAgInBhdGgiOiAiYXZhaWxhYmlsaXR5LmNzdiIsCiAgICAgICJuYW1lIjogImF2YWlsYWJpbGl0eS5jc3YiCiAgICB9LAogICAgImJvb2tpbmdfcmV2aXNpb25zIjogewogICAgICAicGF0aCI6ICJib29raW5nX3JldmlzaW9ucy5jc3YiLAogICAgICAibmFtZSI6ICJib29raW5nX3JldmlzaW9ucy5jc3YiCiAgICB9LAogICAgInF1b3RlZF9saW5lcyI6IHsKICAgICAgInBhdGgiOiAicXVvdGVkX2xpbmVzLmNzdiIsCiAgICAgICJuYW1lIjogInF1b3RlZF9saW5lcy5jc3YiCiAgICB9LAogICAgImNvbXBsZXRpb25zIjogewogICAgICAicGF0aCI6ICJjb21wbGV0aW9ucy5jc3YiLAogICAgICAibmFtZSI6ICJjb21wbGV0aW9ucy5jc3YiCiAgICB9LAogICAgImludm9pY2VfbGluZXMiOiB7CiAgICAgICJwYXRoIjogImludm9pY2VfbGluZXMuY3N2IiwKICAgICAgIm5hbWUiOiAiaW52b2ljZV9saW5lcy5jc3YiCiAgICB9LAogICAgInBheW1lbnRzIjogewogICAgICAicGF0aCI6ICJwYXltZW50cy5jc3YiLAogICAgICAibmFtZSI6ICJwYXltZW50cy5jc3YiCiAgICB9LAogICAgImFsbG9jYXRpb25zIjogewogICAgICAicGF0aCI6ICJhbGxvY2F0aW9ucy5jc3YiLAogICAgICAibmFtZSI6ICJhbGxvY2F0aW9ucy5jc3YiCiAgICB9CiAgfQp9Cg=="
+          },
+          "attempt": {
+            "schema": "tjlabs.detail-day-native-attempt.v1",
+            "state": "completed",
+            "action": "receive",
+            "error": null
+          },
+          "receipts": [
+            {
+              "table": "resources",
+              "name": "resources.csv",
+              "bytes": 116,
+              "sha256": "30f27babd54fc4ba5419d3ccc20c2c95ed44215bb7eb2c00ad150bae73d687cd",
+              "dataBase64": "cmVzb3VyY2VfaWQsbmFtZSxraW5kLHJlZmVyZW5jZQ0KVEVDSC1BLFRlY2huaWNpYW4gQSx0ZWNobmljaWFuLEF1dGhvcmVkIHJvc3Rlcg0KQkFZLUEsU2hvcCBiYXkgQSxiYXksQXV0aG9yZWQgYmF5DQo=",
+              "error": null
+            },
+            {
+              "table": "availability",
+              "name": "availability.csv",
+              "bytes": 405,
+              "sha256": "709bfaa2de4a99e407a96eb5480841b9d6abb07de155f00d9db2a2db73805dd2",
+              "dataBase64": "d2luZG93X2lkLHJlc291cmNlX2lkLHN0YXRlLHN0YXJ0X2F0LGVuZF9hdCxyZWZlcmVuY2UNClcxLFRFQ0gtQSxhdmFpbGFibGUsMjAyNi0xMC0yMFQwODowMDowMC0wNjowMCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLFJvc3RlciBtb3JuaW5nDQpXMixURUNILUEsYXZhaWxhYmxlLDIwMjYtMTAtMjBUMTI6MDA6MDAtMDY6MDAsMjAyNi0xMC0yMFQxODowMDowMC0wNjowMCxSb3N0ZXIgYWZ0ZXJub29uDQpCTE9DSyxURUNILUEsYmxvY2tlZCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLDIwMjYtMTAtMjBUMTI6MzA6MDAtMDY6MDAsRGVjbGFyZWQgbHVuY2gNCkJBWSxCQVktQSxhdmFpbGFibGUsMjAyNi0xMC0yMFQwODowMDowMC0wNjowMCwyMDI2LTEwLTIwVDE4OjAwOjAwLTA2OjAwLEJheSBob3Vycw0K",
+              "error": null
+            },
+            {
+              "table": "booking_revisions",
+              "name": "booking_revisions.csv",
+              "bytes": 1275,
+              "sha256": "b9fce91a81d442f1fedfe6cb0a4fb651a7a4190e8e6eabcc209008c5339a3f08",
+              "dataBase64": "77u/cmV2aXNpb25faWQsam9iX2lkLHJldmlzaW9uLHJlY29yZGVkX2F0LHN0YXR1cyxjdXN0b21lcl9pZCx2ZWhpY2xlX2lkLGxvY2F0aW9uX2lkLHRlY2huaWNpYW5faWQsYmF5X2lkLHN0YXJ0X2F0LGVuZF9hdCx0ZWNobmljaWFuX2JlZm9yZV9taW51dGVzLHRlY2huaWNpYW5fYWZ0ZXJfbWludXRlcyxiYXlfYmVmb3JlX21pbnV0ZXMsYmF5X2FmdGVyX21pbnV0ZXMsY3VycmVuY3ksYXV0aG9yaXphdGlvbixyZWZlcmVuY2UNCkExLEpPQi1BLDEsMjAyNi0xMC0xOVQwOTowMDowMC0wNjowMCxjb25maXJtZWQsQ1VTVE9NRVItQSxTVVYtQSxBRERSRVNTLUEsVEVDSC1BLCwyMDI2LTEwLTIwVDA5OjAwOjAwLTA2OjAwLDIwMjYtMTAtMjBUMTE6MDA6MDAtMDY6MDAsMTUsMTUsMCwwLFVTRCxDdXN0b21lci1hcHByb3ZlZCBzZXJ2aWNlIHdpbmRvdyxBdXRob3JlZCBib29raW5nDQpBMixKT0ItQSwyLDIwMjYtMTAtMTlUMTA6MDA6MDAtMDY6MDAsY29uZmlybWVkLENVU1RPTUVSLUEsU1VWLUEsQUREUkVTUy1BLFRFQ0gtQSwsMjAyNi0xMC0yMFQwOTozMDowMC0wNjowMCwyMDI2LTEwLTIwVDExOjMwOjAwLTA2OjAwLDE1LDE1LDAsMCxVU0QsQ3VzdG9tZXItYXBwcm92ZWQgc2VydmljZSB3aW5kb3csQXV0aG9yZWQgYm9va2luZw0KQjEsSk9CLUIsMSwyMDI2LTEwLTE5VDExOjAwOjAwLTA2OjAwLGNvbmZpcm1lZCxDVVNUT01FUi1CLFNFREFOLUIsQUREUkVTUy1CLFRFQ0gtQSwsMjAyNi0xMC0yMFQxMTozMDowMC0wNjowMCwyMDI2LTEwLTIwVDEzOjMwOjAwLTA2OjAwLDE1LDE1LDAsMCxVU0QsQ3VzdG9tZXItYXBwcm92ZWQgc2VydmljZSB3aW5kb3csQXV0aG9yZWQgYm9va2luZw0KQzEsSk9CLUMsMSwyMDI2LTEwLTE5VDEyOjAwOjAwLTA2OjAwLGNvbmZpcm1lZCxDVVNUT01FUi1DLFRSVUNLLUMsQUREUkVTUy1DLFRFQ0gtQSwsMjAyNi0xMC0yMFQxNTowMDowMC0wNjowMCwyMDI2LTEwLTIwVDE3OjAwOjAwLTA2OjAwLDE1LDE1LDAsMCxVU0QsQ3VzdG9tZXItYXBwcm92ZWQgc2VydmljZSB3aW5kb3csQXV0aG9yZWQgYm9va2luZw0KQzIsSk9CLUMsMiwyMDI2LTEwLTIwVDA3OjAwOjAwLTA2OjAwLHBvc3Rwb25lZCxDVVNUT01FUi1DLFRSVUNLLUMsQUREUkVTUy1DLFRFQ0gtQSwsMjAyNi0xMC0yMFQxNTowMDowMC0wNjowMCwyMDI2LTEwLTIwVDE3OjAwOjAwLTA2OjAwLDE1LDE1LDAsMCxVU0QsV2VhdGhlciBwb3N0cG9uZW1lbnQ7IHJldGFpbiBkZXBvc2l0IHBlbmRpbmcgd3JpdHRlbiByZWJvb2tpbmcsQXV0aG9yZWQgYm9va2luZw0K",
+              "error": null
+            },
+            {
+              "table": "quoted_lines",
+              "name": "quoted_lines.csv",
+              "bytes": 289,
+              "sha256": "e298d0a5938bc4df0313af7796de2ad41fc97164bb50d4f97e15aa74d29666d0",
+              "dataBase64": "bGluZV9pZCxyZXZpc2lvbl9pZCxkZXNjcmlwdGlvbixhbW91bnRfbWlub3IscmVmZXJlbmNlDQpRQTEsQTEsQWdyZWVkIGZ1bGwgZGV0YWlsLDI1MDAwLE9yaWdpbmFsIGFwcHJvdmVkIHF1b3RlDQpRQTIsQTIsQWdyZWVkIGZ1bGwgZGV0YWlsLDI1MDAwLFNhbWUgYW1vdW50IGFwcHJvdmVkIHdpdGggbmV3IHRpbWUNClFCLEIxLEFncmVlZCBpbnRlcmlvciBkZXRhaWwsMTgwMDAsQXBwcm92ZWQgcXVvdGUNClFDLEMxLEFncmVlZCB0cnVjayBkZXRhaWwsMzAwMDAsT3JpZ2luYWwgYXBwcm92ZWQgcXVvdGUNCg==",
+              "error": null
+            },
+            {
+              "table": "completions",
+              "name": "completions.csv",
+              "bytes": 380,
+              "sha256": "ec2bcdca9281c3a91e1d218ac1f5c4366212d03fc01fa21ce8cffe89973e0bb7",
+              "dataBase64": "b2JzZXJ2YXRpb25faWQsam9iX2lkLHN0YXR1cyx0ZWNobmljaWFuX2lkLGJheV9pZCxzdGFydGVkX2F0LGZpbmlzaGVkX2F0LG9ic2VydmVkX2F0LGF1dGhvcml6YXRpb24scmVmZXJlbmNlDQpDQSxKT0ItQSxjb21wbGV0ZWQsVEVDSC1BLCwyMDI2LTEwLTIwVDA5OjQwOjAwLTA2OjAwLDIwMjYtMTAtMjBUMTE6NTA6MDAtMDY6MDAsMjAyNi0xMC0yMFQxMTo1NTowMC0wNjowMCxPYnNlcnZlZCBhY3R1YWwgdGltZXMsVGVjaG5pY2lhbiBjb21wbGV0aW9uDQpDQixKT0ItQixpbl9wcm9ncmVzcyxURUNILUEsLDIwMjYtMTAtMjBUMTE6NDU6MDAtMDY6MDAsLDIwMjYtMTAtMjBUMTI6MTU6MDAtMDY6MDAsU3RhdHVzIHNuYXBzaG90LEN1cnJlbnQgZmllbGQgdXBkYXRlDQo=",
+              "error": null
+            },
+            {
+              "table": "invoice_lines",
+              "name": "invoice_lines.csv",
+              "bytes": 279,
+              "sha256": "f1ed0e9999d31b7efe522e2e1fb67e9343b383d65038b6996946808d1deef696",
+              "dataBase64": "bGluZV9pZCxpbnZvaWNlX2lkLGpvYl9pZCxjdXJyZW5jeSxhbW91bnRfbWlub3IsZGVzY3JpcHRpb24saXNzdWVkX2F0LHJlZmVyZW5jZQ0KSUExLElOVi1BLEpPQi1BLFVTRCwyNTAwMCxBZ3JlZWQgZnVsbCBkZXRhaWwsMjAyNi0xMC0yMFQxMjowMDowMC0wNjowMCxJbnZvaWNlIG9yaWdpbmFsDQpJQTIsSU5WLUEsSk9CLUEsVVNELDEwMDAsUmVjb3JkZWQgY2hhcmdlIHJlcXVpcmluZyBzb3VyY2UgcmV2aWV3LDIwMjYtMTAtMjBUMTI6MDA6MDAtMDY6MDAsSW52b2ljZSBvcmlnaW5hbA0K",
+              "error": null
+            },
+            {
+              "table": "payments",
+              "name": "payments.csv",
+              "bytes": 245,
+              "sha256": "e945957660b6468a369359352c86c777bb806788f191cbdd517ae3503b75c849",
+              "dataBase64": "cGF5bWVudF9pZCxraW5kLHBhcmVudF9wYXltZW50X2lkLGN1cnJlbmN5LGFtb3VudF9taW5vcixvY2N1cnJlZF9hdCxtZXRob2QscmVmZXJlbmNlDQpQLUEscmVjZWl2ZWQsLFVTRCw1MDAwLDIwMjYtMTAtMTlUMTA6MDA6MDAtMDY6MDAsUmVjb3JkZWQgY2FyZCBkZXBvc2l0LFJlY2VpcHQgQQ0KUC1DLHJlY2VpdmVkLCxVU0QsNTAwMCwyMDI2LTEwLTE5VDEyOjA1OjAwLTA2OjAwLFJlY29yZGVkIGRlcG9zaXQsUmVjZWlwdCBDDQo=",
+              "error": null
+            },
+            {
+              "table": "allocations",
+              "name": "allocations.csv",
+              "bytes": 348,
+              "sha256": "7a8ae75401621275303ee20852b446d30445164c929483d53eab67d4fe8c5608",
+              "dataBase64": "YWxsb2NhdGlvbl9pZCxwYXltZW50X2lkLGpvYl9pZCxpbnZvaWNlX2lkLHB1cnBvc2UsYW1vdW50X21pbm9yLGF1dGhvcml6ZWRfYXQsYXV0aG9yaXphdGlvbixyZWZlcmVuY2UNCkFMLUEsUC1BLEpPQi1BLElOVi1BLGRlcG9zaXQsNTAwMCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLEFwcGx5IHJlY29yZGVkIGRlcG9zaXQgdG8gb3JpZ2luYWwgaW52b2ljZSxBbGxvY2F0aW9uIEENCkFMLUMsUC1DLEpPQi1DLCxkZXBvc2l0LDUwMDAsMjAyNi0xMC0xOVQxMjoxMDowMC0wNjowMCxSZXRhaW4gYWdhaW5zdCB0aGUgb3JpZ2luYWwgYm9va2luZyB1bnRpbCB3cml0dGVuIHRyYW5zZmVyLEFsbG9jYXRpb24gQw0K",
+              "error": null
+            }
+          ],
+          "previous": null
+        }
+      }
+    }
+  },
+  "commandRejectedCurrent": {
+    "schema": "tjlabs.detail-day-desk.v1",
+    "workspace": {
+      "schema": "tjlabs.detail-day-study.v1",
+      "id": "authored-detail-day",
+      "label": "Authored technician day study",
+      "editions": [
+        {
+          "id": "E1",
+          "label": "Authored original day",
+          "receivedAt": "2026-10-20T14:00:00-06:00",
+          "settings": {
+            "dayStart": "2026-10-20T00:00:00-06:00",
+            "dayEnd": "2026-10-21T00:00:00-06:00",
+            "asOf": "2026-10-20T14:00:00-06:00"
+          },
+          "notes": "All people, jobs, monetary amounts and observations in this worked source are authored examples.",
+          "sources": {
+            "resources": {
+              "name": "resources.csv",
+              "text": "resource_id,name,kind,reference\r\nTECH-A,Technician A,technician,Authored roster\r\nBAY-A,Shop bay A,bay,Authored bay\r\n",
+              "bytes": 116,
+              "sha256": "30f27babd54fc4ba5419d3ccc20c2c95ed44215bb7eb2c00ad150bae73d687cd"
+            },
+            "availability": {
+              "name": "availability.csv",
+              "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW1,TECH-A,available,2026-10-20T08:00:00-06:00,2026-10-20T12:00:00-06:00,Roster morning\r\nW2,TECH-A,available,2026-10-20T12:00:00-06:00,2026-10-20T18:00:00-06:00,Roster afternoon\r\nBLOCK,TECH-A,blocked,2026-10-20T12:00:00-06:00,2026-10-20T12:30:00-06:00,Declared lunch\r\nBAY,BAY-A,available,2026-10-20T08:00:00-06:00,2026-10-20T18:00:00-06:00,Bay hours\r\n",
+              "bytes": 405,
+              "sha256": "709bfaa2de4a99e407a96eb5480841b9d6abb07de155f00d9db2a2db73805dd2"
+            },
+            "booking_revisions": {
+              "name": "booking_revisions.csv",
+              "text": "revision_id,job_id,revision,recorded_at,status,customer_id,vehicle_id,location_id,technician_id,bay_id,start_at,end_at,technician_before_minutes,technician_after_minutes,bay_before_minutes,bay_after_minutes,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:00:00-06:00,2026-10-20T11:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:30:00-06:00,2026-10-20T11:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-06:00,confirmed,CUSTOMER-B,SEDAN-B,ADDRESS-B,TECH-A,,2026-10-20T11:30:00-06:00,2026-10-20T13:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-06:00,confirmed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-06:00,postponed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Weather postponement; retain deposit pending written rebooking,Authored booking\r\n",
+              "bytes": 1272,
+              "sha256": "b8c2f18c9a29d6c453bc94ecc0d145e9eac9be9f6b9ebcd3cf719cb304a1ba52"
+            },
+            "quoted_lines": {
+              "name": "quoted_lines.csv",
+              "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed full detail,25000,Original approved quote\r\nQA2,A2,Agreed full detail,25000,Same amount approved with new time\r\nQB,B1,Agreed interior detail,18000,Approved quote\r\nQC,C1,Agreed truck detail,30000,Original approved quote\r\n",
+              "bytes": 289,
+              "sha256": "e298d0a5938bc4df0313af7796de2ad41fc97164bb50d4f97e15aa74d29666d0"
+            },
+            "completions": {
+              "name": "completions.csv",
+              "text": "observation_id,job_id,status,technician_id,bay_id,started_at,finished_at,observed_at,authorization,reference\r\nCA,JOB-A,completed,TECH-A,,2026-10-20T09:40:00-06:00,2026-10-20T11:50:00-06:00,2026-10-20T11:55:00-06:00,Observed actual times,Technician completion\r\nCB,JOB-B,in_progress,TECH-A,,2026-10-20T11:45:00-06:00,,2026-10-20T12:15:00-06:00,Status snapshot,Current field update\r\n",
+              "bytes": 380,
+              "sha256": "ec2bcdca9281c3a91e1d218ac1f5c4366212d03fc01fa21ce8cffe89973e0bb7"
+            },
+            "invoice_lines": {
+              "name": "invoice_lines.csv",
+              "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIA1,INV-A,JOB-A,USD,25000,Agreed full detail,2026-10-20T12:00:00-06:00,Invoice original\r\nIA2,INV-A,JOB-A,USD,1000,Recorded charge requiring source review,2026-10-20T12:00:00-06:00,Invoice original\r\n",
+              "bytes": 279,
+              "sha256": "f1ed0e9999d31b7efe522e2e1fb67e9343b383d65038b6996946808d1deef696"
+            },
+            "payments": {
+              "name": "payments.csv",
+              "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nP-A,received,,USD,5000,2026-10-19T10:00:00-06:00,Recorded card deposit,Receipt A\r\nP-C,received,,USD,5000,2026-10-19T12:05:00-06:00,Recorded deposit,Receipt C\r\n",
+              "bytes": 245,
+              "sha256": "e945957660b6468a369359352c86c777bb806788f191cbdd517ae3503b75c849"
+            },
+            "allocations": {
+              "name": "allocations.csv",
+              "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,P-A,JOB-A,INV-A,deposit,5000,2026-10-20T12:00:00-06:00,Apply recorded deposit to original invoice,Allocation A\r\nAL-C,P-C,JOB-C,,deposit,5000,2026-10-19T12:10:00-06:00,Retain against the original booking until written transfer,Allocation C\r\n",
+              "bytes": 348,
+              "sha256": "7a8ae75401621275303ee20852b446d30445164c929483d53eab67d4fe8c5608"
+            }
+          },
+          "sourceHash": "1c42e4a40b85689972215d9a038a5aad24bae3b57c388c22f59abe97be57ff49"
+        },
+        {
+          "id": "native-source-edition",
+          "label": "Authored original-file intake",
+          "receivedAt": "2026-10-15T06:00:00Z",
+          "settings": {
+            "dayStart": "2026-10-20T00:00:00-06:00",
+            "dayEnd": "2026-10-21T00:00:00-06:00",
+            "asOf": "2026-10-20T14:00:00-06:00"
+          },
+          "notes": "Authored exact file intake; browser drafts remain independent.",
+          "sources": {
+            "resources": {
+              "name": "resources.csv",
+              "text": "resource_id,name,kind,reference\r\nTECH-A,Technician A,technician,Authored roster\r\nBAY-A,Shop bay A,bay,Authored bay\r\n",
+              "bytes": 116,
+              "sha256": "30f27babd54fc4ba5419d3ccc20c2c95ed44215bb7eb2c00ad150bae73d687cd"
+            },
+            "availability": {
+              "name": "availability.csv",
+              "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW1,TECH-A,available,2026-10-20T08:00:00-06:00,2026-10-20T12:00:00-06:00,Roster morning\r\nW2,TECH-A,available,2026-10-20T12:00:00-06:00,2026-10-20T18:00:00-06:00,Roster afternoon\r\nBLOCK,TECH-A,blocked,2026-10-20T12:00:00-06:00,2026-10-20T12:30:00-06:00,Declared lunch\r\nBAY,BAY-A,available,2026-10-20T08:00:00-06:00,2026-10-20T18:00:00-06:00,Bay hours\r\n",
+              "bytes": 405,
+              "sha256": "709bfaa2de4a99e407a96eb5480841b9d6abb07de155f00d9db2a2db73805dd2"
+            },
+            "booking_revisions": {
+              "name": "booking_revisions.csv",
+              "text": "﻿revision_id,job_id,revision,recorded_at,status,customer_id,vehicle_id,location_id,technician_id,bay_id,start_at,end_at,technician_before_minutes,technician_after_minutes,bay_before_minutes,bay_after_minutes,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:00:00-06:00,2026-10-20T11:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:30:00-06:00,2026-10-20T11:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-06:00,confirmed,CUSTOMER-B,SEDAN-B,ADDRESS-B,TECH-A,,2026-10-20T11:30:00-06:00,2026-10-20T13:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-06:00,confirmed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-06:00,postponed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Weather postponement; retain deposit pending written rebooking,Authored booking\r\n",
+              "bytes": 1275,
+              "sha256": "b9fce91a81d442f1fedfe6cb0a4fb651a7a4190e8e6eabcc209008c5339a3f08"
+            },
+            "quoted_lines": {
+              "name": "quoted_lines.csv",
+              "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed full detail,25000,Original approved quote\r\nQA2,A2,Agreed full detail,25000,Same amount approved with new time\r\nQB,B1,Agreed interior detail,18000,Approved quote\r\nQC,C1,Agreed truck detail,30000,Original approved quote\r\n",
+              "bytes": 289,
+              "sha256": "e298d0a5938bc4df0313af7796de2ad41fc97164bb50d4f97e15aa74d29666d0"
+            },
+            "completions": {
+              "name": "completions.csv",
+              "text": "observation_id,job_id,status,technician_id,bay_id,started_at,finished_at,observed_at,authorization,reference\r\nCA,JOB-A,completed,TECH-A,,2026-10-20T09:40:00-06:00,2026-10-20T11:50:00-06:00,2026-10-20T11:55:00-06:00,Observed actual times,Technician completion\r\nCB,JOB-B,in_progress,TECH-A,,2026-10-20T11:45:00-06:00,,2026-10-20T12:15:00-06:00,Status snapshot,Current field update\r\n",
+              "bytes": 380,
+              "sha256": "ec2bcdca9281c3a91e1d218ac1f5c4366212d03fc01fa21ce8cffe89973e0bb7"
+            },
+            "invoice_lines": {
+              "name": "invoice_lines.csv",
+              "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIA1,INV-A,JOB-A,USD,25000,Agreed full detail,2026-10-20T12:00:00-06:00,Invoice original\r\nIA2,INV-A,JOB-A,USD,1000,Recorded charge requiring source review,2026-10-20T12:00:00-06:00,Invoice original\r\n",
+              "bytes": 279,
+              "sha256": "f1ed0e9999d31b7efe522e2e1fb67e9343b383d65038b6996946808d1deef696"
+            },
+            "payments": {
+              "name": "payments.csv",
+              "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nP-A,received,,USD,5000,2026-10-19T10:00:00-06:00,Recorded card deposit,Receipt A\r\nP-C,received,,USD,5000,2026-10-19T12:05:00-06:00,Recorded deposit,Receipt C\r\n",
+              "bytes": 245,
+              "sha256": "e945957660b6468a369359352c86c777bb806788f191cbdd517ae3503b75c849"
+            },
+            "allocations": {
+              "name": "allocations.csv",
+              "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,P-A,JOB-A,INV-A,deposit,5000,2026-10-20T12:00:00-06:00,Apply recorded deposit to original invoice,Allocation A\r\nAL-C,P-C,JOB-C,,deposit,5000,2026-10-19T12:10:00-06:00,Retain against the original booking until written transfer,Allocation C\r\n",
+              "bytes": 348,
+              "sha256": "7a8ae75401621275303ee20852b446d30445164c929483d53eab67d4fe8c5608"
+            }
+          },
+          "sourceHash": "45e805a0848e369396f640db692ecacdb9d90d0c7a0209af1d814f4b3a5cd328"
+        }
+      ],
+      "reviews": [
+        {
+          "id": "native-review",
+          "editionId": "native-source-edition",
+          "sourceHash": "45e805a0848e369396f640db692ecacdb9d90d0c7a0209af1d814f4b3a5cd328",
+          "subjectType": "booking",
+          "subjectId": "JOB-A",
+          "disposition": "investigate",
+          "reviewer": "Authored receiving operator",
+          "reason": "Read the original invoice line and written allocation before disposition.",
+          "evidence": "Authored course source; no actual customer payment.",
+          "previousReviewId": null,
+          "recordHash": "5dc83438510114457ddcc2a9bce527326bb932ac48eab213f453bafaa418dee4"
+        }
+      ]
+    },
+    "session": {
+      "editionId": "E1",
+      "table": "resources",
+      "resourceId": null,
+      "sourceDraft": {
+        "id": "E2",
+        "label": "Next complete corrected day",
+        "receivedAt": "2026-10-20T15:00:00-06:00",
+        "settings": {
+          "dayStart": "2026-10-20T00:00:00-06:00",
+          "dayEnd": "2026-10-21T00:00:00-06:00",
+          "asOf": "unfinished offset"
+        },
+        "notes": "Uncommitted source edits remain separate from accepted editions.",
+        "sources": {
+          "resources": {
+            "name": "resources.csv",
+            "text": "resource_id,name,kind,reference\r\nTECH-A,Technician A,technician,Authored roster\r\nBAY-A,Shop bay A,bay,Authored bay\r\n",
+            "receiptSha256": null
+          },
+          "availability": {
+            "name": "availability.csv",
+            "text": "window_id,resource_id,state,start_at,end_at,reference\r\nW1,TECH-A,available,2026-10-20T08:00:00-06:00,2026-10-20T12:00:00-06:00,Roster morning\r\nW2,TECH-A,available,2026-10-20T12:00:00-06:00,2026-10-20T18:00:00-06:00,Roster afternoon\r\nBLOCK,TECH-A,blocked,2026-10-20T12:00:00-06:00,2026-10-20T12:30:00-06:00,Declared lunch\r\nBAY,BAY-A,available,2026-10-20T08:00:00-06:00,2026-10-20T18:00:00-06:00,Bay hours\r\n",
+            "receiptSha256": null
+          },
+          "booking_revisions": {
+            "name": "booking_revisions.csv",
+            "text": "revision_id,job_id,revision,recorded_at,status,customer_id,vehicle_id,location_id,technician_id,bay_id,start_at,end_at,technician_before_minutes,technician_after_minutes,bay_before_minutes,bay_after_minutes,currency,authorization,reference\r\nA1,JOB-A,1,2026-10-19T09:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:00:00-06:00,2026-10-20T11:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nA2,JOB-A,2,2026-10-19T10:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:30:00-06:00,2026-10-20T11:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nB1,JOB-B,1,2026-10-19T11:00:00-06:00,confirmed,CUSTOMER-B,SEDAN-B,ADDRESS-B,TECH-A,,2026-10-20T11:30:00-06:00,2026-10-20T13:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC1,JOB-C,1,2026-10-19T12:00:00-06:00,confirmed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking\r\nC2,JOB-C,2,2026-10-20T07:00:00-06:00,postponed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Weather postponement; retain deposit pending written rebooking,Authored booking\r\n",
+            "receiptSha256": null
+          },
+          "quoted_lines": {
+            "name": "quoted_lines.csv",
+            "text": "line_id,revision_id,description,amount_minor,reference\r\nQA1,A1,Agreed full detail,25000,Original approved quote\r\nQA2,A2,Agreed full detail,25000,Same amount approved with new time\r\nQB,B1,Agreed interior detail,18000,Approved quote\r\nQC,C1,Agreed truck detail,30000,Original approved quote\r\n",
+            "receiptSha256": null
+          },
+          "completions": {
+            "name": "completions.csv",
+            "text": "observation_id,job_id,status,technician_id,bay_id,started_at,finished_at,observed_at,authorization,reference\r\nCA,JOB-A,completed,TECH-A,,2026-10-20T09:40:00-06:00,2026-10-20T11:50:00-06:00,2026-10-20T11:55:00-06:00,Observed actual times,Technician completion\r\nCB,JOB-B,in_progress,TECH-A,,2026-10-20T11:45:00-06:00,,2026-10-20T12:15:00-06:00,Status snapshot,Current field update\r\n",
+            "receiptSha256": null
+          },
+          "invoice_lines": {
+            "name": "invoice_lines.csv",
+            "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\nIA1,INV-A,JOB-A,USD,25000,Agreed full detail,2026-10-20T12:00:00-06:00,Invoice original\r\nIA2,INV-A,JOB-A,USD,1000,Recorded charge requiring source review,2026-10-20T12:00:00-06:00,Invoice original\r\n",
+            "receiptSha256": null
+          },
+          "payments": {
+            "name": "payments.csv",
+            "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\nP-A,received,,USD,5000,2026-10-19T10:00:00-06:00,Recorded card deposit,Receipt A\r\nP-C,received,,USD,5000,2026-10-19T12:05:00-06:00,Recorded deposit,Receipt C\r\nUnfinished literal receipt draft",
+            "receiptSha256": null
+          },
+          "allocations": {
+            "name": "allocations.csv",
+            "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\nAL-A,P-A,JOB-A,INV-A,deposit,5000,2026-10-20T12:00:00-06:00,Apply recorded deposit to original invoice,Allocation A\r\nAL-C,P-C,JOB-C,,deposit,5000,2026-10-19T12:10:00-06:00,Retain against the original booking until written transfer,Allocation C\r\n",
+            "receiptSha256": null
+          }
+        }
+      },
+      "reviewDrafts": {
+        "[\"E1\",\"booking\",\"JOB-A\"]": {
+          "editionId": "E1",
+          "subjectType": "booking",
+          "subjectId": "JOB-A",
+          "disposition": "investigate",
+          "reviewer": "",
+          "reason": "Unfinished invoice and deposit review",
+          "evidence": "",
+          "previousReviewId": null
+        }
+      },
+      "selectedSubject": null,
+      "receipts": [
+        {
+          "sha256": "1320b5dc13aa91dbac6eabc346cb655592aef8244a8ed04b8c4b3bdd59b8af4c",
+          "bytes": 3,
+          "dataBase64": "/w0K",
+          "names": [
+            "earlier-unreadable-source.bin"
+          ],
+          "receivedAt": "2026-10-15T06:00:00Z",
+          "error": "Retained original malformed UTF-8"
+        }
+      ],
+      "notes": "Unfinished technician handoff — literal café note\r\nSecond line.",
+      "labelDraft": ""
+    },
+    "nativeContinuation": {
+      "schema": "tjlabs.detail-day-native-continuation.v1",
+      "command": null,
+      "commandBytes": {
+        "bytes": 3,
+        "sha256": "1320b5dc13aa91dbac6eabc346cb655592aef8244a8ed04b8c4b3bdd59b8af4c",
+        "dataBase64": "/w0K"
+      },
+      "attempt": {
+        "schema": "tjlabs.detail-day-native-attempt.v1",
+        "state": "rejected",
+        "action": "report",
+        "error": "archive_codec: invalid UTF-8 lead byte"
+      },
+      "receipts": [],
+      "previous": {
+        "schema": "tjlabs.detail-day-native-continuation.v1",
+        "command": {
+          "action": "receive",
+          "input": {
+            "id": "malformed-source-edition",
+            "label": "Authored original-file intake",
+            "receivedAt": "2026-10-15T06:00:00Z",
+            "settings": {
+              "dayStart": "2026-10-20T00:00:00-06:00",
+              "dayEnd": "2026-10-21T00:00:00-06:00",
+              "asOf": "2026-10-20T14:00:00-06:00"
+            },
+            "notes": "Authored exact file intake; browser drafts remain independent."
+          },
+          "sourceFiles": {
+            "resources": {
+              "path": "resources.csv",
+              "name": "resources.csv"
+            },
+            "availability": {
+              "path": "availability.csv",
+              "name": "availability.csv"
+            },
+            "booking_revisions": {
+              "path": "malformed.bin",
+              "name": "booking_revisions.csv"
+            },
+            "quoted_lines": {
+              "path": "quoted_lines.csv",
+              "name": "quoted_lines.csv"
+            },
+            "completions": {
+              "path": "completions.csv",
+              "name": "completions.csv"
+            },
+            "invoice_lines": {
+              "path": "invoice_lines.csv",
+              "name": "invoice_lines.csv"
+            },
+            "payments": {
+              "path": "payments.csv",
+              "name": "payments.csv"
+            },
+            "allocations": {
+              "path": "allocations.csv",
+              "name": "allocations.csv"
+            }
+          }
+        },
+        "commandBytes": {
+          "bytes": 1181,
+          "sha256": "30ac5b7492546bcf546a4b919c1ca8bd622dd1c99f405b48f469524398f8a647",
+          "dataBase64": "ewogICJhY3Rpb24iOiAicmVjZWl2ZSIsCiAgImlucHV0IjogewogICAgImlkIjogIm1hbGZvcm1lZC1zb3VyY2UtZWRpdGlvbiIsCiAgICAibGFiZWwiOiAiQXV0aG9yZWQgb3JpZ2luYWwtZmlsZSBpbnRha2UiLAogICAgInJlY2VpdmVkQXQiOiAiMjAyNi0xMC0xNVQwNjowMDowMFoiLAogICAgInNldHRpbmdzIjogewogICAgICAiZGF5U3RhcnQiOiAiMjAyNi0xMC0yMFQwMDowMDowMC0wNjowMCIsCiAgICAgICJkYXlFbmQiOiAiMjAyNi0xMC0yMVQwMDowMDowMC0wNjowMCIsCiAgICAgICJhc09mIjogIjIwMjYtMTAtMjBUMTQ6MDA6MDAtMDY6MDAiCiAgICB9LAogICAgIm5vdGVzIjogIkF1dGhvcmVkIGV4YWN0IGZpbGUgaW50YWtlOyBicm93c2VyIGRyYWZ0cyByZW1haW4gaW5kZXBlbmRlbnQuIgogIH0sCiAgInNvdXJjZUZpbGVzIjogewogICAgInJlc291cmNlcyI6IHsKICAgICAgInBhdGgiOiAicmVzb3VyY2VzLmNzdiIsCiAgICAgICJuYW1lIjogInJlc291cmNlcy5jc3YiCiAgICB9LAogICAgImF2YWlsYWJpbGl0eSI6IHsKICAgICAgInBhdGgiOiAiYXZhaWxhYmlsaXR5LmNzdiIsCiAgICAgICJuYW1lIjogImF2YWlsYWJpbGl0eS5jc3YiCiAgICB9LAogICAgImJvb2tpbmdfcmV2aXNpb25zIjogewogICAgICAicGF0aCI6ICJtYWxmb3JtZWQuYmluIiwKICAgICAgIm5hbWUiOiAiYm9va2luZ19yZXZpc2lvbnMuY3N2IgogICAgfSwKICAgICJxdW90ZWRfbGluZXMiOiB7CiAgICAgICJwYXRoIjogInF1b3RlZF9saW5lcy5jc3YiLAogICAgICAibmFtZSI6ICJxdW90ZWRfbGluZXMuY3N2IgogICAgfSwKICAgICJjb21wbGV0aW9ucyI6IHsKICAgICAgInBhdGgiOiAiY29tcGxldGlvbnMuY3N2IiwKICAgICAgIm5hbWUiOiAiY29tcGxldGlvbnMuY3N2IgogICAgfSwKICAgICJpbnZvaWNlX2xpbmVzIjogewogICAgICAicGF0aCI6ICJpbnZvaWNlX2xpbmVzLmNzdiIsCiAgICAgICJuYW1lIjogImludm9pY2VfbGluZXMuY3N2IgogICAgfSwKICAgICJwYXltZW50cyI6IHsKICAgICAgInBhdGgiOiAicGF5bWVudHMuY3N2IiwKICAgICAgIm5hbWUiOiAicGF5bWVudHMuY3N2IgogICAgfSwKICAgICJhbGxvY2F0aW9ucyI6IHsKICAgICAgInBhdGgiOiAiYWxsb2NhdGlvbnMuY3N2IiwKICAgICAgIm5hbWUiOiAiYWxsb2NhdGlvbnMuY3N2IgogICAgfQogIH0KfQo="
+        },
+        "attempt": {
+          "schema": "tjlabs.detail-day-native-attempt.v1",
+          "state": "rejected",
+          "action": "receive",
+          "error": "booking_revisions: archive_codec: invalid UTF-8 lead byte"
+        },
+        "receipts": [
+          {
+            "table": "resources",
+            "name": "resources.csv",
+            "bytes": 116,
+            "sha256": "30f27babd54fc4ba5419d3ccc20c2c95ed44215bb7eb2c00ad150bae73d687cd",
+            "dataBase64": "cmVzb3VyY2VfaWQsbmFtZSxraW5kLHJlZmVyZW5jZQ0KVEVDSC1BLFRlY2huaWNpYW4gQSx0ZWNobmljaWFuLEF1dGhvcmVkIHJvc3Rlcg0KQkFZLUEsU2hvcCBiYXkgQSxiYXksQXV0aG9yZWQgYmF5DQo=",
+            "error": null
+          },
+          {
+            "table": "availability",
+            "name": "availability.csv",
+            "bytes": 405,
+            "sha256": "709bfaa2de4a99e407a96eb5480841b9d6abb07de155f00d9db2a2db73805dd2",
+            "dataBase64": "d2luZG93X2lkLHJlc291cmNlX2lkLHN0YXRlLHN0YXJ0X2F0LGVuZF9hdCxyZWZlcmVuY2UNClcxLFRFQ0gtQSxhdmFpbGFibGUsMjAyNi0xMC0yMFQwODowMDowMC0wNjowMCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLFJvc3RlciBtb3JuaW5nDQpXMixURUNILUEsYXZhaWxhYmxlLDIwMjYtMTAtMjBUMTI6MDA6MDAtMDY6MDAsMjAyNi0xMC0yMFQxODowMDowMC0wNjowMCxSb3N0ZXIgYWZ0ZXJub29uDQpCTE9DSyxURUNILUEsYmxvY2tlZCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLDIwMjYtMTAtMjBUMTI6MzA6MDAtMDY6MDAsRGVjbGFyZWQgbHVuY2gNCkJBWSxCQVktQSxhdmFpbGFibGUsMjAyNi0xMC0yMFQwODowMDowMC0wNjowMCwyMDI2LTEwLTIwVDE4OjAwOjAwLTA2OjAwLEJheSBob3Vycw0K",
+            "error": null
+          },
+          {
+            "table": "booking_revisions",
+            "name": "booking_revisions.csv",
+            "bytes": 3,
+            "sha256": "1320b5dc13aa91dbac6eabc346cb655592aef8244a8ed04b8c4b3bdd59b8af4c",
+            "dataBase64": "/w0K",
+            "error": "archive_codec: invalid UTF-8 lead byte"
+          },
+          {
+            "table": "quoted_lines",
+            "name": "quoted_lines.csv",
+            "bytes": 289,
+            "sha256": "e298d0a5938bc4df0313af7796de2ad41fc97164bb50d4f97e15aa74d29666d0",
+            "dataBase64": "bGluZV9pZCxyZXZpc2lvbl9pZCxkZXNjcmlwdGlvbixhbW91bnRfbWlub3IscmVmZXJlbmNlDQpRQTEsQTEsQWdyZWVkIGZ1bGwgZGV0YWlsLDI1MDAwLE9yaWdpbmFsIGFwcHJvdmVkIHF1b3RlDQpRQTIsQTIsQWdyZWVkIGZ1bGwgZGV0YWlsLDI1MDAwLFNhbWUgYW1vdW50IGFwcHJvdmVkIHdpdGggbmV3IHRpbWUNClFCLEIxLEFncmVlZCBpbnRlcmlvciBkZXRhaWwsMTgwMDAsQXBwcm92ZWQgcXVvdGUNClFDLEMxLEFncmVlZCB0cnVjayBkZXRhaWwsMzAwMDAsT3JpZ2luYWwgYXBwcm92ZWQgcXVvdGUNCg==",
+            "error": null
+          },
+          {
+            "table": "completions",
+            "name": "completions.csv",
+            "bytes": 380,
+            "sha256": "ec2bcdca9281c3a91e1d218ac1f5c4366212d03fc01fa21ce8cffe89973e0bb7",
+            "dataBase64": "b2JzZXJ2YXRpb25faWQsam9iX2lkLHN0YXR1cyx0ZWNobmljaWFuX2lkLGJheV9pZCxzdGFydGVkX2F0LGZpbmlzaGVkX2F0LG9ic2VydmVkX2F0LGF1dGhvcml6YXRpb24scmVmZXJlbmNlDQpDQSxKT0ItQSxjb21wbGV0ZWQsVEVDSC1BLCwyMDI2LTEwLTIwVDA5OjQwOjAwLTA2OjAwLDIwMjYtMTAtMjBUMTE6NTA6MDAtMDY6MDAsMjAyNi0xMC0yMFQxMTo1NTowMC0wNjowMCxPYnNlcnZlZCBhY3R1YWwgdGltZXMsVGVjaG5pY2lhbiBjb21wbGV0aW9uDQpDQixKT0ItQixpbl9wcm9ncmVzcyxURUNILUEsLDIwMjYtMTAtMjBUMTE6NDU6MDAtMDY6MDAsLDIwMjYtMTAtMjBUMTI6MTU6MDAtMDY6MDAsU3RhdHVzIHNuYXBzaG90LEN1cnJlbnQgZmllbGQgdXBkYXRlDQo=",
+            "error": null
+          },
+          {
+            "table": "invoice_lines",
+            "name": "invoice_lines.csv",
+            "bytes": 279,
+            "sha256": "f1ed0e9999d31b7efe522e2e1fb67e9343b383d65038b6996946808d1deef696",
+            "dataBase64": "bGluZV9pZCxpbnZvaWNlX2lkLGpvYl9pZCxjdXJyZW5jeSxhbW91bnRfbWlub3IsZGVzY3JpcHRpb24saXNzdWVkX2F0LHJlZmVyZW5jZQ0KSUExLElOVi1BLEpPQi1BLFVTRCwyNTAwMCxBZ3JlZWQgZnVsbCBkZXRhaWwsMjAyNi0xMC0yMFQxMjowMDowMC0wNjowMCxJbnZvaWNlIG9yaWdpbmFsDQpJQTIsSU5WLUEsSk9CLUEsVVNELDEwMDAsUmVjb3JkZWQgY2hhcmdlIHJlcXVpcmluZyBzb3VyY2UgcmV2aWV3LDIwMjYtMTAtMjBUMTI6MDA6MDAtMDY6MDAsSW52b2ljZSBvcmlnaW5hbA0K",
+            "error": null
+          },
+          {
+            "table": "payments",
+            "name": "payments.csv",
+            "bytes": 245,
+            "sha256": "e945957660b6468a369359352c86c777bb806788f191cbdd517ae3503b75c849",
+            "dataBase64": "cGF5bWVudF9pZCxraW5kLHBhcmVudF9wYXltZW50X2lkLGN1cnJlbmN5LGFtb3VudF9taW5vcixvY2N1cnJlZF9hdCxtZXRob2QscmVmZXJlbmNlDQpQLUEscmVjZWl2ZWQsLFVTRCw1MDAwLDIwMjYtMTAtMTlUMTA6MDA6MDAtMDY6MDAsUmVjb3JkZWQgY2FyZCBkZXBvc2l0LFJlY2VpcHQgQQ0KUC1DLHJlY2VpdmVkLCxVU0QsNTAwMCwyMDI2LTEwLTE5VDEyOjA1OjAwLTA2OjAwLFJlY29yZGVkIGRlcG9zaXQsUmVjZWlwdCBDDQo=",
+            "error": null
+          },
+          {
+            "table": "allocations",
+            "name": "allocations.csv",
+            "bytes": 348,
+            "sha256": "7a8ae75401621275303ee20852b446d30445164c929483d53eab67d4fe8c5608",
+            "dataBase64": "YWxsb2NhdGlvbl9pZCxwYXltZW50X2lkLGpvYl9pZCxpbnZvaWNlX2lkLHB1cnBvc2UsYW1vdW50X21pbm9yLGF1dGhvcml6ZWRfYXQsYXV0aG9yaXphdGlvbixyZWZlcmVuY2UNCkFMLUEsUC1BLEpPQi1BLElOVi1BLGRlcG9zaXQsNTAwMCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLEFwcGx5IHJlY29yZGVkIGRlcG9zaXQgdG8gb3JpZ2luYWwgaW52b2ljZSxBbGxvY2F0aW9uIEENCkFMLUMsUC1DLEpPQi1DLCxkZXBvc2l0LDUwMDAsMjAyNi0xMC0xOVQxMjoxMDowMC0wNjowMCxSZXRhaW4gYWdhaW5zdCB0aGUgb3JpZ2luYWwgYm9va2luZyB1bnRpbCB3cml0dGVuIHRyYW5zZmVyLEFsbG9jYXRpb24gQw0K",
+            "error": null
+          }
+        ],
+        "previous": {
+          "schema": "tjlabs.detail-day-native-continuation.v1",
+          "command": {
+            "action": "review",
+            "input": {
+              "id": "native-review",
+              "editionId": "native-source-edition",
+              "subjectType": "booking",
+              "subjectId": "JOB-A",
+              "disposition": "investigate",
+              "reviewer": "Authored receiving operator",
+              "reason": "Read the original invoice line and written allocation before disposition.",
+              "evidence": "Authored course source; no actual customer payment.",
+              "previousReviewId": null
+            }
+          },
+          "commandBytes": {
+            "bytes": 440,
+            "sha256": "8abc8054b9f12c5366c93eb7c3ddafd67201c86c6137e16f2c1448289d402503",
+            "dataBase64": "ewogICJhY3Rpb24iOiAicmV2aWV3IiwKICAiaW5wdXQiOiB7CiAgICAiaWQiOiAibmF0aXZlLXJldmlldyIsCiAgICAiZWRpdGlvbklkIjogIm5hdGl2ZS1zb3VyY2UtZWRpdGlvbiIsCiAgICAic3ViamVjdFR5cGUiOiAiYm9va2luZyIsCiAgICAic3ViamVjdElkIjogIkpPQi1BIiwKICAgICJkaXNwb3NpdGlvbiI6ICJpbnZlc3RpZ2F0ZSIsCiAgICAicmV2aWV3ZXIiOiAiQXV0aG9yZWQgcmVjZWl2aW5nIG9wZXJhdG9yIiwKICAgICJyZWFzb24iOiAiUmVhZCB0aGUgb3JpZ2luYWwgaW52b2ljZSBsaW5lIGFuZCB3cml0dGVuIGFsbG9jYXRpb24gYmVmb3JlIGRpc3Bvc2l0aW9uLiIsCiAgICAiZXZpZGVuY2UiOiAiQXV0aG9yZWQgY291cnNlIHNvdXJjZTsgbm8gYWN0dWFsIGN1c3RvbWVyIHBheW1lbnQuIiwKICAgICJwcmV2aW91c1Jldmlld0lkIjogbnVsbAogIH0KfQo="
+          },
+          "attempt": {
+            "schema": "tjlabs.detail-day-native-attempt.v1",
+            "state": "completed",
+            "action": "review",
+            "error": null
+          },
+          "receipts": [],
+          "previous": {
+            "schema": "tjlabs.detail-day-native-continuation.v1",
+            "command": {
+              "action": "receive",
+              "input": {
+                "id": "native-source-edition",
+                "label": "Authored original-file intake",
+                "receivedAt": "2026-10-15T06:00:00Z",
+                "settings": {
+                  "dayStart": "2026-10-20T00:00:00-06:00",
+                  "dayEnd": "2026-10-21T00:00:00-06:00",
+                  "asOf": "2026-10-20T14:00:00-06:00"
+                },
+                "notes": "Authored exact file intake; browser drafts remain independent."
+              },
+              "sourceFiles": {
+                "resources": {
+                  "path": "resources.csv",
+                  "name": "resources.csv"
+                },
+                "availability": {
+                  "path": "availability.csv",
+                  "name": "availability.csv"
+                },
+                "booking_revisions": {
+                  "path": "booking_revisions.csv",
+                  "name": "booking_revisions.csv"
+                },
+                "quoted_lines": {
+                  "path": "quoted_lines.csv",
+                  "name": "quoted_lines.csv"
+                },
+                "completions": {
+                  "path": "completions.csv",
+                  "name": "completions.csv"
+                },
+                "invoice_lines": {
+                  "path": "invoice_lines.csv",
+                  "name": "invoice_lines.csv"
+                },
+                "payments": {
+                  "path": "payments.csv",
+                  "name": "payments.csv"
+                },
+                "allocations": {
+                  "path": "allocations.csv",
+                  "name": "allocations.csv"
+                }
+              }
+            },
+            "commandBytes": {
+              "bytes": 1186,
+              "sha256": "5f3e80cc42b06295f138376b3e32133812bc4e7b959779df3bad16b9e912b56a",
+              "dataBase64": "ewogICJhY3Rpb24iOiAicmVjZWl2ZSIsCiAgImlucHV0IjogewogICAgImlkIjogIm5hdGl2ZS1zb3VyY2UtZWRpdGlvbiIsCiAgICAibGFiZWwiOiAiQXV0aG9yZWQgb3JpZ2luYWwtZmlsZSBpbnRha2UiLAogICAgInJlY2VpdmVkQXQiOiAiMjAyNi0xMC0xNVQwNjowMDowMFoiLAogICAgInNldHRpbmdzIjogewogICAgICAiZGF5U3RhcnQiOiAiMjAyNi0xMC0yMFQwMDowMDowMC0wNjowMCIsCiAgICAgICJkYXlFbmQiOiAiMjAyNi0xMC0yMVQwMDowMDowMC0wNjowMCIsCiAgICAgICJhc09mIjogIjIwMjYtMTAtMjBUMTQ6MDA6MDAtMDY6MDAiCiAgICB9LAogICAgIm5vdGVzIjogIkF1dGhvcmVkIGV4YWN0IGZpbGUgaW50YWtlOyBicm93c2VyIGRyYWZ0cyByZW1haW4gaW5kZXBlbmRlbnQuIgogIH0sCiAgInNvdXJjZUZpbGVzIjogewogICAgInJlc291cmNlcyI6IHsKICAgICAgInBhdGgiOiAicmVzb3VyY2VzLmNzdiIsCiAgICAgICJuYW1lIjogInJlc291cmNlcy5jc3YiCiAgICB9LAogICAgImF2YWlsYWJpbGl0eSI6IHsKICAgICAgInBhdGgiOiAiYXZhaWxhYmlsaXR5LmNzdiIsCiAgICAgICJuYW1lIjogImF2YWlsYWJpbGl0eS5jc3YiCiAgICB9LAogICAgImJvb2tpbmdfcmV2aXNpb25zIjogewogICAgICAicGF0aCI6ICJib29raW5nX3JldmlzaW9ucy5jc3YiLAogICAgICAibmFtZSI6ICJib29raW5nX3JldmlzaW9ucy5jc3YiCiAgICB9LAogICAgInF1b3RlZF9saW5lcyI6IHsKICAgICAgInBhdGgiOiAicXVvdGVkX2xpbmVzLmNzdiIsCiAgICAgICJuYW1lIjogInF1b3RlZF9saW5lcy5jc3YiCiAgICB9LAogICAgImNvbXBsZXRpb25zIjogewogICAgICAicGF0aCI6ICJjb21wbGV0aW9ucy5jc3YiLAogICAgICAibmFtZSI6ICJjb21wbGV0aW9ucy5jc3YiCiAgICB9LAogICAgImludm9pY2VfbGluZXMiOiB7CiAgICAgICJwYXRoIjogImludm9pY2VfbGluZXMuY3N2IiwKICAgICAgIm5hbWUiOiAiaW52b2ljZV9saW5lcy5jc3YiCiAgICB9LAogICAgInBheW1lbnRzIjogewogICAgICAicGF0aCI6ICJwYXltZW50cy5jc3YiLAogICAgICAibmFtZSI6ICJwYXltZW50cy5jc3YiCiAgICB9LAogICAgImFsbG9jYXRpb25zIjogewogICAgICAicGF0aCI6ICJhbGxvY2F0aW9ucy5jc3YiLAogICAgICAibmFtZSI6ICJhbGxvY2F0aW9ucy5jc3YiCiAgICB9CiAgfQp9Cg=="
+            },
+            "attempt": {
+              "schema": "tjlabs.detail-day-native-attempt.v1",
+              "state": "completed",
+              "action": "receive",
+              "error": null
+            },
+            "receipts": [
+              {
+                "table": "resources",
+                "name": "resources.csv",
+                "bytes": 116,
+                "sha256": "30f27babd54fc4ba5419d3ccc20c2c95ed44215bb7eb2c00ad150bae73d687cd",
+                "dataBase64": "cmVzb3VyY2VfaWQsbmFtZSxraW5kLHJlZmVyZW5jZQ0KVEVDSC1BLFRlY2huaWNpYW4gQSx0ZWNobmljaWFuLEF1dGhvcmVkIHJvc3Rlcg0KQkFZLUEsU2hvcCBiYXkgQSxiYXksQXV0aG9yZWQgYmF5DQo=",
+                "error": null
+              },
+              {
+                "table": "availability",
+                "name": "availability.csv",
+                "bytes": 405,
+                "sha256": "709bfaa2de4a99e407a96eb5480841b9d6abb07de155f00d9db2a2db73805dd2",
+                "dataBase64": "d2luZG93X2lkLHJlc291cmNlX2lkLHN0YXRlLHN0YXJ0X2F0LGVuZF9hdCxyZWZlcmVuY2UNClcxLFRFQ0gtQSxhdmFpbGFibGUsMjAyNi0xMC0yMFQwODowMDowMC0wNjowMCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLFJvc3RlciBtb3JuaW5nDQpXMixURUNILUEsYXZhaWxhYmxlLDIwMjYtMTAtMjBUMTI6MDA6MDAtMDY6MDAsMjAyNi0xMC0yMFQxODowMDowMC0wNjowMCxSb3N0ZXIgYWZ0ZXJub29uDQpCTE9DSyxURUNILUEsYmxvY2tlZCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLDIwMjYtMTAtMjBUMTI6MzA6MDAtMDY6MDAsRGVjbGFyZWQgbHVuY2gNCkJBWSxCQVktQSxhdmFpbGFibGUsMjAyNi0xMC0yMFQwODowMDowMC0wNjowMCwyMDI2LTEwLTIwVDE4OjAwOjAwLTA2OjAwLEJheSBob3Vycw0K",
+                "error": null
+              },
+              {
+                "table": "booking_revisions",
+                "name": "booking_revisions.csv",
+                "bytes": 1275,
+                "sha256": "b9fce91a81d442f1fedfe6cb0a4fb651a7a4190e8e6eabcc209008c5339a3f08",
+                "dataBase64": "77u/cmV2aXNpb25faWQsam9iX2lkLHJldmlzaW9uLHJlY29yZGVkX2F0LHN0YXR1cyxjdXN0b21lcl9pZCx2ZWhpY2xlX2lkLGxvY2F0aW9uX2lkLHRlY2huaWNpYW5faWQsYmF5X2lkLHN0YXJ0X2F0LGVuZF9hdCx0ZWNobmljaWFuX2JlZm9yZV9taW51dGVzLHRlY2huaWNpYW5fYWZ0ZXJfbWludXRlcyxiYXlfYmVmb3JlX21pbnV0ZXMsYmF5X2FmdGVyX21pbnV0ZXMsY3VycmVuY3ksYXV0aG9yaXphdGlvbixyZWZlcmVuY2UNCkExLEpPQi1BLDEsMjAyNi0xMC0xOVQwOTowMDowMC0wNjowMCxjb25maXJtZWQsQ1VTVE9NRVItQSxTVVYtQSxBRERSRVNTLUEsVEVDSC1BLCwyMDI2LTEwLTIwVDA5OjAwOjAwLTA2OjAwLDIwMjYtMTAtMjBUMTE6MDA6MDAtMDY6MDAsMTUsMTUsMCwwLFVTRCxDdXN0b21lci1hcHByb3ZlZCBzZXJ2aWNlIHdpbmRvdyxBdXRob3JlZCBib29raW5nDQpBMixKT0ItQSwyLDIwMjYtMTAtMTlUMTA6MDA6MDAtMDY6MDAsY29uZmlybWVkLENVU1RPTUVSLUEsU1VWLUEsQUREUkVTUy1BLFRFQ0gtQSwsMjAyNi0xMC0yMFQwOTozMDowMC0wNjowMCwyMDI2LTEwLTIwVDExOjMwOjAwLTA2OjAwLDE1LDE1LDAsMCxVU0QsQ3VzdG9tZXItYXBwcm92ZWQgc2VydmljZSB3aW5kb3csQXV0aG9yZWQgYm9va2luZw0KQjEsSk9CLUIsMSwyMDI2LTEwLTE5VDExOjAwOjAwLTA2OjAwLGNvbmZpcm1lZCxDVVNUT01FUi1CLFNFREFOLUIsQUREUkVTUy1CLFRFQ0gtQSwsMjAyNi0xMC0yMFQxMTozMDowMC0wNjowMCwyMDI2LTEwLTIwVDEzOjMwOjAwLTA2OjAwLDE1LDE1LDAsMCxVU0QsQ3VzdG9tZXItYXBwcm92ZWQgc2VydmljZSB3aW5kb3csQXV0aG9yZWQgYm9va2luZw0KQzEsSk9CLUMsMSwyMDI2LTEwLTE5VDEyOjAwOjAwLTA2OjAwLGNvbmZpcm1lZCxDVVNUT01FUi1DLFRSVUNLLUMsQUREUkVTUy1DLFRFQ0gtQSwsMjAyNi0xMC0yMFQxNTowMDowMC0wNjowMCwyMDI2LTEwLTIwVDE3OjAwOjAwLTA2OjAwLDE1LDE1LDAsMCxVU0QsQ3VzdG9tZXItYXBwcm92ZWQgc2VydmljZSB3aW5kb3csQXV0aG9yZWQgYm9va2luZw0KQzIsSk9CLUMsMiwyMDI2LTEwLTIwVDA3OjAwOjAwLTA2OjAwLHBvc3Rwb25lZCxDVVNUT01FUi1DLFRSVUNLLUMsQUREUkVTUy1DLFRFQ0gtQSwsMjAyNi0xMC0yMFQxNTowMDowMC0wNjowMCwyMDI2LTEwLTIwVDE3OjAwOjAwLTA2OjAwLDE1LDE1LDAsMCxVU0QsV2VhdGhlciBwb3N0cG9uZW1lbnQ7IHJldGFpbiBkZXBvc2l0IHBlbmRpbmcgd3JpdHRlbiByZWJvb2tpbmcsQXV0aG9yZWQgYm9va2luZw0K",
+                "error": null
+              },
+              {
+                "table": "quoted_lines",
+                "name": "quoted_lines.csv",
+                "bytes": 289,
+                "sha256": "e298d0a5938bc4df0313af7796de2ad41fc97164bb50d4f97e15aa74d29666d0",
+                "dataBase64": "bGluZV9pZCxyZXZpc2lvbl9pZCxkZXNjcmlwdGlvbixhbW91bnRfbWlub3IscmVmZXJlbmNlDQpRQTEsQTEsQWdyZWVkIGZ1bGwgZGV0YWlsLDI1MDAwLE9yaWdpbmFsIGFwcHJvdmVkIHF1b3RlDQpRQTIsQTIsQWdyZWVkIGZ1bGwgZGV0YWlsLDI1MDAwLFNhbWUgYW1vdW50IGFwcHJvdmVkIHdpdGggbmV3IHRpbWUNClFCLEIxLEFncmVlZCBpbnRlcmlvciBkZXRhaWwsMTgwMDAsQXBwcm92ZWQgcXVvdGUNClFDLEMxLEFncmVlZCB0cnVjayBkZXRhaWwsMzAwMDAsT3JpZ2luYWwgYXBwcm92ZWQgcXVvdGUNCg==",
+                "error": null
+              },
+              {
+                "table": "completions",
+                "name": "completions.csv",
+                "bytes": 380,
+                "sha256": "ec2bcdca9281c3a91e1d218ac1f5c4366212d03fc01fa21ce8cffe89973e0bb7",
+                "dataBase64": "b2JzZXJ2YXRpb25faWQsam9iX2lkLHN0YXR1cyx0ZWNobmljaWFuX2lkLGJheV9pZCxzdGFydGVkX2F0LGZpbmlzaGVkX2F0LG9ic2VydmVkX2F0LGF1dGhvcml6YXRpb24scmVmZXJlbmNlDQpDQSxKT0ItQSxjb21wbGV0ZWQsVEVDSC1BLCwyMDI2LTEwLTIwVDA5OjQwOjAwLTA2OjAwLDIwMjYtMTAtMjBUMTE6NTA6MDAtMDY6MDAsMjAyNi0xMC0yMFQxMTo1NTowMC0wNjowMCxPYnNlcnZlZCBhY3R1YWwgdGltZXMsVGVjaG5pY2lhbiBjb21wbGV0aW9uDQpDQixKT0ItQixpbl9wcm9ncmVzcyxURUNILUEsLDIwMjYtMTAtMjBUMTE6NDU6MDAtMDY6MDAsLDIwMjYtMTAtMjBUMTI6MTU6MDAtMDY6MDAsU3RhdHVzIHNuYXBzaG90LEN1cnJlbnQgZmllbGQgdXBkYXRlDQo=",
+                "error": null
+              },
+              {
+                "table": "invoice_lines",
+                "name": "invoice_lines.csv",
+                "bytes": 279,
+                "sha256": "f1ed0e9999d31b7efe522e2e1fb67e9343b383d65038b6996946808d1deef696",
+                "dataBase64": "bGluZV9pZCxpbnZvaWNlX2lkLGpvYl9pZCxjdXJyZW5jeSxhbW91bnRfbWlub3IsZGVzY3JpcHRpb24saXNzdWVkX2F0LHJlZmVyZW5jZQ0KSUExLElOVi1BLEpPQi1BLFVTRCwyNTAwMCxBZ3JlZWQgZnVsbCBkZXRhaWwsMjAyNi0xMC0yMFQxMjowMDowMC0wNjowMCxJbnZvaWNlIG9yaWdpbmFsDQpJQTIsSU5WLUEsSk9CLUEsVVNELDEwMDAsUmVjb3JkZWQgY2hhcmdlIHJlcXVpcmluZyBzb3VyY2UgcmV2aWV3LDIwMjYtMTAtMjBUMTI6MDA6MDAtMDY6MDAsSW52b2ljZSBvcmlnaW5hbA0K",
+                "error": null
+              },
+              {
+                "table": "payments",
+                "name": "payments.csv",
+                "bytes": 245,
+                "sha256": "e945957660b6468a369359352c86c777bb806788f191cbdd517ae3503b75c849",
+                "dataBase64": "cGF5bWVudF9pZCxraW5kLHBhcmVudF9wYXltZW50X2lkLGN1cnJlbmN5LGFtb3VudF9taW5vcixvY2N1cnJlZF9hdCxtZXRob2QscmVmZXJlbmNlDQpQLUEscmVjZWl2ZWQsLFVTRCw1MDAwLDIwMjYtMTAtMTlUMTA6MDA6MDAtMDY6MDAsUmVjb3JkZWQgY2FyZCBkZXBvc2l0LFJlY2VpcHQgQQ0KUC1DLHJlY2VpdmVkLCxVU0QsNTAwMCwyMDI2LTEwLTE5VDEyOjA1OjAwLTA2OjAwLFJlY29yZGVkIGRlcG9zaXQsUmVjZWlwdCBDDQo=",
+                "error": null
+              },
+              {
+                "table": "allocations",
+                "name": "allocations.csv",
+                "bytes": 348,
+                "sha256": "7a8ae75401621275303ee20852b446d30445164c929483d53eab67d4fe8c5608",
+                "dataBase64": "YWxsb2NhdGlvbl9pZCxwYXltZW50X2lkLGpvYl9pZCxpbnZvaWNlX2lkLHB1cnBvc2UsYW1vdW50X21pbm9yLGF1dGhvcml6ZWRfYXQsYXV0aG9yaXphdGlvbixyZWZlcmVuY2UNCkFMLUEsUC1BLEpPQi1BLElOVi1BLGRlcG9zaXQsNTAwMCwyMDI2LTEwLTIwVDEyOjAwOjAwLTA2OjAwLEFwcGx5IHJlY29yZGVkIGRlcG9zaXQgdG8gb3JpZ2luYWwgaW52b2ljZSxBbGxvY2F0aW9uIEENCkFMLUMsUC1DLEpPQi1DLCxkZXBvc2l0LDUwMDAsMjAyNi0xMC0xOVQxMjoxMDowMC0wNjowMCxSZXRhaW4gYWdhaW5zdCB0aGUgb3JpZ2luYWwgYm9va2luZyB1bnRpbCB3cml0dGVuIHRyYW5zZmVyLEFsbG9jYXRpb24gQw0K",
+                "error": null
+              }
+            ],
+            "previous": null
+          }
+        }
+      }
+    }
+  },
+  "runtime": "Actual production CLI/core/browser model executed in V8 with explicit fs/path adapters; native OS and browser rendering remain original equipped receiving.",
+  "sources": {
+    "detail-day-native.mjs": {
+      "bytes": 6191,
+      "sha256": "bab34a2a30f9936d591a6fa1fcd28dd84c5f8374fba18aa1c017e407f37aa9b8"
+    },
+    "detail-day-core.js": {
+      "bytes": 41664,
+      "sha256": "1e87f9e49cd8d932b5eedf29c5d23c777370b613e22a4d7da95f26c9eec01790"
+    },
+    "workbench/detail-workspace.js": {
+      "bytes": 5674,
+      "sha256": "770512c44c648585a79ee5f85d282d14bbe10ffe8c49095d30be472643b159c5"
+    }
+  }
+}

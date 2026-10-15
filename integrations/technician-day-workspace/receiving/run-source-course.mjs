@@ -1,0 +1,11 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import {createArchiveCodec} from "../vendor/archive-codec.mjs";
+import {createDetailDayCore} from "../detail-day-core.mjs";
+import {runDetailSourceCourse} from "./source-course.mjs";
+const out=process.argv[2];if(!out)throw Error("Usage: node receiving/run-source-course.mjs NEW_DIRECTORY");
+const codec=createArchiveCodec(),api=createDetailDayCore({codec}),result=runDetailSourceCourse({api});
+const files={"result.json":JSON.stringify({...result,kept:undefined},null,2)+"\n","workspace.json":JSON.stringify(result.kept.workspace,null,2)+"\n","original-report.html":api.report(result.kept.workspace,"E1"),"corrected-report.html":api.report(result.kept.workspace,"E2")};
+for(const kind of ["bookings","resources","conflicts","invoices","payments","allocations","attention","revisions"])files[kind+".csv"]=api.csv(result.kept.workspace,"E2",kind);
+await fs.mkdir(out);for(const[name,text]of Object.entries(files))await fs.writeFile(path.join(out,name),text,{encoding:"utf8",flag:"wx"});
+console.log(JSON.stringify({checks:result.checks.length,passed:result.checks.every(x=>x.passed),out},null,2));

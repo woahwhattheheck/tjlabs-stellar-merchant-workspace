@@ -1,0 +1,3 @@
+line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference
+IA1,INV-A,JOB-A,USD,25000,Agreed full detail,2026-10-20T12:00:00-06:00,Invoice original
+IA2,INV-A,JOB-A,USD,1000,Recorded charge requiring source review,2026-10-20T12:00:00-06:00,Invoice original

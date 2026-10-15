@@ -1,0 +1,14 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import {createArchiveCodec} from "../vendor/archive-codec.mjs";
+import {createDetailDayCore} from "../detail-day-core.mjs";
+import {runDetailDayCLI} from "../detail-day-native.mjs";
+import {receiveDetailDayNative} from "./detail-native-receiving.mjs";
+if(process.argv.length!==4||process.argv[2]!=="--out")throw Error("Use --out NEW_DIRECTORY");
+const codec=createArchiveCodec(),core=createDetailDayCore({codec});
+const modelSource=await fs.readFile(new URL("../workbench/detail-workspace.js",import.meta.url),"utf8");
+const workspaceAPI=new Function(modelSource+";return createDetailDayWorkspace;")()(core,codec);
+const desk=JSON.parse(await fs.readFile(new URL("../examples/worked-desk.json",import.meta.url),"utf8"));
+const result=await receiveDetailDayNative({fs,path,codec,core,workspaceAPI,runCLI:runDetailDayCLI,directory:path.resolve(process.argv[3]),desk});
+await fs.writeFile(path.join(path.resolve(process.argv[3]),"receiving-result.json"),JSON.stringify(result,null,2)+"\n",{flag:"wx"});
+console.log(JSON.stringify({summary:result.summary,checks:result.checks},null,2));
