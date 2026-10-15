@@ -173,8 +173,8 @@
     },
     {
       "path": "Fleet_Incident_Study_Desk.html",
-      "bytes": 1568113,
-      "sha256": "ce0ecec85c1a541ca38e21b40b94483c58d70944aaca04b7c2569fa914142150"
+      "bytes": 1571508,
+      "sha256": "50afb6348d5f6a78909369b0efd40c6c22d593c5ada704630ac8f03b2c1ae2fd"
     },
     {
       "path": "fleet-money.cjs",
@@ -398,8 +398,8 @@
     },
     {
       "path": "SOURCE_MANIFEST.json",
-      "bytes": 18501,
-      "sha256": "04ccc00e88e81c1da1d1e62b94c4185fbf071c4052eeaf41acea8cb75b682ba9"
+      "bytes": 18851,
+      "sha256": "3a83a7af81f76003c4c7d5ff4492e3b110108fe075291cf659bc8c1b5cd04e25"
     },
     {
       "path": "src/archive.mjs",
@@ -580,6 +580,16 @@
       "path": "verification/complete-analysis.json",
       "bytes": 77645,
       "sha256": "3f2ea759736c19cc451f03d9fdcaa3c372a2ba33e173bccfec7b36ad7c6ecce2"
+    },
+    {
+      "path": "verification/installed-browser-course.json",
+      "bytes": 994,
+      "sha256": "6bacf13ee53fe2180f25a9362b2a23d372ca924d0d885aa17089cb482f79e8ab"
+    },
+    {
+      "path": "verification/installed-host-course.json",
+      "bytes": 1717,
+      "sha256": "0455387336bf1bb831e29c50b54aa08c8f31941e772159d2f60718e0b81a3c52"
     },
     {
       "path": "verification/model-course.json",

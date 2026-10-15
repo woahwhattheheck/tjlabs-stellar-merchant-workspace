@@ -572,6 +572,16 @@
       "sha256": "3f2ea759736c19cc451f03d9fdcaa3c372a2ba33e173bccfec7b36ad7c6ecce2"
     },
     {
+      "path": "verification/installed-browser-course.json",
+      "bytes": 994,
+      "sha256": "6bacf13ee53fe2180f25a9362b2a23d372ca924d0d885aa17089cb482f79e8ab"
+    },
+    {
+      "path": "verification/installed-host-course.json",
+      "bytes": 1717,
+      "sha256": "0455387336bf1bb831e29c50b54aa08c8f31941e772159d2f60718e0b81a3c52"
+    },
+    {
       "path": "verification/model-course.json",
       "bytes": 2083,
       "sha256": "b8db199fd1f0dd4a2eb1d8a905d55bf7770bd5a246c03bdd7a9eadbc54ea225f"
