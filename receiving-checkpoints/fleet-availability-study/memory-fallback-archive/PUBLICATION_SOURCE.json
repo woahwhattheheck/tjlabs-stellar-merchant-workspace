@@ -1,0 +1,96 @@
+{
+  "schema": "commons.git-archive-publication-source.v1",
+  "publisherMerge": "f95eb896058b91da7e6083f4d4b548f586020fe7",
+  "publisherSource": "f33bfb1602549cc6edcbc58604b75d086de6bddc",
+  "verification": "ordinary",
+  "productSourceMerge": "cfc0ade43456f3ad18d9878ce3a1cdec4bc13139",
+  "preparedIndex": "receiving-checkpoints/fleet-availability-study/resumable-complete-export/checkpoint.json",
+  "preparedHead": "e648e13d0d3c77ffafa4a73afd63b27448063e42",
+  "derivation": {
+    "schema": "commons.source-successor-derivation.v1",
+    "parentIdentity": "d36bd079e997a13ee0f0242b16ccb6c13a2d0ca2c4ce12053808e69b9ed9b592",
+    "parentIndexSha256": "799e9119cb9ca14b2c7bc830f2691f9e595d81d61755912bc285f68399b9264f",
+    "sourceVersion": "woahwhattheheck/tjlabs-stellar-merchant-workspace@cfc0ade43456f3ad18d9878ce3a1cdec4bc13139:products/fleet-availability-study",
+    "compression": {
+      "engine": "pako",
+      "level": 1
+    },
+    "changes": [
+      {
+        "name": "source/receiving/portable-course.cjs",
+        "before": {
+          "bytes": 13102,
+          "sha256": "1de8eaa9c8aebd280c3703a3af84a7da89d695e151389a7eee7c173b1a52e7a0"
+        },
+        "after": {
+          "bytes": 13122,
+          "sha256": "d1f2cb9d9473da35cb537db27a338d155e8f45cd0b8d6cbc0ba1d1dd7dfa8e5a"
+        }
+      },
+      {
+        "name": "source/operator/installed-desk.js",
+        "before": {
+          "bytes": 61495,
+          "sha256": "b8f38298e7054e35b7202388d4b0b4fa5fbffd49c0be6a91c095e599e544ffb8"
+        },
+        "after": {
+          "bytes": 61954,
+          "sha256": "b2b1167e17c62a132f2b5d8562a1ef83651885a2f311b3a0e2ca3350d5e347c0"
+        }
+      },
+      {
+        "name": "source/SOURCE_MANIFEST.json",
+        "before": {
+          "bytes": 32113,
+          "sha256": "972c7612cc9b05c737c8b15f690a0fcb22ea4d1df489e0dc7b459333dbd5b349"
+        },
+        "after": {
+          "bytes": 32113,
+          "sha256": "6590a81172aa084e218dcb342b5a9a2fd5680a1466e405ccecc197aa0b9693b2"
+        }
+      },
+      {
+        "name": "source/source-manifest.json",
+        "before": {
+          "bytes": 32286,
+          "sha256": "3f1bda813d2fd9418d02e0749473f3d50f9d1ff300085a4b1d34b6857d1a2f9e"
+        },
+        "after": {
+          "bytes": 32286,
+          "sha256": "79a948e7b150360ff04d38936a0d469ce2d9b6338dab2d2998936370f33da903"
+        }
+      },
+      {
+        "name": "working/Fleet_Availability_Study_Editable.html",
+        "before": {
+          "bytes": 7765342,
+          "sha256": "85716c1198a297296b6ddc98cc543498b84e0630730c063ab23ba72539c8d376"
+        },
+        "after": {
+          "bytes": 7766287,
+          "sha256": "5cf133ac7259b1a0a4cc042b647f6c09ee6e138e768e26503948b7341450767b"
+        }
+      },
+      {
+        "name": "EXPORT_MANIFEST.json",
+        "before": {
+          "bytes": 2879330,
+          "sha256": "99209c5d2185624d2f575152e6bbba132b886f7f4f0f2ff41c6b58bdbad8a423"
+        },
+        "after": {
+          "bytes": 2879330,
+          "sha256": "896dc1a26fa98a150ff2efe1ecce279a52965d41b736658e6f34532a5b99057c"
+        }
+      }
+    ]
+  },
+  "workingHTML": {
+    "bytes": 7766287,
+    "sha256": "5cf133ac7259b1a0a4cc042b647f6c09ee6e138e768e26503948b7341450767b"
+  },
+  "originalComparison": {
+    "archiveHead": "4dacae9f842af7e3e6d94ffb4074832c582a3fde",
+    "archiveSha256": "c49ef09a2d6074e0958565a5c9a3d838fed12fa5f455a01765c6b7e0df3cd9e2",
+    "expectedMembers": 10834
+  }
+}
