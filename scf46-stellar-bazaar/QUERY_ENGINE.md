@@ -14,7 +14,7 @@ sample values; the companion Bazaar schema carries the parameter descriptions.
 | HTTP | `extensions.bazaar.schema.properties.input.properties.queryParams` | Query parameter names, descriptions and titles, including nested fields |
 | HTTP | `extensions.bazaar.schema.properties.input.properties.body` | Body field names, descriptions and titles, including nested fields |
 | HTTP | The same input schema's `pathParams` and `headers` groups, when declared | Schema field names and annotations |
-| MCP | `extensions.bazaar.info.input.tool` and `.inputSchema` | Official tool name plus argument names, descriptions and titles, including nested fields |
+| MCP | `extensions.bazaar.info.input.toolName` and `.inputSchema` | Official tool name plus argument names, descriptions and titles, including nested fields |
 
 The seller discovery compiler emits HTTP `querySchema` and `bodySchema` at the first
 two paths. MCP uses its actual tool input schema. Both one-shot
@@ -123,3 +123,4 @@ the catalog metadata and the queries people use.
 
 See [distribution and operation](DISTRIBUTION.md) for the existing package entry
 points and serving workflow.
+
