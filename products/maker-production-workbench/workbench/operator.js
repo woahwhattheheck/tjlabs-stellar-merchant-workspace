@@ -104,7 +104,7 @@ q("open-copy").onclick=()=>{const id=q("copies").value;run(async()=>{if(!id)thro
 q("refresh-copies").onclick=()=>run(async()=>say((await listCopies()).length+" complete saved copies available."));
 q("json").onclick=()=>{try{exportFull()}catch(e){say(e.message)}};
 q("import").onchange=e=>{const file=e.target.files?.[0],input=e.target;if(!file||busy)return;run(async()=>{const candidate=JSON.parse((await originalText(file)).replace(/^\uFEFF/,""));if(await adopt(candidate))say("Complete workspace opened. Save this version or continue its production plan.");input.value=""})};
-q("new-project").onclick=()=>run(async()=>{const w=core.create({id:uid("studio"),label:state.session.projectLabel});if(await adopt(wrap(w)))say("New farm workspace opened after retaining the prior working copy.")});
+q("new-project").onclick=()=>run(async()=>{const w=core.create({id:uid("studio"),label:state.session.projectLabel});if(await adopt(wrap(w)))say("New maker workspace opened after retaining the prior working copy.")});
 for(const kind of ["orders","stages","capacity","observations","decisions"])q(kind).onclick=()=>run(()=>{if(!plan())throw Error("Select a source date");download("Maker_Production_"+kind+".csv","text/csv;charset=utf-8",core.csv(state.workspace,selection(),kind));say("Complete "+kind+" CSV exported for the selected edition and date.")});
 q("report").onclick=()=>run(()=>{if(!plan())throw Error("Select a source date");download("Maker_Production_Report.html","text/html",core.report(state.workspace,selection()));say("Readable report exported with original sources and core history. Full workspace also retains unfinished forms.")});
 window.addEventListener("beforeunload",e=>{if(dirty){e.preventDefault();e.returnValue=""}});
