@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "production-run",
+  "description": "Complete original production source reconciliation, revision proposals and named operations/finance reviews with recoverable editable sessions",
+  "components": [
+    "products/production-run"
+  ],
+  "commands": {
+    "production-workspace": "products/production-run/cli.mjs",
+    "production-managed": "products/production-run/managed.mjs"
+  },
+  "commandDescriptions": {
+    "production-workspace": "Create, receive and export complete Production run sessions",
+    "production-managed": "Open the managed production operator through Applications"
+  },
+  "exports": {
+    "./products/production": "./source/products/production-run/runtime.mjs",
+    "./products/production/client": "./source/products/production-run/host/client.mjs",
+    "./products/production/server": "./source/products/production-run/host/server.mjs"
+  },
+  "applicationProviders": {
+    "production-run": "products/production-run/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "production-run": "products/production-run/merchant-provider.mjs"
+  }
+}

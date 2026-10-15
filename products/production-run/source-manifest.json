@@ -1,0 +1,523 @@
+{
+  "schema": "tjlabs.production-run-source-manifest.v1",
+  "files": [
+    {
+      "path": "INSTALLED_RECEIVING.md",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 5765,
+      "sha256": "d3461180d4807144cf0ef86ad16a03438ce3e194fe05d5ea44041889b3e5a35b"
+    },
+    {
+      "path": "NOTICE.md",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 2238,
+      "sha256": "6cb9f2f48a2305f647afb5a350a38fbda2719797edefa47caefb2463dc9baf3c"
+    },
+    {
+      "path": "OPERATING.md",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 5795,
+      "sha256": "3f24ec0d8b66642ccd35b3b8f0ce241339b86ea9339d0c7612e079ace6716695"
+    },
+    {
+      "path": "README.md",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 1505,
+      "sha256": "9068b419fcc6cf535bf79682edd824b530e69bc552ba51e1e2baae2417e773ed"
+    },
+    {
+      "path": "application-provider.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 3894,
+      "sha256": "9a5c7a18b9dad457e8bfd05b7271efdbeaf6dec3fe1cd10f8bdd38f55b49d043"
+    },
+    {
+      "path": "cli.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 3783,
+      "sha256": "53d3bf75063935c13d94b5beb98712b42ac15cea4a27e76b9864333575b052db"
+    },
+    {
+      "path": "commissioning/capacity-transport.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 5147,
+      "sha256": "0b2fabe358a7c54fe6388f2926ed2e30972faa544eacb336046263dcdb60bf0a"
+    },
+    {
+      "path": "commissioning/installed-model-course.cjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 7704,
+      "sha256": "b7e1072a7372a65d5d548767c2f0c7c36c2f7c5a419b344edaa9f2b24f8e1b25"
+    },
+    {
+      "path": "commissioning/installed-model-result.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 1017,
+      "sha256": "a1f425a4fa28c4c1a433fc05a1400236457f2de91c9b392ac30d9ad6577df638"
+    },
+    {
+      "path": "commissioning/operator-course.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 17163,
+      "sha256": "75ac4b1a9bf3bed3d3c1c8229bed6590542f35c9b9153f8198ee6596de670acd"
+    },
+    {
+      "path": "docs/BROWSER_RECEIVING.md",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 3131,
+      "sha256": "b8cbf5fbba2afbff83b707c5cd4965fa1c359c04d1c587a203a72d14ccb2b367"
+    },
+    {
+      "path": "docs/CONTRACT.md",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 12834,
+      "sha256": "709ac15ed748c81cb0c4bc716ccd218611f4ba36315ad94d10141a33a49fcf2e"
+    },
+    {
+      "path": "docs/NATIVE_RECEIVING.md",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 4282,
+      "sha256": "6264b7321dd94c5946571a0c44e031e6638e7d563dedc2c75f88a890cba9aa31"
+    },
+    {
+      "path": "docs/OPERATOR.md",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 8750,
+      "sha256": "003c4da8e27a94e5e82d0580bf75b8a485e8bee1ffbf40b8d0f9f65fd7705ec6"
+    },
+    {
+      "path": "examples/Blank_Input.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 2725,
+      "sha256": "c231de0b891506d0e61afcfef4a4e8c3034cfbad19c3e4dfbd9d4e9b89311a27"
+    },
+    {
+      "path": "examples/authored-workspace.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 75306,
+      "sha256": "fe200e6a687b9a93009c1036a70ba76b075042ac18900f8ccd89608b1145af24"
+    },
+    {
+      "path": "examples/blank-workspace.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 351,
+      "sha256": "164a14e51badeb1b7ed46b2fc80f07d00153b0c01201a4ecca3de78b6a279ed2"
+    },
+    {
+      "path": "examples/originals/charges.csv",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 375,
+      "sha256": "f7427cebf306bd1309d126e7b3e5658426791ede83c498ed50b7b1ac2c566775"
+    },
+    {
+      "path": "examples/originals/labor.csv",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 326,
+      "sha256": "9c29d13814e19beb63070c0d4c992c62ee79e3ed5097e0d5a4213ca162bf6150"
+    },
+    {
+      "path": "examples/originals/output.csv",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 405,
+      "sha256": "c2e338ce81da39c6705d2b7a21f5a9cb716ef855a0a5e64d3d553a499f206f9b"
+    },
+    {
+      "path": "examples/originals/received-labor.csv",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 326,
+      "sha256": "3ea7c66d71699f1d50bd09c23fccff2f6e465e88e5bd8e512f74d0c25d24c17c"
+    },
+    {
+      "path": "examples/originals/received-output.csv",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 398,
+      "sha256": "672b23e2a7425991837d080eb0e7854a763767428f7256e4872b0bfc92a4bf55"
+    },
+    {
+      "path": "examples/originals/runs.csv",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 401,
+      "sha256": "9126292452ae14c72ca5d3e790ec812824b95c84243a198741bb2f8f4bb94719"
+    },
+    {
+      "path": "examples/originals/standards.csv",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 187,
+      "sha256": "ca9e2012de9bfe9e430f5f198eb14a719a4a9ac513514bf245b176366636cba0"
+    },
+    {
+      "path": "examples/originals/stops.csv",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 508,
+      "sha256": "c048252a15c430e00b6d91c5cf9faef3023eb5f49c56488448d70d355c8b0104"
+    },
+    {
+      "path": "history/INSTALLED_PROVENANCE.md",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 967,
+      "sha256": "3e2553bd0628a417afa3c25118c4de81385e952ff92a28b89e846673a6d11adb"
+    },
+    {
+      "path": "history/OPERATOR_PROVENANCE.md",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 539,
+      "sha256": "bbd235f5e24b09bf2b62ee93f149834917d61602352a6dcbc3936b9076347f62"
+    },
+    {
+      "path": "history/before-installed/operator/build.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 4045,
+      "sha256": "0f56af24b30a0c0b4cc14d0bb1d4f833e6f59b19b844bedac5f8511954e36c36"
+    },
+    {
+      "path": "history/before-installed/operator/controller.js",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 47049,
+      "sha256": "d3fb5bf59323e2d1dcc60f70efe8e550c79204caf98de1c34a094b964f186406"
+    },
+    {
+      "path": "history/before-installed/source-manifest.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 10236,
+      "sha256": "d74f774d66f9eb26732fcf8b182e24b92916eb24443f32d3bf1d2334a28c66d5"
+    },
+    {
+      "path": "history/hardware-operator/README.md",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 3270,
+      "sha256": "d7f6f6746d75ea2ef702d55c2459e06bd3c7490e3adef72888f774a3129eea5e"
+    },
+    {
+      "path": "history/hardware-operator/docs/OPERATOR.md",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 7423,
+      "sha256": "b4c5ad36978abf56066ac1476f6ef505017990c22cbbb0137a09597349fd66e2"
+    },
+    {
+      "path": "history/hardware-operator/operator/body.html",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 1366,
+      "sha256": "a2212d4dd6880c01f311051e7876d3aab66cede48305e80ba08e6a60a1b200d6"
+    },
+    {
+      "path": "history/hardware-operator/operator/build.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 4017,
+      "sha256": "3f8407bed8635284fe26c3ae9c8039cbf8a489128806bf0aa7d3e79a4e5a9810"
+    },
+    {
+      "path": "history/hardware-operator/operator/controller.js",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 38088,
+      "sha256": "3a8020a7b0fa33c9c5010f6bcd5fb9a8ed0107021f63a99c1618f3e975449eda"
+    },
+    {
+      "path": "history/hardware-operator/operator/session.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 6210,
+      "sha256": "7a50e4c557d2c6a413ac544f8ead813c804fd9847b9efc5eca5cebf8e53df708"
+    },
+    {
+      "path": "history/native-original-source-manifest.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 4055,
+      "sha256": "71dc7ea23a125cc886a55b1492a35992c5815d62591259388cf3d3b5fa86ba1a"
+    },
+    {
+      "path": "host/client.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 4296,
+      "sha256": "451766dffc8d9428c195b86a82a771f6b94ed111401a4e32b722f1925b1c88da"
+    },
+    {
+      "path": "host/domain.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 4342,
+      "sha256": "603489676b665257713e08d0193c2d9032245630d1e7e7049661b24b263e7f96"
+    },
+    {
+      "path": "host/export.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 4414,
+      "sha256": "53813c782ce593e2f7820b761dce171d8f08133832b35219a319bee3c4ebd498"
+    },
+    {
+      "path": "host/io.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 3144,
+      "sha256": "2071e68b06593634469615cb45c2e91035c6986c9ca79725558721d4bab067f6"
+    },
+    {
+      "path": "host/model.cjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 5101,
+      "sha256": "2f57d633aab09d85295fa6339d6b821ee25a38a0a5c4de2a1c0ec6bc13c8d9f8"
+    },
+    {
+      "path": "host/server.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 7000,
+      "sha256": "77a1f1250daeb38a1c71f3336f4450e413eda47c6c47c7a1ec42f68d6a97b356"
+    },
+    {
+      "path": "host/store.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 5674,
+      "sha256": "edad8ee8d0312ee0c665000be4331d41197074d22905ec2382d2c02e159de126"
+    },
+    {
+      "path": "managed.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 2590,
+      "sha256": "ea3cea04802eddecd93b5c95f378f8e52f90e6ef506fc8da1283c42d926d7959"
+    },
+    {
+      "path": "mcp.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 7752,
+      "sha256": "6ade1631380a1d65351611f7c894f1b8f7513e0b8807365ea8fb39f839edfbba"
+    },
+    {
+      "path": "merchant-provider.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 2072,
+      "sha256": "d9d1776b3026de6cda8d1fc3d10adb773354440c9a6366c7cfd970b783b10041"
+    },
+    {
+      "path": "native/build-desk.mjs",
+      "mode": "100755",
+      "encoding": "utf8",
+      "bytes": 2401,
+      "sha256": "f197ab6e3d95e7c7f01c58edbc6989f5538075bc8618fbc842c770909fd2ba39"
+    },
+    {
+      "path": "native/io.mjs",
+      "mode": "100755",
+      "encoding": "utf8",
+      "bytes": 2761,
+      "sha256": "ea8bb05b2cd0c66622bffe83d419eea3ec9212a97cc34b3b2b2f2933c661a67f"
+    },
+    {
+      "path": "native/materialize-source.py",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 18786,
+      "sha256": "a1074978c5dd61e5cfe21087de116730cfab4b29e30682d780c8802e5ec265b4"
+    },
+    {
+      "path": "native/production-cli.mjs",
+      "mode": "100755",
+      "encoding": "utf8",
+      "bytes": 7200,
+      "sha256": "dc289c22236956650292196f4002918c067f4340d9fa0185147586d21544e45d"
+    },
+    {
+      "path": "native/receive-capacity-transport.mjs",
+      "mode": "100755",
+      "encoding": "utf8",
+      "bytes": 2150,
+      "sha256": "7c91e8bcf6520771ef13e75bd0ce9f063e01f9813f7eaf8334f32b8d0b5bb84b"
+    },
+    {
+      "path": "native/receive-installed.mjs",
+      "mode": "100755",
+      "encoding": "utf8",
+      "bytes": 5125,
+      "sha256": "76afef7caba07e72742d8e8690298741d9eca47472429d5c0291cc9238abc757"
+    },
+    {
+      "path": "native/receive-operator.mjs",
+      "mode": "100755",
+      "encoding": "utf8",
+      "bytes": 1820,
+      "sha256": "def31c19669f2ff93715921464a186ee397dc30d3b0347912097a93c8c87e666"
+    },
+    {
+      "path": "native/runtime.mjs",
+      "mode": "100755",
+      "encoding": "utf8",
+      "bytes": 674,
+      "sha256": "a14a73d919c3259f99541effeb41f483e1c234043e6308693c4b5e7493e819cf"
+    },
+    {
+      "path": "native/source.mjs",
+      "mode": "100755",
+      "encoding": "utf8",
+      "bytes": 1611,
+      "sha256": "59b884918155cf3596254b3bbf85c4548ca8184c0bbdf61eb81fcfbf2319ce33"
+    },
+    {
+      "path": "operator/body.html",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 1428,
+      "sha256": "ba9544be91b9c04bccea1150011b7eba882ae0555c0c23d128f332fef70e1db2"
+    },
+    {
+      "path": "operator/build.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 4268,
+      "sha256": "603317fa90c5d16c464fb1b88adacb357672b9c0f4fb072fcc88d96e4ec1dc69"
+    },
+    {
+      "path": "operator/codec.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 27651,
+      "sha256": "89f88fd456de6e180e6743f3eb66bbc31fc4449e8cc0259e199587ebc327d121"
+    },
+    {
+      "path": "operator/connected_zip.cjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 12090,
+      "sha256": "857c79f789e9cf4f6321bf22804e1c8d55af6758495ae1ba09d4fa72fd97bb26"
+    },
+    {
+      "path": "operator/controller.js",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 47783,
+      "sha256": "4d949e01161ca75ffb0fe5cce1adb12ec30ad314b28d50e4637aa50934d97596"
+    },
+    {
+      "path": "operator/fields.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 174,
+      "sha256": "de0435b7cecf4d0efd0756c4e2b75985062f046ca5903f933186f46acc79bc46"
+    },
+    {
+      "path": "operator/managed.js",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 14767,
+      "sha256": "b36872d4b0934b045cf5b93db7c879e8f7321ce298ba87acd8640b2650af0866"
+    },
+    {
+      "path": "operator/session.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 6876,
+      "sha256": "758bbe6ba9f4b15cdd1b9a5dbb9a38d3f0daed5e6363b10f722a9fc3a0664175"
+    },
+    {
+      "path": "operator/style.css",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 3920,
+      "sha256": "9b849cb7d15308f378d65327d438fe1bf6c4b78b2375acfc68d7a34157442cc5"
+    },
+    {
+      "path": "operator/view.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 4167,
+      "sha256": "ce66d2e237ad2e8f580420ea09f48773e00c26aef0945931da39a76b606a7717"
+    },
+    {
+      "path": "package.json",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 457,
+      "sha256": "25e5ba567dd2ab35d66c357e6f03184e037e7a8f811a6b3c70e473b6d175e912"
+    },
+    {
+      "path": "production/core.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 46090,
+      "sha256": "61f8298f03ed6acd133f69fd0aaa0601a7c8c5991f75c85ad239ac4712f0c101"
+    },
+    {
+      "path": "production/course.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 11967,
+      "sha256": "17d7bdf9f56ea616e76265f41789881b7f4923f1760d4ec17697483aa77596fa"
+    },
+    {
+      "path": "production/example.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 6776,
+      "sha256": "64a681c9dd46adff5262dd5cca8cae5bbde22c11f660cb030fc430a91d4714a7"
+    },
+    {
+      "path": "production/report.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 6578,
+      "sha256": "3b88f090438b0ecb60287265a550c0565104c31ead67936285d2e778204b6328"
+    },
+    {
+      "path": "runtime.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 1375,
+      "sha256": "9d574430fb7d2f77fa991ca7a73d5deaadc9aba97332bf49e9776486802bf01f"
+    },
+    {
+      "path": "setup.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 2555,
+      "sha256": "c5a9680ef7f767b65623b0a589c5c9e60bb5521fc8cc3cc4266e659c683c2f0d"
+    },
+    {
+      "path": "tools.mjs",
+      "mode": "100644",
+      "encoding": "utf8",
+      "bytes": 4054,
+      "sha256": "2d260789453ccc45846042fc7b9e85ed5bf910eba269791575ea9d404e1e732b"
+    }
+  ]
+}
