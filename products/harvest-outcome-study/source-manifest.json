@@ -18,8 +18,8 @@
     },
     {
       "path": "Harvest_Outcome_Study_Desk.html",
-      "bytes": 3145942,
-      "sha256": "6f3067a62d1026a09b8989e705684619943915b15c1a28bb20c656116660f92b"
+      "bytes": 3151124,
+      "sha256": "e2487ad0189bf17e6035dd04d9c7cd8a04ca99750e580befb44b95dae4bed186"
     },
     {
       "path": "INSTALLED_OPERATION.md",
@@ -53,8 +53,8 @@
     },
     {
       "path": "SOURCE_MANIFEST.json",
-      "bytes": 25422,
-      "sha256": "a7b4c5d1ce218b5fdd46e3efb1ecac9327b0625c5f4956d94631c9b71757da04"
+      "bytes": 25776,
+      "sha256": "94d4ebd83f512ee680859e87aa197b00f7df94460ecdc5a1e6474b3bf02072f5"
     },
     {
       "path": "SOURCE_PROVENANCE.md",
@@ -492,6 +492,11 @@
       "sha256": "feb8bf52a05110909ffa7c00011ea42b9af5b27feade4d72e758b94036e4795f"
     },
     {
+      "path": "receiving/history-recovery-course.cjs",
+      "bytes": 2157,
+      "sha256": "223bef8bbe3e945a7e2ca167b2d990277470212a20438fa4c0015a05710ee974"
+    },
+    {
       "path": "receiving/host-course.cjs",
       "bytes": 13873,
       "sha256": "96f08d12d7cc7d925df77ec5481db17601c983d5357c1e7f43e1b3d7cdc822bc"
@@ -518,8 +523,8 @@
     },
     {
       "path": "session.cjs",
-      "bytes": 8558,
-      "sha256": "6ec15cdc9ba8f24a53b8eb6af297bcbb608d3e6c1db907f13268270bc768fb91"
+      "bytes": 8875,
+      "sha256": "79c4831e8721ed1d04662f249e8c1a8c5ffacbed0159d68b4753cb2596529279"
     },
     {
       "path": "setup.mjs",
@@ -752,9 +757,14 @@
       "sha256": "e586a1b4798a091104acdaed94020b7d32202f327af4fe6cc66f50690340079e"
     },
     {
+      "path": "verification/history-recovery.json",
+      "bytes": 802,
+      "sha256": "305535e7b958d61773f227f7425cebb15eb3a2f6b429c1fae458dd8d7523ff86"
+    },
+    {
       "path": "verification/installed-courses.json",
-      "bytes": 28851,
-      "sha256": "d48932d6dcc1084990f66c581621fb5e56066cd2aa96eeaa80845d5bb1f82cb0"
+      "bytes": 29767,
+      "sha256": "79d0153762e655426d2ea9ca58a12afda08cf716dcf6c839440f50cee7e1e149"
     },
     {
       "path": "verification/model-course.json",
