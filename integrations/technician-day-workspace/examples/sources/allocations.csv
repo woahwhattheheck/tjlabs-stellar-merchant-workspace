@@ -1,0 +1,3 @@
+allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference
+AL-A,P-A,JOB-A,INV-A,deposit,5000,2026-10-20T12:00:00-06:00,Apply recorded deposit to original invoice,Allocation A
+AL-C,P-C,JOB-C,,deposit,5000,2026-10-19T12:10:00-06:00,Retain against the original booking until written transfer,Allocation C

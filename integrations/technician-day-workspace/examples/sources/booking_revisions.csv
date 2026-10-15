@@ -1,0 +1,6 @@
+revision_id,job_id,revision,recorded_at,status,customer_id,vehicle_id,location_id,technician_id,bay_id,start_at,end_at,technician_before_minutes,technician_after_minutes,bay_before_minutes,bay_after_minutes,currency,authorization,reference
+A1,JOB-A,1,2026-10-19T09:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:00:00-06:00,2026-10-20T11:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking
+A2,JOB-A,2,2026-10-19T10:00:00-06:00,confirmed,CUSTOMER-A,SUV-A,ADDRESS-A,TECH-A,,2026-10-20T09:30:00-06:00,2026-10-20T11:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking
+B1,JOB-B,1,2026-10-19T11:00:00-06:00,confirmed,CUSTOMER-B,SEDAN-B,ADDRESS-B,TECH-A,,2026-10-20T11:30:00-06:00,2026-10-20T13:30:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking
+C1,JOB-C,1,2026-10-19T12:00:00-06:00,confirmed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Customer-approved service window,Authored booking
+C2,JOB-C,2,2026-10-20T07:00:00-06:00,postponed,CUSTOMER-C,TRUCK-C,ADDRESS-C,TECH-A,,2026-10-20T15:00:00-06:00,2026-10-20T17:00:00-06:00,15,15,0,0,USD,Weather postponement; retain deposit pending written rebooking,Authored booking

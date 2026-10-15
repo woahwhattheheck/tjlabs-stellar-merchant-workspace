@@ -1,0 +1,14 @@
+{
+  "action": "review",
+  "input": {
+    "id": "authored-invoice-review",
+    "editionId": "authored-native-day",
+    "subjectType": "booking",
+    "subjectId": "JOB-A",
+    "disposition": "investigate",
+    "reviewer": "Authored example operator",
+    "reason": "Compare the original 25000-minor-unit approved quote with the recorded 26000-minor-unit invoice before resolving its 1000 difference.",
+    "evidence": "Authored example sources; no customer payment or approval inferred.",
+    "previousReviewId": null
+  }
+}

@@ -1,0 +1,130 @@
+{
+  "schema": "tjlabs.detail-day-contract.v1",
+  "factory": "createDetailDayCore({codec})",
+  "workspaceSchema": "tjlabs.detail-day-study.v1",
+  "browserSchema": "tjlabs.detail-day-desk.v1",
+  "tables": {
+    "resources": [
+      "resource_id",
+      "name",
+      "kind",
+      "reference"
+    ],
+    "availability": [
+      "window_id",
+      "resource_id",
+      "state",
+      "start_at",
+      "end_at",
+      "reference"
+    ],
+    "booking_revisions": [
+      "revision_id",
+      "job_id",
+      "revision",
+      "recorded_at",
+      "status",
+      "customer_id",
+      "vehicle_id",
+      "location_id",
+      "technician_id",
+      "bay_id",
+      "start_at",
+      "end_at",
+      "technician_before_minutes",
+      "technician_after_minutes",
+      "bay_before_minutes",
+      "bay_after_minutes",
+      "currency",
+      "authorization",
+      "reference"
+    ],
+    "quoted_lines": [
+      "line_id",
+      "revision_id",
+      "description",
+      "amount_minor",
+      "reference"
+    ],
+    "completions": [
+      "observation_id",
+      "job_id",
+      "status",
+      "technician_id",
+      "bay_id",
+      "started_at",
+      "finished_at",
+      "observed_at",
+      "authorization",
+      "reference"
+    ],
+    "invoice_lines": [
+      "line_id",
+      "invoice_id",
+      "job_id",
+      "currency",
+      "amount_minor",
+      "description",
+      "issued_at",
+      "reference"
+    ],
+    "payments": [
+      "payment_id",
+      "kind",
+      "parent_payment_id",
+      "currency",
+      "amount_minor",
+      "occurred_at",
+      "method",
+      "reference"
+    ],
+    "allocations": [
+      "allocation_id",
+      "payment_id",
+      "job_id",
+      "invoice_id",
+      "purpose",
+      "amount_minor",
+      "authorized_at",
+      "authorization",
+      "reference"
+    ]
+  },
+  "api": [
+    "create({id,label})",
+    "receive(workspace,{id,label,receivedAt,settings:{dayStart,dayEnd,asOf},notes,sources})",
+    "analyse(workspace,editionId)",
+    "review(workspace,{id,editionId,subjectType,subjectId,disposition,reviewer,reason,evidence,previousReviewId})",
+    "reopen(workspace)",
+    "report(workspace,editionId)",
+    "csv(workspace,editionId,kind)"
+  ],
+  "source": "Every table is explicit {name,text}; originals retain UTF8 BOM, CRLF and physical record ranges, bytes and SHA256. Immutable editions bind complete settings and original sources. Header-only means explicitly empty. No platform API or undocumented importer.",
+  "semantics": {
+    "resources": "kind technician|bay. One declared technician and optional bay per active job. Resource windows state available|blocked; half-open exact instants; adjacent available windows may cover a continuous occupancy. Unavailable or overlapping resource intervals yield attention, never a reschedule.",
+    "bookings": "Full replacement revisions have stable job/customer/vehicle identity and strictly increasing revision/recorded_at order. status scheduled|confirmed|in_progress|completed|cancelled|postponed. Select latest recorded_at <= asOf; preserve future revisions. Original is earliest eligible source revision. A cancelled/postponed revision reserves no planned occupancy. Each resource has its own integer before/after buffer; no route, distance or travel duration is inferred. Actual selected window is compared with explicit operating-day boundaries. Rebooked-outside-day jobs retain their history.",
+    "quotes": "Each source line is bound to a specific booking revision. amount_minor is signed integer; no tax rate, fee, price-from or deposit percentage is inferred. Missing quote is unknown, not zero. Currency stays per job/revision.",
+    "completions": "One current observation per job per edition. status not_started|in_progress|completed|cancelled|postponed. Completed requires start/end; in_progress requires start and no fabricated end. Actual assigned technician/bay are explicit. Completion is observed independently from booking status; mismatches and time/resource conflicts remain visible. A later source edition corrects a snapshot.",
+    "invoices": "Signed original invoice lines reference actual job and invoice; negative credits remain. Compare recorded invoice totals with the selected quoted lines only when both exist. All totals remain by currency. Invoice records never prove physical completion.",
+    "payments": "kind received|refund, positive amount_minor. Refund explicitly names original received transaction and same currency. Aggregate over-refund is attention. No charge is generated. Methods and references remain literal.",
+    "allocations": "Positive current snapshot per unique allocation_id links one transaction to a job and optional invoice. purpose deposit|settlement|refund. Refund allocations require refund transactions; ordinary deposit/settlement use received transactions. Every signed paid allocation contributes only once to a job's available credit. Invoice allocations must reference an actual invoice line for the same job/currency. Allocation excess, refund allocation mismatch and unallocated transaction balance remain visible. Transfer a deposit by a corrected full allocation source in a new edition, retaining all prior allocation decisions and authorization; do not duplicate the payment receipt.",
+    "day": "settings.dayStart/dayEnd are explicit offset instants spanning the actual owned day, at most 36 hours; asOf is explicit offset instant. Results retain actual offset strings. No recurring rules or local-time zone lookup is inferred. Future bookings/observations/payments stay source-retained and separately visible; current analysis uses asOf.",
+    "reviews": "subjectType booking|resource|invoice|payment|allocation; id is the exact analysis subject key. disposition investigate|accept_expected. Records annotate original quantities without changing them, bind edition/sourceHash and chain previousReviewId for the exact subject. No automatic cancellation/weather fee or refund decision."
+  },
+  "outputs": [
+    "bookings",
+    "revisions",
+    "occupancy",
+    "conflicts",
+    "completions",
+    "invoices",
+    "payments",
+    "allocations",
+    "unallocated",
+    "attention",
+    "totalsByCurrency",
+    "reviewHistory",
+    "summary"
+  ],
+  "native": "Preserve exact tjlabs.detail-day-desk.v1 {workspace,session,nativeContinuation?}; append core while retaining complete current session. Selected old edition/drafts remain until explicit selection of new edition. Create-only outputs retain original input/command bytes and readable malformed receipts."
+}

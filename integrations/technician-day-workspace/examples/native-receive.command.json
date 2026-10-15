@@ -1,0 +1,48 @@
+{
+  "action": "receive",
+  "input": {
+    "id": "authored-native-day",
+    "label": "Authored native technician day",
+    "receivedAt": "2026-10-15T06:00:00Z",
+    "settings": {
+      "dayStart": "2026-10-20T00:00:00-06:00",
+      "dayEnd": "2026-10-21T00:00:00-06:00",
+      "asOf": "2026-10-20T14:00:00-06:00"
+    },
+    "notes": "Authored example. Replace settings, identifiers and source files with actual owned exports before operational use."
+  },
+  "sourceFiles": {
+    "resources": {
+      "path": "sources/resources.csv",
+      "name": "resources.csv"
+    },
+    "availability": {
+      "path": "sources/availability.csv",
+      "name": "availability.csv"
+    },
+    "booking_revisions": {
+      "path": "sources/booking_revisions.csv",
+      "name": "booking_revisions.csv"
+    },
+    "quoted_lines": {
+      "path": "sources/quoted_lines.csv",
+      "name": "quoted_lines.csv"
+    },
+    "completions": {
+      "path": "sources/completions.csv",
+      "name": "completions.csv"
+    },
+    "invoice_lines": {
+      "path": "sources/invoice_lines.csv",
+      "name": "invoice_lines.csv"
+    },
+    "payments": {
+      "path": "sources/payments.csv",
+      "name": "payments.csv"
+    },
+    "allocations": {
+      "path": "sources/allocations.csv",
+      "name": "allocations.csv"
+    }
+  }
+}
