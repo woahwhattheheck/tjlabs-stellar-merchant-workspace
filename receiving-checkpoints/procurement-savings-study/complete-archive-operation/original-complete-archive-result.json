@@ -1,0 +1,12 @@
+{
+  "head": "1cc6c8ce04e6a81516a025d43edf3935f2d7af0b",
+  "metadataExact": true,
+  "members": 25391,
+  "bytes": 306562228,
+  "sha256": "91b67b2cfbc209a3058efcc1041acbbac07d2f3812c2631b2a87ed17be09a0a9",
+  "parts": 629,
+  "sourceIndexHead": "680e054dbf3cd4634bb866175a82e40df9d3483b",
+  "uncompressedBytes": 898154099,
+  "sourceVersion": "616bf52ded7359b880c01700db6a226ab8cfe35a",
+  "status": "Complete original full-validating emission; later memory-recovery source successor has its own publication and ordinary reopening"
+}
