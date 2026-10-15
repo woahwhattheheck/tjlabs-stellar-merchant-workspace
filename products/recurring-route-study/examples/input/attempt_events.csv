@@ -1,0 +1,9 @@
+id,attempt_id,supersedes_id,status,effective_at,recorded_at,actor_id,notes,source_ref
+EV-A1,A1,,completed,2026-10-12T09:10:00Z,2026-10-12T09:10:00Z,TECH,Authored actual source statement,authored/state/A1
+EV-A2,A2,,blocked,2026-10-12T09:10:00Z,2026-10-12T09:10:00Z,TECH,Authored actual source statement,authored/state/A2
+EV-A2R,A2R,,completed,2026-10-12T10:10:00Z,2026-10-12T10:10:00Z,TECH,Authored actual source statement,authored/state/A2R
+EV-A3,A3,,missed,2026-10-12T09:10:00Z,2026-10-12T09:10:00Z,TECH,Authored actual source statement,authored/state/A3
+EV-A4,A4,,cancelled,2026-10-12T09:10:00Z,2026-10-12T09:10:00Z,TECH,Authored actual source statement,authored/state/A4
+EV-A5,A5,,completed,2026-10-12T09:10:00Z,2026-10-12T09:10:00Z,TECH,Authored actual source statement,authored/state/A5
+EV-A6,A6,,completed,2026-10-12T09:10:00Z,2026-10-12T09:10:00Z,TECH,Authored actual source statement,authored/state/A6
+EV-A8,A8,,completed,2026-10-12T09:10:00Z,2026-10-12T09:10:00Z,TECH,Authored actual source statement,authored/state/A8

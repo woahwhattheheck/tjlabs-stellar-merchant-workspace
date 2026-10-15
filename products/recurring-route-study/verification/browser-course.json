@@ -1,0 +1,33 @@
+{
+  "schema": "route.source-browser-course/v1",
+  "runtime": "Actual generated HTML handlers with injected DOM and IndexedDB in V8; rendered-browser receiving remains separate",
+  "checks": [
+    "Generated operator starts with empty field study",
+    "Fresh CSV intake uses the current canonical family",
+    "Generated whole study retains the exact authored workflow result",
+    "Actual generated handler renders study",
+    "Actual generated handler renders intake",
+    "Actual generated handler renders selection",
+    "Actual generated handler renders records",
+    "Actual generated handler renders crosswalks",
+    "Actual generated handler renders documents",
+    "Actual generated handler renders plan",
+    "Actual generated handler renders timeline",
+    "Actual generated handler renders compare",
+    "Actual generated handler renders reviews",
+    "Actual generated handler renders recovery",
+    "Exact retained original digest is prepared without recording a receipt or approval",
+    "Ordinary evidence correction retains its exact prior edition",
+    "Starting another record retains complete unfinished evidence draft",
+    "Restored stale record family and side normalize to the visible editor",
+    "Restored stale map family uses the visible identity draft",
+    "Restored stale intake selection uses the visible canonical family and source side",
+    "CSV staging retains BOM and original CRLF",
+    "Applied mapping preserves exact original text",
+    "Changed study cannot accept a stale retained review",
+    "Concurrent browser branches are explicit",
+    "Atomic explicit adoption retains both branches and permits later saves",
+    "Rejected original CSV remains complete and recoverable",
+    "Complete session, editable study, source and readable report exports execute"
+  ]
+}

@@ -1,0 +1,4 @@
+id,attempt_id,code,opened_at,recorded_at,notes,source_ref
+EX2,A2,access_blocked,2026-10-12T09:10:00Z,2026-10-12T09:11:00Z,Actual reason from route source,authored/exception/EX2
+EX3,A3,missed,2026-10-12T09:10:00Z,2026-10-12T09:11:00Z,Actual reason from route source,authored/exception/EX3
+EX4,A4,cancelled,2026-10-12T09:10:00Z,2026-10-12T09:11:00Z,Actual reason from route source,authored/exception/EX4

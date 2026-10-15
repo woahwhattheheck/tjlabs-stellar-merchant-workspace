@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "recurring-route-study",
+  "description": "Complete twenty-three-family recurring route study with scheduled obligations, dispatched editions, original proof and office availability, report history, invoice handoff and recurring effort with recoverable editing",
+  "components": [
+    "products/recurring-route-study"
+  ],
+  "commands": {
+    "recurringroute-workspace": "products/recurring-route-study/installed-cli.mjs",
+    "recurringroute-managed": "products/recurring-route-study/managed.mjs"
+  },
+  "commandDescriptions": {
+    "recurringroute-workspace": "Create, receive and export complete Recurring Route Study sessions",
+    "recurringroute-managed": "Open the complete field quote study through Applications"
+  },
+  "exports": {
+    "./products/recurringroute": "./source/products/recurring-route-study/runtime.mjs",
+    "./products/recurringroute/client": "./source/products/recurring-route-study/host/client.mjs",
+    "./products/recurringroute/server": "./source/products/recurring-route-study/host/server.mjs"
+  },
+  "applicationProviders": {
+    "recurring-route-study": "products/recurring-route-study/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "recurring-route-study": "products/recurring-route-study/merchant-provider.mjs"
+  }
+}

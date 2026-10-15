@@ -1,0 +1,1 @@
+id,attempt_id,kind,role,acquired_at,captured_at,recorded_at,payload_sha256,latitude,longitude,accuracy_m,provider,signer_name,note,source_ref
