@@ -1,5 +1,5 @@
 {
-  "schema": "stellar-forge.procurement-source-selection.v1",
+  "schema": "stellar-forge.distribution-source-selection.v1",
   "id": "procurement-savings-study",
   "title": "Procurement Savings Reconciliation Study Desk",
   "description": "Complete procurement savings reconciliation with exact original purchases and credits, explicit allocations, currency and scope treatments, frozen calculations, procurement submissions, Finance decisions and all recurring work.",
