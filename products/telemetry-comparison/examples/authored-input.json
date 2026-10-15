@@ -1,0 +1,110 @@
+{
+  "schema": "tjlabs.telemetry-input.v1",
+  "scope": {
+    "siteId": "AUTHORED-SITE",
+    "podId": "POD-A",
+    "clockId": "UTC",
+    "timeFormat": "iso-offset",
+    "start": "2026-10-01T00:00:00Z",
+    "end": "2026-10-01T00:08:00Z",
+    "cadenceMs": 60000
+  },
+  "alignment": {
+    "method": "exact",
+    "toleranceMs": 0
+  },
+  "duplicatePolicy": "reject",
+  "points": [
+    {
+      "id": "rack-inlet",
+      "label": "Rack inlet temperature",
+      "quantity": "temperature",
+      "unit": "C",
+      "lower": "18",
+      "upper": "27"
+    },
+    {
+      "id": "pdu-power",
+      "label": "PDU real power",
+      "quantity": "power",
+      "unit": "kW",
+      "lower": "0",
+      "upper": "15"
+    },
+    {
+      "id": "humidity",
+      "label": "Relative humidity",
+      "quantity": "humidity",
+      "unit": "percent",
+      "lower": "30",
+      "upper": "60"
+    }
+  ],
+  "streams": [
+    {
+      "id": "measurements",
+      "sourceId": "419fc5f89b00bd7ae00de9e52117c2ad7f729a4285b47a9fcb98f19ed790d37c",
+      "role": "observation",
+      "runId": "",
+      "format": "csv",
+      "layout": "wide",
+      "timeField": "timestamp",
+      "timeFormat": "iso-offset",
+      "clockId": "UTC",
+      "columns": [
+        {
+          "pointId": "rack-inlet",
+          "field": "rack_inlet_f",
+          "unit": "F"
+        },
+        {
+          "pointId": "pdu-power",
+          "field": "pdu_kw",
+          "unit": "kW"
+        },
+        {
+          "pointId": "humidity",
+          "field": "humidity_fraction",
+          "unit": "fraction"
+        }
+      ]
+    },
+    {
+      "id": "prediction",
+      "sourceId": "f7e90b5aaa98cdfc056a161d734404f267e7926de0e9489050ed0a2dca7b58ff",
+      "role": "prediction",
+      "runId": "pod-model",
+      "format": "json",
+      "arrayPointer": "/rows",
+      "layout": "wide",
+      "timeField": "/time",
+      "timeFormat": "iso-offset",
+      "clockId": "UTC",
+      "columns": [
+        {
+          "pointId": "rack-inlet",
+          "field": "/inlet_c",
+          "unit": "C"
+        },
+        {
+          "pointId": "pdu-power",
+          "field": "/power_w",
+          "unit": "W"
+        },
+        {
+          "pointId": "humidity",
+          "field": "/humidity_percent",
+          "unit": "percent"
+        }
+      ],
+      "model": {
+        "id": "AUTHORED-NO-PHYSICS",
+        "version": "authored-candidate",
+        "calibrationStart": "2026-09-30T00:00:00Z",
+        "calibrationEnd": "2026-10-01T00:00:00Z",
+        "calibrationClockId": "UTC",
+        "note": "These predictions are authored values, not a fitted model."
+      }
+    }
+  ]
+}

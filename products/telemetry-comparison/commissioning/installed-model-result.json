@@ -1,0 +1,17 @@
+{
+  "schema": "stellar-forge.telemetry-managed-model-course.v1",
+  "runtime": "Production JavaScript in V8",
+  "checks": [
+    "Complete compact incoming session expands with exact original domain and drafts",
+    "Original selected request replays after later session save without replacing newer drafts",
+    "Stale request retains complete definitive rejection; no draft is lost",
+    "Original telemetry review applies through same writer while retaining complete unfinished editor state",
+    "Exact original source intake uses telemetry add-source contract",
+    "Existing authored full cohort remains comparable after installed session and source changes"
+  ],
+  "sequence": 4,
+  "workspaceRoot": "efd12635316d5f8db40ae765434e6e8e511cb42ded783646bc3246f7d692dd28",
+  "originals": 5,
+  "editions": 3,
+  "reviews": 2
+}

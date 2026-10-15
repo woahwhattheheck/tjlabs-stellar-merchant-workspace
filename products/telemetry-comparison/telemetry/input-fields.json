@@ -1,0 +1,54 @@
+{
+  "scope": [
+    "siteId",
+    "podId",
+    "clockId",
+    "timeFormat",
+    "start",
+    "end",
+    "cadenceMs"
+  ],
+  "point": [
+    "id",
+    "label",
+    "quantity",
+    "unit",
+    "lower",
+    "upper"
+  ],
+  "stream": [
+    "id",
+    "sourceId",
+    "role",
+    "runId",
+    "format",
+    "arrayPointer",
+    "layout",
+    "timeField",
+    "timeFormat",
+    "clockId",
+    "pointField",
+    "valueField",
+    "unitField",
+    "pointAliases",
+    "columns",
+    "qualityField",
+    "acceptedQuality",
+    "model"
+  ],
+  "column": [
+    "pointId",
+    "field",
+    "unit",
+    "qualityField",
+    "acceptedQuality"
+  ],
+  "model": [
+    "id",
+    "version",
+    "calibrationStart",
+    "calibrationEnd",
+    "calibrationClockId",
+    "note"
+  ]
+}

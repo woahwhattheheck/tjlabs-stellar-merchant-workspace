@@ -1,0 +1,112 @@
+{
+  "runtime": "Production source executed with explicit in-memory DOM/storage/download adapters",
+  "checks": [
+    "Actual original-file handler retains complete authored CSV bytes",
+    "Blank default and complete separate authored example",
+    "Actual original inspection, explicit stream preview and one-ID replacement with prior draft retained",
+    "Typed record editor, complete preview and immutable successor",
+    "Exact baseline/candidate comparison and full cohort exports",
+    "All eight report sections and every current report format",
+    "Invalid unfinished drafts survive JSON and actual cold editable controller boot; changed carrier rejects; every ZIP source/working/HTML/original member is exact",
+    "Both compact export buttons, full prior-session/draft preservation, compact domain receiving and cold compact operator boot reproduce exact original working state"
+  ],
+  "sections": 7,
+  "reportSections": 8,
+  "downloads": [
+    {
+      "name": "Telemetry_Comparison.json",
+      "bytes": 9854,
+      "sha256": "8f82827842b0a5163873f154905213de2102474a3226a08c78b01e87c8eaed07"
+    },
+    {
+      "name": "Telemetry_Comparison.csv",
+      "bytes": 12420,
+      "sha256": "08ab7cb39f578f9328cb10e1c48bc229956da58d765cad54576ddf5c758b4a49"
+    },
+    {
+      "name": "Telemetry_Report.json",
+      "bytes": 104804,
+      "sha256": "dab9ef1a138713eee6600104c82e694a9cffcbd962650d46b8a8fda9151086eb"
+    },
+    {
+      "name": "Telemetry_Report.csv",
+      "bytes": 118709,
+      "sha256": "407e6ab978f304fcdae3370e9cf0bf80947844c4e66409f8f33073ff817bbbea"
+    },
+    {
+      "name": "Telemetry_Aligned_Pairs.csv",
+      "bytes": 5358,
+      "sha256": "22e3c30ff00880989244b9d3acaa23ce9e34a03eb7e248d61f268f618808f8d0"
+    },
+    {
+      "name": "Telemetry_Report.html",
+      "bytes": 2686,
+      "sha256": "92876ef39417aaed4670a5543553e9d78e0c87861251d59aac5b8e64a10e6d00"
+    },
+    {
+      "name": "Telemetry_Report.md",
+      "bytes": 1662,
+      "sha256": "f7b8dd4ceb468161e0334b4b7cb41d02c6ea734401d47ecf8e6052709f12bbe1"
+    },
+    {
+      "name": "Telemetry_Working.json",
+      "bytes": 678842,
+      "sha256": "06120edb58b294a54c254faed38a66a154d3609cd12ea159cb9a236b5cad11a2"
+    },
+    {
+      "name": "Telemetry_Shared_Working.json",
+      "bytes": 227708,
+      "sha256": "83d598e78cf6afaba6e5e07330f303082e8ae2f618e63402fda60e6b89e1c94f"
+    },
+    {
+      "name": "Telemetry_Shared_Workspace.json",
+      "bytes": 73756,
+      "sha256": "1dd557d0191af29775583e5c19238556827ca751dfceece578e5b908b19dcc6e"
+    },
+    {
+      "name": "Telemetry_Editable.html",
+      "bytes": 657860,
+      "sha256": "b130fea437f23055b703f6c401e3573a77aa2b600b97ce5ea83fa3e4ab7223d7"
+    },
+    {
+      "name": "Telemetry_Complete_Application_Source.json",
+      "bytes": 358705,
+      "sha256": "8f4897fbc591f848e71f8a87d4263e36950f14ca878ff8245a1b6a5a0c9dd6e3"
+    },
+    {
+      "name": "Telemetry_Workspace.json",
+      "bytes": 266772,
+      "sha256": "65e8f196be4ccf7d7ac6af1a7a3a68a32363436064dad2c32d0a8eb42f036c4c"
+    },
+    {
+      "name": "Telemetry_Complete_Handover.zip",
+      "bytes": 2166702,
+      "sha256": "6deb73bd2ec724870ba7c0670686b5885dfe694ffa6cf2585f9c0d815fcbd7bb"
+    },
+    {
+      "name": "Telemetry_Working.json",
+      "bytes": 678842,
+      "sha256": "06120edb58b294a54c254faed38a66a154d3609cd12ea159cb9a236b5cad11a2"
+    },
+    {
+      "name": "Telemetry_Working.json",
+      "bytes": 678842,
+      "sha256": "06120edb58b294a54c254faed38a66a154d3609cd12ea159cb9a236b5cad11a2"
+    }
+  ],
+  "counts": {
+    "sources": 4,
+    "editions": 4,
+    "reviews": 2,
+    "backups": 3
+  },
+  "workingSha256": "06120edb58b294a54c254faed38a66a154d3609cd12ea159cb9a236b5cad11a2",
+  "sourceSha256": "8f4897fbc591f848e71f8a87d4263e36950f14ca878ff8245a1b6a5a0c9dd6e3",
+  "zipBytes": 2166702,
+  "rootSha256": "8970459c9b50eb1976607739b5d26de136b8091c9459809673e99fd71e27f722",
+  "source": {
+    "controller": "229668933e7565b11fe986038c789dde8b39ef224eac431bd447ed2b80a936be",
+    "builder": "98a7f7a3a310e865867ac467e2e056df443c2e7c507e55b8b839f78544672057",
+    "domain": "7f6c0d5cf593e46fb2f332f1bbc545358871cffb46e24a41ea5268d10b7ba6cd"
+  }
+}
