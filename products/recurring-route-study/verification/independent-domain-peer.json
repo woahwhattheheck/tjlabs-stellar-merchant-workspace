@@ -1,0 +1,24 @@
+{
+  "schema": "route.independent-domain-peer/v1",
+  "reviewed_source": {
+    "files": 75,
+    "bytes": 605523,
+    "sha256": "10230dbca7f6e4f311722c657be68022fd05c2b6909b59688d6bd29290219dbf",
+    "canvas": "F0C9JRT684C",
+    "edition": "complete-domain-peer-fixed"
+  },
+  "outcome": "accepted",
+  "reviewer": "independent collaborating engineering agent",
+  "execution": "Exact maintained modules executed independently in V8",
+  "accepted_cases": [
+    "Proof recorded after report generation cannot qualify through an earlier receipt",
+    "Service reopening before issuance invalidates invoice support",
+    "Later competing state preserves historical report and invoice",
+    "Invalid earlier disposition actor and chronology remain unresolved after completed revisit",
+    "Duplicate current work suppresses whole current total",
+    "Duplicate external payment identity suppresses receipt total",
+    "Future payment stays outside current cutoff totals",
+    "Report withdrawal preserves old ready observation but invalidates later/current support",
+    "Late cross-attempt photo reuse preserves earlier report assessment"
+  ]
+}

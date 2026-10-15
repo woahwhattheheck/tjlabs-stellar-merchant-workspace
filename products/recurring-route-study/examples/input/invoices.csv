@@ -1,0 +1,2 @@
+id,customer_id,number,currency,issued_at,recorded_at,total,payload_sha256,source_ref
+INV1,CUSTOMER,AUTH-001,USD,2026-10-12T13:00:00Z,2026-10-12T13:01:00Z,100,b73d2ba2d1bb085aaa97e424dceaad9ce4c9c2bc148bff445d3931733f2b5274,authored/invoice
