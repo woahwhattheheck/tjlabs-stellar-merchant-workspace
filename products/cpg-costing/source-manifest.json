@@ -43,6 +43,11 @@
       "sha256": "13e21504ae41d404c97a4c15ff8b9c0640194ef1a701c966b4cb25a183e5ff9b"
     },
     {
+      "path": "commissioning/installed-controller-result.json",
+      "bytes": 3187,
+      "sha256": "b59f2fbd3787addc6fddbe17a74d4777945dc6de523040eeb09a42a7620cacdf"
+    },
+    {
       "path": "commissioning/installed-export-result.json",
       "bytes": 778,
       "sha256": "9d6c3761fe66a94b106b75691a4814df06f4306a0f0ee1cc88a10e42530ccc38"
