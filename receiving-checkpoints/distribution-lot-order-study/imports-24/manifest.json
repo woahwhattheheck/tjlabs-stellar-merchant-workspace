@@ -1,0 +1,79 @@
+{
+  "schema": "installed-complete-course-checkpoint/v1",
+  "sourceHead": "710bfa6703031892daed620b1fd880aa6c124f81",
+  "phase": "imports-24",
+  "bytes": 7860108,
+  "sha256": "62ce806cffc7936bf770744b06da92456746ceb928d9d7157cd33bf1d83b584a",
+  "expandedBytes": 189973841,
+  "expandedSha256": "36151e52895252fcd008c6149b8074f7e0de8edc6924af1d5b43fa28e2d38a86",
+  "checks": 24,
+  "requests": 24,
+  "editions": 25,
+  "parts": [
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-24/part-000.jsonpart",
+      "bytes": 650000,
+      "sha256": "036e7eb9be6dc5d513d1eb2635c05543bb6828a080e85ec4a27ed6fcf6bb4886"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-24/part-001.jsonpart",
+      "bytes": 650000,
+      "sha256": "6325f8bfb322a2ca90d355643775644178e6f193ee28b7b5890619030e5bc849"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-24/part-002.jsonpart",
+      "bytes": 650000,
+      "sha256": "08e328df78d5f62b8d41ec116a63ac760f80bcbb2c33694e29c25fc04ef0a729"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-24/part-003.jsonpart",
+      "bytes": 650000,
+      "sha256": "e63904fdf66e07ddaaac0a70c955f6b43d33e7320c4a6dfa76b5da7d4625f4e2"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-24/part-004.jsonpart",
+      "bytes": 650000,
+      "sha256": "5fdf251a899dd0a6285dc29ce1caece7db71c23ff19bd90e065ec55527b4e189"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-24/part-005.jsonpart",
+      "bytes": 650000,
+      "sha256": "e0d2cf81ee3d18e91b680a36e3affe69cf5c9c8f034b95621c0f6ab894692945"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-24/part-006.jsonpart",
+      "bytes": 650000,
+      "sha256": "0d30ad182cb6e342b6e701c80253b9ccc9f8412f4cf95041838ebabde53dce72"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-24/part-007.jsonpart",
+      "bytes": 650000,
+      "sha256": "5ef6bb828d49631055f416701a6b62ef4de5d33ad8d32a02df7ea9381194e84d"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-24/part-008.jsonpart",
+      "bytes": 650000,
+      "sha256": "d4e05f8ee267ca5ea58100a945577908863e56d59036192e25d012d011cc4a12"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-24/part-009.jsonpart",
+      "bytes": 650000,
+      "sha256": "cd951f17a538dc8a4e82031455c6dee5a1b099878bef9b0e19c3beea7f53676f"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-24/part-010.jsonpart",
+      "bytes": 650000,
+      "sha256": "21897a89ba1109c9c3231866bbaf074f746048322cde4c7ca28141ac19fcc8bf"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-24/part-011.jsonpart",
+      "bytes": 650000,
+      "sha256": "db252aae267553c13696eca50b5beda78dcdb3354bd5b705c41428c0d1b59c02"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/imports-24/part-012.jsonpart",
+      "bytes": 60108,
+      "sha256": "43a768c280055774c10c87924cbbde79aed133f5d66eeceef81687fe897326bd"
+    }
+  ]
+}
