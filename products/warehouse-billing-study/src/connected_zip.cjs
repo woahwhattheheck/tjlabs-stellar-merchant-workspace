@@ -3,7 +3,9 @@
 /** Deterministic ordinary-file ZIP archives in connected V8 and native Node.
  * No filesystem, process, network, Buffer or TextEncoder.
  * Original STORE output remains byte-identical. Optional ordinary DEFLATE
- * uses the maintained connected_gzip encoder/decoder, loaded only when needed.
+ * uses explicit raw-DEFLATE codec hooks when supplied, otherwise the maintained
+ * connected_gzip encoder/decoder. Repeated identical byte objects reuse compressed
+ * data and CRC values within one synchronous pack without trusting declared hashes.
  */
 
 function utf8(value) {
@@ -112,6 +114,8 @@ function packZipRecords(entries,options,allowCompression) {
   if(!Array.isArray(entries)||entries.length>maxEntries) throw RangeError('ZIP entry collection exceeds its limit');
   const stamp=timeFields(options.timestamp??'1980-01-01T00:00:00Z');
   const compression=allowCompression?archiveOptions(options):null;
+  const deflateRaw=options.deflateRaw;if(deflateRaw!==undefined&&typeof deflateRaw!=='function')throw TypeError('ZIP deflateRaw must be a function');
+  const packedCache=new WeakMap(),crcCache=new WeakMap();
   let total=22,localBytes=0,centralBytes=0,uncompressedBytes=0;
   const records=entries.map(entry=>{
     const name=entry?.name,names=pathName(name),mode=entry.mode??0o644;
@@ -126,15 +130,21 @@ function packZipRecords(entries,options,allowCompression) {
       const selected=entry.compression??compression.selected;
       if(!['store','deflate','auto'].includes(selected))throw TypeError('ZIP member compression must be store, deflate or auto');
       if(selected!=='store') {
-        const candidate=require('./connected_gzip.cjs').deflateRawBytes(data,{
-          ...compression.deflate,huffman:compression.deflate.huffman??'auto',
-          max_input_bytes:Math.max(1,compression.maxUncompressedBytes)}).data;
+        let candidate=packedCache.get(data);
+        if(!candidate) {
+          const config={...compression.deflate,huffman:compression.deflate.huffman??'auto',
+            max_input_bytes:Math.max(1,compression.maxUncompressedBytes)};
+          candidate=deflateRaw?deflateRaw(data,config):require('./connected_gzip.cjs').deflateRawBytes(data,config).data;
+          if(!(candidate instanceof Uint8Array))throw TypeError('ZIP compressor must return raw DEFLATE bytes');
+          packedCache.set(data,candidate);
+        }
         if(selected==='deflate'||candidate.length<data.length){packed=candidate;method=8;}
       }
     }
     const added=76+names.length*2+packed.length;
     if(!Number.isSafeInteger(total+added)||(total+=added)>maxBytes) throw RangeError('ZIP bytes exceed the selected limit');
-    return {name,names,data,packed,method,mode,crc:crc32(data)};
+    let crc=crcCache.get(data);if(crc===undefined){crc=crc32(data);crcCache.set(data,crc);}
+    return {name,names,data,packed,method,mode,crc};
   }).sort((a,b)=>a.name<b.name?-1:a.name>b.name?1:0);
   checkPaths(records);
   for(const r of records){r.offset=localBytes;localBytes+=30+r.names.length+r.packed.length;centralBytes+=46+r.names.length;}
@@ -190,9 +200,11 @@ function readZipRecords(bytes,options,allowCompression) {
     for(let j=0;j<names;j++)if(nameBytes[j]!==bytes[offset+30+j])throw TypeError('ZIP member names differ');
     const name=utf8Text(nameBytes);pathName(name);
     const packed=bytes.subarray(start,finish);
-    const data=method===0?packed:require('./connected_gzip.cjs').inflateRawBytes(packed,{
-      expected_bytes:size,max_output_bytes:Math.max(1,maxUncompressedBytes),
-      max_input_bytes:Math.max(1,Math.min(maxBytes,0x7fffffff))}).data;
+    const config={expected_bytes:size,expected_crc32:crc,max_output_bytes:Math.max(1,maxUncompressedBytes),
+      max_input_bytes:Math.max(1,Math.min(maxBytes,0x7fffffff))};
+    if(options.inflateRaw!==undefined&&typeof options.inflateRaw!=='function')throw TypeError('ZIP inflateRaw must be a function');
+    const data=method===0?packed:options.inflateRaw?options.inflateRaw(packed,config):require('./connected_gzip.cjs').inflateRawBytes(packed,config).data;
+    if(!(data instanceof Uint8Array)||data.length!==size)throw TypeError('ZIP inflated member length differs: '+name);
     if(crc32(data)!==crc)throw TypeError('ZIP member checksum changed: '+name);
     records.push({name,mode:mode&0o777,data,crc32:crc,bytes:size,
       ...(allowCompression?{method,compressedBytes:packedSize}:{})});
