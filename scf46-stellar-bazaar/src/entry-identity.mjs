@@ -5,6 +5,27 @@ import { inspectResourceURL, inspectRouteTemplate } from '../../stellar-forge/ro
 const plain = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const printable = (v) => typeof v === 'string' && v.length > 0 && v.length <= 32 && /^[\x20-\x7E]+$/.test(v);
 const MCP_TOOL_NAME = /^[A-Za-z0-9_.-]{1,128}$/;
+const LOOPBACK_NAMES = new Set(['localhost', 'localhost.localdomain', 'ip6-localhost', 'ip6-loopback']);
+
+/** Apply the x402 Bazaar iconUrl soft-drop rules without fetching the URL. */
+export function isValidIconUrl(value) {
+  if (typeof value !== 'string' || value.length === 0 || value.length > 2048 ||
+      /[\x00-\x1f\x7f-\x9f]/.test(value)) return false;
+  try {
+    const url = new URL(value);
+    if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password) return false;
+    // WHATWG URL performs UTS #46 normalization and canonicalizes alternate
+    // IPv4 spellings. Decode once more before the required hostname checks so
+    // an encoded loopback label cannot survive as apparently public metadata.
+    const hostname = decodeURIComponent(url.hostname).toLowerCase().replace(/\.$/, '');
+    if (!hostname || LOOPBACK_NAMES.has(hostname) || /^\d+$/.test(hostname) ||
+        /^0x[0-9a-f]+$/.test(hostname)) return false;
+    // WHATWG represents IPv6 literals in brackets and canonicalizes every
+    // accepted IPv4 literal to dotted decimal, including integer/hex forms.
+    if (/^\[.*\]$/.test(hostname) || /^\d{1,3}(?:\.\d{1,3}){3}$/.test(hostname)) return false;
+    return true;
+  } catch { return false; }
+}
 
 export function sanitizeResourceSearchMetadata(resource) {
   const result = { ...resource };
@@ -18,6 +39,7 @@ export function sanitizeResourceSearchMetadata(resource) {
       return seen.size <= 5;
     }).slice(0, 5);
   }
+  if (!isValidIconUrl(result.iconUrl)) delete result.iconUrl;
   return result;
 }
 
@@ -49,8 +71,8 @@ export function validateCatalogEntryIdentity(entry) {
   return keyOf(entry);
 }
 
-/** Detached fields for search. Icons and pricing remain with their original
- * consumers; this read projection never fetches an icon or authorizes payment. */
+/** Detached fields for search. Metadata is syntax-sanitized but never fetched;
+ * pricing remains with its original consumers and does not authorize payment. */
 export function projectCatalogSearchEntry(entry) {
   const id = validateCatalogEntryIdentity(entry), projected = structuredClone(entry);
   projected.resource = sanitizeResourceSearchMetadata(projected.resource);
