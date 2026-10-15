@@ -1,0 +1,32 @@
+{
+  "schema": "tjlabs.procurement-memory-recovery-archive-publication.v1",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "sourceIndex": "receiving-checkpoints/procurement-savings-study/complete-archive/checkpoint.json",
+  "sourceIndexHead": "5c280826a4ae205d6667d20fbc878d11cad73653",
+  "sourceIndexIdentity": {
+    "bytes": 7556831,
+    "sha256": "82631431871b45a3b207f3a300f985dcbe89fc01387fed5f1e9200b535b2050d"
+  },
+  "identity": "7d4e44528cf9228215dcfeadd468fa56921fc2b3dff9d348ae4312ef3377acda",
+  "branch": "a74f/procurement-memory-recovery-complete-archive-20261015",
+  "directory": "receiving-checkpoints/procurement-savings-study/streamed-memory-recovery-complete-archive/",
+  "toolSource": "f95eb896058b91da7e6083f4d4b548f586020fe7",
+  "toolDirectory": "receiving-checkpoints/tools/prepared-export-streaming/",
+  "verification": "ordinary",
+  "partBytes": 1950000,
+  "commitParts": 8,
+  "expected": {
+    "members": 25391,
+    "groups": 896,
+    "bytes": 306562089,
+    "uncompressedBytes": 898155245,
+    "source": 664,
+    "requests": 39,
+    "editions": 40,
+    "prior": 37,
+    "distinctStudies": 38
+  },
+  "sourceCommit": "980bf6bbd6948e535544b3adcd9ea72a03fc2759",
+  "courseCommit": "02a3cfdb82c99de2c6b4170a0b65440e98d2c6d7",
+  "priorSourceIndexHead": "680e054dbf3cd4634bb866175a82e40df9d3483b"
+}
