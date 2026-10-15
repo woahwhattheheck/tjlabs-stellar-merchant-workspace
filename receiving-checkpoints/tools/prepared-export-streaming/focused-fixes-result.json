@@ -1,0 +1,9 @@
+{
+  "schema": "commons.prepared-stream-focused-fixes.v1",
+  "supplementaryBoundary": {
+    "characters": 650002,
+    "parts": 2,
+    "exact": true
+  },
+  "trailingDeflateRejected": "Invalid or trailing DEFLATE data"
+}

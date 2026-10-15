@@ -1,0 +1,71 @@
+{
+  "schema": "commons.complete-source-manifest.v1",
+  "operation": "A74F-COMPLETE-EXPORT-STREAMING-20261015",
+  "files": [
+    {
+      "path": "prepared-stream.cjs",
+      "bytes": 16033,
+      "sha256": "ccecfcb3f98d48748e02314cb4475f67e0660ec08e4b5c65e323c530cd4c892f"
+    },
+    {
+      "path": "connected_zip.cjs",
+      "bytes": 22223,
+      "sha256": "751354cbfe55450be53689de23631900f3b1661063c7974e46f99fa2413cbc1f"
+    },
+    {
+      "path": "sha256.cjs",
+      "bytes": 19696,
+      "sha256": "f37a1319db3aa8b9bd15ae2fea89cf0b79677e2a2eb295e63efa4d34f8308230"
+    },
+    {
+      "path": "text.cjs",
+      "bytes": 2322,
+      "sha256": "521560e432751fa701553e9f8f1ec795dbbbb463afc4d9b1e441f95241f1fc51"
+    },
+    {
+      "path": "zip.cjs",
+      "bytes": 2008,
+      "sha256": "0db36ea7dfaa084be2da89e185576017d596f33b8a174ec61199ee17bc0ea1a9"
+    },
+    {
+      "path": "vendor/pako.cjs",
+      "bytes": 238806,
+      "sha256": "e3c8f46f5a741598157ba051a9a0c043bcdc879c1867d3268e4058d4fae5fe3e"
+    },
+    {
+      "path": "checkpoint-storage.cjs",
+      "bytes": 2493,
+      "sha256": "effafda4907de3ab610f90427a04067e2e3e2cefbd4af2008fad3bdde07db78f"
+    },
+    {
+      "path": "finish-prepared.mjs",
+      "bytes": 3190,
+      "sha256": "fbc053d5da30f1e860d15e2f5ca9fee8f76f80c912b1829648eea7bc78be1458"
+    },
+    {
+      "path": "verify-prepared-stream.cjs",
+      "bytes": 6117,
+      "sha256": "e65aa640cc815d71993bdb321a2f178e98a70f4d404292498360e676b86498d9"
+    },
+    {
+      "path": "README.md",
+      "bytes": 3271,
+      "sha256": "7a32ff558fd2592bc9a13a0b8d873b6008c1ff9d0747d4247563de3322cd89fb"
+    },
+    {
+      "path": "full-source-result.json",
+      "bytes": 3277,
+      "sha256": "bb0ac53232978c576b7d9c63db99c5ee734d05b4e103c1df6f07507dbbf66538"
+    },
+    {
+      "path": "focused-fixes-result.json",
+      "bytes": 218,
+      "sha256": "215f6f319efc6bfe680da4822c11c56557dcd8404ebbab5628a70de0065a3858"
+    },
+    {
+      "path": "vendor/PAKO_LICENSE.txt",
+      "bytes": 1104,
+      "sha256": "a04665b3b2de56c66730c1f720f528175739e4104f79073614aa611da1e85539"
+    }
+  ]
+}
