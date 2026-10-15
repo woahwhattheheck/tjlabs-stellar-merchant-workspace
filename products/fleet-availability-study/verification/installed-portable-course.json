@@ -1,0 +1,19 @@
+{
+  "sourceHead": "93ae8ec38279cf0286d00bdeb5b276cc88e43ac5",
+  "surface": "Actual assembled production HTML and handlers, injected DOM and atomic IndexedDB",
+  "checks": [
+    "Every ordinary fleet availability section renders through assembled production handlers",
+    "Complete authored physical-fleet readiness, actual duties, safety releases, costs and recurring work results remain exact",
+    "Complete pending physical vehicle CSV retains BOM and CRLF",
+    "Actual mapped physical vehicle import retains the entire original",
+    "Ordinary fleet release-input correction retains the exact whole fleet release-input preimage",
+    "Binary supporting source bytes remain exact",
+    "Exact release-input helper retains its complete source-bound draft",
+    "Document chronology correction retains prior metadata",
+    "Current configured operations or safety review binds the exact source",
+    "Competing complete saved head detected",
+    "Explicit adoption retains complete competing fleet availability preimage",
+    "Continued editing and portable actor/session reopen"
+  ],
+  "passed": 12
+}

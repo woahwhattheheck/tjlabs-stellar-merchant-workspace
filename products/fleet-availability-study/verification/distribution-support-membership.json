@@ -1,0 +1,430 @@
+{
+  "head": "93ae8ec38279cf0286d00bdeb5b276cc88e43ac5",
+  "verified": [
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/build.mjs",
+      "sha": "ebe3f17f6b9a65f2813021e9c0c96e37a1cc1aba"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/git-object-receiving.py",
+      "sha": "ca72c8eb0c9ca12301a6a7eedcf8750427d71dcb"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-unpack.py",
+      "sha": "a4ded984727512f987c458dac99fbc8bdef919b8"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/BUILDING.md",
+      "sha": "ad046c2544366ee36497d50701c38c9a1bbe44ba"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/GIT_OBJECT_RECEIVING.md",
+      "sha": "e9c3b166a4446c929d1d484fde0751ad2e8af475"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/SOURCE_SELECTIONS.md",
+      "sha": "44de4a938e58a069ee6167317b47627ca8a3266a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/RUNTIME_INSTALL.md",
+      "sha": "a7f3e57869db8e5d2bc324305fa1449374397768"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/RUNTIME_TRANSFER.md",
+      "sha": "1595b2a44520344c1ccfd42f6422e57c510a98e6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/browser-assets.mjs",
+      "sha": "aefe2df3b0c799a0b21b617c31ea64c4d8c33df5"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/worker.mjs",
+      "sha": "f5cbef83727e4fb96ea706d4e0ababc51c9c3880"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-terminal.py",
+      "sha": "674cece44f61b4c951972ff6f9c74221b57f6cdf"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/managed-command.mjs",
+      "sha": "2b143b028be28947518139e4afc0a3b1d276fffb"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/README.md",
+      "sha": "527d51be41c8caa2e746a41c3086f2bb988d8bfc"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATIONS.md",
+      "sha": "165cb6c0b8425ee6d81e5de7639f84ebd2b02858"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/APPLICATION_PROVIDERS.md",
+      "sha": "1a4d783e0c93bc1bf0059bb2d5d549cf13dadb1a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-provider.mjs",
+      "sha": "1b005a019cb4428e611f98cca1a960bd6e7afb0b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/storage.mjs",
+      "sha": "56456d7a75e2ea3a3cf6a940413e001f9ee0c99b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/application-providers.mjs",
+      "sha": "ee1049fc3340f08988e9510c7b32f721cca435aa"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/distribution/runtime-workspace/SOURCE_BUILDS.md",
+      "sha": "e1be34156effcd2fce66fc51ee71a03693e47246"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/publisher.mjs",
+      "sha": "1f346ac4c38be711a52ff84ff19c78d27bbd5492"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/README.md",
+      "sha": "2ed02b7a54186a4659a666a8713cdb78f51112e2"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/MERCHANT_PROVIDERS.md",
+      "sha": "a1c3b12536aa0e4958e71128828dd47064b91932"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/retained-file-reads.mjs",
+      "sha": "0cc3502779b193521cd1d177e8d23b76ab625df2"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/host-files.mjs",
+      "sha": "a366cc4aa3e3ee3dfb7cb88320b84fcb00ab2fad"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/provider-contract.mjs",
+      "sha": "84a78fa4f594294b3b3e82d7056a5aeff740ab3d"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/retained-file-contracts.mjs",
+      "sha": "16dbce5411cddc372ac93cbe4813c373b9d81457"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/discovery.mjs",
+      "sha": "77f1b6db48ae86338086c2854038fcfb11490c31"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/receiving.mjs",
+      "sha": "bdb97c80f259312519ce83badf0c6b026ed17908"
+    },
+    {
+      "path": "stellar-forge/mcp-merchant-operator/catalog/publisher.mjs",
+      "sha": "fb22946b90cf4b16f2aebe4effddb0d0a3f9d240"
+    },
+    {
+      "path": "stellar-forge/mcp-paid-agent/http-tools.mjs",
+      "sha": "1b0b2417a4f60671094b09b000faef8af47c410e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/merchant-fleet-gateway/state-lease.mjs",
+      "sha": "1c2a8f3a3488bc1c687ad9fdfb2fba7964baaedc"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/service.json",
+      "sha": "f44b91dbbafbf8e9ead1eab41d2a30065d286d86"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstream-service.json",
+      "sha": "457151454ffcc18b03f4e003ca488a315d458d06"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/application.mjs",
+      "sha": "e1df420515cfa0a4b8e9993008c68d2beb2cb03a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/examples/upstreams.json",
+      "sha": "ca61762b613739b3a88b82429b294e40240a50d0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf43-agent-commerce/mcp-buyer-acceptance.mjs",
+      "sha": "ad070bb69c5ee9356b9a2f322cc7d552ed9b030c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf99-merchant-deploy/container-image/runtime.mjs",
+      "sha": "81332b59191829ccedfd329298be3b562dde03b4"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf86-rpc-transfer-reconcile/networks.json",
+      "sha": "2f92b8e3f8498fd07136c7f9b741c9e8fe3c3aa8"
+    },
+    {
+      "path": "stellar-forge/payment-auto-catalog/package-lock.json",
+      "sha": "c9fa2151a9203d983fefe40806b26b9803fc472f"
+    },
+    {
+      "path": "stellar-forge/payment-auto-catalog/schema-validation.mjs",
+      "sha": "545e69faefe0e1efac1d773cf365cc7a3123761a"
+    },
+    {
+      "path": "stellar-forge/payment-auto-catalog/schema-pattern.mjs",
+      "sha": "cbd80107c5718667939ef4dfe3a5ec5c53166611"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/config.mjs",
+      "sha": "c5802ab76d626863ac4f9f921a2bac7734cff7b0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/stream.mjs",
+      "sha": "b1bd20e78062c89eb7455d3acc7c2a7c84867f7e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/declaration.mjs",
+      "sha": "bd2865bb6ea61a64c42eb2a4b1f3952265c740f6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/source.mjs",
+      "sha": "5bff5be410fc00f0053124534478f1c2a083adde"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/bindings.mjs",
+      "sha": "377dac0b3c31f6a5196703b1dffb2770e382438f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/postgres/decimal.mjs",
+      "sha": "f13cb8a452b17153cdf66a837bb194e717153e1b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-handler.mjs",
+      "sha": "8da9ef8bddbc560aabe1a74f59c258e29f18d5a9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/dataset-cli.mjs",
+      "sha": "95ed4f2db87385e6d8d8fd0d83f5ac566d93519b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/serve.mjs",
+      "sha": "8d3564169ef2e3bbf0ea2d2e7aecd5765002b4c3"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/resource-server.mjs",
+      "sha": "2466c1731d889140de45cc3d1a54269bf05cf6b8"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/admission.mjs",
+      "sha": "ee141eb0a9cd858a6cad95d0cd2cd4857ec13ea0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/handler-execution.mjs",
+      "sha": "5966bbf721f0cfbdf94059a069df4a5442dac24a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/request-lifetime.mjs",
+      "sha": "1ffd645db0dd64409255907e2addbf802d7e2462"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/configured-admission.mjs",
+      "sha": "0f5c9d4026dd888a46a512a3f026c3cad99632ed"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/route-path.mjs",
+      "sha": "4884fc0106dd3221f80490c1b30aac00c648f433"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/response-file.mjs",
+      "sha": "332e84f219644494cc0d3b2c6b089b2641397d6d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/developer-portal.mjs",
+      "sha": "56787ded05cb9a029d30f055d5998c1e8c4f4adb"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/lifecycle.mjs",
+      "sha": "f4c095c5982ba210744cf050f94731278c87466b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/stream-response.mjs",
+      "sha": "c2a29adc60cec32cf3edc19696a213269346c63b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/seller.mjs",
+      "sha": "eabd88d563f388bc25e3a68d89d9d687cfe9887c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/response-asset.mjs",
+      "sha": "ce09c70ced6ff1e4f0330fd3a2f52ad99849e53b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/http-methods.mjs",
+      "sha": "06d82311e7cd4ebec0a5421b00f5c57205a673cf"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/multipart.mjs",
+      "sha": "c19284dc59e2f648f691233b3a31988936b22e41"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/query-parameters.mjs",
+      "sha": "320ee0b5500ad24c76372aeca60de92b1d293587"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/native-version.mjs",
+      "sha": "3a0dcc01954c212351c7099c10278bb34d23f270"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/native-factory.mjs",
+      "sha": "52041aaab2413bc4e54250642cbb5b21476a8f64"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/source_bundle_archive.py",
+      "sha": "c8a6a78da8ffde7d70d00dc6661d92c4e4332f91"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/native-delivery.mjs",
+      "sha": "8afe75f776eff16df9691f808791b9d0820f17c1"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/source_file_delivery.py",
+      "sha": "58055f355dbd096c9c3ffdecc70a51f4de4e008c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/sqlite/parameters.mjs",
+      "sha": "a8099e6d50978c8c9d12427bf03da65c110bbf3a"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/availability/gate.mjs",
+      "sha": "046a5b025be8b167d3dc142256356f88319afc9b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/availability/store.mjs",
+      "sha": "1df3d041a83d48705711d074147a47b399f2b3a8"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf89-live-request-admission/index.mjs",
+      "sha": "1a4939ca1b5596c56edebc2e6efd222871b92518"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf31-buyer-client/response-stream.mjs",
+      "sha": "d84fcd3adbf5a3f262d39ba23b641d56754050ea"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf31-buyer-client/public-transport.mjs",
+      "sha": "323233a1b27ecc032ce5c62dab11e1bb1c57a3a1"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf31-buyer-client/response-file.mjs",
+      "sha": "3db2202411dd46cd1822d6147738e75bd9ad26be"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf31-buyer-client/request-body.mjs",
+      "sha": "9505955700d595d3fc69aef41dcac48da1570d72"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf98-merchant-delivery/outbox.mjs",
+      "sha": "48e4f643601fb8464f695dd8e8785f4ad9e0f21c"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf98-merchant-delivery/deliver.mjs",
+      "sha": "666d1b3d5fdcf99c8c1fe2e9d8c45fae353a734b"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf98-merchant-delivery/delivery-lock.mjs",
+      "sha": "a98f39d671254287f7150133a35718227057cfc4"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf98-merchant-delivery/delivery-recovery.mjs",
+      "sha": "bd34a78c67a6fa6ffb2bd39efaccd5b107ac5201"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf85-live-402-capture/proxy-connect.mjs",
+      "sha": "e8d669d584ee4767afd1fd21eddd44bfc99c3732"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf98-merchant-delivery/destinations/model.mjs",
+      "sha": "f22c85176d365510093f22f699fb5bbd34ffcba0"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf98-merchant-delivery/destinations/exchange.mjs",
+      "sha": "1c19e08d8ef49600401738011f4d83fea4136ff6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf98-merchant-delivery/destinations/storage.mjs",
+      "sha": "92ccb43f0f331dc2c9b0e784e116fc26c83d10d9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/response-cache/control.mjs",
+      "sha": "5ebadc849424792ccc1e48dfbc79860f49811905"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf100-buyer-dataset-delivery/deliver.mjs",
+      "sha": "290957543c5bf3b7b29c87e111552749eee1a9e7"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf102-cube-paid-query-adapter/onboarding/files.mjs",
+      "sha": "1b2346e965bf124e2ed857f9681ca87772bebdc6"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf102-cube-paid-query-adapter/onboarding/metadata.mjs",
+      "sha": "30b6069ac38f6ae6cdf34726190e72a1242d14c1"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf103-native-buyer-signer/diagnostics.mjs",
+      "sha": "0d3c532c2eeb42326fc50df4ff54151f05055902"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/crossref/metadata.mjs",
+      "sha": "f2a2290a7a1bc0d9d6404b43289d6ec83388617f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/europe-pmc/source.mjs",
+      "sha": "bea6a43789b77b1c97b4451bfa4473049bbd7e35"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/routescan/config.mjs",
+      "sha": "33ec1ab29ac2715f0200a4655b837aea94695dcb"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/routescan/quota.mjs",
+      "sha": "fcf18c4da7c5a1b1514a4d1d19b06d6e5f5b106d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/attempt-wire.mjs",
+      "sha": "092304ce9ed33fe7a2c1d483501a091e3db6c7b9"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-location.mjs",
+      "sha": "d7ef6dab7cc4a53b322810e9ed0cb9ac7d8731f5"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/package.json",
+      "sha": "038f1824d7e2703b449fe50a5446b988d8f3bc3f"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/README.md",
+      "sha": "c24d4d16ab1a17f9240dfd792f208ab28d1bbc5e"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/prepare.mjs",
+      "sha": "152360ad7c8fbcd73f233ff4e08507f00b09ec16"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/dataset-page.mjs",
+      "sha": "f7c8163fc7c9fa166d9048ebdcdc84df05ec165d"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/config.mjs",
+      "sha": "55c0bcf95c6c42d9a49656590fcea46f0d6dbf42"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/operation-ticket.mjs",
+      "sha": "5c702be112360e5d671cad7375cb3d970630b928"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/request-headers.mjs",
+      "sha": "05340718cefcd6f547a43fa6e1e2c775301617b7"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf88-operator-buyer-cli/request-body.mjs",
+      "sha": "12830ce2b65dca2a1cee2437b4eb22242b81a206"
+    },
+    {
+      "path": "stellar/scf-starforge-20261009/sf30-seller-sdk/python/workspace/local-draft-store.mjs",
+      "sha": "f9dd19b7c6af1a691f8b560157770cb2ffe126c6"
+    }
+  ],
+  "failures": []
+}

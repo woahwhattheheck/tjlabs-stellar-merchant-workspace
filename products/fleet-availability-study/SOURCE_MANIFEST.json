@@ -477,6 +477,16 @@
       "sha256": "ff2ab5461f93344c39fa3c14b6af0bdeee1bac9844153d000385de321bf07ac2"
     },
     {
+      "path": "receiving/checkpoint-reader.cjs",
+      "bytes": 1040,
+      "sha256": "5462f986efb7e334528003fa2f81d1687dd6ad8d41388a3ad2ccca5eaeaeff97"
+    },
+    {
+      "path": "receiving/complete-archive-readback.cjs",
+      "bytes": 5199,
+      "sha256": "7bd7b03ea7c921ce06e24c7bb5d782adb885e9b408a0b29b069f973e090ae381"
+    },
+    {
       "path": "receiving/EXPORT_COMPRESSION.md",
       "bytes": 3817,
       "sha256": "25c4cb13c71cef0e4c67c75ae06bba4c77b50be88098915d6d90a59e6ff4c2dd"
@@ -498,8 +508,8 @@
     },
     {
       "path": "receiving/host-course.cjs",
-      "bytes": 14668,
-      "sha256": "ecf4b966cf593db38e7b3ed34f72b5d6e1384171da3720b0799b377a7943587d"
+      "bytes": 15015,
+      "sha256": "03ca0949ba030d39fb265c0c91101f5d367bd0df372ba549d21421e2c3c24a6f"
     },
     {
       "path": "receiving/portable-course.cjs",
@@ -767,6 +777,16 @@
       "sha256": "f4a81e650646da3792203334c2f73645c4e696a96610d6fa5a306ccfeb7c8243"
     },
     {
+      "path": "verification/complete-course-checkpoint.json",
+      "bytes": 6672,
+      "sha256": "8b1ba46d48368c36d719bd05d1c805c3fba8dd4fc16376dacca2973e58ee7bfd"
+    },
+    {
+      "path": "verification/distribution-support-membership.json",
+      "bytes": 16427,
+      "sha256": "c688d9c62392ac6ea2a940a7dea419a2408f9bfadb94c1eb51c9f3b81545ad88"
+    },
+    {
       "path": "verification/fleet-business-peer-after-fixes.json",
       "bytes": 6444,
       "sha256": "6016ac3d77b2815d79f13c4eb165ca98118ea034ae564f73b8118d4b9cc9ccc6"
@@ -795,6 +815,16 @@
       "path": "verification/history-key-order-peer.cjs",
       "bytes": 554,
       "sha256": "e9e53eac0954ffa57509d1095bb9eb84c465e4767335dde1d1972e2299f2f0fc"
+    },
+    {
+      "path": "verification/installed-host-course.json",
+      "bytes": 4348,
+      "sha256": "edac1106fa47b2a837abb0e0553dfa5f992e4fc7d0139295792f3573971737c1"
+    },
+    {
+      "path": "verification/installed-portable-course.json",
+      "bytes": 1105,
+      "sha256": "b673c850f7c5a02f60216e03098396ce39a9abf8a59ea569b1d81f533c9bcb38"
     },
     {
       "path": "verification/installed-source-join.json",
