@@ -1,0 +1,113 @@
+{
+  "schema": "stellar-forge.makerproduction-installed-receiving.v1",
+  "sourceRevision": "PR2107 original45",
+  "runtime": "V8 production modules and explicit DOM/IndexedDB adapters",
+  "source": {
+    "schema": "maker.production-source-course.v1",
+    "provenance": "Authored production declarations and observations exercised against maintained source.",
+    "passed": 24,
+    "checks": [
+      "Delivery date subtracts declared shipping days separately from ship deadline",
+      "Ready stock reduces only its allocated order and leaves spare unallocated",
+      "Exact backward yield rounding sizes each stage input",
+      "Calendar drying and resource-open work use explicitly different dates",
+      "Comparable normalization reveals three resource-day overloads",
+      "Distinct declared firing groups remain a conflict even at exact capacity",
+      "Review correction retains both notes without changing reservations",
+      "Observed finished stock linked to the batch counts once",
+      "Completed stages release future reservations and retain complete observations",
+      "Unstarted late latest-start remains explicit",
+      "New source edition receives independent decision context",
+      "Later snapshot corrects rather than sums final output",
+      "Corrected source exposes projected shortage without rewriting original order",
+      "Whole reopen preserves every source and original BOM CRLF",
+      "A decision ID cannot move to a changed source",
+      "Historical asOf cannot precede undated source inventory snapshot",
+      "Linked stock cannot exceed final observed good",
+      "Observation quantity conservation is required",
+      "Maker calendar cannot silently fall back to five or seven days",
+      "Zero remaining flow retains shortage but reserves no dates or incompatible group",
+      "Internal ready deadline has production date and no invented ship date",
+      "Zero baseline resource uses only explicitly confirmed positive dated slots",
+      "Changed retained original rejects reopen",
+      "Ordinary exports retain complete plan; an empty selected review CSV retains its header"
+    ]
+  },
+  "model": {
+    "schema": "stellar-forge.makerproduction-installed-course.v1",
+    "checks": [
+      "Exact eight-file intake retains original BOM and CRLF",
+      "Source receiving retains the entire unfinished prior editor",
+      "Native observed snapshot appends one immutable complete source edition",
+      "Exact date and observation edition bind all decision revisions",
+      "Original request retry preserves later complete correction",
+      "Pinned complete projection editions",
+      "Pinned complete projection decisions",
+      "Pinned complete projection original",
+      "Pinned complete projection sourceRows",
+      "Pinned complete projection orders",
+      "Pinned complete projection batches",
+      "Pinned complete projection batch",
+      "Pinned complete projection stages",
+      "Pinned complete projection stage",
+      "Pinned complete projection capacity",
+      "Pinned complete projection observations",
+      "Pinned complete projection futureObservations",
+      "Pinned complete projection unallocatedStock",
+      "Pinned complete projection attention",
+      "Pinned complete projection currentDecisions",
+      "Pinned complete projection decisionHistory",
+      "Pinned complete projection backups",
+      "Pinned complete projection draft",
+      "Pinned complete projection requests",
+      "Original domain and original workbench carriers reopen",
+      "Complete session restores exact prior editor"
+    ],
+    "sequence": 4,
+    "sourceEditions": 2,
+    "backups": 4
+  },
+  "controller": {
+    "schema": "stellar-forge.makerproduction-controller-course.v1",
+    "checks": [
+      "Full browser intake preserves original bytes and all eight families",
+      "Original overload and firing compatibility remain visible",
+      "Rejected review date restores actual displayed selection",
+      "Invalid count preserves full observation form and selected source",
+      "Browser and native use same complete observation action",
+      "Complete original decision history retains correction",
+      "Whole installed working export includes invalid unfinished input",
+      "New project retains every prior source and editor",
+      "Full working carrier adoption restores observations and decisions",
+      "Original standalone desk compatibility remains available"
+    ],
+    "retainedPriorSessions": 8
+  },
+  "capacity": {
+    "schema": "stellar-forge.makerproduction-capacity-course.v1",
+    "capacity": 60921,
+    "completeOriginalEditorBytes": 60409,
+    "rejectedDateRestoresDisplayedSelection": true,
+    "oversizeFilePreservesCompleteDraft": true,
+    "defaultCapacity": 134217728
+  },
+  "recovery": {
+    "schema": "stellar-forge.makerproduction-recovery-course.v1",
+    "checks": [
+      "Complete pending request survives saved recovery",
+      "Conflicting publication retains full competing editor without replacing selected head",
+      "Explicit adoption retains complete displaced recovery",
+      "Immutable original objects reopen under the production workspace schema"
+    ],
+    "proposals": 3,
+    "objects": 5,
+    "expandedBytes": 212152
+  },
+  "assembly": {
+    "schema": "stellar-forge.makerproduction-assembly-course.v1",
+    "scripts": 12,
+    "htmlBytes": 1104332,
+    "completeWorkspaceEqual": true,
+    "fullSourceFiles": 75
+  }
+}
