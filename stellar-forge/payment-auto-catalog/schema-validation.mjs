@@ -1,6 +1,6 @@
 /**
  * SF-25: v2 PaymentPayload Bazaar extension -> trusted SF-46 catalog commit.
- * Source pin: x402-foundation/x402@7f2b2f1f77fa5317615735e3378a6fad41cccb4e
+ * Source pin: x402-foundation/x402@e95b06661e1a2a8a9a21fce34cc28b9934834650
  * Bazaar spec blob: 442708e76d5a129e0c1393471d8ed71e3604c94e
  * Facilitator extractor blob: 083013ee19544e182c2e3185d7853309c34b9d9c
  */
@@ -243,6 +243,22 @@ function bazaarContractError(info, schema) {
 
   if (typeof input.toolName !== 'string' || input.toolName.length === 0) return 'INFO_MCP_TOOL_NAME_INVALID';
   if (!plain(input.inputSchema)) return 'INFO_MCP_INPUT_SCHEMA_INVALID';
+  // Bazaar's MCP contract is the MCP Tool.inputSchema object-root subset, not
+  // merely any JSON object carried under the inputSchema field.
+  if (input.inputSchema.type !== 'object') return 'INFO_MCP_INPUT_SCHEMA_TYPE_INVALID';
+  if (input.inputSchema.properties !== undefined) {
+    if (!plain(input.inputSchema.properties) ||
+        Object.values(input.inputSchema.properties).some(value => !plain(value) && typeof value !== 'boolean')) {
+      return 'INFO_MCP_INPUT_SCHEMA_PROPERTIES_INVALID';
+    }
+  }
+  if (input.inputSchema.required !== undefined) {
+    const required = input.inputSchema.required;
+    if (!Array.isArray(required) || required.some(value => typeof value !== 'string') ||
+        new Set(required).size !== required.length) {
+      return 'INFO_MCP_INPUT_SCHEMA_REQUIRED_INVALID';
+    }
+  }
   for (const [field, reason] of [
     ['toolName', 'SCHEMA_MCP_TOOL_NAME_NOT_REQUIRED'],
     ['inputSchema', 'SCHEMA_MCP_INPUT_SCHEMA_NOT_REQUIRED'],
