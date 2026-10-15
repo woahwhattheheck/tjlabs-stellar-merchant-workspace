@@ -4,7 +4,6 @@ import { inspectResourceURL, resolveCatalogIdentity } from '../../stellar-forge/
 
 const plain = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const printable = (v) => typeof v === 'string' && v.length > 0 && v.length <= 32 && /^[\x20-\x7E]+$/.test(v);
-const MCP_TOOL_NAME = /^[A-Za-z0-9_.-]{1,128}$/;
 const LOOPBACK_NAMES = new Set(['localhost', 'localhost.localdomain', 'ip6-localhost', 'ip6-loopback']);
 const UNSAFE_RESOURCE_CHAR = /[\x00-\x20\x7f\\]/;
 
@@ -78,7 +77,11 @@ function identityOf(entry) {
   const discovery = discoveryURLOf(entry, info);
   const { resourceURL } = discovery;
   if (info.type === 'mcp') {
-    if (typeof info.toolName !== 'string' || !MCP_TOOL_NAME.test(info.toolName) || !plain(info.inputSchema)) throw new TypeError('Invalid MCP tool');
+    // The official x402 Bazaar contract deliberately treats an MCP tool name as
+    // an opaque, non-empty string. Do not invent an ASCII alphabet or length
+    // limit here: doing so would reject conforming tools before cataloging and
+    // would change their protocol identity.
+    if (typeof info.toolName !== 'string' || info.toolName.length === 0 || !plain(info.inputSchema)) throw new TypeError('Invalid MCP tool');
     return { id: ['mcp',resourceURL,info.toolName].join('|'), resourceURL };
   }
   if (!['GET','HEAD','DELETE','POST','PUT','PATCH'].includes(info.method)) throw new TypeError('Invalid HTTP method');

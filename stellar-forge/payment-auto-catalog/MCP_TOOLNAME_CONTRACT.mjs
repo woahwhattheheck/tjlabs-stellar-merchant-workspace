@@ -96,12 +96,43 @@ assert.equal(rejected.decision, 'soft_drop');
 assert.equal(rejected.reason, 'INFO_SCHEMA_MISMATCH');
 assert.equal(catalog.size, 2);
 
+// x402 specifies an opaque non-empty string, not a restricted identifier.
+// Preserve spaces, slash, Unicode and names longer than 128 code units exactly
+// in the catalog identity and public discovery projection.
+const expressiveName = 'Vendor tools/航海 🚀';
+const expressive = catalog.ingest(payload(expressiveName, 5));
+assert.equal(expressive.decision, 'accepted');
+assert.equal(expressive.catalogKey, `mcp|${RESOURCE_URL}|${expressiveName}`);
+
+const longName = `vendor/${'x'.repeat(256)}`;
+const long = catalog.ingest(payload(longName, 6));
+assert.equal(long.decision, 'accepted');
+assert.equal(long.catalogKey, `mcp|${RESOURCE_URL}|${longName}`);
+const preservedNames = new Set(catalog.listDiscovery(new URLSearchParams({ limit: '10' })).items
+  .map(row => row.extensions.bazaar.info.input.toolName));
+assert.equal(preservedNames.has(expressiveName), true);
+assert.equal(preservedNames.has(longName), true);
+
+const empty = catalog.ingest(payload('', 7));
+assert.equal(empty.decision, 'soft_drop');
+assert.equal(empty.reason, 'BAZAAR_SCHEMA_CONTRACT_MISMATCH');
+const nonString = payload('placeholder', 8);
+nonString.paymentPayload.extensions.bazaar.info.input.toolName = 7;
+const nonStringRejected = catalog.ingest(nonString);
+assert.equal(nonStringRejected.decision, 'soft_drop');
+assert.equal(nonStringRejected.reason, 'INFO_SCHEMA_MISMATCH');
+assert.equal(catalog.size, 4);
+
 console.log(JSON.stringify({
   officialField: 'toolName',
   first: first.decision,
   update: update.reason,
   coexistence: catalog.size,
   legacyAlias: rejected.reason,
+  expressiveNamePreserved: preservedNames.has(expressiveName),
+  longNameCodeUnits: longName.length,
+  emptyName: empty.reason,
+  nonStringName: nonStringRejected.reason,
   search: 'ok',
 }));
 
