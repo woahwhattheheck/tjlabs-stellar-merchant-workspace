@@ -1,0 +1,1 @@
+event_id,batch_id,stage_id,observed_at,local_date,status,input_qty,good_qty,reject_qty,held_qty,source_ref

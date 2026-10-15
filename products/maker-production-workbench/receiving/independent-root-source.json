@@ -1,0 +1,35 @@
+{
+  "schema": "maker.production-independent-receiving.v1",
+  "execution": "Actual production source in V8; root authored declarations and observations",
+  "checks": [
+    {
+      "name": "Monday delivery minus one open shipping day gives previous Friday",
+      "passed": true
+    },
+    {
+      "name": "Declared80% form and90% fire yield target8 requires12initial and9fire inputs",
+      "passed": true
+    },
+    {
+      "name": "Active9 input with4good1reject4held projects7; independentready2 gives9forecast and1short",
+      "passed": true
+    },
+    {
+      "name": "Final8good plus linked8 plus independent2 counts10 once",
+      "passed": true
+    },
+    {
+      "name": "Correctedfinal7 and linked7 gives9actual/1short with all4observations retained",
+      "passed": true
+    },
+    {
+      "name": "Upstream8good cannot admit downstream9input",
+      "passed": true
+    },
+    {
+      "name": "Four source editions and decision reopen including BOM/CRLF",
+      "passed": true
+    }
+  ],
+  "finding": "Zero-flow downstream reservations falsely contributed an incompatible group. Successor removes all zero-input reservations and retained course includes exact all-rejected case."
+}

@@ -1,0 +1,3 @@
+stock_id,product_id,quantity,order_id,batch_id,source_ref
+READY-MUG,MUG,2,O-MUG,,Authored independent ready-stock count
+UNALLOC,MUG,1,,,Authored unallocated spare

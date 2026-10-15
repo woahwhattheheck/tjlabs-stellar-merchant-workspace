@@ -1,0 +1,8 @@
+{
+  "schema": "maker.production-workspace.v1",
+  "id": "maker-empty",
+  "label": "My maker studio",
+  "editions": [],
+  "decisions": [],
+  "head": "e28f87ec129a031683f7faa081788ff8b3e4b92a710ab7a9cb5cf9d96e13dd92"
+}

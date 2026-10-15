@@ -1,0 +1,1041 @@
+{
+  "schema": "maker.production-plan.v1",
+  "workspaceId": "authored-maker",
+  "editionId": "original",
+  "editionLabel": "Declared original production plan",
+  "sourceHash": "bb0731969ef92e01f126a4484d0ef815443e3ae1fb2989dbb734db27e4e9ee59",
+  "asOf": "2026-10-15",
+  "fingerprint": "c4d464eb958d83fa511d9070e30c3cf4d3d3adb58e4e4077e8314b5ea7e25b7c",
+  "orders": [
+    {
+      "orderId": "O-MUG",
+      "productId": "MUG",
+      "productName": "Authored mug",
+      "quantity": 12,
+      "dueDate": "2026-11-02",
+      "dueBasis": "delivery",
+      "transitDays": 2,
+      "productionDue": "2026-10-29",
+      "shipBy": "2026-10-29",
+      "independentReady": 2,
+      "linkedReady": 0,
+      "batchTargetTotal": 10,
+      "remainingRequirement": 10,
+      "allocationDelta": 0,
+      "actualBatchGood": 0,
+      "actualReady": 2,
+      "actualRemaining": 10,
+      "projectedReady": 12,
+      "projectedShortfall": 0,
+      "batchIds": [
+        "B-MUG"
+      ],
+      "stockRows": [
+        {
+          "stock_id": "READY-MUG",
+          "product_id": "MUG",
+          "quantity": "2",
+          "order_id": "O-MUG",
+          "batch_id": "",
+          "source_ref": "Authored independent ready-stock count"
+        }
+      ],
+      "sourceRef": "Authored accepted order not a public lead-time promise"
+    },
+    {
+      "orderId": "O-PLATE",
+      "productId": "PLATE",
+      "productName": "Authored plate",
+      "quantity": 8,
+      "dueDate": "2026-10-29",
+      "dueBasis": "ship",
+      "transitDays": 0,
+      "productionDue": "2026-10-29",
+      "shipBy": "2026-10-29",
+      "independentReady": 0,
+      "linkedReady": 0,
+      "batchTargetTotal": 8,
+      "remainingRequirement": 8,
+      "allocationDelta": 0,
+      "actualBatchGood": 0,
+      "actualReady": 0,
+      "actualRemaining": 8,
+      "projectedReady": 8,
+      "projectedShortfall": 0,
+      "batchIds": [
+        "B-PLATE"
+      ],
+      "stockRows": [],
+      "sourceRef": "Authored accepted ship date"
+    }
+  ],
+  "batches": [
+    {
+      "batchId": "B-MUG",
+      "orderId": "O-MUG",
+      "productId": "MUG",
+      "targetGood": 10,
+      "requiredInitialInput": 16,
+      "projectedGood": 10,
+      "finalActualGood": 0,
+      "completedStages": 0,
+      "totalStages": 5,
+      "currentStage": "form",
+      "complete": false,
+      "latestStart": "2026-10-21",
+      "productionDue": "2026-10-29",
+      "shipBy": "2026-10-29",
+      "sourceRef": "Authored remaining mug allocation",
+      "stages": [
+        {
+          "batchId": "B-MUG",
+          "orderId": "O-MUG",
+          "productId": "MUG",
+          "stageId": "form",
+          "sequence": 1,
+          "resourceId": "FORM",
+          "capacityUnit": "declared bench units",
+          "unitsPerPiece": 1,
+          "compatibility": "shared-work",
+          "durationDays": 2,
+          "dayBasis": "resource-open",
+          "yieldBps": 10000,
+          "requiredInput": 16,
+          "requiredOutput": 16,
+          "scheduledInput": 16,
+          "projectedOutput": 16,
+          "status": "unstarted",
+          "latestStart": "2026-10-21",
+          "latestEnd": "2026-10-22",
+          "plannedDates": [
+            "2026-10-21",
+            "2026-10-22"
+          ],
+          "reservationDates": [
+            "2026-10-21",
+            "2026-10-22"
+          ],
+          "reservationUnits": 16,
+          "observation": null
+        },
+        {
+          "batchId": "B-MUG",
+          "orderId": "O-MUG",
+          "productId": "MUG",
+          "stageId": "dry",
+          "sequence": 2,
+          "resourceId": "DRY",
+          "capacityUnit": "declared shelf units",
+          "unitsPerPiece": 1,
+          "compatibility": "shared-dry",
+          "durationDays": 3,
+          "dayBasis": "calendar",
+          "yieldBps": 9000,
+          "requiredInput": 16,
+          "requiredOutput": 14,
+          "scheduledInput": 16,
+          "projectedOutput": 14,
+          "status": "unstarted",
+          "latestStart": "2026-10-23",
+          "latestEnd": "2026-10-25",
+          "plannedDates": [
+            "2026-10-23",
+            "2026-10-24",
+            "2026-10-25"
+          ],
+          "reservationDates": [
+            "2026-10-23",
+            "2026-10-24",
+            "2026-10-25"
+          ],
+          "reservationUnits": 16,
+          "observation": null
+        },
+        {
+          "batchId": "B-MUG",
+          "orderId": "O-MUG",
+          "productId": "MUG",
+          "stageId": "bisque",
+          "sequence": 3,
+          "resourceId": "KILN",
+          "capacityUnit": "declared shelf units",
+          "unitsPerPiece": 1,
+          "compatibility": "bisque-06",
+          "durationDays": 1,
+          "dayBasis": "resource-open",
+          "yieldBps": 9000,
+          "requiredInput": 14,
+          "requiredOutput": 12,
+          "scheduledInput": 14,
+          "projectedOutput": 12,
+          "status": "unstarted",
+          "latestStart": "2026-10-26",
+          "latestEnd": "2026-10-26",
+          "plannedDates": [
+            "2026-10-26"
+          ],
+          "reservationDates": [
+            "2026-10-26"
+          ],
+          "reservationUnits": 14,
+          "observation": null
+        },
+        {
+          "batchId": "B-MUG",
+          "orderId": "O-MUG",
+          "productId": "MUG",
+          "stageId": "glaze",
+          "sequence": 4,
+          "resourceId": "GLAZE",
+          "capacityUnit": "declared bench units",
+          "unitsPerPiece": 1,
+          "compatibility": "shared-work",
+          "durationDays": 1,
+          "dayBasis": "resource-open",
+          "yieldBps": 10000,
+          "requiredInput": 12,
+          "requiredOutput": 12,
+          "scheduledInput": 12,
+          "projectedOutput": 12,
+          "status": "unstarted",
+          "latestStart": "2026-10-27",
+          "latestEnd": "2026-10-27",
+          "plannedDates": [
+            "2026-10-27"
+          ],
+          "reservationDates": [
+            "2026-10-27"
+          ],
+          "reservationUnits": 12,
+          "observation": null
+        },
+        {
+          "batchId": "B-MUG",
+          "orderId": "O-MUG",
+          "productId": "MUG",
+          "stageId": "fire",
+          "sequence": 5,
+          "resourceId": "KILN",
+          "capacityUnit": "declared shelf units",
+          "unitsPerPiece": 1,
+          "compatibility": "glaze-6",
+          "durationDays": 1,
+          "dayBasis": "resource-open",
+          "yieldBps": 9000,
+          "requiredInput": 12,
+          "requiredOutput": 10,
+          "scheduledInput": 12,
+          "projectedOutput": 10,
+          "status": "unstarted",
+          "latestStart": "2026-10-28",
+          "latestEnd": "2026-10-28",
+          "plannedDates": [
+            "2026-10-28"
+          ],
+          "reservationDates": [
+            "2026-10-28"
+          ],
+          "reservationUnits": 12,
+          "observation": null
+        }
+      ]
+    },
+    {
+      "batchId": "B-PLATE",
+      "orderId": "O-PLATE",
+      "productId": "PLATE",
+      "targetGood": 8,
+      "requiredInitialInput": 12,
+      "projectedGood": 8,
+      "finalActualGood": 0,
+      "completedStages": 0,
+      "totalStages": 5,
+      "currentStage": "form",
+      "complete": false,
+      "latestStart": "2026-10-21",
+      "productionDue": "2026-10-29",
+      "shipBy": "2026-10-29",
+      "sourceRef": "Authored plate allocation",
+      "stages": [
+        {
+          "batchId": "B-PLATE",
+          "orderId": "O-PLATE",
+          "productId": "PLATE",
+          "stageId": "form",
+          "sequence": 1,
+          "resourceId": "FORM",
+          "capacityUnit": "declared bench units",
+          "unitsPerPiece": 2,
+          "compatibility": "shared-work",
+          "durationDays": 2,
+          "dayBasis": "resource-open",
+          "yieldBps": 10000,
+          "requiredInput": 12,
+          "requiredOutput": 12,
+          "scheduledInput": 12,
+          "projectedOutput": 12,
+          "status": "unstarted",
+          "latestStart": "2026-10-21",
+          "latestEnd": "2026-10-22",
+          "plannedDates": [
+            "2026-10-21",
+            "2026-10-22"
+          ],
+          "reservationDates": [
+            "2026-10-21",
+            "2026-10-22"
+          ],
+          "reservationUnits": 24,
+          "observation": null
+        },
+        {
+          "batchId": "B-PLATE",
+          "orderId": "O-PLATE",
+          "productId": "PLATE",
+          "stageId": "dry",
+          "sequence": 2,
+          "resourceId": "DRY",
+          "capacityUnit": "declared shelf units",
+          "unitsPerPiece": 2,
+          "compatibility": "shared-dry",
+          "durationDays": 3,
+          "dayBasis": "calendar",
+          "yieldBps": 9000,
+          "requiredInput": 12,
+          "requiredOutput": 10,
+          "scheduledInput": 12,
+          "projectedOutput": 10,
+          "status": "unstarted",
+          "latestStart": "2026-10-23",
+          "latestEnd": "2026-10-25",
+          "plannedDates": [
+            "2026-10-23",
+            "2026-10-24",
+            "2026-10-25"
+          ],
+          "reservationDates": [
+            "2026-10-23",
+            "2026-10-24",
+            "2026-10-25"
+          ],
+          "reservationUnits": 24,
+          "observation": null
+        },
+        {
+          "batchId": "B-PLATE",
+          "orderId": "O-PLATE",
+          "productId": "PLATE",
+          "stageId": "bisque",
+          "sequence": 3,
+          "resourceId": "KILN",
+          "capacityUnit": "declared shelf units",
+          "unitsPerPiece": 2,
+          "compatibility": "bisque-06",
+          "durationDays": 1,
+          "dayBasis": "resource-open",
+          "yieldBps": 9000,
+          "requiredInput": 10,
+          "requiredOutput": 9,
+          "scheduledInput": 10,
+          "projectedOutput": 9,
+          "status": "unstarted",
+          "latestStart": "2026-10-26",
+          "latestEnd": "2026-10-26",
+          "plannedDates": [
+            "2026-10-26"
+          ],
+          "reservationDates": [
+            "2026-10-26"
+          ],
+          "reservationUnits": 20,
+          "observation": null
+        },
+        {
+          "batchId": "B-PLATE",
+          "orderId": "O-PLATE",
+          "productId": "PLATE",
+          "stageId": "glaze",
+          "sequence": 4,
+          "resourceId": "GLAZE",
+          "capacityUnit": "declared bench units",
+          "unitsPerPiece": 2,
+          "compatibility": "shared-work",
+          "durationDays": 1,
+          "dayBasis": "resource-open",
+          "yieldBps": 10000,
+          "requiredInput": 9,
+          "requiredOutput": 9,
+          "scheduledInput": 9,
+          "projectedOutput": 9,
+          "status": "unstarted",
+          "latestStart": "2026-10-27",
+          "latestEnd": "2026-10-27",
+          "plannedDates": [
+            "2026-10-27"
+          ],
+          "reservationDates": [
+            "2026-10-27"
+          ],
+          "reservationUnits": 18,
+          "observation": null
+        },
+        {
+          "batchId": "B-PLATE",
+          "orderId": "O-PLATE",
+          "productId": "PLATE",
+          "stageId": "fire",
+          "sequence": 5,
+          "resourceId": "KILN",
+          "capacityUnit": "declared shelf units",
+          "unitsPerPiece": 2,
+          "compatibility": "glaze-10",
+          "durationDays": 1,
+          "dayBasis": "resource-open",
+          "yieldBps": 9000,
+          "requiredInput": 9,
+          "requiredOutput": 8,
+          "scheduledInput": 9,
+          "projectedOutput": 8,
+          "status": "unstarted",
+          "latestStart": "2026-10-28",
+          "latestEnd": "2026-10-28",
+          "plannedDates": [
+            "2026-10-28"
+          ],
+          "reservationDates": [
+            "2026-10-28"
+          ],
+          "reservationUnits": 18,
+          "observation": null
+        }
+      ]
+    }
+  ],
+  "stages": [
+    {
+      "batchId": "B-MUG",
+      "orderId": "O-MUG",
+      "productId": "MUG",
+      "stageId": "form",
+      "sequence": 1,
+      "resourceId": "FORM",
+      "capacityUnit": "declared bench units",
+      "unitsPerPiece": 1,
+      "compatibility": "shared-work",
+      "durationDays": 2,
+      "dayBasis": "resource-open",
+      "yieldBps": 10000,
+      "requiredInput": 16,
+      "requiredOutput": 16,
+      "scheduledInput": 16,
+      "projectedOutput": 16,
+      "status": "unstarted",
+      "latestStart": "2026-10-21",
+      "latestEnd": "2026-10-22",
+      "plannedDates": [
+        "2026-10-21",
+        "2026-10-22"
+      ],
+      "reservationDates": [
+        "2026-10-21",
+        "2026-10-22"
+      ],
+      "reservationUnits": 16,
+      "observation": null
+    },
+    {
+      "batchId": "B-MUG",
+      "orderId": "O-MUG",
+      "productId": "MUG",
+      "stageId": "dry",
+      "sequence": 2,
+      "resourceId": "DRY",
+      "capacityUnit": "declared shelf units",
+      "unitsPerPiece": 1,
+      "compatibility": "shared-dry",
+      "durationDays": 3,
+      "dayBasis": "calendar",
+      "yieldBps": 9000,
+      "requiredInput": 16,
+      "requiredOutput": 14,
+      "scheduledInput": 16,
+      "projectedOutput": 14,
+      "status": "unstarted",
+      "latestStart": "2026-10-23",
+      "latestEnd": "2026-10-25",
+      "plannedDates": [
+        "2026-10-23",
+        "2026-10-24",
+        "2026-10-25"
+      ],
+      "reservationDates": [
+        "2026-10-23",
+        "2026-10-24",
+        "2026-10-25"
+      ],
+      "reservationUnits": 16,
+      "observation": null
+    },
+    {
+      "batchId": "B-MUG",
+      "orderId": "O-MUG",
+      "productId": "MUG",
+      "stageId": "bisque",
+      "sequence": 3,
+      "resourceId": "KILN",
+      "capacityUnit": "declared shelf units",
+      "unitsPerPiece": 1,
+      "compatibility": "bisque-06",
+      "durationDays": 1,
+      "dayBasis": "resource-open",
+      "yieldBps": 9000,
+      "requiredInput": 14,
+      "requiredOutput": 12,
+      "scheduledInput": 14,
+      "projectedOutput": 12,
+      "status": "unstarted",
+      "latestStart": "2026-10-26",
+      "latestEnd": "2026-10-26",
+      "plannedDates": [
+        "2026-10-26"
+      ],
+      "reservationDates": [
+        "2026-10-26"
+      ],
+      "reservationUnits": 14,
+      "observation": null
+    },
+    {
+      "batchId": "B-MUG",
+      "orderId": "O-MUG",
+      "productId": "MUG",
+      "stageId": "glaze",
+      "sequence": 4,
+      "resourceId": "GLAZE",
+      "capacityUnit": "declared bench units",
+      "unitsPerPiece": 1,
+      "compatibility": "shared-work",
+      "durationDays": 1,
+      "dayBasis": "resource-open",
+      "yieldBps": 10000,
+      "requiredInput": 12,
+      "requiredOutput": 12,
+      "scheduledInput": 12,
+      "projectedOutput": 12,
+      "status": "unstarted",
+      "latestStart": "2026-10-27",
+      "latestEnd": "2026-10-27",
+      "plannedDates": [
+        "2026-10-27"
+      ],
+      "reservationDates": [
+        "2026-10-27"
+      ],
+      "reservationUnits": 12,
+      "observation": null
+    },
+    {
+      "batchId": "B-MUG",
+      "orderId": "O-MUG",
+      "productId": "MUG",
+      "stageId": "fire",
+      "sequence": 5,
+      "resourceId": "KILN",
+      "capacityUnit": "declared shelf units",
+      "unitsPerPiece": 1,
+      "compatibility": "glaze-6",
+      "durationDays": 1,
+      "dayBasis": "resource-open",
+      "yieldBps": 9000,
+      "requiredInput": 12,
+      "requiredOutput": 10,
+      "scheduledInput": 12,
+      "projectedOutput": 10,
+      "status": "unstarted",
+      "latestStart": "2026-10-28",
+      "latestEnd": "2026-10-28",
+      "plannedDates": [
+        "2026-10-28"
+      ],
+      "reservationDates": [
+        "2026-10-28"
+      ],
+      "reservationUnits": 12,
+      "observation": null
+    },
+    {
+      "batchId": "B-PLATE",
+      "orderId": "O-PLATE",
+      "productId": "PLATE",
+      "stageId": "form",
+      "sequence": 1,
+      "resourceId": "FORM",
+      "capacityUnit": "declared bench units",
+      "unitsPerPiece": 2,
+      "compatibility": "shared-work",
+      "durationDays": 2,
+      "dayBasis": "resource-open",
+      "yieldBps": 10000,
+      "requiredInput": 12,
+      "requiredOutput": 12,
+      "scheduledInput": 12,
+      "projectedOutput": 12,
+      "status": "unstarted",
+      "latestStart": "2026-10-21",
+      "latestEnd": "2026-10-22",
+      "plannedDates": [
+        "2026-10-21",
+        "2026-10-22"
+      ],
+      "reservationDates": [
+        "2026-10-21",
+        "2026-10-22"
+      ],
+      "reservationUnits": 24,
+      "observation": null
+    },
+    {
+      "batchId": "B-PLATE",
+      "orderId": "O-PLATE",
+      "productId": "PLATE",
+      "stageId": "dry",
+      "sequence": 2,
+      "resourceId": "DRY",
+      "capacityUnit": "declared shelf units",
+      "unitsPerPiece": 2,
+      "compatibility": "shared-dry",
+      "durationDays": 3,
+      "dayBasis": "calendar",
+      "yieldBps": 9000,
+      "requiredInput": 12,
+      "requiredOutput": 10,
+      "scheduledInput": 12,
+      "projectedOutput": 10,
+      "status": "unstarted",
+      "latestStart": "2026-10-23",
+      "latestEnd": "2026-10-25",
+      "plannedDates": [
+        "2026-10-23",
+        "2026-10-24",
+        "2026-10-25"
+      ],
+      "reservationDates": [
+        "2026-10-23",
+        "2026-10-24",
+        "2026-10-25"
+      ],
+      "reservationUnits": 24,
+      "observation": null
+    },
+    {
+      "batchId": "B-PLATE",
+      "orderId": "O-PLATE",
+      "productId": "PLATE",
+      "stageId": "bisque",
+      "sequence": 3,
+      "resourceId": "KILN",
+      "capacityUnit": "declared shelf units",
+      "unitsPerPiece": 2,
+      "compatibility": "bisque-06",
+      "durationDays": 1,
+      "dayBasis": "resource-open",
+      "yieldBps": 9000,
+      "requiredInput": 10,
+      "requiredOutput": 9,
+      "scheduledInput": 10,
+      "projectedOutput": 9,
+      "status": "unstarted",
+      "latestStart": "2026-10-26",
+      "latestEnd": "2026-10-26",
+      "plannedDates": [
+        "2026-10-26"
+      ],
+      "reservationDates": [
+        "2026-10-26"
+      ],
+      "reservationUnits": 20,
+      "observation": null
+    },
+    {
+      "batchId": "B-PLATE",
+      "orderId": "O-PLATE",
+      "productId": "PLATE",
+      "stageId": "glaze",
+      "sequence": 4,
+      "resourceId": "GLAZE",
+      "capacityUnit": "declared bench units",
+      "unitsPerPiece": 2,
+      "compatibility": "shared-work",
+      "durationDays": 1,
+      "dayBasis": "resource-open",
+      "yieldBps": 10000,
+      "requiredInput": 9,
+      "requiredOutput": 9,
+      "scheduledInput": 9,
+      "projectedOutput": 9,
+      "status": "unstarted",
+      "latestStart": "2026-10-27",
+      "latestEnd": "2026-10-27",
+      "plannedDates": [
+        "2026-10-27"
+      ],
+      "reservationDates": [
+        "2026-10-27"
+      ],
+      "reservationUnits": 18,
+      "observation": null
+    },
+    {
+      "batchId": "B-PLATE",
+      "orderId": "O-PLATE",
+      "productId": "PLATE",
+      "stageId": "fire",
+      "sequence": 5,
+      "resourceId": "KILN",
+      "capacityUnit": "declared shelf units",
+      "unitsPerPiece": 2,
+      "compatibility": "glaze-10",
+      "durationDays": 1,
+      "dayBasis": "resource-open",
+      "yieldBps": 9000,
+      "requiredInput": 9,
+      "requiredOutput": 8,
+      "scheduledInput": 9,
+      "projectedOutput": 8,
+      "status": "unstarted",
+      "latestStart": "2026-10-28",
+      "latestEnd": "2026-10-28",
+      "plannedDates": [
+        "2026-10-28"
+      ],
+      "reservationDates": [
+        "2026-10-28"
+      ],
+      "reservationUnits": 18,
+      "observation": null
+    }
+  ],
+  "capacity": [
+    {
+      "id": "[\"FORM\",\"2026-10-21\"]",
+      "resourceId": "FORM",
+      "date": "2026-10-21",
+      "capacityUnit": "declared bench units",
+      "capacity": 30,
+      "reserved": 40,
+      "contributors": [
+        {
+          "batchId": "B-MUG",
+          "orderId": "O-MUG",
+          "stageId": "form",
+          "pieces": 16,
+          "units": 16,
+          "compatibility": "shared-work"
+        },
+        {
+          "batchId": "B-PLATE",
+          "orderId": "O-PLATE",
+          "stageId": "form",
+          "pieces": 12,
+          "units": 24,
+          "compatibility": "shared-work"
+        }
+      ],
+      "compatibilities": [
+        "shared-work"
+      ],
+      "overload": 10,
+      "conflict": false
+    },
+    {
+      "id": "[\"FORM\",\"2026-10-22\"]",
+      "resourceId": "FORM",
+      "date": "2026-10-22",
+      "capacityUnit": "declared bench units",
+      "capacity": 30,
+      "reserved": 40,
+      "contributors": [
+        {
+          "batchId": "B-MUG",
+          "orderId": "O-MUG",
+          "stageId": "form",
+          "pieces": 16,
+          "units": 16,
+          "compatibility": "shared-work"
+        },
+        {
+          "batchId": "B-PLATE",
+          "orderId": "O-PLATE",
+          "stageId": "form",
+          "pieces": 12,
+          "units": 24,
+          "compatibility": "shared-work"
+        }
+      ],
+      "compatibilities": [
+        "shared-work"
+      ],
+      "overload": 10,
+      "conflict": false
+    },
+    {
+      "id": "[\"DRY\",\"2026-10-23\"]",
+      "resourceId": "DRY",
+      "date": "2026-10-23",
+      "capacityUnit": "declared shelf units",
+      "capacity": 60,
+      "reserved": 40,
+      "contributors": [
+        {
+          "batchId": "B-MUG",
+          "orderId": "O-MUG",
+          "stageId": "dry",
+          "pieces": 16,
+          "units": 16,
+          "compatibility": "shared-dry"
+        },
+        {
+          "batchId": "B-PLATE",
+          "orderId": "O-PLATE",
+          "stageId": "dry",
+          "pieces": 12,
+          "units": 24,
+          "compatibility": "shared-dry"
+        }
+      ],
+      "compatibilities": [
+        "shared-dry"
+      ],
+      "overload": 0,
+      "conflict": false
+    },
+    {
+      "id": "[\"DRY\",\"2026-10-24\"]",
+      "resourceId": "DRY",
+      "date": "2026-10-24",
+      "capacityUnit": "declared shelf units",
+      "capacity": 60,
+      "reserved": 40,
+      "contributors": [
+        {
+          "batchId": "B-MUG",
+          "orderId": "O-MUG",
+          "stageId": "dry",
+          "pieces": 16,
+          "units": 16,
+          "compatibility": "shared-dry"
+        },
+        {
+          "batchId": "B-PLATE",
+          "orderId": "O-PLATE",
+          "stageId": "dry",
+          "pieces": 12,
+          "units": 24,
+          "compatibility": "shared-dry"
+        }
+      ],
+      "compatibilities": [
+        "shared-dry"
+      ],
+      "overload": 0,
+      "conflict": false
+    },
+    {
+      "id": "[\"DRY\",\"2026-10-25\"]",
+      "resourceId": "DRY",
+      "date": "2026-10-25",
+      "capacityUnit": "declared shelf units",
+      "capacity": 60,
+      "reserved": 40,
+      "contributors": [
+        {
+          "batchId": "B-MUG",
+          "orderId": "O-MUG",
+          "stageId": "dry",
+          "pieces": 16,
+          "units": 16,
+          "compatibility": "shared-dry"
+        },
+        {
+          "batchId": "B-PLATE",
+          "orderId": "O-PLATE",
+          "stageId": "dry",
+          "pieces": 12,
+          "units": 24,
+          "compatibility": "shared-dry"
+        }
+      ],
+      "compatibilities": [
+        "shared-dry"
+      ],
+      "overload": 0,
+      "conflict": false
+    },
+    {
+      "id": "[\"KILN\",\"2026-10-26\"]",
+      "resourceId": "KILN",
+      "date": "2026-10-26",
+      "capacityUnit": "declared shelf units",
+      "capacity": 30,
+      "reserved": 34,
+      "contributors": [
+        {
+          "batchId": "B-MUG",
+          "orderId": "O-MUG",
+          "stageId": "bisque",
+          "pieces": 14,
+          "units": 14,
+          "compatibility": "bisque-06"
+        },
+        {
+          "batchId": "B-PLATE",
+          "orderId": "O-PLATE",
+          "stageId": "bisque",
+          "pieces": 10,
+          "units": 20,
+          "compatibility": "bisque-06"
+        }
+      ],
+      "compatibilities": [
+        "bisque-06"
+      ],
+      "overload": 4,
+      "conflict": false
+    },
+    {
+      "id": "[\"GLAZE\",\"2026-10-27\"]",
+      "resourceId": "GLAZE",
+      "date": "2026-10-27",
+      "capacityUnit": "declared bench units",
+      "capacity": 30,
+      "reserved": 30,
+      "contributors": [
+        {
+          "batchId": "B-MUG",
+          "orderId": "O-MUG",
+          "stageId": "glaze",
+          "pieces": 12,
+          "units": 12,
+          "compatibility": "shared-work"
+        },
+        {
+          "batchId": "B-PLATE",
+          "orderId": "O-PLATE",
+          "stageId": "glaze",
+          "pieces": 9,
+          "units": 18,
+          "compatibility": "shared-work"
+        }
+      ],
+      "compatibilities": [
+        "shared-work"
+      ],
+      "overload": 0,
+      "conflict": false
+    },
+    {
+      "id": "[\"KILN\",\"2026-10-28\"]",
+      "resourceId": "KILN",
+      "date": "2026-10-28",
+      "capacityUnit": "declared shelf units",
+      "capacity": 30,
+      "reserved": 30,
+      "contributors": [
+        {
+          "batchId": "B-MUG",
+          "orderId": "O-MUG",
+          "stageId": "fire",
+          "pieces": 12,
+          "units": 12,
+          "compatibility": "glaze-6"
+        },
+        {
+          "batchId": "B-PLATE",
+          "orderId": "O-PLATE",
+          "stageId": "fire",
+          "pieces": 9,
+          "units": 18,
+          "compatibility": "glaze-10"
+        }
+      ],
+      "compatibilities": [
+        "glaze-6",
+        "glaze-10"
+      ],
+      "overload": 0,
+      "conflict": true
+    }
+  ],
+  "observations": [],
+  "futureObservations": [],
+  "unallocatedStock": [
+    {
+      "stock_id": "UNALLOC",
+      "product_id": "MUG",
+      "quantity": "1",
+      "order_id": "",
+      "batch_id": "",
+      "source_ref": "Authored unallocated spare"
+    }
+  ],
+  "attention": [
+    {
+      "id": "capacity_overload:[\"FORM\",\"2026-10-21\"]",
+      "code": "capacity_overload",
+      "targetType": "capacity",
+      "targetId": "[\"FORM\",\"2026-10-21\"]",
+      "message": "Declared reservations exceed comparable resource/day capacity.",
+      "reserved": 40,
+      "capacity": 30,
+      "capacityUnit": "declared bench units",
+      "overload": 10
+    },
+    {
+      "id": "capacity_overload:[\"FORM\",\"2026-10-22\"]",
+      "code": "capacity_overload",
+      "targetType": "capacity",
+      "targetId": "[\"FORM\",\"2026-10-22\"]",
+      "message": "Declared reservations exceed comparable resource/day capacity.",
+      "reserved": 40,
+      "capacity": 30,
+      "capacityUnit": "declared bench units",
+      "overload": 10
+    },
+    {
+      "id": "capacity_overload:[\"KILN\",\"2026-10-26\"]",
+      "code": "capacity_overload",
+      "targetType": "capacity",
+      "targetId": "[\"KILN\",\"2026-10-26\"]",
+      "message": "Declared reservations exceed comparable resource/day capacity.",
+      "reserved": 34,
+      "capacity": 30,
+      "capacityUnit": "declared shelf units",
+      "overload": 4
+    },
+    {
+      "id": "compatibility_conflict:[\"KILN\",\"2026-10-28\"]",
+      "code": "compatibility_conflict",
+      "targetType": "capacity",
+      "targetId": "[\"KILN\",\"2026-10-28\"]",
+      "message": "Different maker-declared compatibility groups share the same resource/day.",
+      "groups": [
+        "glaze-6",
+        "glaze-10"
+      ]
+    }
+  ],
+  "decisions": [],
+  "decisionHistory": [],
+  "summary": {
+    "orders": 2,
+    "batches": 2,
+    "stages": 10,
+    "actualReady": 2,
+    "actualRemaining": 18,
+    "projectedShortfall": 0,
+    "overloadedDays": 3,
+    "compatibilityDays": 1,
+    "lateStarts": 0,
+    "attention": 4
+  }
+}

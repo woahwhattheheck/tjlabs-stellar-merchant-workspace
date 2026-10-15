@@ -1,0 +1,247 @@
+{
+  "schema": "maker.production-workspace.v1",
+  "id": "authored-maker-production",
+  "label": "Authored maker production and receiving",
+  "editions": [
+    {
+      "id": "declared",
+      "label": "Original declared process and deadlines",
+      "notes": "Authored studio declarations. No measured ceramic physics or actual researched maker quantities.",
+      "settings": {
+        "asOf": "2026-10-15",
+        "shippingCalendar": {
+          "openWeekdays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "closedDates": []
+        }
+      },
+      "sources": {
+        "products": {
+          "name": "products.csv",
+          "text": "﻿product_id,name\r\nMUG,Authored mug\r\nPLATE,Authored plate\r\n",
+          "bytes": 60,
+          "sha256": "4aa6ef8e9c14742bba20ae8b63f65edb430ee0da8372656613038df9e9e2ed37"
+        },
+        "resources": {
+          "name": "resources.csv",
+          "text": "resource_id,name,capacity_unit,daily_capacity,open_weekdays\nFORM,Forming bench,declared bench units,30,1|2|3|4|5\nDRY,Drying shelf,declared shelf units,60,1|2|3|4|5|6|7\nKILN,Shared kiln reservation,declared shelf units,30,1|3|5\nGLAZE,Glaze bench,declared bench units,30,1|2|3|4|5\n",
+          "bytes": 279,
+          "sha256": "f5f3a5809c7d3f66f9dd2ba884577dae5104f09e49507e2016ca0f299aa4a996"
+        },
+        "calendar": {
+          "name": "calendar.csv",
+          "text": "resource_id,date,capacity,source_ref\nKILN,2026-10-30,0,Authored maker declared closure\n",
+          "bytes": 87,
+          "sha256": "4cf80fd07582b045edff10bbdcc85068ed9693d1d012993dfe33fcf57027b7b7"
+        },
+        "routes": {
+          "name": "routes.csv",
+          "text": "product_id,stage_id,sequence,duration_days,day_basis,resource_id,units_per_piece,yield_bps,compatibility\nMUG,form,1,2,resource-open,FORM,1,10000,shared-work\nMUG,dry,2,3,calendar,DRY,1,9000,shared-dry\nMUG,bisque,3,1,resource-open,KILN,1,9000,bisque-06\nMUG,glaze,4,1,resource-open,GLAZE,1,10000,shared-work\nMUG,fire,5,1,resource-open,KILN,1,9000,glaze-6\nPLATE,form,1,2,resource-open,FORM,2,10000,shared-work\nPLATE,dry,2,3,calendar,DRY,2,9000,shared-dry\nPLATE,bisque,3,1,resource-open,KILN,2,9000,bisque-06\nPLATE,glaze,4,1,resource-open,GLAZE,2,10000,shared-work\nPLATE,fire,5,1,resource-open,KILN,2,9000,glaze-10\n",
+          "bytes": 610,
+          "sha256": "6da59201ae7c1c62c8831c7f07a31a5eadd35792cea8b3b684c52f4179e207e2"
+        },
+        "orders": {
+          "name": "orders.csv",
+          "text": "order_id,product_id,quantity,due_date,due_basis,transit_days,source_ref\nO-MUG,MUG,12,2026-11-02,delivery,2,Authored accepted order not a public lead-time promise\nO-PLATE,PLATE,8,2026-10-29,ship,0,Authored accepted ship date\n",
+          "bytes": 224,
+          "sha256": "b9511a00aac21557ad9be3f468b586a979055e11b056e8dc97ca09bb8dace73f"
+        },
+        "stock": {
+          "name": "stock.csv",
+          "text": "stock_id,product_id,quantity,order_id,batch_id,source_ref\nREADY-MUG,MUG,2,O-MUG,,Authored independent ready-stock count\nUNALLOC,MUG,1,,,Authored unallocated spare\n",
+          "bytes": 163,
+          "sha256": "80ed40a4761943ffc58dce579b9425690bae6ec4fc2023b2550b2fd7cb9d2d9a"
+        },
+        "batches": {
+          "name": "batches.csv",
+          "text": "batch_id,order_id,target_good,source_ref\nB-MUG,O-MUG,10,Authored remaining mug allocation\nB-PLATE,O-PLATE,8,Authored plate allocation\n",
+          "bytes": 134,
+          "sha256": "3d6318cdea28588600ee9a15a15c4fd6cb0b4bfbe7932db0a90efadc4b0c89b5"
+        },
+        "observations": {
+          "name": "observations.csv",
+          "text": "event_id,batch_id,stage_id,observed_at,local_date,status,input_qty,good_qty,reject_qty,held_qty,source_ref\n",
+          "bytes": 107,
+          "sha256": "d59615196710faadaa55bd9ab5938389ecc1444b380b108b64830bb2c99945be"
+        }
+      },
+      "sourceHash": "0880ae931925d35f7e30955d7e75fd5bd59798a869c37e5bf06b95d7d537e397"
+    },
+    {
+      "id": "observed",
+      "label": "Observed finished mug batch",
+      "notes": "Same actual batch appears in stock with explicit batch link; count output once. Plate batch remains unstarted.",
+      "settings": {
+        "asOf": "2026-10-23",
+        "shippingCalendar": {
+          "openWeekdays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "closedDates": []
+        }
+      },
+      "sources": {
+        "products": {
+          "name": "products.csv",
+          "text": "﻿product_id,name\r\nMUG,Authored mug\r\nPLATE,Authored plate\r\n",
+          "bytes": 60,
+          "sha256": "4aa6ef8e9c14742bba20ae8b63f65edb430ee0da8372656613038df9e9e2ed37"
+        },
+        "resources": {
+          "name": "resources.csv",
+          "text": "resource_id,name,capacity_unit,daily_capacity,open_weekdays\nFORM,Forming bench,declared bench units,30,1|2|3|4|5\nDRY,Drying shelf,declared shelf units,60,1|2|3|4|5|6|7\nKILN,Shared kiln reservation,declared shelf units,30,1|3|5\nGLAZE,Glaze bench,declared bench units,30,1|2|3|4|5\n",
+          "bytes": 279,
+          "sha256": "f5f3a5809c7d3f66f9dd2ba884577dae5104f09e49507e2016ca0f299aa4a996"
+        },
+        "calendar": {
+          "name": "calendar.csv",
+          "text": "resource_id,date,capacity,source_ref\nKILN,2026-10-30,0,Authored maker declared closure\n",
+          "bytes": 87,
+          "sha256": "4cf80fd07582b045edff10bbdcc85068ed9693d1d012993dfe33fcf57027b7b7"
+        },
+        "routes": {
+          "name": "routes.csv",
+          "text": "product_id,stage_id,sequence,duration_days,day_basis,resource_id,units_per_piece,yield_bps,compatibility\nMUG,form,1,2,resource-open,FORM,1,10000,shared-work\nMUG,dry,2,3,calendar,DRY,1,9000,shared-dry\nMUG,bisque,3,1,resource-open,KILN,1,9000,bisque-06\nMUG,glaze,4,1,resource-open,GLAZE,1,10000,shared-work\nMUG,fire,5,1,resource-open,KILN,1,9000,glaze-6\nPLATE,form,1,2,resource-open,FORM,2,10000,shared-work\nPLATE,dry,2,3,calendar,DRY,2,9000,shared-dry\nPLATE,bisque,3,1,resource-open,KILN,2,9000,bisque-06\nPLATE,glaze,4,1,resource-open,GLAZE,2,10000,shared-work\nPLATE,fire,5,1,resource-open,KILN,2,9000,glaze-10\n",
+          "bytes": 610,
+          "sha256": "6da59201ae7c1c62c8831c7f07a31a5eadd35792cea8b3b684c52f4179e207e2"
+        },
+        "orders": {
+          "name": "orders.csv",
+          "text": "order_id,product_id,quantity,due_date,due_basis,transit_days,source_ref\nO-MUG,MUG,12,2026-11-02,delivery,2,Authored accepted order not a public lead-time promise\nO-PLATE,PLATE,8,2026-10-29,ship,0,Authored accepted ship date\n",
+          "bytes": 224,
+          "sha256": "b9511a00aac21557ad9be3f468b586a979055e11b056e8dc97ca09bb8dace73f"
+        },
+        "stock": {
+          "name": "stock.csv",
+          "text": "stock_id,product_id,quantity,order_id,batch_id,source_ref\nREADY-MUG,MUG,2,O-MUG,,Authored independent ready-stock count\nUNALLOC,MUG,1,,,Authored unallocated spare\nFINISHED-MUG,MUG,10,O-MUG,B-MUG,Authored stock record of same final batch output\n",
+          "bytes": 244,
+          "sha256": "23e238e096e2b37e88952d20f0daeef2ded3ffb25d418264c08948f677d72def"
+        },
+        "batches": {
+          "name": "batches.csv",
+          "text": "batch_id,order_id,target_good,source_ref\nB-MUG,O-MUG,10,Authored remaining mug allocation\nB-PLATE,O-PLATE,8,Authored plate allocation\n",
+          "bytes": 134,
+          "sha256": "3d6318cdea28588600ee9a15a15c4fd6cb0b4bfbe7932db0a90efadc4b0c89b5"
+        },
+        "observations": {
+          "name": "observations.csv",
+          "text": "event_id,batch_id,stage_id,observed_at,local_date,status,input_qty,good_qty,reject_qty,held_qty,source_ref\nMF0,B-MUG,form,2026-10-16T09:00:00-04:00,2026-10-16,active,16,8,1,7,Authored partial forming count\nMF1,B-MUG,form,2026-10-16T16:00:00-04:00,2026-10-16,complete,16,15,1,0,Authored completed forming count\nMD1,B-MUG,dry,2026-10-19T16:00:00-04:00,2026-10-19,complete,15,14,1,0,Authored maker declared dry-stage completion\nMB1,B-MUG,bisque,2026-10-21T16:00:00-04:00,2026-10-21,complete,14,12,2,0,Authored unloaded count\nMG1,B-MUG,glaze,2026-10-22T16:00:00-04:00,2026-10-22,complete,12,12,0,0,Authored glaze-stage completion\nMK1,B-MUG,fire,2026-10-23T16:00:00-04:00,2026-10-23,complete,12,10,2,0,Authored final unload count\n",
+          "bytes": 725,
+          "sha256": "0108e4dddf6aa4e864db2894c4b42635df7a3822fb29ccf018b2c88a10123419"
+        }
+      },
+      "sourceHash": "530b91e3a2b8ac07f4d2162a304ec7b9eecc29861f0cf9d52303be246eab12e7"
+    },
+    {
+      "id": "recount",
+      "label": "Corrected final unload",
+      "notes": "One earlier good piece reclassified as rejected; previous snapshot remains in the full source.",
+      "settings": {
+        "asOf": "2026-10-24",
+        "shippingCalendar": {
+          "openWeekdays": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "closedDates": []
+        }
+      },
+      "sources": {
+        "products": {
+          "name": "products.csv",
+          "text": "﻿product_id,name\r\nMUG,Authored mug\r\nPLATE,Authored plate\r\n",
+          "bytes": 60,
+          "sha256": "4aa6ef8e9c14742bba20ae8b63f65edb430ee0da8372656613038df9e9e2ed37"
+        },
+        "resources": {
+          "name": "resources.csv",
+          "text": "resource_id,name,capacity_unit,daily_capacity,open_weekdays\nFORM,Forming bench,declared bench units,30,1|2|3|4|5\nDRY,Drying shelf,declared shelf units,60,1|2|3|4|5|6|7\nKILN,Shared kiln reservation,declared shelf units,30,1|3|5\nGLAZE,Glaze bench,declared bench units,30,1|2|3|4|5\n",
+          "bytes": 279,
+          "sha256": "f5f3a5809c7d3f66f9dd2ba884577dae5104f09e49507e2016ca0f299aa4a996"
+        },
+        "calendar": {
+          "name": "calendar.csv",
+          "text": "resource_id,date,capacity,source_ref\nKILN,2026-10-30,0,Authored maker declared closure\n",
+          "bytes": 87,
+          "sha256": "4cf80fd07582b045edff10bbdcc85068ed9693d1d012993dfe33fcf57027b7b7"
+        },
+        "routes": {
+          "name": "routes.csv",
+          "text": "product_id,stage_id,sequence,duration_days,day_basis,resource_id,units_per_piece,yield_bps,compatibility\nMUG,form,1,2,resource-open,FORM,1,10000,shared-work\nMUG,dry,2,3,calendar,DRY,1,9000,shared-dry\nMUG,bisque,3,1,resource-open,KILN,1,9000,bisque-06\nMUG,glaze,4,1,resource-open,GLAZE,1,10000,shared-work\nMUG,fire,5,1,resource-open,KILN,1,9000,glaze-6\nPLATE,form,1,2,resource-open,FORM,2,10000,shared-work\nPLATE,dry,2,3,calendar,DRY,2,9000,shared-dry\nPLATE,bisque,3,1,resource-open,KILN,2,9000,bisque-06\nPLATE,glaze,4,1,resource-open,GLAZE,2,10000,shared-work\nPLATE,fire,5,1,resource-open,KILN,2,9000,glaze-10\n",
+          "bytes": 610,
+          "sha256": "6da59201ae7c1c62c8831c7f07a31a5eadd35792cea8b3b684c52f4179e207e2"
+        },
+        "orders": {
+          "name": "orders.csv",
+          "text": "order_id,product_id,quantity,due_date,due_basis,transit_days,source_ref\nO-MUG,MUG,12,2026-11-02,delivery,2,Authored accepted order not a public lead-time promise\nO-PLATE,PLATE,8,2026-10-29,ship,0,Authored accepted ship date\n",
+          "bytes": 224,
+          "sha256": "b9511a00aac21557ad9be3f468b586a979055e11b056e8dc97ca09bb8dace73f"
+        },
+        "stock": {
+          "name": "stock.csv",
+          "text": "stock_id,product_id,quantity,order_id,batch_id,source_ref\nREADY-MUG,MUG,2,O-MUG,,Authored independent ready-stock count\nUNALLOC,MUG,1,,,Authored unallocated spare\nFINISHED-MUG,MUG,9,O-MUG,B-MUG,Authored stock record of same final batch output\n",
+          "bytes": 243,
+          "sha256": "72cd7b6c2edd69e4fe2efa4dda4c94d563e83be7316ab3e03369128f05963b53"
+        },
+        "batches": {
+          "name": "batches.csv",
+          "text": "batch_id,order_id,target_good,source_ref\nB-MUG,O-MUG,10,Authored remaining mug allocation\nB-PLATE,O-PLATE,8,Authored plate allocation\n",
+          "bytes": 134,
+          "sha256": "3d6318cdea28588600ee9a15a15c4fd6cb0b4bfbe7932db0a90efadc4b0c89b5"
+        },
+        "observations": {
+          "name": "observations.csv",
+          "text": "event_id,batch_id,stage_id,observed_at,local_date,status,input_qty,good_qty,reject_qty,held_qty,source_ref\nMF0,B-MUG,form,2026-10-16T09:00:00-04:00,2026-10-16,active,16,8,1,7,Authored partial forming count\nMF1,B-MUG,form,2026-10-16T16:00:00-04:00,2026-10-16,complete,16,15,1,0,Authored completed forming count\nMD1,B-MUG,dry,2026-10-19T16:00:00-04:00,2026-10-19,complete,15,14,1,0,Authored maker declared dry-stage completion\nMB1,B-MUG,bisque,2026-10-21T16:00:00-04:00,2026-10-21,complete,14,12,2,0,Authored unloaded count\nMG1,B-MUG,glaze,2026-10-22T16:00:00-04:00,2026-10-22,complete,12,12,0,0,Authored glaze-stage completion\nMK1,B-MUG,fire,2026-10-23T16:00:00-04:00,2026-10-23,complete,12,10,2,0,Authored final unload count\nMK2,B-MUG,fire,2026-10-24T10:00:00-04:00,2026-10-24,complete,12,9,3,0,Authored corrected final unload recount\n",
+          "bytes": 835,
+          "sha256": "d73cc2c2f72f062dfd30b6417726979ffad96caf40a71d195833594b7ab3c8da"
+        }
+      },
+      "sourceHash": "7d09b8ff7a2c908028e10f07160b8aa0b97ade169479fe47bb928b497c0dae75"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "load-review",
+      "sequence": 1,
+      "revision": 1,
+      "editionId": "declared",
+      "asOf": "2026-10-15",
+      "sourceHash": "0880ae931925d35f7e30955d7e75fd5bd59798a869c37e5bf06b95d7d537e397",
+      "fingerprint": "cfc4e0a1e8893e24631e8a617944a8c674ee7b1d9c87d29910ede588d695e63b",
+      "targetType": "capacity",
+      "targetId": "[\"KILN\",\"2026-10-28\"]",
+      "action": "reserve-capacity",
+      "reviewer": "Authored maker",
+      "reason": "Separate the two declared glaze groups.",
+      "evidence": "Authored reservation request"
+    },
+    {
+      "id": "load-review",
+      "sequence": 2,
+      "revision": 2,
+      "editionId": "declared",
+      "asOf": "2026-10-15",
+      "sourceHash": "0880ae931925d35f7e30955d7e75fd5bd59798a869c37e5bf06b95d7d537e397",
+      "fingerprint": "cfc4e0a1e8893e24631e8a617944a8c674ee7b1d9c87d29910ede588d695e63b",
+      "targetType": "capacity",
+      "targetId": "[\"KILN\",\"2026-10-28\"]",
+      "action": "hold",
+      "reviewer": "Authored maker",
+      "reason": "Corrected action: wait for the actual separate slot confirmation.",
+      "evidence": "Authored correction"
+    }
+  ],
+  "head": "b61d5ff4454405bf1de227ef17f535f1547f69a98d73ada6e7d95bccb2ac98a0"
+}
