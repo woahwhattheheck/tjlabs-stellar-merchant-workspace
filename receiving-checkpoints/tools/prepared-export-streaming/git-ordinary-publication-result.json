@@ -71,7 +71,7 @@
     "accepted final ref plus lost reconciliation",
     "pending-final mode switch"
   ],
-  "elapsedMs": 132997,
+  "elapsedMs": 133833,
   "input": {
     "sourceHead": "e1cb22158270e6c52fb6f7dc80a94b7567f0e572",
     "sourceDirectory": "products/fleet-availability-study",
@@ -82,6 +82,10 @@
       "elapsed": 10349
     },
     "publisherSourceHead": "cde376bbfbdc271c889cf55d69dce208aa00c7e1",
-    "courseSourceHead": "2cbcfbc8193ab93432e53bfec6e1729b0741030c"
+    "courseSourceHead": "2cbcfbc8193ab93432e53bfec6e1729b0741030c",
+    "checkpointStorage": {
+      "bytes": 2493,
+      "sha256": "effafda4907de3ab610f90427a04067e2e3e2cefbd4af2008fad3bdde07db78f"
+    }
   }
 }
