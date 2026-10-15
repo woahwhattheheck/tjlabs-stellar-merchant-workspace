@@ -1,0 +1,2 @@
+period_id,start_at,end_at,counted_at,observed_at,currency,platform_minor,per_pool_minor,rate_basis,proration_reference,excluded_statuses_json,rule_reference,reference
+OCTOBER-EXPLICIT-COUNT,2026-10-01T00:00:00-05:00,2026-11-01T00:00:00-05:00,2026-10-20T14:00:00-05:00,2026-10-20T14:00:00-05:00,USD,2000,99,full_month,,"[""paused"",""inactive""]",https://poolroutemonitor.com/terms-of-service.html; explicit authored count at 2026-10-20T14:00:00-05:00,Authored supplied-rate comparison; no subscription invoice or trial proration implied

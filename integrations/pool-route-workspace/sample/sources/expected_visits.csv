@@ -1,0 +1,6 @@
+occurrence_id,pool_id,series_id,due_start_at,due_end_at,recorded_at,status,authorization,reference
+OCC-A,POOL-A,WEEKLY-A,2026-10-20T08:00:00-05:00,2026-10-20T13:00:00-05:00,2026-10-19T15:00:00-05:00,expected,Explicit authored recurring occurrence; not inferred from cadence,Authored operating-course source
+OCC-B,POOL-B,WEEKLY-B,2026-10-20T08:00:00-05:00,2026-10-20T13:00:00-05:00,2026-10-19T15:00:00-05:00,expected,Explicit authored recurring occurrence; not inferred from cadence,Authored operating-course source
+OCC-C,POOL-C,WEEKLY-C,2026-10-20T08:00:00-05:00,2026-10-20T13:00:00-05:00,2026-10-19T15:00:00-05:00,expected,Explicit authored recurring occurrence; not inferred from cadence,Authored operating-course source
+OCC-D,POOL-D,WEEKLY-D,2026-10-20T08:00:00-05:00,2026-10-20T13:00:00-05:00,2026-10-19T15:00:00-05:00,expected,Explicit authored recurring occurrence; not inferred from cadence,Authored operating-course source
+OCC-E,POOL-E,WEEKLY-E,2026-10-20T08:00:00-05:00,2026-10-20T13:00:00-05:00,2026-10-19T15:00:00-05:00,expected,Explicit authored recurring occurrence; not inferred from cadence,Authored operating-course source

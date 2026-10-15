@@ -1,0 +1,8 @@
+status_event_id,pool_id,status,effective_at,observed_at,authorization,reference
+STATE-A-1,POOL-A,active,2026-10-01T00:00:00-05:00,2026-10-01T08:00:00-05:00,Authored customer status register,Authored operating-course source
+STATE-B-1,POOL-B,active,2026-10-01T00:00:00-05:00,2026-10-01T08:00:00-05:00,Authored customer status register,Authored operating-course source
+STATE-C-1,POOL-C,active,2026-10-01T00:00:00-05:00,2026-10-01T08:00:00-05:00,Authored customer status register,Authored operating-course source
+STATE-D-1,POOL-D,active,2026-10-01T00:00:00-05:00,2026-10-01T08:00:00-05:00,Authored customer status register,Authored operating-course source
+STATE-E-1,POOL-E,active,2026-10-01T00:00:00-05:00,2026-10-01T08:00:00-05:00,Authored customer status register,Authored operating-course source
+STATE-B-2,POOL-B,paused,2026-10-20T13:00:00-05:00,2026-10-20T13:00:00-05:00,Authored customer pause instruction after today's service,Authored operating-course source
+STATE-D-2,POOL-D,inactive,2026-10-20T13:10:00-05:00,2026-10-20T13:10:00-05:00,Authored customer close instruction,Authored operating-course source

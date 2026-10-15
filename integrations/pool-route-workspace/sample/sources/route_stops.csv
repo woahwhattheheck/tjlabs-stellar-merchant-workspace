@@ -1,0 +1,7 @@
+stop_id,revision_id,route_id,stop_sequence,occurrence_id,recorded_at,reference
+STOP-A,A1,NORTH,1,OCC-A,2026-10-19T16:01:00-05:00,Authored operating-course source
+STOP-B,B1,NORTH,2,OCC-B,2026-10-19T16:01:00-05:00,Authored operating-course source
+STOP-C1,C1,NORTH,3,OCC-C,2026-10-19T16:01:00-05:00,Authored operating-course source
+STOP-D,D1,SOUTH,1,OCC-D,2026-10-19T16:01:00-05:00,Authored operating-course source
+STOP-AN,A-NEXT-1,NORTH-22,1,,2026-10-19T16:11:00-05:00,Authored operating-course source
+STOP-C2,C2,SOUTH,2,OCC-C,2026-10-20T08:31:00-05:00,Authored operating-course source

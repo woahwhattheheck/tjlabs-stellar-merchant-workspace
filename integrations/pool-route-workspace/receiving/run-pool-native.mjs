@@ -1,0 +1,14 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import {createArchiveCodec} from "../vendor/archive-codec.mjs";
+import {createPoolRouteCore} from "../pool-route-core.mjs";
+import {runPoolRouteCLI} from "../pool-route-native.mjs";
+import {receivePoolRouteNative} from "./pool-native-receiving.mjs";
+if(process.argv.length!==4||process.argv[2]!=="--out")throw Error("Use --out NEW_DIRECTORY");
+const codec=createArchiveCodec(),core=createPoolRouteCore({codec});
+const modelSource=await fs.readFile(new URL("../workbench/pool-workspace.js",import.meta.url),"utf8");
+const workspaceAPI=new Function(modelSource+";return createPoolRouteWorkspace;")()(core,codec);
+const desk=JSON.parse(await fs.readFile(new URL("../examples/worked-desk.json",import.meta.url),"utf8"));
+const result=await receivePoolRouteNative({fs,path,codec,core,workspaceAPI,runCLI:runPoolRouteCLI,directory:path.resolve(process.argv[3]),desk});
+await fs.writeFile(path.join(path.resolve(process.argv[3]),"receiving-result.json"),JSON.stringify(result,null,2)+"\n",{flag:"wx"});
+console.log(JSON.stringify({summary:result.summary,checks:result.checks},null,2));

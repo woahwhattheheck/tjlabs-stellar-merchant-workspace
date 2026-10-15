@@ -1,0 +1,5 @@
+reading_id,service_version_id,analyte,value_text,unit,method,measured_at,observed_at,reference
+READ-A1,SERVICE-A1,pH,7.8,pH,Authored comparator reading,2026-10-20T10:25:00-05:00,2026-10-20T12:30:00-05:00,Authored operating-course source
+READ-A2,SERVICE-A2,pH,7.4,pH,Original comparator log transcription correction,2026-10-20T10:25:00-05:00,2026-10-20T12:50:00-05:00,Authored operating-course source
+READ-A2-CL,SERVICE-A2,free chlorine,3.0,mg/L,Authored DPD comparator,2026-10-20T10:26:00-05:00,2026-10-20T12:50:00-05:00,Authored operating-course source
+READ-B1,SERVICE-B1,total alkalinity,90,mg/L as CaCO3,Authored titration,2026-10-20T09:30:00-05:00,2026-10-20T12:35:00-05:00,Authored operating-course source

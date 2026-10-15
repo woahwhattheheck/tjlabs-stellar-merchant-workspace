@@ -1,0 +1,4 @@
+delivery_id,report_id,recipient,channel,submitted_at,observed_at,authorization,reference
+DELIVERY-A1,REPORT-A1,customer-a@example.invalid,Authored email delivery export,2026-10-20T12:37:00-05:00,2026-10-20T12:37:00-05:00,Authored customer report delivery authority,Authored operating-course source
+DELIVERY-A2,REPORT-A2,customer-a@example.invalid,Authored email delivery export,2026-10-20T13:10:00-05:00,2026-10-20T13:10:00-05:00,Authored customer report delivery authority,Authored operating-course source
+DELIVERY-A1-RETRY,REPORT-A1,customer-a@example.invalid,Authored email delivery export,2026-10-20T13:30:00-05:00,2026-10-20T13:30:00-05:00,Authored customer report delivery authority,Authored operating-course source

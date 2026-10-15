@@ -1,0 +1,128 @@
+{
+  "schema": "tjlabs.pool-route-desk.v1",
+  "workspace": {
+    "schema": "tjlabs.pool-route-study.v1",
+    "id": "pool-route-blank",
+    "label": "Pool Route Workbench",
+    "editions": [],
+    "reviews": []
+  },
+  "session": {
+    "editionId": null,
+    "table": "resources",
+    "resourceId": null,
+    "jobId": null,
+    "sourceDraft": {
+      "id": "source-edition-1",
+      "label": "First source edition",
+      "receivedAt": "",
+      "notes": "",
+      "settings": {
+        "dayStart": "",
+        "dayEnd": "",
+        "asOf": ""
+      },
+      "sources": {
+        "resources": {
+          "name": "resources.csv",
+          "text": "resource_id,name,kind,reference\r\n",
+          "receiptSha256": null
+        },
+        "availability": {
+          "name": "availability.csv",
+          "text": "window_id,resource_id,state,start_at,end_at,reference\r\n",
+          "receiptSha256": null
+        },
+        "booking_revisions": {
+          "name": "booking_revisions.csv",
+          "text": "revision_id,job_id,revision,recorded_at,status,customer_id,pool_id,location_id,technician_id,vehicle_id,start_at,end_at,technician_before_minutes,technician_after_minutes,vehicle_before_minutes,vehicle_after_minutes,currency,authorization,reference\r\n",
+          "receiptSha256": null
+        },
+        "quoted_lines": {
+          "name": "quoted_lines.csv",
+          "text": "line_id,revision_id,description,amount_minor,reference\r\n",
+          "receiptSha256": null
+        },
+        "completions": {
+          "name": "completions.csv",
+          "text": "observation_id,job_id,status,technician_id,vehicle_id,started_at,finished_at,observed_at,authorization,reference\r\n",
+          "receiptSha256": null
+        },
+        "invoice_lines": {
+          "name": "invoice_lines.csv",
+          "text": "line_id,invoice_id,job_id,currency,amount_minor,description,issued_at,reference\r\n",
+          "receiptSha256": null
+        },
+        "payments": {
+          "name": "payments.csv",
+          "text": "payment_id,kind,parent_payment_id,currency,amount_minor,occurred_at,method,reference\r\n",
+          "receiptSha256": null
+        },
+        "allocations": {
+          "name": "allocations.csv",
+          "text": "allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference\r\n",
+          "receiptSha256": null
+        },
+        "pools": {
+          "name": "pools.csv",
+          "text": "pool_id,customer_id,property_id,source_system,source_id,recorded_at,reference\r\n",
+          "receiptSha256": null
+        },
+        "pool_statuses": {
+          "name": "pool_statuses.csv",
+          "text": "status_event_id,pool_id,status,effective_at,observed_at,authorization,reference\r\n",
+          "receiptSha256": null
+        },
+        "expected_visits": {
+          "name": "expected_visits.csv",
+          "text": "occurrence_id,pool_id,series_id,due_start_at,due_end_at,recorded_at,status,authorization,reference\r\n",
+          "receiptSha256": null
+        },
+        "route_stops": {
+          "name": "route_stops.csv",
+          "text": "stop_id,revision_id,route_id,stop_sequence,occurrence_id,recorded_at,reference\r\n",
+          "receiptSha256": null
+        },
+        "service_versions": {
+          "name": "service_versions.csv",
+          "text": "service_version_id,job_id,revision_id,version,previous_version_id,captured_at,observed_at,status,work_json,customer_notes,internal_notes,authorization,reference\r\n",
+          "receiptSha256": null
+        },
+        "readings": {
+          "name": "readings.csv",
+          "text": "reading_id,service_version_id,analyte,value_text,unit,method,measured_at,observed_at,reference\r\n",
+          "receiptSha256": null
+        },
+        "media": {
+          "name": "media.csv",
+          "text": "media_id,service_version_id,source_reference,artifact_sha256,captured_at,observed_at,caption,reference\r\n",
+          "receiptSha256": null
+        },
+        "report_artifacts": {
+          "name": "report_artifacts.csv",
+          "text": "report_id,job_id,service_version_id,reading_ids_json,media_ids_json,artifact_sha256,created_at,observed_at,reference\r\n",
+          "receiptSha256": null
+        },
+        "report_deliveries": {
+          "name": "report_deliveries.csv",
+          "text": "delivery_id,report_id,recipient,channel,submitted_at,observed_at,authorization,reference\r\n",
+          "receiptSha256": null
+        },
+        "delivery_events": {
+          "name": "delivery_events.csv",
+          "text": "event_id,delivery_id,kind,occurred_at,observed_at,evidence_reference,reference\r\n",
+          "receiptSha256": null
+        },
+        "billing_periods": {
+          "name": "billing_periods.csv",
+          "text": "period_id,start_at,end_at,counted_at,observed_at,currency,platform_minor,per_pool_minor,rate_basis,proration_reference,excluded_statuses_json,rule_reference,reference\r\n",
+          "receiptSha256": null
+        }
+      }
+    },
+    "reviewDrafts": {},
+    "selectedSubject": null,
+    "receipts": [],
+    "notes": ""
+  }
+}
