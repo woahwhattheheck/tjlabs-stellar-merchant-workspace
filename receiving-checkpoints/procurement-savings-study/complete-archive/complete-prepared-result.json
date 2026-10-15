@@ -1,0 +1,65 @@
+{
+  "schema": "tjlabs.procurement-complete-prepared-export.v1",
+  "identity": "4dbc599a19847ca574dbaf8d651241f2e3f108b4588acd7f8ad809477bd685ce",
+  "done": true,
+  "completedGroups": 895,
+  "entries": 25385,
+  "uncompressedBytes": 897757773,
+  "archiveBytes": 306384554,
+  "source": {
+    "source": {
+      "bytes": 9982266,
+      "sha256": "e0264d15818218e5e84de2155ca887efd7e2e35086f419feedcbf81643f3f99b"
+    },
+    "html": {
+      "bytes": 2880102,
+      "sha256": "2cc9958d60e44513fe4e79a33b0956400fa09054cc3c7ac6ff25c42007ce8920"
+    },
+    "files": 658,
+    "donorFilesUnchanged": 612
+  },
+  "input": {
+    "bytes": 6762092,
+    "sha256": "7b02fcf45b06739fc03e64193671059a318a0bcf97895349e49bbaa05b5126f6"
+  },
+  "capacityContinuation": {
+    "schema": "tjlabs.procurement-capacity-continuation.v1",
+    "originalCommit": "804e76aa69b016471c9d64500be1881218d1f884",
+    "originalIndexSha256": "67dac10a996889f8e0eb110f334ee14e09fb694c1f81a0296211fd74239ecf77",
+    "identity": "4dbc599a19847ca574dbaf8d651241f2e3f108b4588acd7f8ad809477bd685ce",
+    "sourceBank": {
+      "bytes": 9982266,
+      "sha256": "e0264d15818218e5e84de2155ca887efd7e2e35086f419feedcbf81643f3f99b"
+    },
+    "completeInput": {
+      "bytes": 6762092,
+      "sha256": "7b02fcf45b06739fc03e64193671059a318a0bcf97895349e49bbaa05b5126f6"
+    },
+    "from": {
+      "timestamp": "2026-10-15T00:00:00Z",
+      "maxBytes": 268435456,
+      "maxEntries": 60000,
+      "maxUncompressedBytes": 536870912,
+      "compression": "auto",
+      "deflate": {}
+    },
+    "to": {
+      "timestamp": "2026-10-15T00:00:00Z",
+      "maxBytes": 536870912,
+      "maxEntries": 60000,
+      "maxUncompressedBytes": 1073741824,
+      "compression": "auto",
+      "deflate": {}
+    },
+    "originalCompletedGroups": 799,
+    "originalEntries": 15059,
+    "unchangedMemberMetadataSha256": "1bfc2bbef64ca61ac236b0a927729f656ccd4701c19935de10ef6a138db02366",
+    "unchangedPayloadReferencesSha256": "8150c3cf41ccdcb9b62ead44f010d778878cf274a276e9b3f46704cd4c4dafba",
+    "allOriginalPackedPayloadTextsExact": true,
+    "reason": "Complete retained workload exceeds original512MiB raw ceiling; preserve every branch, study export, request and edition",
+    "strictMinimumRawBytes": 568712757
+  },
+  "activeObjects": 1434,
+  "activeObjectCharacters": 373717799,
+  "historicalCheckpoints": "All previous committed checkpoints and objects remain durable; active map retains only current references."
+}
