@@ -82,6 +82,46 @@
       "sha256": "0584d18ea11873b0851e91ff45b7ebc49d4e6b284f25297c70c100ae26e78ad2"
     },
     {
+      "path": "contributions/carrier-read-throughput/README.md",
+      "bytes": 2348,
+      "sha256": "c5962bde26f8f524d71e35a89b4346b58b51627ee621e4e9525117d20d9f2330"
+    },
+    {
+      "path": "contributions/carrier-read-throughput/SOURCE_MANIFEST.json",
+      "bytes": 1113,
+      "sha256": "9092d21016807c28e511c531fcf887edd13d8e6ddb5f0a308774230790b43ff0"
+    },
+    {
+      "path": "contributions/carrier-read-throughput/after/host-model.cjs",
+      "bytes": 5679,
+      "sha256": "5e0e5a74efd5b619fd12f04f8528a274fa15d06aa9d8bdbdf1598fce08f74304"
+    },
+    {
+      "path": "contributions/carrier-read-throughput/before/host-model.cjs",
+      "bytes": 5181,
+      "sha256": "076e52ec6f5de98ad4145c61d9d46a3c19db1acccb46ce4344f68c8538692d33"
+    },
+    {
+      "path": "contributions/carrier-read-throughput/changed-source-and-isolation.json",
+      "bytes": 709,
+      "sha256": "3e2779ff847f67dd4ee6d351f1f0eb2a6680f727bd02fca0f0ae7a253c9f8e18"
+    },
+    {
+      "path": "contributions/carrier-read-throughput/checkpoint-selection.cjs",
+      "bytes": 830,
+      "sha256": "c8ff95f8b70342a77c55b05e397f1b9c0e574846794ebdf177ac030a04af0a77"
+    },
+    {
+      "path": "contributions/carrier-read-throughput/measure-complete-read.cjs",
+      "bytes": 2679,
+      "sha256": "ecbaf81dc5335942a95c6f4b4fb4ff5133d90d57e8b626c479b8f088aa93e45c"
+    },
+    {
+      "path": "contributions/carrier-read-throughput/measurement.json",
+      "bytes": 2060,
+      "sha256": "a8645eaff456516c43b70796d05fcb82b38f7c4bb0f7e5cb68a7f9879d53f736"
+    },
+    {
       "path": "contributions/installed-throughput/README.md",
       "bytes": 3554,
       "sha256": "0f1528b8e89766b81cc607045390d92a862ffc07939827403a83a1b27be18441"
@@ -489,7 +529,7 @@
     {
       "path": "host/export-core.mjs",
       "bytes": 4469,
-      "sha256": "54d31462dc188df49c9574c2b77b967f1e649e20ccf9721f0916129c40a9fca1"
+      "sha256": "301fa3ec22561dcda3b38368287894bcdefdab445306df08faac899789260119"
     },
     {
       "path": "host/export.mjs",
@@ -503,8 +543,8 @@
     },
     {
       "path": "host/model.cjs",
-      "bytes": 5181,
-      "sha256": "076e52ec6f5de98ad4145c61d9d46a3c19db1acccb46ce4344f68c8538692d33"
+      "bytes": 5679,
+      "sha256": "5e0e5a74efd5b619fd12f04f8528a274fa15d06aa9d8bdbdf1598fce08f74304"
     },
     {
       "path": "host/server.mjs",
@@ -598,8 +638,18 @@
     },
     {
       "path": "receiving/EXPORT_COMPRESSION.md",
-      "bytes": 3817,
-      "sha256": "25c4cb13c71cef0e4c67c75ae06bba4c77b50be88098915d6d90a59e6ff4c2dd"
+      "bytes": 4474,
+      "sha256": "06cb12840347eac0f534c02bef2548f80b52f0d154a38765bc499d007b19b97d"
+    },
+    {
+      "path": "receiving/checkpoint-reader.cjs",
+      "bytes": 1040,
+      "sha256": "5462f986efb7e334528003fa2f81d1687dd6ad8d41388a3ad2ccca5eaeaeff97"
+    },
+    {
+      "path": "receiving/complete-archive-readback.cjs",
+      "bytes": 3599,
+      "sha256": "3716025fa79255c34cba07eedd138fa00116b67ee6b8b112473f36d661e4f48c"
     },
     {
       "path": "receiving/export-compression-comparison.json",
@@ -609,7 +659,7 @@
     {
       "path": "receiving/export-compression-course.cjs",
       "bytes": 3725,
-      "sha256": "e4feaf822fd41d4456fb96bacbe0b807c357990159aaf0850b35b812c7905911"
+      "sha256": "f21c136d10967befb6b5dbb0ce780e3db0232ee2a46b7e05d95932cefcf32a7e"
     },
     {
       "path": "receiving/history-recovery-course.cjs",
@@ -668,8 +718,8 @@
     },
     {
       "path": "src/connected_zip.cjs",
-      "bytes": 13178,
-      "sha256": "4903eb16215d3015388b62788670da9f23872d65e94422ff22cbf09863f9dd08"
+      "bytes": 13431,
+      "sha256": "f24df36a09b3f89ea95b53e13351d85fab676b7f493181ff34d92c9cb732d74f"
     },
     {
       "path": "src/core-cache.cjs",
@@ -912,6 +962,11 @@
       "sha256": "038e9e63224d64fa52c4249537895a1e72e1efb7ee06d130529990c911db2c79"
     },
     {
+      "path": "verification/complete-export-capacity.json",
+      "bytes": 275,
+      "sha256": "47dff1ad1843c3a8c9342a8dcd4c20a43214e1576693953ff9b0d46aecdfb974"
+    },
+    {
       "path": "verification/export-equivalence.json",
       "bytes": 198,
       "sha256": "495b2b69d96d20fe7f6f76b2a970c523ea044960849567c0863be6319c051c77"
@@ -923,8 +978,8 @@
     },
     {
       "path": "verification/installed-courses.json",
-      "bytes": 34676,
-      "sha256": "9ae1d0b457310f71993afa7247fd4a712462ad2257f19fc11479beb11f1520e3"
+      "bytes": 38666,
+      "sha256": "59822feb20be3a53e41b6415afa0321f17a201a0401e059b757d070122edc445"
     },
     {
       "path": "verification/lab-course.json",
@@ -940,6 +995,11 @@
       "path": "verification/native-course.json",
       "bytes": 1076,
       "sha256": "1ffe3d80cc9fab991293789a8480f905daf9f9b2156f8ddba753ab80b994335b"
+    },
+    {
+      "path": "verification/read-cache-replay.json",
+      "bytes": 616,
+      "sha256": "7b9cb103a473a2121b8e4385dbe1581412453e251b12031a967d6d85300381e9"
     },
     {
       "path": "verification/source-closure.json",

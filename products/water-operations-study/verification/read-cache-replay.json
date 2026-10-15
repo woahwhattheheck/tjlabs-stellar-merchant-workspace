@@ -1,0 +1,25 @@
+{
+  "schema": "water-operations.read-cache-replay/v1",
+  "warmMs": 21725,
+  "reads": [
+    {
+      "collection": "rows",
+      "ms": 443,
+      "bytes": 6621,
+      "sha256": "855fb9aca6a7e35bb8c9c0d44ceffc2508eaa4a6d77a4b6a9793e178a3bf4c70"
+    },
+    {
+      "collection": "labRecords",
+      "ms": 422,
+      "bytes": 5293,
+      "sha256": "bc8a3412e957ef7c13d7387e14c85120038de6337c8c9de5571c27f72c1b130c"
+    },
+    {
+      "collection": "waterResult",
+      "ms": 445,
+      "bytes": 1659,
+      "sha256": "e562f58b1b2ec93bde2fb6f199770b77fe72e9b267db166bb36c466468981367"
+    }
+  ],
+  "allBytesExact": true
+}

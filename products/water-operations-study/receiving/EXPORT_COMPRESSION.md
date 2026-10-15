@@ -10,7 +10,7 @@ In this connected V8 run, entry assembly took 128.503 seconds, STORE packing 8.0
 
 ## Integration
 
-Replace src/connected_zip.cjs with the explicit raw-codec-hook implementation. Retain vendor/pako.cjs and vendor/PAKO_LICENSE.txt. Apply the complete host/export-core.mjs source: it loads only the exact bundled codec source, cached by the actual files object and source text, then packs with level 1 and the existing 256 MiB / 10,000-member constraints. Apply the complete source builder to require and carry both vendor members. The independent peer hook receives expected_bytes and expected_crc32 to support a bounded ordinary raw decoder. The original packStoredZip API keeps identical STORE bytes.
+Replace src/connected_zip.cjs with the explicit raw-codec-hook implementation. Retain vendor/pako.cjs and vendor/PAKO_LICENSE.txt. Apply the complete host/export-core.mjs source: it loads only the exact bundled codec source, cached by the actual files object and source text, then packs with level 1 and a 256 MiB compressed ZIP limit, a 512 MiB expanded-content limit and at most 60,000 members. The complete retained 42-request/43-edition Water course already requires at least 292,439,889 expanded bytes before its remaining domain/source exports. Apply the complete source builder to require and carry both vendor members. The independent peer hook receives expected_bytes and expected_crc32 to support a bounded ordinary raw decoder. The original packStoredZip API keeps identical STORE bytes.
 
 For a sibling product, preserve its exported function names, source namespace, file names and manifest schema while applying the same source change. Regenerate its ordinary application and complete source manifest using its maintained builder. Do not copy RouteProof business/domain sources into another product. All histories and paths remain intact.
 
@@ -26,3 +26,6 @@ The reproducible whole-workload comparison is in export-compression-course.cjs. 
 ## Installed replay
 
 From the current source map, load receiving/export-compression-course.cjs and call its exported async function with {files, workload, sourceHead}. workload is the complete result of receiving/host-course.cjs. Both ordinary STORE and DEFLATE entry builders are intercepted for comparison, so the same whole replay works after compression is installed. The preserved comparison JSON identifies the original RouteProof workload, while a new replay identifies its supplied current sourceHead.
+
+
+For complete large archives, `readZip(bytes, { ...limits, inflateRaw, visitEntry })` validates and visits each ordinary member in sequence and returns its metadata. The callback receives the current member's bytes; they are released after the callback rather than accumulating a second expanded archive. Omitting `visitEntry` preserves the existing complete-array API. CRC, member layout, path and aggregate capacity validation remain active in either mode.

@@ -170,6 +170,7 @@ function packZipRecords(entries,options,allowCompression) {
 function readStoredZip(bytes,options={}) { return readZipRecords(bytes,options,false); }
 function readZip(bytes,options={}) { return readZipRecords(bytes,options,true); }
 function readZipRecords(bytes,options,allowCompression) {
+  const visit=options.visitEntry;if(visit!==undefined&&typeof visit!=='function')throw TypeError('ZIP visitEntry must be a function');
   const {maxBytes,maxEntries}=limits(options);
   if(!(bytes instanceof Uint8Array)||bytes.length<22||bytes.length>maxBytes) throw TypeError('Complete ZIP bytes are required');
   const maxUncompressedBytes=allowCompression?archiveOptions(options).maxUncompressedBytes:maxBytes;
@@ -206,8 +207,9 @@ function readZipRecords(bytes,options,allowCompression) {
     const data=method===0?packed:options.inflateRaw?options.inflateRaw(packed,config):require('./connected_gzip.cjs').inflateRawBytes(packed,config).data;
     if(!(data instanceof Uint8Array)||data.length!==size)throw TypeError('ZIP inflated member length differs: '+name);
     if(crc32(data)!==crc)throw TypeError('ZIP member checksum changed: '+name);
-    records.push({name,mode:mode&0o777,data,crc32:crc,bytes:size,
-      ...(allowCompression?{method,compressedBytes:packedSize}:{})});
+    const record={name,mode:mode&0o777,data,crc32:crc,bytes:size,
+      ...(allowCompression?{method,compressedBytes:packedSize}:{})};
+    if(visit){visit(record);const {data:discard,...metadata}=record;records.push(metadata);}else records.push(record);
     localAt=finish;at+=46+names;
   }
   if(at!==end||localAt!==central)throw TypeError('ZIP contains extra member or directory bytes');

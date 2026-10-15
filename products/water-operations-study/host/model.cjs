@@ -4,13 +4,19 @@ function createManagedModel({sessions:S,applyDomain,codec:C}){
  const need=(v,code,message,status=409)=>{if(!v)throw Object.assign(Error(message),{code,status});};
  const text=(v,n)=>typeof v==="string"&&v.length>0&&v.length<=n;
  const receive=c=>S.receive(JSON.stringify(c));
+ // Keep one complete successful carrier validation, keyed by its exact serialized bytes.
+ // Mutable callers must serialize again; failures and oversized inputs are never retained.
+ const CARRIER_VALIDATION_LIMIT=64*1024*1024;let validatedCarrierText=null;
+ function validateCarrier(carrier){const serialized=JSON.stringify(carrier);if(serialized===validatedCarrierText)return;
+  S.receive(serialized);validatedCarrierText=serialized.length*2<=CARRIER_VALIDATION_LIMIT?serialized:null;
+ }
  function initial(installationId,carrier){
   need(text(installationId,120),"WATER_OPERATIONS_ID","Choose the installation identity.");carrier=S.pack(receive(carrier));
   return {schema:"stellar-forge.water-operations-state.v1",installationId,sequence:0,carrier:copy(carrier),receipts:[],rejections:[]};
  }
  function validate(state){
   need(state?.schema==="stellar-forge.water-operations-state.v1"&&text(state.installationId,120)&&Number.isSafeInteger(state.sequence)&&state.sequence>=0&&Array.isArray(state.receipts)&&Array.isArray(state.rejections),"WATER_OPERATIONS_STATE","Select the complete managed session.");
-  receive(state.carrier);const ids=new Set();
+  validateCarrier(state.carrier);const ids=new Set();
   for(const row of [...state.receipts,...state.rejections]){need(text(row.id,120)&&/^[a-f0-9]{64}$/.test(row.requestSha256)&&/^[a-f0-9]{64}$/.test(row.recordSha256)&&!ids.has(row.id),"WATER_OPERATIONS_HISTORY","Original request history differs.");ids.add(row.id);}
   return state;
  }

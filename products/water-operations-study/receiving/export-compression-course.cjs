@@ -9,7 +9,7 @@ module.exports=async function compareExportCompression({files,workload,zipSource
  let captured;const oldPack=B.zip.packStoredZip;
  const capture=(entries,options)=>{captured={entries,options};return new Uint8Array(0)};B.zip.packStoredZip=capture;B.zip.packZip=capture;
  B.exporter(files,workload.state,workload.records,workload.editions);
- const {entries,options}=captured,collectionMs=Date.now()-started,limits={...options,maxUncompressedBytes:256*1024*1024,compression:"auto"};
+ const {entries,options}=captured,collectionMs=Date.now()-started,limits={...options,maxUncompressedBytes:512*1024*1024,compression:"auto"};
  progress({phase:"entries_collected",members:entries.length,uncompressed_bytes:entries.reduce((n,e)=>n+e.data.length,0),elapsed_ms:collectionMs});
  let start=Date.now();const stored=oldPack(entries,options),storeMs=Date.now()-start;
  const comparisons=[],archives=new Map();

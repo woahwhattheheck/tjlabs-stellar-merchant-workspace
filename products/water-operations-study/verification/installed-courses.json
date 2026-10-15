@@ -1251,5 +1251,109 @@
     "compactBytes": 3495599,
     "compactSha256": "e34088ed7acfcf98080549920a358936becfd0db8e9c836fe7538ce5d84dacac",
     "nodes": 6650
+  },
+  "readThroughput": {
+    "sourceCanvas": "F0C9DFK5PGB",
+    "sourceSha256": "6aed323964f3ee59194c5ad28ce6f5bbaeb7656635fe7edb343980219e6aa55e",
+    "measurement": {
+      "execution": "Actual current production Water model/session/domain/core in V8; identical full retained state, separate runtime per before/after, one warm derived read each.",
+      "source_outer_git_blob": "f6a54c7b0088249196ec0999c30f0aba755998e9",
+      "source_head": "a94509ae0be56a87e99f8146e877c6c555c700b3",
+      "retained_workload_commit": "897f5e794d821757f01d2b244359ac6b7f5999be",
+      "retained_workload_manifest": "receiving-checkpoints/water-operations-study/full45-compact/manifest.json",
+      "complete_workload_sha256": "700c80935b7b5b17d9f5878d96a7fbc601e2fc0c080dd1aa493c6903483aa4a5",
+      "results": [
+        {
+          "name": "before",
+          "warm_ms": 24720,
+          "reads": [
+            {
+              "collection": "rows",
+              "ms": 8082,
+              "bytes": 6621,
+              "sha256": "855fb9aca6a7e35bb8c9c0d44ceffc2508eaa4a6d77a4b6a9793e178a3bf4c70"
+            },
+            {
+              "collection": "labRecords",
+              "ms": 8215,
+              "bytes": 5293,
+              "sha256": "bc8a3412e957ef7c13d7387e14c85120038de6337c8c9de5571c27f72c1b130c"
+            },
+            {
+              "collection": "waterResult",
+              "ms": 8147,
+              "bytes": 1659,
+              "sha256": "e562f58b1b2ec93bde2fb6f199770b77fe72e9b267db166bb36c466468981367"
+            }
+          ]
+        },
+        {
+          "name": "after",
+          "warm_ms": 23668,
+          "reads": [
+            {
+              "collection": "rows",
+              "ms": 428,
+              "bytes": 6621,
+              "sha256": "855fb9aca6a7e35bb8c9c0d44ceffc2508eaa4a6d77a4b6a9793e178a3bf4c70"
+            },
+            {
+              "collection": "labRecords",
+              "ms": 401,
+              "bytes": 5293,
+              "sha256": "bc8a3412e957ef7c13d7387e14c85120038de6337c8c9de5571c27f72c1b130c"
+            },
+            {
+              "collection": "waterResult",
+              "ms": 406,
+              "bytes": 1659,
+              "sha256": "e562f58b1b2ec93bde2fb6f199770b77fe72e9b267db166bb36c466468981367"
+            }
+          ]
+        }
+      ],
+      "all_result_bytes_identical": true,
+      "before_total_ms": 24444,
+      "after_total_ms": 1235,
+      "reduction_percent": 94.94763541155294
+    },
+    "independentReplay": {
+      "schema": "water-operations.read-cache-replay/v1",
+      "warmMs": 21725,
+      "reads": [
+        {
+          "collection": "rows",
+          "ms": 443,
+          "bytes": 6621,
+          "sha256": "855fb9aca6a7e35bb8c9c0d44ceffc2508eaa4a6d77a4b6a9793e178a3bf4c70"
+        },
+        {
+          "collection": "labRecords",
+          "ms": 422,
+          "bytes": 5293,
+          "sha256": "bc8a3412e957ef7c13d7387e14c85120038de6337c8c9de5571c27f72c1b130c"
+        },
+        {
+          "collection": "waterResult",
+          "ms": 445,
+          "bytes": 1659,
+          "sha256": "e562f58b1b2ec93bde2fb6f199770b77fe72e9b267db166bb36c466468981367"
+        }
+      ],
+      "allBytesExact": true
+    },
+    "changedSource": {
+      "execution": "Actual production Water model/session/core in V8 on complete 42-request retained state",
+      "checks": [
+        "Equal complete carrier copies reuse successful validation and return identical complete views",
+        "Returned mutable views are isolated from the validated source and cache",
+        "Changed complete carrier is independently rejected on attempt 1",
+        "Changed complete carrier is independently rejected on attempt 2",
+        "Rejected carrier validation is never cached",
+        "Unchanged valid carrier never bypasses current outer request-history validation",
+        "A valid changed carrier is fully revalidated and becomes the exact new successful cache entry"
+      ],
+      "receive_calls": 4
+    }
   }
 }
