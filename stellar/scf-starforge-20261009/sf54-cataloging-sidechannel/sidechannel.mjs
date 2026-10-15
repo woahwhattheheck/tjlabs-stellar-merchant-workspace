@@ -7,19 +7,21 @@ import { PaymentAutoCatalog } from '../../../stellar-forge/payment-auto-catalog/
 const plain = value => value !== null && typeof value === 'object' &&
   !Array.isArray(value) && (Object.getPrototypeOf(value) === Object.prototype ||
     Object.getPrototypeOf(value) === null);
-const STATUS_KEY = /^[a-z][a-z0-9_-]{0,63}$/;
-
+const encodedBytes = json => Buffer.byteLength(Buffer.from(json, 'utf8').toString('base64'), 'utf8');
 
 // Existing outcomes must be from the trusted facilitator, not an HTTP caller.
 function otherOutcomes(value) {
   if (value === undefined) return {};
   if (!plain(value)) throw new TypeError('OTHER_EXTENSION_OUTCOMES_INVALID');
-  if (Object.keys(value).some(key => !STATUS_KEY.test(key) || key === 'bazaar'))
+  // Sibling names are x402 extension identifiers, not local status fields.
+  // Treat them as opaque JSON object keys while reserving Bazaar for this
+  // adapter's own authoritative outcome.
+  if (Object.keys(value).some(key => key === 'bazaar'))
     throw new TypeError('OTHER_EXTENSION_KEY_INVALID');
   let serialized;
   try { serialized = JSON.stringify(value); }
   catch { throw new TypeError('OTHER_EXTENSION_OUTCOMES_NOT_JSON'); }
-  if (typeof serialized !== 'string' || Buffer.byteLength(serialized) > MAX_HEADER_BYTES)
+  if (typeof serialized !== 'string' || encodedBytes(serialized) > MAX_HEADER_BYTES)
     throw new RangeError('OTHER_EXTENSION_OUTCOMES_TOO_LARGE');
   const cloned = JSON.parse(serialized);
   if (!plain(cloned)) throw new TypeError('OTHER_EXTENSION_OUTCOMES_INVALID');
@@ -51,9 +53,10 @@ export function encodeCatalogSidechannel({ paymentPayload, catalogDecision, othe
   }
   if (!Object.keys(fields).length)
     return { headerName: HEADER_NAME, headerValue: null, extensionResponses: {}, bazaar: null };
-  const bytes = Buffer.from(JSON.stringify(fields), 'utf8');
-  if (bytes.length > MAX_HEADER_BYTES) throw new RangeError('EXTENSION_RESPONSES_TOO_LARGE');
-  return { headerName: HEADER_NAME, headerValue: bytes.toString('base64'),
+  const headerValue = Buffer.from(JSON.stringify(fields), 'utf8').toString('base64');
+  if (Buffer.byteLength(headerValue, 'utf8') > MAX_HEADER_BYTES)
+    throw new RangeError('EXTENSION_RESPONSES_TOO_LARGE');
+  return { headerName: HEADER_NAME, headerValue,
     extensionResponses: fields, bazaar };
 }
 
@@ -70,7 +73,7 @@ function preflight(paymentPayload, otherExtensionResponses) {
     const worst = { ...validatedSiblings, bazaar: {
       status: 'rejected', rejectedReason: 'A'.repeat(96) + ':' + 'a'.repeat(80),
     } };
-    if (Buffer.byteLength(JSON.stringify(worst), 'utf8') > MAX_HEADER_BYTES)
+    if (encodedBytes(JSON.stringify(worst)) > MAX_HEADER_BYTES)
       throw new RangeError('EXTENSION_RESPONSES_TOO_LARGE');
   }
   return validatedSiblings;
