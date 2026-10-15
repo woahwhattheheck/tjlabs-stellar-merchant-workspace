@@ -49,8 +49,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 4452,
-      "sha256": "488cc9944f537f55c9a0d893c1c65056327cc0fdfd0f537202e80eac36e7a100"
+      "bytes": 6156,
+      "sha256": "54b87856ae5fe4993d944fcf8bd5788a57b2b8cf2ba78c6ef02a4162e46a5c0e"
     },
     {
       "path": "full-source-result.json",
@@ -86,6 +86,16 @@
       "path": "default-codec-result.json",
       "bytes": 1178,
       "sha256": "80661fb0a281bf39ed5082ab2f97632238f9fbbedce32902014ee896786a4fe3"
+    },
+    {
+      "path": "publish-prepared-git.cjs",
+      "bytes": 6907,
+      "sha256": "7ff0f806f3efd3b6d379f6b65ad5d8e5db973c2c3b4e75ea99a6a2c60d942aba"
+    },
+    {
+      "path": "git-publication-result.json",
+      "bytes": 442,
+      "sha256": "0cea80c9a20bb38487a691a6886cc17f1b33ec2ddb1e3218c31521a142dc1eb3"
     }
   ]
 }
