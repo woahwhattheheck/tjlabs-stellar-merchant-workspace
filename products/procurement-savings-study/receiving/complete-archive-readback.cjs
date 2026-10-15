@@ -1,5 +1,5 @@
 'use strict';
-module.exports=async function completeArchiveReadback(B,files,bank,progress=()=>{}){
+module.exports=async function completeArchiveReadback(B,files,bank,progress=()=>{},preparedBytes=null){
  const R=require('./checkpoint-reader.cjs')(bank),state=R.read(R.field(R.root,'state')),recordNode=R.field(R.root,'records'),editionNode=R.field(R.root,'editions'),records=R.sequence(recordNode),editions=R.sequence(editionNode);
  const byId=node=>new Map(bank.nodes[node][1].map(ref=>[R.read(R.field(ref,'id')),R.field(ref,'value')]));
  const requestRefs=byId(recordNode),editionRefs=byId(editionNode),start=Date.now(),stages=[],counts={history:0,branches:0,studies:0,compression:0};
@@ -13,7 +13,7 @@ module.exports=async function completeArchiveReadback(B,files,bank,progress=()=>
   const builder=B.zip.createZipBuilder({...options,deflateRaw(bytes,cfg){const packed=raw(bytes,cfg);counts.compression++;inputBytes+=bytes.length;if(counts.compression%100===0||Date.now()-last>5000){last=Date.now();progress({phase:'compression',calls:counts.compression,inputBytes,elapsedMs:Date.now()-start});}return packed;}},checkpoint);
   return Object.freeze({...builder,finish(){const before=builder.statistics();progress({phase:'zip-start',...before,elapsedMs:Date.now()-start});const at=Date.now(),result=builder.finish(),row={phase:'zip',ms:Date.now()-at,...before,bytes:result.length,compressionCalls:counts.compression};stages.push(row);progress(row);return result;}});
  }};
- const exportCore=Function(B.strip(files['host/export-core.mjs'])+';return buildProcurementSavingsStudyExport;')(),bytes=exportCore(files,state,records,editions,{codec:B.C,core,originalSessions:M,sessions:B.sessions,buildDesk:B.build,zip,observeEntry}),built=Date.now();
+ const exportCore=Function(B.strip(files['host/export-core.mjs'])+';return buildProcurementSavingsStudyExport;')(),bytes=preparedBytes||exportCore(files,state,records,editions,{codec:B.C,core,originalSessions:M,sessions:B.sessions,buildDesk:B.build,zip,observeEntry}),built=Date.now();
  progress({phase:'archive_built',bytes:bytes.length,buildMs:built-start});
  const inflateRaw=(packed,cfg)=>{const gzip=new Uint8Array(packed.length+18);gzip.set([31,139,8,0,0,0,0,0,0,255]);gzip.set(packed,10);const v=new DataView(gzip.buffer);v.setUint32(gzip.length-8,cfg.expected_crc32,true);v.setUint32(gzip.length-4,cfg.expected_bytes,true);return B.C.inflateGzip(gzip);};
  let manifest=null,expected=null,count=0,rawBytes=0,sources=0,requestCount=0,editionCount=0,workingCount=0,studyCount=0;

@@ -1,6 +1,6 @@
 'use strict';
 // Assembled production browser/controller course with explicit DOM and atomic IndexedDB adapters.
-module.exports=async function installedCourse(files,{progress=()=>{}}={}){
+module.exports=async function installedCourse(files,{progress=()=>{},baselineOnly=false}={}){
 const B=require("./bootstrap.cjs")(files);
 function memoryIndexedDB(){
  const dbs=new Map(),clone=x=>x===undefined?undefined:JSON.parse(JSON.stringify(x));let tail=Promise.resolve(),failCommit=false;
@@ -29,6 +29,7 @@ await a.click({action:"course",course:"complete"});
 const authored=JSON.parse(files["examples/complete.study.json"]),baseline=B.core.analyze(authored).procurement;
 for(const view of JSON.parse(files["operator/desk.js"].match(/const views=(\[.*\]);/)[1]).map(x=>x[0])){await a.click({view});if(a.nodes.main.innerHTML.length<60)throw Error("View "+view);}check(true,"Every ordinary procurement savings reconciliation section renders through assembled production handlers");
 check(JSON.stringify(a.window.ProcurementDesk.assessment().result.procurement)===JSON.stringify(baseline),"Complete authored purchase allocation, signed credit, price and currency, costs and Finance and recurring work results remain exact");
+if(baselineOnly)return {schema:"procurement-savings.installed-assembly-course/v1",surface:"Actual final assembled production HTML with injected DOM and atomic IndexedDB",checks};
 a.nodes["installed-actor"].value="Authored procurement operator";a.nodes["installed-actor"].oninput();await a.settle();
 const kind="spend_lines",side="source",selectedSource=B.core.selected(a.window.ProcurementDesk.getSession().study,kind,side),sourceOriginal=a.window.ProcurementDesk.getSession().study.originals.find(x=>x.id===selectedSource.original_id),raw="\ufeff"+sourceOriginal.content.replace(/\r?\n/g,"\r\n"),key="intake:"+kind+":"+side;await a.loadFile(raw,"original-spend-lines.csv","csv:"+kind+":"+side);check(a.window.ProcurementDesk.getSession().drafts[key].content===raw,"Complete pending purchase source CSV retains BOM and CRLF");
 let form=a.formFor(key,{},"intake",{available_at:selectedSource.available_at,label:"Known original purchase source source"});await a.submit(form.form);check(a.window.ProcurementDesk.getSession().study.originals.some(x=>x.content===raw),"Actual mapped purchase source import retains the entire original");
