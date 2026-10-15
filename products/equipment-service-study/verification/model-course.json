@@ -1,5 +1,5 @@
 {
-  "execution": "Actual maintained domain modules executed in V8; no customer or OS/rendered-browser claim.",
+  "execution": "Actual maintained domain modules in V8. No customer run or rendered-browser/OS receiving claim.",
   "checks": [
     {
       "name": "All eight consecutive intakes remain accounted, including unsupported and declined work",
@@ -70,7 +70,7 @@
       "passed": true
     },
     {
-      "name": "A reinspection before actual repair completion cannot close the repair finding",
+      "name": "An otherwise valid reinspection before actual repair completion cannot close the repair finding",
       "passed": true
     },
     {

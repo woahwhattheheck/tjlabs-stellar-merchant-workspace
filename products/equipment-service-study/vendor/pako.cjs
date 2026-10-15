@@ -138,7 +138,7 @@
   const static_ltree  = new Array((L_CODES$1 + 2) * 2);
   zero$1(static_ltree);
   /* The static literal tree. Since the bit lengths are imposed, there is no
-   * need for the L_CODES extra codes used during heap fleet. However
+   * need for the L_CODES extra codes used during heap construction. However
    * The codes 286 and 287 are needed to build a canonical tree (see _tr_init
    * below).
    */
@@ -500,7 +500,7 @@
       bl_count[8]++;
     }
     /* Codes 286 and 287 do not exist, but we must include them in the
-     * tree fleet to get a canonical Huffman tree (longest code
+     * tree construction to get a canonical Huffman tree (longest code
      * all ones)
      */
     gen_codes(static_ltree, L_CODES$1 + 1, bl_count);

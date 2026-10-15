@@ -6,7 +6,7 @@ Source scope: Fictional original customer, site, unit, technical and commercial 
 
 Returned scope: Fictional returned mappings and actual-record observations for the complete eight-case course.
 
-Selected edition: 6da05e1a32b157f52b4d48921fae56afee72ea54a1495c6996a54f717726a9ef
+Selected edition: 67b819854c39b49ac9f3d3f9a5ac7f22435b201c0c968c7f2ae51513371fdd0f
 
 Comparison: selected_fields_match; review: unreviewed
 

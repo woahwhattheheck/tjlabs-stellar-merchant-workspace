@@ -18,13 +18,28 @@
     },
     {
       "path": "DOMAIN_CONTRACT.md",
-      "bytes": 9129,
-      "sha256": "0e8f001ee1c2d28498d7c394d98fe41d948953c2b6db7e9d78c09012b7dc0857"
+      "bytes": 9997,
+      "sha256": "0ef330200c9a3718000c785184c4da3031f8ca1b30ccd94358b0791fd54adbcc"
+    },
+    {
+      "path": "DOMAIN_HEADERS.json",
+      "bytes": 18486,
+      "sha256": "355a1876c01317dc1a232ca74286e2f22ae112945fa092cbd8219d08488c9d38"
     },
     {
       "path": "Equipment_Service_Study_Desk.html",
-      "bytes": 2341528,
-      "sha256": "4dd04311cb5dc8506a75910d3225c25f37823613feea2922506f725feecd943c"
+      "bytes": 2792464,
+      "sha256": "be93c6167b9d654fee14dd234123edc80a9e35e7b8ade177c14864ab5f279ddc"
+    },
+    {
+      "path": "FIELD_REFERENCE.md",
+      "bytes": 12186,
+      "sha256": "98a00a04b589d11b006588ce85ee9e491d1a837b763e24e208fefd31181ed873"
+    },
+    {
+      "path": "FINANCIAL_REPORT_PEER.md",
+      "bytes": 1130,
+      "sha256": "678f95832a921c3154a833c3545e7dbe4a8ad7ef3ffc2c192f01133f50334779"
     },
     {
       "path": "INSTALLED_OPERATION.md",
@@ -58,13 +73,13 @@
     },
     {
       "path": "SOURCE_MANIFEST.json",
-      "bytes": 21875,
-      "sha256": "e6897937b9d23f14e981749feec3db956cbf056ca534137681e2362478676497"
+      "bytes": 23752,
+      "sha256": "a2f4226deb3a08afb62ae22e7159b0d33b8c0fbb2eeb348bc977ee32e2713856"
     },
     {
       "path": "SOURCE_PROVENANCE.md",
-      "bytes": 1079,
-      "sha256": "43d920ccd91d8820f6867e62ffdd8e3541833d32f62e85ec40f462bbd20db079"
+      "bytes": 1566,
+      "sha256": "2b5ae79634314a80855cb8bef99ff8ade2d5aa196e3fb7c392e87d242fe43d55"
     },
     {
       "path": "application-provider.mjs",
@@ -97,6 +112,21 @@
       "sha256": "8d3a3d4d7f6c597e18eac49c211e5128da68a3f6322677b1edaec9c66fb4cb28"
     },
     {
+      "path": "contributions/financial-report-manifest.json",
+      "bytes": 924,
+      "sha256": "a38f88791dc8e12500ab1506a5ea6820d96052c25932f060702c351a9d1098eb"
+    },
+    {
+      "path": "contributions/financial-report-original-guide.md",
+      "bytes": 832,
+      "sha256": "281459e9f416b98f35d33e7934b557f45c8e90efabf6cd2bca6f51df374214fd"
+    },
+    {
+      "path": "contributions/service-commerce-manifest.json",
+      "bytes": 6969,
+      "sha256": "8f4b99def83c9ead10575910fd4cd98324d2a2f0f2af250650d90c0c262d826b"
+    },
+    {
       "path": "contributions/service-commerce.source.json",
       "bytes": 204058,
       "sha256": "7d9debc0f561bdc943c70ac96977d9ce64202e3ceb48e36a98870156814ce20e"
@@ -113,8 +143,8 @@
     },
     {
       "path": "examples/build-course.cjs",
-      "bytes": 21452,
-      "sha256": "da8ac4e143b8ac2d076c2f448a92718572e042eaaa0e11b15d7e9398e8867e06"
+      "bytes": 22006,
+      "sha256": "734bdfee12a0c2dea3a33fe4651ae6bc78cb1896c75cacee1cb71d6ba4fc2ec8"
     },
     {
       "path": "examples/canonical/commerce_approvals.csv",
@@ -204,17 +234,27 @@
     {
       "path": "examples/complete-report.md",
       "bytes": 4804,
-      "sha256": "837bd1deacd303a05ca3afdfd83b8b5049eb6fe2690aabad96077ec24319cab7"
+      "sha256": "ebc8449bc011523b76105a0665864209a48485c2bc7d4d2734224a58ab6aad6b"
     },
     {
       "path": "examples/complete.session.json",
       "bytes": 293955,
-      "sha256": "f00175f828cf85d223320f22fc6f4f73a806da3f8b85a4fb9741398390a120cc"
+      "sha256": "8032ee1a5ce0bbcf0d46a5494421404778cf3d287ab1156fabbffe36ad705eae"
     },
     {
       "path": "examples/complete.study.json",
       "bytes": 283587,
-      "sha256": "a0e00bb794277b81600217d00583dd7169c0da90341468e736ab3eb8bdc41bad"
+      "sha256": "857ecce5ab784858102724f232e4a2433bc3b7e5edbef8aaf31b97f04ce8f51e"
+    },
+    {
+      "path": "examples/financial-report-complete.json",
+      "bytes": 41988,
+      "sha256": "42d247cbbff3ccc759a3a5c2f29ebeb94707bebb0a1117cc27f54ac0e76ab9f6"
+    },
+    {
+      "path": "examples/financial-report-complete.study.json",
+      "bytes": 295996,
+      "sha256": "148ae22f0cce04d8631f582d2111bb7a51b86f8008468f1bf85d4031cec8cd8c"
     },
     {
       "path": "host/client.mjs",
@@ -343,8 +383,8 @@
     },
     {
       "path": "receiving/export-compression-course.cjs",
-      "bytes": 3729,
-      "sha256": "ce01d1ca510c5eb8123f407d8b09dd6083c19562da029d3a7388b5235e174b90"
+      "bytes": 3726,
+      "sha256": "a99bb48b16d3717de95f123ed8b36f944b10e70dce9535b42e975bb2d00790e1"
     },
     {
       "path": "receiving/host-course.cjs",
@@ -658,8 +698,8 @@
     },
     {
       "path": "vendor/pako.cjs",
-      "bytes": 238792,
-      "sha256": "cf0bbe4187ec43bd75378b177d2c28c2dd27ebde7e738591162ff67b35de1908"
+      "bytes": 238806,
+      "sha256": "e3c8f46f5a741598157ba051a9a0c043bcdc879c1867d3268e4058d4fae5fe3e"
     },
     {
       "path": "verification/browser-course.json",
@@ -672,14 +712,24 @@
       "sha256": "08150d0dc95598fbb9872ed1383a7b78237b0791a6fe83f76e52e894d0db1bb6"
     },
     {
+      "path": "verification/financial-report-peer.cjs",
+      "bytes": 3400,
+      "sha256": "d6b63bb7e93b82a8774cdd91ed435224a6ae6895718211f06f0ea7fec0a3bc0d"
+    },
+    {
+      "path": "verification/financial-report-peer.json",
+      "bytes": 871,
+      "sha256": "a034937ec4d9c49fc9a4fe235370986f72e2d8afe1a27e5da7a017663fb0f802"
+    },
+    {
       "path": "verification/installed-courses.json",
-      "bytes": 1370,
-      "sha256": "8f5a972f63ff242863b0f2679f75916b1e225935511448dd6c50f4039c0ff293"
+      "bytes": 29331,
+      "sha256": "6964577f7b02f2b615c002add53036afcedf7b98ce1ebbe408c24a72a2f5198d"
     },
     {
       "path": "verification/model-course.json",
-      "bytes": 2730,
-      "sha256": "d0f041d6fa09748eada5baae9908484c30d609ab8291539bb7b8ec4ac97e6ab1"
+      "bytes": 2752,
+      "sha256": "581a9b04bf13b8a785b4ce731963555fa5b66bf57fe72e6840c665218f4ee94c"
     },
     {
       "path": "verification/native-course.json",
@@ -687,9 +737,14 @@
       "sha256": "c27d7e4fa0fc3c583b4833bc6cc0ae966929b7e381023839d8480ebe73a36b63"
     },
     {
+      "path": "verification/source-closure.json",
+      "bytes": 541,
+      "sha256": "700383abc7c27d632c52691468c1ea11e82e47fad5919d95a2ed4e17e4dcd550"
+    },
+    {
       "path": "verify.cjs",
-      "bytes": 1258,
-      "sha256": "b96067bbf0a7c631c9b46b9ef910e687261bc490f11c114d0fb166c209176d50"
+      "bytes": 1353,
+      "sha256": "016b91883707c74707f105c8b6212c9db4bfd2997f261f97a00077fbe7a730b2"
     },
     {
       "path": "zip.cjs",

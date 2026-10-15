@@ -1,10 +1,10 @@
 {
   "schema": "equipment-service.source-session/v1",
-  "id": "session-1792070696140-agylmy",
+  "id": "session-1792071212269-bp7kz9",
   "revision": 0,
   "study": {
     "schema": "equipment-service.source-study/v1",
-    "id": "study-1792070639292-zjfiz",
+    "id": "study-1792071154005-pdokp",
     "config": {
       "label": "Complete authored equipment-service workflow",
       "data_class": "authored_course",

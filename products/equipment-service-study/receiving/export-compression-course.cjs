@@ -1,11 +1,9 @@
 'use strict';
 module.exports=async function compareExportCompression({files,workload,zipSource=files['src/connected_zip.cjs'],pakoSource=files['vendor/pako.cjs'],sourceHead=null,progress=()=>{}}){
  const started=Date.now(),strip=s=>s.replace(/^import .*;\s*$/gm,'').replace(/^export /gm,'');
- const course=files["receiving/host-course.cjs"],marker='const at="2026-10-15T08:00:00Z"';
- if(course.indexOf(marker)<0)throw Error("Select the maintained installed host course");
- const adapter={exports:{}};
- Function("module","exports",course.slice(0,course.indexOf(marker))+'return B;\n};')(adapter,adapter.exports);
- const B=await adapter.exports(files),Z={exports:{}},P={exports:{}};
+ const course=files["receiving/host-course.cjs"],loaderStart=course.indexOf("const B=(()=>{"),loaderEnd=course.indexOf("})(),{core",loaderStart);
+ if(loaderStart<0||loaderEnd<0)throw Error("Select the maintained installed host course");
+ const B=Function("files","return (()=>{"+course.slice(loaderStart+"const B=(()=>{".length,loaderEnd)+"})();")(files),Z={exports:{}},P={exports:{}};
  Function("module","exports","require",zipSource)(Z,Z.exports,()=>{throw Error("Use the declared raw codec")});
  Function("module","exports",pakoSource)(P,P.exports);
  let captured;const oldPack=B.zip.packStoredZip;

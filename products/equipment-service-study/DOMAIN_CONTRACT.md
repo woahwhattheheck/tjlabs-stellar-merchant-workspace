@@ -61,3 +61,9 @@ A paired subset may have a valid signed current-minus-baseline difference while 
 Current study reviews bind the complete selected source and plan digest. Earlier acceptance remains historical after changes. Full portable sessions retain unfinished forms, import candidates, prior studies, compacted immutable history and competing browser branches. A failed save must preserve the exact pending form for recovery.
 
 Ordinary exports contain readable reports, canonical CSV projections, column availability, full original files, documents, source editions, review history, complete session and maintained application source. Native record corrections bind study ID and selected extract ID before applying a row index. Use the complete session to move devices without losing pending work.
+
+## Historical technical bindings
+
+An intake binds the customer unit and site at actual receipt. An inspection or work observation uses its actual event time; a later legitimate unit movement does not rewrite the earlier service. Certificate support is evaluated using inspection and original evidence available at issuance, work available at signing, and actual deficiencies known at issuance. Later office arrivals cannot retrospectively support the earlier certificate. A required repair reinspection must start after the actual completed repair, while the original finding and all preceding states remain retained.
+
+Distinct current source records claiming the same business report ID are unresolved. They cannot share an input list and appear as two complete reports. Report-source bindings, full population and named review completion remain separately visible.
