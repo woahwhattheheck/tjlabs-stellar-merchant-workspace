@@ -228,8 +228,8 @@
     },
     {
       "path": "receiving/installed-result.json",
-      "bytes": 2528,
-      "sha256": "757cd94d9c7c41bae640a273721e22989d8d1077ac4e0381f916303732480ce3"
+      "bytes": 2774,
+      "sha256": "3f8874c8030f866226cb702155dce3a554aa5dee9effae73d9063f05caea6b66"
     },
     {
       "path": "runtime.mjs",
@@ -308,8 +308,8 @@
     },
     {
       "path": "workbench/installed-operator.js",
-      "bytes": 18519,
-      "sha256": "5a538d397128dda348d811b49996d68543240c757df2b462484d01e3ddeb97af"
+      "bytes": 18537,
+      "sha256": "537e016d6f6e82e6afade7050451217ba8cf32236ff658f6483cb1b99ab1d117"
     },
     {
       "path": "workbench/installed-template.html",

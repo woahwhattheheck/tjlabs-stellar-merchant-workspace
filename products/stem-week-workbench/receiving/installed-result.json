@@ -63,5 +63,15 @@
     "sharedOriginalWorkspaces": 4,
     "expandedBytes": 227966,
     "proposalMetadataBytes": 43110
+  },
+  "rejectedContext": {
+    "schema": "stellar-forge.stem-rejected-context-course.v1",
+    "capacity": 7010,
+    "fields": [
+      "basis",
+      "target"
+    ],
+    "completeEditorUnchanged": true,
+    "displayedSelectionRestored": true
   }
 }

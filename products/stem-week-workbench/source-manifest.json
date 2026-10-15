@@ -223,8 +223,8 @@
     },
     {
       "path": "receiving/installed-result.json",
-      "bytes": 2669,
-      "sha256": "556becdddf0c57d434cae6b749737d45589d32f10ac90179078fd430bc4fae47"
+      "bytes": 2911,
+      "sha256": "9f3c0ae504bd1c02ae10c3c48def5e06182532cf389ee4d295fbb14a35de3e9a"
     },
     {
       "path": "receiving/ui-handler-course.js",
@@ -373,8 +373,8 @@
     },
     {
       "path": "workbench/installed-operator.js",
-      "bytes": 18820,
-      "sha256": "ee74b2bc4a9af22a71687003978a8c658b7fdd7746ae06721cd465279fb24bdd"
+      "bytes": 18829,
+      "sha256": "cfbec7bac864fffe81223d82e1f04c843763f6254a8ade2d881a33d7c5dd3545"
     },
     {
       "path": "workbench/installed-template.html",
