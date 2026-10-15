@@ -1,0 +1,9 @@
+{
+  "originalBytes": 4451298,
+  "checkpointBytes": 339922,
+  "nodes": 3087,
+  "sha256": "fe8efb15ea42dc0d404efdf2f84f7a693c1edcc913fbfde1082bf065c08922ae",
+  "exactRoundTrip": true,
+  "changedReferenceRejected": true,
+  "elapsedMs": 7163
+}
