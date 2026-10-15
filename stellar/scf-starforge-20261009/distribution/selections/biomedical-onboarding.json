@@ -172,7 +172,7 @@
   "product": {
     "schema": "stellar-forge.merchant-product-package.v1",
     "description": "Complete administrative source/return comparison with eight record families, exact report files, named reviews and recoverable editable sessions",
-    "readme": "products/biomedical-onboarding/OPERATING.md",
+    "readme": "products/biomedical-onboarding/INSTALLED_OPERATION.md",
     "bin": {
       "starforge": "stellar/scf-starforge-20261009/distribution/cli.mjs"
     },

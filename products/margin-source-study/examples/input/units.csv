@@ -1,0 +1,13 @@
+id,sku_id,source_unit,basis_unit,factor_numerator,factor_denominator,source_ref
+AXkg,AX,kg,kg,1,1,authored/example-source
+AXg,AX,g,kg,1,1000,authored/example-source
+AYkg,AY,kg,kg,1,1,authored/example-source
+AYg,AY,g,kg,1,1000,authored/example-source
+BXkg,BX,kg,kg,1,1,authored/example-source
+BXg,BX,g,kg,1,1000,authored/example-source
+BYkg,BY,kg,kg,1,1,authored/example-source
+BYg,BY,g,kg,1,1000,authored/example-source
+CXkg,CX,kg,kg,1,1,authored/example-source
+CXg,CX,g,kg,1,1000,authored/example-source
+CYkg,CY,kg,kg,1,1,authored/example-source
+CYg,CY,g,kg,1,1000,authored/example-source

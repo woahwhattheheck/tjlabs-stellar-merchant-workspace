@@ -1,0 +1,13 @@
+id,site_id,sku_id,period_id,slice_key,good_quantity,good_unit_id,input_quantity,input_unit_id,output_scope,input_scope,included,exclusion_reason,source_ref
+prodAXP0,A,AX,P0,AXP0-disjoint-lot,100000,AXg,125,AXkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source
+prodAYP0,A,AY,P0,AYP0-disjoint-lot,100,AYkg,125,AYkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source
+prodAXP1,A,AX,P1,AXP1-disjoint-lot,200000,AXg,225,AXkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source
+prodAYP1,A,AY,P1,AYP1-disjoint-lot,50,AYkg,75,AYkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source
+prodBXP0,B,BX,P0,BXP0-disjoint-lot,100000,BXg,125,BXkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source
+prodBYP0,B,BY,P0,BYP0-disjoint-lot,100,BYkg,125,BYkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source
+prodBXP1,B,BX,P1,BXP1-disjoint-lot,100000,BXg,125,BXkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source
+prodBYP1,B,BY,P1,BYP1-disjoint-lot,100,BYkg,125,BYkg,Accepted raw net mass,Raw net ingredients,true,,authored/example-source
+prodCXP0,C,CX,P0,CXP0-disjoint-lot,100000,CXg,125,CXkg,Accepted cooked net mass,Wet ingredients plus additions,true,,authored/example-source
+prodCYP0,C,CY,P0,CYP0-disjoint-lot,100,CYkg,125,CYkg,Accepted cooked net mass,Wet ingredients plus additions,true,,authored/example-source
+prodCXP1,C,CX,P1,CXP1-disjoint-lot,100000,CXg,125,CXkg,Accepted cooked net mass,Wet ingredients plus additions,true,,authored/example-source
+prodCYP1,C,CY,P1,CYP1-disjoint-lot,100,CYkg,125,CYkg,Accepted cooked net mass,Wet ingredients plus additions,true,,authored/example-source

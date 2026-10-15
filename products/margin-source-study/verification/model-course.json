@@ -1,0 +1,230 @@
+{
+  "schema": "margin.authored-course/v1",
+  "data_class": "authored_course",
+  "checks": [
+    {
+      "name": "Whole source return repair retains first editions",
+      "passed": true
+    },
+    {
+      "name": "Reference mix and actual exposure remain signed and separate",
+      "passed": true
+    },
+    {
+      "name": "Gross margin and accepted cash never double subtract labour",
+      "passed": true
+    },
+    {
+      "name": "Cross-site cooked definition stays unmatched",
+      "passed": true
+    },
+    {
+      "name": "Duplicate economic source and incomplete allocation suppress rates",
+      "passed": true
+    },
+    {
+      "name": "Later correction cannot enter earlier knowledge",
+      "passed": true
+    },
+    {
+      "name": "Partial fiscal period remains incomplete",
+      "passed": true
+    },
+    {
+      "name": "Scope mismatch does not silently omit included production",
+      "passed": true
+    },
+    {
+      "name": "Role reviews bind full current source edition",
+      "passed": true
+    },
+    {
+      "name": "Whole unfinished form and prior branch reopen",
+      "passed": true
+    },
+    {
+      "name": "Every original and normalised report export survives",
+      "passed": true
+    }
+  ],
+  "first_findings": 3,
+  "corrected_findings": 0,
+  "baseline_comparison": {
+    "id": "baseline-A",
+    "label": "Plant A matched week comparison",
+    "kind": "baseline_current",
+    "reference_site_id": "A",
+    "reference_period_id": "P0",
+    "current_site_id": "A",
+    "current_period_id": "P1",
+    "equivalence_basis": "Same authored recipe, net good-output and disjoint lot basis",
+    "source_ref": "authored/example-source",
+    "comparison_keys": [
+      "X",
+      "Y"
+    ],
+    "complete": true,
+    "reference_period": {
+      "id": "P0",
+      "label": "Reference fiscal week",
+      "starts_at": "2026-09-28T00:00:00Z",
+      "ends_at": "2026-10-05T00:00:00Z",
+      "calendar_basis": "Authored Monday fiscal week, UTC boundaries",
+      "external_ref": "authored/example-source",
+      "valid": true,
+      "closed": true,
+      "duration_hours": 168,
+      "source": {
+        "original_id": "original-4f3f71543b50ba3197879ef9e23443a4",
+        "sha256": "b81e8af5bc22d135edebf6e985a3c80d22ae6e3584fdb194b039a6a0ba6be1da",
+        "extract_id": "extract-11858a446c3e2ca722f4b613fe6061ee",
+        "name": "returned-periods.csv",
+        "line_start": 2,
+        "line_end": 2
+      }
+    },
+    "current_period": {
+      "id": "P1",
+      "label": "Current fiscal week",
+      "starts_at": "2026-10-05T00:00:00Z",
+      "ends_at": "2026-10-12T00:00:00Z",
+      "calendar_basis": "Authored Monday fiscal week, UTC boundaries",
+      "external_ref": "authored/example-source",
+      "valid": true,
+      "closed": true,
+      "duration_hours": 168,
+      "source": {
+        "original_id": "original-4f3f71543b50ba3197879ef9e23443a4",
+        "sha256": "b81e8af5bc22d135edebf6e985a3c80d22ae6e3584fdb194b039a6a0ba6be1da",
+        "extract_id": "extract-11858a446c3e2ca722f4b613fe6061ee",
+        "name": "returned-periods.csv",
+        "line_start": 3,
+        "line_end": 3
+      }
+    },
+    "strata": [
+      {
+        "comparison_key": "X",
+        "reference_sku": "AX",
+        "current_sku": "AX",
+        "comparable": true,
+        "reference_good_quantity": {
+          "numerator": "100",
+          "denominator": "1",
+          "decimal": "100"
+        },
+        "current_good_quantity": {
+          "numerator": "200",
+          "denominator": "1",
+          "decimal": "200"
+        },
+        "reference_cost_rate": {
+          "numerator": "2",
+          "denominator": "1",
+          "decimal": "2"
+        },
+        "current_cost_rate": {
+          "numerator": "3",
+          "denominator": "2",
+          "decimal": "1.5"
+        },
+        "current_minus_reference_cost_per_unit": {
+          "numerator": "-1",
+          "denominator": "2",
+          "decimal": "−0.5"
+        },
+        "fixed_reference_volume_cost_change": {
+          "numerator": "-50",
+          "denominator": "1",
+          "decimal": "−50"
+        },
+        "actual_current_volume_cost_change": {
+          "numerator": "-100",
+          "denominator": "1",
+          "decimal": "−100"
+        },
+        "physical_yield_ratio_change": {
+          "numerator": "4",
+          "denominator": "45",
+          "decimal": "0.088888888889"
+        },
+        "issue": null
+      },
+      {
+        "comparison_key": "Y",
+        "reference_sku": "AY",
+        "current_sku": "AY",
+        "comparable": true,
+        "reference_good_quantity": {
+          "numerator": "100",
+          "denominator": "1",
+          "decimal": "100"
+        },
+        "current_good_quantity": {
+          "numerator": "50",
+          "denominator": "1",
+          "decimal": "50"
+        },
+        "reference_cost_rate": {
+          "numerator": "4",
+          "denominator": "1",
+          "decimal": "4"
+        },
+        "current_cost_rate": {
+          "numerator": "5",
+          "denominator": "1",
+          "decimal": "5"
+        },
+        "current_minus_reference_cost_per_unit": {
+          "numerator": "1",
+          "denominator": "1",
+          "decimal": "1"
+        },
+        "fixed_reference_volume_cost_change": {
+          "numerator": "100",
+          "denominator": "1",
+          "decimal": "100"
+        },
+        "actual_current_volume_cost_change": {
+          "numerator": "50",
+          "denominator": "1",
+          "decimal": "50"
+        },
+        "physical_yield_ratio_change": {
+          "numerator": "-2",
+          "denominator": "15",
+          "decimal": "−0.133333333333"
+        },
+        "issue": null
+      }
+    ],
+    "reference_quantity": {
+      "numerator": "200",
+      "denominator": "1",
+      "decimal": "200"
+    },
+    "current_quantity": {
+      "numerator": "250",
+      "denominator": "1",
+      "decimal": "250"
+    },
+    "reference_mix_weighted_rate_change": {
+      "numerator": "1",
+      "denominator": "4",
+      "decimal": "0.25"
+    },
+    "fixed_reference_volume_cost_change": {
+      "numerator": "50",
+      "denominator": "1",
+      "decimal": "50"
+    },
+    "actual_current_volume_cost_change": {
+      "numerator": "-50",
+      "denominator": "1",
+      "decimal": "−50"
+    },
+    "issues": [],
+    "interpretation": "Current minus reference. Positive means higher direct cost; negative means lower direct cost. Fixed reference volume and actual current volume are distinct exposures. These are observed matched-rate comparisons, not recovered cash, forecasts, causal estimates or automatically additive opportunities."
+  },
+  "source_originals": 25
+}
