@@ -4609,8 +4609,8 @@
     },
     {
       "path": "receiving/host-course.cjs",
-      "bytes": 15722,
-      "sha256": "1b7a45ac8d1f26671dafda12bab69800d3248fc99c1c495e74e624917404bb46"
+      "bytes": 16980,
+      "sha256": "970691f9a53848afe1aa3e82df6feda563df24335f7fea12f898a5724f074cab"
     },
     {
       "path": "receiving/portable-course.cjs",
