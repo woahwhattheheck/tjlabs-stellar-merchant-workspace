@@ -1,0 +1,181 @@
+{
+  "schema": "commons.source-successor-derivation.v1",
+  "parentIdentity": "4dbc599a19847ca574dbaf8d651241f2e3f108b4588acd7f8ad809477bd685ce",
+  "parentIndexSha256": "d55c589bbd68fd8c3c3e6a0e149e2e9e84ac7c1f59476b5fd959dabda924a8b2",
+  "sourceVersion": "Procurement standalone664; merged616bf52ded7359b880c01700db6a226ab8cfe35a; sourceSHA2565ab66ebde2b3d87780ea4dfa64180a0ce1fbbfafadb8fca1e96e5308f11c2f8e",
+  "compression": {
+    "engine": "pako",
+    "level": 1
+  },
+  "changes": [
+    {
+      "name": "source/application-provider.mjs",
+      "before": {
+        "bytes": 4211,
+        "sha256": "a99383bdeb4b1591e5ec73860dba5effa08235ec664fd7a391045d858124a88b"
+      },
+      "after": {
+        "bytes": 4186,
+        "sha256": "fa15ef467345d65c222630a2dad0f099ef421329ede5811bf92cb921bb804757"
+      }
+    },
+    {
+      "name": "source/host/export-core.mjs",
+      "before": {
+        "bytes": 13147,
+        "sha256": "552094ed1fdcf72f7cf036d5b8294b021b516b547442a9a9b155ca7c105d30f7"
+      },
+      "after": {
+        "bytes": 13249,
+        "sha256": "e24f2e0062175fda001f15a15ec088e830039a1f80469bbac47120cd0cede5bd"
+      }
+    },
+    {
+      "name": "source/host/store.mjs",
+      "before": {
+        "bytes": 5753,
+        "sha256": "c7c2bd63266cb7979b19b3ee1bede5b9935beb1b2d1c8e29854628902fb3ffe8"
+      },
+      "after": {
+        "bytes": 5723,
+        "sha256": "5182bc611d45cb5f06813333e8a2f4579ed18567cee8283cc655be987c036a49"
+      }
+    },
+    {
+      "name": "source/INSTALLED_RECEIVING.md",
+      "before": {
+        "bytes": 2246,
+        "sha256": "0b26cfbbe3fec0686589bcf84540824218e7b462f7201a99d72dbe64cad1be2c"
+      },
+      "after": {
+        "bytes": 3045,
+        "sha256": "ba296501d2968e52d9b65e3e7aa09429b4bff0bcbb4fbdad637716df9d866a09"
+      }
+    },
+    {
+      "name": "source/merchant-provider.mjs",
+      "before": {
+        "bytes": 2626,
+        "sha256": "61376ad304f8df2511df19b0dc15d4e98e8888e673281687f06fc1c883162cae"
+      },
+      "after": {
+        "bytes": 2618,
+        "sha256": "f3a64185d080e3fc795d216c5a2c2e052cb4ff6474fff20f50b400dba89035fe"
+      }
+    },
+    {
+      "name": "source/receiving/complete-archive-readback.cjs",
+      "before": {
+        "bytes": 5665,
+        "sha256": "ba82a260a3d7c6dcfae6d551732eea0aecda36765563e1bd4c2163d471899b50"
+      },
+      "after": {
+        "bytes": 5666,
+        "sha256": "a3604920593a4b20aef4734b02ca8c05b636d763e1c489456dd8574770756e34"
+      }
+    },
+    {
+      "name": "source/receiving/prepared-stream.cjs",
+      "before": {
+        "bytes": 16041,
+        "sha256": "1b19289347d8f6e4306afff632abc88e3bf8e36171a32b731426257671741f55"
+      },
+      "after": {
+        "bytes": 17023,
+        "sha256": "8f0c8427c71ffd7584638c5f56ee52c65eba58a1a90ced010327671fe3af45b7"
+      }
+    },
+    {
+      "name": "source/setup.mjs",
+      "before": {
+        "bytes": 2723,
+        "sha256": "c413af5ded24eec46201ce7c5ee5950f7f7865625999acc8f172fbe948495db6"
+      },
+      "after": {
+        "bytes": 2695,
+        "sha256": "0ec9c808c723c71c9c73522a4b49031d36da9189908a0f67a07a24762fa00ef2"
+      }
+    },
+    {
+      "name": "source/SOURCE_MANIFEST.json",
+      "before": {
+        "bytes": 126626,
+        "sha256": "3a88ae9c45ebd6585ae083d2a9464fd92285308a732f5563ba20c40c572dfdde"
+      },
+      "after": {
+        "bytes": 134740,
+        "sha256": "eaabb2a5796c683c8cc417f808025c4402f4ab7c928f70a6c66362499d1ed6ad"
+      }
+    },
+    {
+      "name": "source/src/connected_gzip.cjs",
+      "before": null,
+      "after": {
+        "bytes": 47127,
+        "sha256": "1fc9f3b218c60d029c96bf9f1c1e4de5fcb86918ed5a0570586dc81488440119"
+      }
+    },
+    {
+      "name": "source/vendor/merchant-shared/merchant/provider-contract.mjs",
+      "before": null,
+      "after": {
+        "bytes": 6260,
+        "sha256": "abbc3a9f344f7e1be07f3085e6554f2c0ce1ccf131338d7ffa36f5694628394b"
+      }
+    },
+    {
+      "name": "source/vendor/merchant-shared/operations/history.mjs",
+      "before": null,
+      "after": {
+        "bytes": 42366,
+        "sha256": "5928c1243549c7db21942bb6ce7188060b32e5e75d4690374a88fe7b2ed96de5"
+      }
+    },
+    {
+      "name": "source/vendor/merchant-shared/runtime-workspace/application-provider.mjs",
+      "before": null,
+      "after": {
+        "bytes": 9395,
+        "sha256": "0f638caeeaa5c78560ebd262c0e410cb0dfd4fcd886748f5136cd08755e019c9"
+      }
+    },
+    {
+      "name": "source/vendor/merchant-shared/runtime-workspace/storage.mjs",
+      "before": null,
+      "after": {
+        "bytes": 23911,
+        "sha256": "d42495664abaf6f43d1ce4d92ba7cbcbe07c554310f1c2f58d068c208fcc57fa"
+      }
+    },
+    {
+      "name": "source/source-manifest.json",
+      "before": null,
+      "after": {
+        "bytes": 134759,
+        "sha256": "7c96b5ee190ae89d18c1f43adbedbf34b3eb5af1548ea89f4d101ca55e75f3f2"
+      }
+    },
+    {
+      "name": "working/Procurement_Savings_Reconciliation_Study_Editable.html",
+      "before": {
+        "bytes": 10616585,
+        "sha256": "000c4c32b2244c97314a5eb3b0d933827eca17dc55c629bff58a239a6d287d7d"
+      },
+      "after": {
+        "bytes": 10738072,
+        "sha256": "dd89d2b560805b7d1d86c0216f097325f4ee4e0c5b13e2a1476ae9abc5d586c0"
+      }
+    },
+    {
+      "name": "EXPORT_MANIFEST.json",
+      "before": {
+        "bytes": 6948532,
+        "sha256": "f5b274eb479839c5f7dd393c875ec550b47ece26bad034cbdc7c5e3ed3143c14"
+      },
+      "after": {
+        "bytes": 6949646,
+        "sha256": "985f25c2a6e1f2412a09f6ddb37855d37162f95c32612fc6e631238b5cbe1985"
+      }
+    }
+  ]
+}
