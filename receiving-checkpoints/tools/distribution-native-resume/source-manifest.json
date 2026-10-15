@@ -1,26 +1,30 @@
 {
-  "schema": "commons.source-manifest/v1",
-  "operation": "A74F-DISTRIBUTION-COMPLETE-NATIVE-RESUME-20261015",
+  "schema": "commons.source-manifest.v1",
   "files": [
     {
       "path": "resume-core.cjs",
-      "bytes": 4129,
-      "sha256": "5d1b5af10cf6c1719956b1e18e05e17039df84bdac4092fb96e792b6b3e3d47d"
+      "bytes": 7494,
+      "sha256": "50b80905b0dd5ffe09724bfa027aa4bd9739a3620c29157bbc43715fa0e76c56"
     },
     {
       "path": "resume-complete-course.cjs",
-      "bytes": 5772,
-      "sha256": "469621a8bab9a0b1340777e73ec8f79076b7a566285bd7ba57f79dc8bd0d046d"
+      "bytes": 5643,
+      "sha256": "6d0b52e13c8affc99edbe2e1b6281fad291a1c8dd8284891076cd60437967061"
     },
     {
       "path": "README.md",
-      "bytes": 3889,
-      "sha256": "f7cb6464c7bfb7a5ad3dbfcb04d89162466f70449fcc08d0ac5a28ec6b4f6288"
+      "bytes": 4071,
+      "sha256": "c9921cf6315d2c12ffa0b65a256556dff89f657aae286331ea9be5e384cdd8c7"
     },
     {
-      "path": "focused-result.json",
-      "bytes": 2045,
-      "sha256": "fb0b175afadea73b0dab5bbb236f8070abca6faa7ac05bd9b090e88af55f7d5b"
+      "path": "retained-selection-result.json",
+      "bytes": 1898,
+      "sha256": "99e46017b180bcebf21835119eaf4d7c19f5692e0ad027fd75c4c5ed40b7b81c"
+    },
+    {
+      "path": "retained-operation.json",
+      "bytes": 2783,
+      "sha256": "2056012e9dd6b377fc48b70b16170e7e69e6b6476ce860f25b8ec5c867582812"
     }
   ]
 }

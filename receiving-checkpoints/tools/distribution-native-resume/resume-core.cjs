@@ -32,4 +32,39 @@ function restore(graph,receipt,source,identity){
  if(JSON.stringify(observed)!==JSON.stringify(receipt))throw Error('Saved checkpoint receipt differs from its exact input and complete state');
  return value;
 }
-module.exports={hydrate,compact,rank,binding,describe,restore};
+
+
+function prepareResume(input,payload,digest){
+ if(typeof digest!=='function')throw Error('Supply exact UTF-8 byte and SHA-256 hashing');
+ const legacy=input.edition==='distribution-original-complete-merchant-course-resume-imports24';
+ if(!legacy&&input.edition!=='distribution-original-complete-merchant-course-resume-retained')throw Error('Unexpected retained-input edition');
+ const source=binding({...input,edition:'distribution-original-complete-merchant-course-resume-imports24'},payload);
+ const resume=hydrate(payload.checkpoint),identity=digest(JSON.stringify(payload.checkpoint));
+ const observed=describe(resume,identity,source);
+ if(legacy){
+  if(resume.phase!=='imports-24'||resume.records.length!==24||resume.editions.length!==25||resume.checks.length!==24||resume.state.sequence!==24)throw Error('Original complete prefix differs');
+  if(payload.initialCheckpoint!==undefined||payload.courseOverlay!==undefined)throw Error('Legacy original input has an undeclared overlay');
+  return {source,resume,files:payload.files};
+ }
+ const p=payload.initialCheckpoint;
+ if(!p||!/^([a-f0-9]{40})$/.test(p.originCommit||'')||typeof p.originManifest!=='string'||p.originManifest.startsWith('/')||p.originManifest.includes(String.fromCharCode(92))||p.originManifest.split('/').some(x=>!x||x==='.'||x==='..'))throw Error('Retain the original checkpoint commit and manifest');
+ for(const key of ['phase','requests','editions','checks','sequence','stateSha256'])if(p[key]!==observed[key])throw Error('Retained initial checkpoint differs: '+key);
+ if(p.bytes!==identity.bytes||p.sha256!==identity.sha256)throw Error('Retained initial checkpoint byte identity differs');
+ const expected={
+  'complete-imports':[42,43,42,42],
+  'before-pinned-reads':[44,45,45,43],
+  'after-pinned-reads':[44,45,46,43],
+  'complete-course':[45,46,48,44]
+ }[resume.phase];
+ if(!expected||[observed.requests,observed.editions,observed.checks,observed.sequence].some((v,i)=>v!==expected[i]))throw Error('Retain one exact completed original receiving phase');
+ const overlay=payload.courseOverlay,coursePath='receiving/host-course.cjs';
+ const before='assessment.result.distribution.status==="population_for_review"',after='assessment.result.distribution.status==="population_unresolved"';
+ const original=payload.files?.[coursePath];
+ if(!overlay||overlay.path!==coursePath||overlay.before!==before||overlay.after!==after||typeof original!=='string'||original.split(before).length!==2)throw Error('Use the exact one-literal original course correction');
+ const originalIdentity=digest(original),executed=original.replace(before,after),executedIdentity=digest(executed);
+ if(overlay.originalBytes!==originalIdentity.bytes||overlay.originalSha256!==originalIdentity.sha256||overlay.executedBytes!==executedIdentity.bytes||overlay.executedSha256!==executedIdentity.sha256)throw Error('Course overlay identities differ');
+ source.initialCheckpoint={...p};
+ source.courseOverlay={path:coursePath,before,after,originalBytes:originalIdentity.bytes,originalSha256:originalIdentity.sha256,executedBytes:executedIdentity.bytes,executedSha256:executedIdentity.sha256,reason:'Correct the stale expected population status while preserving exact Merchant/core equality and the post-cutoff missing-edition check'};
+ return {source,resume,files:{...payload.files,[coursePath]:executed}};
+}
+module.exports={hydrate,compact,rank,binding,describe,restore,prepareResume};
