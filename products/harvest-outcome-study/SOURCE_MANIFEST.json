@@ -1,6 +1,6 @@
 {
   "schema": "commons.source-manifest.v1",
-  "edition": "harvest-complete-installed-history-order-20261015",
+  "edition": "harvest-complete-installed-history-read-cache-20261015",
   "members": [
     {
       "path": "DOMAIN_CONTRACT.md",
@@ -76,6 +76,46 @@
       "path": "context-source-view.cjs",
       "bytes": 8028,
       "sha256": "11ccf4417b6bd466310e5e1488e18a61aaf69a65e6a20b78c94add0115e0c307"
+    },
+    {
+      "path": "contributions/carrier-read-throughput/README.md",
+      "bytes": 2348,
+      "sha256": "c5962bde26f8f524d71e35a89b4346b58b51627ee621e4e9525117d20d9f2330"
+    },
+    {
+      "path": "contributions/carrier-read-throughput/SOURCE_MANIFEST.json",
+      "bytes": 1113,
+      "sha256": "9092d21016807c28e511c531fcf887edd13d8e6ddb5f0a308774230790b43ff0"
+    },
+    {
+      "path": "contributions/carrier-read-throughput/after/host-model.cjs",
+      "bytes": 5679,
+      "sha256": "5e0e5a74efd5b619fd12f04f8528a274fa15d06aa9d8bdbdf1598fce08f74304"
+    },
+    {
+      "path": "contributions/carrier-read-throughput/before/host-model.cjs",
+      "bytes": 5181,
+      "sha256": "076e52ec6f5de98ad4145c61d9d46a3c19db1acccb46ce4344f68c8538692d33"
+    },
+    {
+      "path": "contributions/carrier-read-throughput/changed-source-and-isolation.json",
+      "bytes": 709,
+      "sha256": "3e2779ff847f67dd4ee6d351f1f0eb2a6680f727bd02fca0f0ae7a253c9f8e18"
+    },
+    {
+      "path": "contributions/carrier-read-throughput/checkpoint-selection.cjs",
+      "bytes": 830,
+      "sha256": "c8ff95f8b70342a77c55b05e397f1b9c0e574846794ebdf177ac030a04af0a77"
+    },
+    {
+      "path": "contributions/carrier-read-throughput/measure-complete-read.cjs",
+      "bytes": 2679,
+      "sha256": "ecbaf81dc5335942a95c6f4b4fb4ff5133d90d57e8b626c479b8f088aa93e45c"
+    },
+    {
+      "path": "contributions/carrier-read-throughput/measurement.json",
+      "bytes": 2060,
+      "sha256": "a8645eaff456516c43b70796d05fcb82b38f7c4bb0f7e5cb68a7f9879d53f736"
     },
     {
       "path": "contributions/harvest-reviewed.source.json",
@@ -384,8 +424,8 @@
     },
     {
       "path": "host/model.cjs",
-      "bytes": 5163,
-      "sha256": "8c1badd80b487e07a108d3f243d62840f7173d53e23c6313025ea7ced369b39f"
+      "bytes": 5661,
+      "sha256": "5cb71cef069f413283dfe528d37119adad6615903dfe735a366b55b1a772b007"
     },
     {
       "path": "host/server.mjs",
@@ -496,6 +536,11 @@
       "path": "receiving/portable-course.cjs",
       "bytes": 13167,
       "sha256": "9aa2d03a44fa7200b3e904582d981fbe73af6535c561f7eccf28593336393e27"
+    },
+    {
+      "path": "receiving/read-cache-course.cjs",
+      "bytes": 2659,
+      "sha256": "e76a525b4844749503c80b3cc13a03de8fa593cd8e68b019ae26b71a91300f3c"
     },
     {
       "path": "receiving/source-bytes-course.cjs",
@@ -754,8 +799,8 @@
     },
     {
       "path": "verification/installed-courses.json",
-      "bytes": 29767,
-      "sha256": "79d0153762e655426d2ea9ca58a12afda08cf716dcf6c839440f50cee7e1e149"
+      "bytes": 31776,
+      "sha256": "1c935953551da41fd983af75e87d0cfec237b9123fa276686709f08cf90d96e4"
     },
     {
       "path": "verification/model-course.json",
@@ -776,6 +821,11 @@
       "path": "verification/protocol-context-peer.json",
       "bytes": 264,
       "sha256": "046957431c5138df58441e0c86f4b994498180014ecf4c3ce8a3ec2c48051446"
+    },
+    {
+      "path": "verification/read-cache-replay.json",
+      "bytes": 1419,
+      "sha256": "0140faee648b843ac7ff2471129e4fba5e5112d621a1acf4bd0e209d9a69aadb"
     },
     {
       "path": "verify-harvest.cjs",
