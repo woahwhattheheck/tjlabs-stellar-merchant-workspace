@@ -1,0 +1,42 @@
+{
+  "schema": "stemwise.independent-source-receiving.v1",
+  "source_sha256": "5efdace76182fdc28e58827ffc1f605c8e0562e6c577d97111c80398161a0dd4",
+  "checks": [
+    {
+      "name": "Forecast stays separate from 140 confirmed stems",
+      "passed": true
+    },
+    {
+      "name": "Unreceived projected local buy-in stays missing actual",
+      "passed": true
+    },
+    {
+      "name": "Decision does not invent receipt",
+      "passed": true
+    },
+    {
+      "name": "Exact receipt produces two-stem shortage and leaves prior choice on prior edition",
+      "passed": true
+    },
+    {
+      "name": "Correction ID cannot silently move to a changed source",
+      "passed": true
+    },
+    {
+      "name": "Complete source editions and original BOM CRLF survive reopen",
+      "passed": true
+    }
+  ],
+  "final_summary": {
+    "varieties": 3,
+    "confirmedCommitments": 1,
+    "tentativeCommitments": 1,
+    "cancelledCommitments": 0,
+    "knownSelectedSupply": 138,
+    "firmDemand": 140,
+    "knownShortage": 2,
+    "knownSurplus": 0,
+    "incompleteVarieties": 0
+  },
+  "notes": "Actual production factory executed in V8 with authored two 70-stem buckets, 24 tentative retail stems, 40 own-grown snapdragons and projected10 local stems replaced by measured8 local stems. Initial missing local actual prevented complete supply verdict; actual receipt produced2 shortage against50 firm snapdragons. Independent whole source reopen retained two editions and BOM/CRLF. Browser rendering remains on existing receiving route."
+}

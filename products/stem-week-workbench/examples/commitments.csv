@@ -1,0 +1,6 @@
+commitment_id,week_start,channel,recipe_id,quantity,buffer_bps,status,priority,source_ref
+W01,2026-10-19,wedding,WEDDING,2,1250,confirmed,0,Authored agreed wedding recipe
+C01,2026-10-19,csa,CSA,3,0,confirmed,1,Authored scheduled three-share pickup
+M01,2026-10-19,market,MARKET,1,0,confirmed,2,Authored firm market preparation
+T01,2026-10-19,wholesale,PREMIUM,2,0,tentative,3,Authored optional quote scenario
+X01,2026-10-19,wedding,WEDDING,1,0,cancelled,4,Authored cancellation retained

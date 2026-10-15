@@ -1,0 +1,3 @@
+# Independent actual-source receiving
+
+Root executed the actual factory with two dated 70-stem mixed buckets plus 24 tentative retail stems and a projected ten-stem local buy-in without receipt. Firm demand was140; missing local actual remained null and pull unknown. A recorded buy-in decision did not add a receipt. A new edition with eight received stems yielded138 supply against140 firm and2short. The prior decision remained on its original edition; same-ID transfer rejected; whole JSON reopened with both exact source editions and BOM/CRLF. Parent read exact-ID vendor comparison, integer arithmetic and correction history and found no further material defect. The optional-origin contract was updated to match the production source.
