@@ -165,6 +165,32 @@ export class BazaarCatalog {
       pagination: page.pagination };
   }
   /**
+   * Aggregate preflight for an operator that is about to expose discovery.
+   * The snapshot contains no resource, payment or query data. A catalog can
+   * remain useful to internal callers while reporting that one or more rows
+   * lack the trusted observation time required by the public x402 v2 wire.
+   */
+  discoveryReadiness() {
+    let observedResources = 0;
+    let unreadyResources = 0;
+    for (const [id, entry] of this.#entries) {
+      try {
+        discoveryRow(entry, this.#lastUpdated.get(id));
+        observedResources++;
+      } catch {
+        unreadyResources++;
+      }
+    }
+    return {
+      ready: unreadyResources === 0,
+      x402Version: 2,
+      catalogVersion: this.#version,
+      resources: this.#entries.size,
+      observedResources,
+      unreadyResources,
+    };
+  }
+  /**
    * Opt-in buyer-facing discovery. Never silently drop metered routes whose
    * authorization ceiling exceeds a buyer's expected per-call spend.
    * Comparisons are per-network, per-asset atomic units, and are not
@@ -198,18 +224,22 @@ export class BazaarCatalog {
 
 export function createDiscoveryServer(catalog) {
   if (!catalog || typeof catalog.listDiscovery !== 'function' ||
-      typeof catalog.searchDiscovery !== 'function')
+      typeof catalog.searchDiscovery !== 'function' ||
+      typeof catalog.discoveryReadiness !== 'function')
     throw new TypeError('Official Bazaar discovery catalog required');
   // Read-only HTTP API. No endpoint permits client-injected catalog records.
   return async function handler(req,res) {
     try {
       const u = new URL(req.url,'http://localhost');
       if (req.method !== 'GET') {res.writeHead(405,{'content-type':'application/json'});res.end(JSON.stringify({error:'METHOD_NOT_ALLOWED',reason:'GET only'}));return;}
+      let status = 200;
       const data = u.pathname === '/discovery/resources' ? catalog.listDiscovery(u.searchParams)
         : u.pathname === '/discovery/search' ? catalog.searchDiscovery(u.searchParams)
-        : u.pathname === '/discovery/pricing' ? catalog.pricing(u.searchParams) : null;
+        : u.pathname === '/discovery/pricing' ? catalog.pricing(u.searchParams)
+        : u.pathname === '/discovery/readiness' ? catalog.discoveryReadiness() : null;
       if (!data) {res.writeHead(404,{'content-type':'application/json'});res.end(JSON.stringify({error:'NOT_FOUND',reason:'Unknown endpoint'}));return;}
-      res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});
+      if (u.pathname === '/discovery/readiness' && !data.ready) status = 503;
+      res.writeHead(status,{'content-type':'application/json','cache-control':'no-store'});
       res.end(JSON.stringify(data));
     } catch(e) {
       const code = e instanceof RangeError ? 400 : 500;
