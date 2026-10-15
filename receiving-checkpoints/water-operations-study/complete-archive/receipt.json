@@ -1,0 +1,268 @@
+{
+  "schema": "commons.streamed-complete-export.v1",
+  "identity": "b1a17c3eff22efed6eefb1b547458c467ed4ce926e1c930fb324b1ebc4c935f4",
+  "bytes": 167483392,
+  "sha256": "8ba198397811a1d9265317b122d59e1527b6e8b567acc1e78fd6fb49fd46f390",
+  "members": 21636,
+  "uncompressedBytes": 507731708,
+  "metadataBytes": 10406600,
+  "maxInputFragmentBytes": 650000,
+  "maxOutputChunkBytes": 487500,
+  "receivingSource": {
+    "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+    "sourceHead": "4a6d4cd4ca243cc7cfd952ab12030432f1507c4f",
+    "inputHead": "897f5e794d821757f01d2b244359ac6b7f5999be",
+    "inputManifest": "receiving-checkpoints/water-operations-study/full45-compact/manifest.json",
+    "inputSha256": "e34088ed7acfcf98080549920a358936becfd0db8e9c836fe7538ce5d84dacac",
+    "executionDependency": {
+      "cacheHead": "6d1e099a618d37641f12ff943a061f3fe23723bc",
+      "sourceZipSha256": "78cc84089aa4aad4303888b6ca0156df258ab19ac0ca2aca1aeffd9674d1fb6a",
+      "checkpointStorageSha256": "bff39c118069c3417c9678e84ce522a99aa65a20661320816a31153704f821a9",
+      "capacityOverride": {
+        "wrapperSource": "function makeCapacityZip(zip){return {...zip,createZipBuilder(options,checkpoint){return zip.createZipBuilder({...options,maxBytes:512*1024*1024,maxUncompressedBytes:1024*1024*1024},checkpoint);}};}",
+        "wrapperSha256": "605bc64842c19c9a4b50c7d80b8e4a6c5ffc10df8f7b3e1c3272d5462e38706a",
+        "zipSha256": "78cc84089aa4aad4303888b6ca0156df258ab19ac0ca2aca1aeffd9674d1fb6a",
+        "oldLimits": {
+          "maxBytes": 268435456,
+          "maxUncompressedBytes": 536870912,
+          "maxEntries": 60000
+        },
+        "limits": {
+          "maxBytes": 536870912,
+          "maxUncompressedBytes": 1073741824,
+          "maxEntries": 60000
+        }
+      },
+      "seededPreparerHead": "ee00f27740eb312879a977c7d81f14e5d330a571"
+    },
+    "resumedFrom": {
+      "head": "bfd2b00a416ac1a91e82b39ab28891f574156e9b",
+      "reusedUniqueRefs": 539,
+      "newlyVerifiedUniqueRefs": 124,
+      "fetchedObjects": 244,
+      "groups": 374,
+      "entries": 9722,
+      "elapsed": 190490,
+      "metadataSha256": "022223ee3c143fa60326daec9b5037079df97253a3756c775c3f6a31fb0abd58"
+    }
+  },
+  "derivation": {
+    "schema": "commons.source-successor-derivation.v1",
+    "parentIdentity": "101a74ea6516676ed7893b072deae11114438767414d9c3d9de7f11b85721350",
+    "parentIndexSha256": "83ac2c09c7914e1375862d55de4625653440d1b0bfbe8a1aeafc42fdbc3074a3",
+    "sourceVersion": "woahwhattheheck/tjlabs-stellar-merchant-workspace@e1cb22158270e6c52fb6f7dc80a94b7567f0e572:products/water-operations-study",
+    "compression": {
+      "engine": "pako",
+      "level": 1
+    },
+    "changes": [
+      {
+        "name": "source/application-provider.mjs",
+        "before": {
+          "bytes": 4076,
+          "sha256": "2335a62d591f74e9a9aaad822f9fa0ba12d7a48b3fe72824ad846ae52265e3bb"
+        },
+        "after": {
+          "bytes": 4051,
+          "sha256": "f50b99c300062a36c09217e77f8eede1bcedca7002e9f304fd2d2989638d062b"
+        }
+      },
+      {
+        "name": "source/host/domain.mjs",
+        "before": {
+          "bytes": 6966,
+          "sha256": "34a673050ccb073915338a26d888f5ac5826faff6771cf43613f304fa3f686fa"
+        },
+        "after": {
+          "bytes": 7217,
+          "sha256": "b64735d19339168763fe805aeb1df4acc665cf573a347e6e4dd648385832e4d0"
+        }
+      },
+      {
+        "name": "source/host/export-core.mjs",
+        "before": {
+          "bytes": 13068,
+          "sha256": "e70ff48aa22bb485956f3215cf11f681827912117c2c3456a6e70ae9b4c09243"
+        },
+        "after": {
+          "bytes": 13884,
+          "sha256": "57fb7eb3ef09591129912f8a9b2114adf1084aaa4fff1626adb2a05ad18135a6"
+        }
+      },
+      {
+        "name": "source/host/store.mjs",
+        "before": {
+          "bytes": 5729,
+          "sha256": "6324f1f41277784183e0f17cfb6c750513ab3e611178ddcc341bc1262e7a4d3a"
+        },
+        "after": {
+          "bytes": 5699,
+          "sha256": "39a03d7417ffa20b667b8ad9a495c67e2cf1b850d7bcbf5a489a991816c09b6b"
+        }
+      },
+      {
+        "name": "source/merchant-provider.mjs",
+        "before": {
+          "bytes": 2689,
+          "sha256": "faad30ad685c8d9615d361befe705d16e8619c0173d1fd45fabe096ca869f54f"
+        },
+        "after": {
+          "bytes": 2681,
+          "sha256": "20bee45b78662430555eaa173b398f818152e30ff0fb980b7078218d9ce25772"
+        }
+      },
+      {
+        "name": "source/setup.mjs",
+        "before": {
+          "bytes": 2648,
+          "sha256": "b66aacfc41651f75c2c19f5e7d183f2eee0b20b9faa3210da02e6f8b4f701c0c"
+        },
+        "after": {
+          "bytes": 2620,
+          "sha256": "7477b361a9d9bf4af5e0ba5273bf4cc1126a7059c8851d7813399972038779e9"
+        }
+      },
+      {
+        "name": "source/src/connected_zip.cjs",
+        "before": {
+          "bytes": 22223,
+          "sha256": "751354cbfe55450be53689de23631900f3b1661063c7974e46f99fa2413cbc1f"
+        },
+        "after": {
+          "bytes": 22417,
+          "sha256": "78cc84089aa4aad4303888b6ca0156df258ab19ac0ca2aca1aeffd9674d1fb6a"
+        }
+      },
+      {
+        "name": "source/SOURCE_MANIFEST.json",
+        "before": {
+          "bytes": 74649,
+          "sha256": "e3d456c60849bdb1ae0fd427af79873536cadb46a097673f43db92dd510fb76a"
+        },
+        "after": {
+          "bytes": 39017,
+          "sha256": "711e4195a31bdbe322f4976223eb41118a9d0bf8f3ed96a5c6702c5b3c37f908"
+        }
+      },
+      {
+        "name": "source/receiving/checkpoint-storage.cjs",
+        "before": {
+          "bytes": 2493,
+          "sha256": "effafda4907de3ab610f90427a04067e2e3e2cefbd4af2008fad3bdde07db78f"
+        },
+        "after": {
+          "bytes": 3625,
+          "sha256": "bff39c118069c3417c9678e84ce522a99aa65a20661320816a31153704f821a9"
+        }
+      },
+      {
+        "name": "source/receiving/run-resumable-export.mjs",
+        "before": {
+          "bytes": 5088,
+          "sha256": "0ce4d4f74a2d9ed4452301f405a5458cfe7bfab346797c25027cf904643e4596"
+        },
+        "after": {
+          "bytes": 4872,
+          "sha256": "bc581cdaac0c2d1cdb91aa8a52e817373441070ba1e94188c07734c998c70e7c"
+        }
+      },
+      {
+        "name": "source/receiving/RESUMABLE_EXPORT.md",
+        "before": {
+          "bytes": 5289,
+          "sha256": "0b9fe362b8b2a179bba794b8de41be9378b5752c6d8dc6be46aa57ca37dc9998"
+        },
+        "after": {
+          "bytes": 8027,
+          "sha256": "0300c402b8ad26e740832bdf3ab0986aad3d753b00be2d53c70c631f34332f26"
+        }
+      },
+      {
+        "name": "source/src/connected_gzip.cjs",
+        "before": null,
+        "after": {
+          "bytes": 47127,
+          "sha256": "1fc9f3b218c60d029c96bf9f1c1e4de5fcb86918ed5a0570586dc81488440119"
+        }
+      },
+      {
+        "name": "source/native/finish-prepared.mjs",
+        "before": null,
+        "after": {
+          "bytes": 3201,
+          "sha256": "afca8b17478ef73ce369ba300b2eea03ec9d251774d0e60ae34b839eaed6b86a"
+        }
+      },
+      {
+        "name": "source/receiving/prepared-stream.cjs",
+        "before": null,
+        "after": {
+          "bytes": 17023,
+          "sha256": "8f0c8427c71ffd7584638c5f56ee52c65eba58a1a90ced010327671fe3af45b7"
+        }
+      },
+      {
+        "name": "source/vendor/merchant-shared/operations/history.mjs",
+        "before": null,
+        "after": {
+          "bytes": 42366,
+          "sha256": "5928c1243549c7db21942bb6ce7188060b32e5e75d4690374a88fe7b2ed96de5"
+        }
+      },
+      {
+        "name": "source/vendor/merchant-shared/runtime-workspace/application-provider.mjs",
+        "before": null,
+        "after": {
+          "bytes": 9395,
+          "sha256": "0f638caeeaa5c78560ebd262c0e410cb0dfd4fcd886748f5136cd08755e019c9"
+        }
+      },
+      {
+        "name": "source/vendor/merchant-shared/runtime-workspace/storage.mjs",
+        "before": null,
+        "after": {
+          "bytes": 23911,
+          "sha256": "d42495664abaf6f43d1ce4d92ba7cbcbe07c554310f1c2f58d068c208fcc57fa"
+        }
+      },
+      {
+        "name": "source/vendor/merchant-shared/merchant/provider-contract.mjs",
+        "before": null,
+        "after": {
+          "bytes": 6260,
+          "sha256": "abbc3a9f344f7e1be07f3085e6554f2c0ce1ccf131338d7ffa36f5694628394b"
+        }
+      },
+      {
+        "name": "source/source-manifest.json",
+        "before": null,
+        "after": {
+          "bytes": 39188,
+          "sha256": "0f8702b65be3fcb007001f138453e67875bf877f9058330dd9f2d68689cdaf0e"
+        }
+      },
+      {
+        "name": "working/Water_Operations_Study_Editable.html",
+        "before": {
+          "bytes": 9022148,
+          "sha256": "f5500bf5f582b45268364cdbdb19318c7629cf907a4da4c7ec14cd62196d1d22"
+        },
+        "after": {
+          "bytes": 9185661,
+          "sha256": "a979e64715f32cbc4fca59fc9868d447630ba40519dd3fd42264e4c38580359c"
+        }
+      },
+      {
+        "name": "EXPORT_MANIFEST.json",
+        "before": {
+          "bytes": 5826617,
+          "sha256": "eb905d2b2014bd5c848e6452fb7e19c1289614ba2c376c89516c216c7b5c800b"
+        },
+        "after": {
+          "bytes": 5828070,
+          "sha256": "3eb2633e86551b02bdcecc2cabab846707baad91319b2c01dc428154c1f4bf94"
+        }
+      }
+    ]
+  }
+}

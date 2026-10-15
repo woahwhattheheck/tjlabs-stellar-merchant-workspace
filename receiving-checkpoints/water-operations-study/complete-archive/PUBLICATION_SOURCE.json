@@ -1,0 +1,24 @@
+{
+  "streamingHead": "f2ad2399c4ea409b7e751666adfe778431505bdc",
+  "publisherHead": "2ca9dbdb0fbf780bcac66dc20b9c83cdf1b16eb8",
+  "publisherMerge": "bf905de2a691ff1cf6ddfb6174857ea8aab5c1d2",
+  "readerMerge": "f4214739cabfd8aa2d909f12f427c989c4810f4a",
+  "files": {
+    "prepared-stream.cjs": {
+      "bytes": 17015,
+      "sha256": "9f1cb890041c1eefc6206488e177dbda4784e22cd811fc2a29dd9db27e186412"
+    },
+    "publish-prepared-git.cjs": {
+      "bytes": 9111,
+      "sha256": "a47832ed78736a7c34da8bcddb40be886ae6cf5e3997708b6c45fb0131feaff2"
+    },
+    "ordinary-zip-range.cjs": {
+      "bytes": 9833,
+      "sha256": "86c0ee5ddf471e7e3552da5d01215fccc7deb32896b2f372cb574d1322a7c990"
+    },
+    "streamed-archive-source.cjs": {
+      "bytes": 4108,
+      "sha256": "5ed5d330f9cdb0ece100a7fb63be637b37021b533f87c10d8b7cf0f8529af9b3"
+    }
+  }
+}
