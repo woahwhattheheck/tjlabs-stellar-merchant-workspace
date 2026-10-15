@@ -1,5 +1,5 @@
 'use strict';
-const Stream = require('./prepared-stream.cjs');
+const Stream = require('./prepared-stream.cjs'), H = require('./sha256.cjs');
 const HEX = /^[a-f0-9]{64}$/, GIT = /^[a-f0-9]{40}$/;
 const fields = ['path','bytes','sha256','decodedBytes','decodedSha256'];
 const copyPart = p => Object.fromEntries([...fields,'gitBlob'].map(k => [k,p[k]]));
@@ -53,13 +53,20 @@ async function publishPreparedToGit(index,readObject,api,options={}) {
       pendingPublication={parentHead:p.parentHead,nextHead:p.nextHead,partCount:p.partCount,complete:p.complete};
     }
   }
-  const extra=options.extraFiles??{};
+  const extra={...(options.extraFiles??{})};
   for(const [path,content]of Object.entries(extra))
     if(!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(path)||
        ['manifest.json','receipt.json','progress.json'].includes(path)||typeof content!=='string')
       throw Error('Invalid final archive companion file');
+  const extraFilesSha256=H.sha256Utf8(JSON.stringify(Object.entries(extra).sort(([a],[b])=>a<b?-1:a>b?1:0))).sha256;
+  if(prior){
+    if(prior.extraFilesSha256!==undefined&&prior.extraFilesSha256!==extraFilesSha256)
+      throw Error('Final archive companions changed from the retained publication');
+    if(prior.extraFilesSha256===undefined&&(prior.complete===true||prior.pendingPublication?.complete===true))
+      throw Error('Complete publication replay requires its original companion identity');
+  }
   const snapshot=()=>({schema:'commons.git-archive-publisher-state.v1',branch,directory,head,
-    sourceIndex,sourceIndexHead,identity:index.identity,partBytes,committedParts,verifiedMembers,complete:alreadyComplete,pendingPublication:pendingPublication?{...pendingPublication}:null,
+    sourceIndex,sourceIndexHead,identity:index.identity,extraFilesSha256,partBytes,committedParts,verifiedMembers,complete:alreadyComplete,pendingPublication:pendingPublication?{...pendingPublication}:null,
     parts:[...parts,...retained.slice(parts.length)].map(copyPart)});
   let writing=false;
   async function settlePending(){
@@ -84,7 +91,7 @@ async function publishPreparedToGit(index,readObject,api,options={}) {
   async function publish(files,complete){
     const entries=parts.slice(committedParts).map(p=>({path:directory+p.path,mode:'100644',type:'blob',sha:p.gitBlob}));
     const progress={schema:'commons.streaming-archive-publication.v1',sourceIndex,sourceIndexHead,
-      identity:index.identity,partBytes,parts:parts.map(copyPart),complete};
+      identity:index.identity,extraFilesSha256,partBytes,parts:parts.map(copyPart),complete};
     entries.push({path:directory+'progress.json',mode:'100644',type:'blob',content:JSON.stringify(progress,null,2)+'\n'});
     for(const [path,content]of Object.entries(files))
       entries.push({path:directory+path,mode:'100644',type:'blob',content});
@@ -124,7 +131,7 @@ async function publishPreparedToGit(index,readObject,api,options={}) {
     if(parts.length<retained.length||stored.parts.length!==parts.length||
        stored.parts.some((p,i)=>!samePart(p,parts[i])))
       throw Error('Complete output differs from retained part sequence');
-    const manifest={...stored,parts:parts.map(copyPart),sourceIndex,sourceIndexHead};
+    const manifest={...stored,parts:parts.map(copyPart),sourceIndex,sourceIndexHead,extraFilesSha256};
     if(alreadyComplete){
       if(committedParts!==parts.length)throw Error('Recovered complete commit has a different part count');
       if(options.onProgress)await options.onProgress({...snapshot(),complete:true});
