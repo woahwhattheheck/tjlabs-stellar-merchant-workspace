@@ -1,0 +1,4 @@
+allocation_id,payment_id,job_id,invoice_id,purpose,amount_minor,authorized_at,authorization,reference
+ALLOC-A,RECEIPT-1,JOB-A,INVOICE-A,settlement,40000,2026-10-20T15:01:00+13:00,Authored explicit receipt allocation,Authored marine operating example; no customer operating record
+ALLOC-C,RECEIPT-1,JOB-C,,deposit,15000,2026-10-20T15:02:00+13:00,Authored explicit receipt allocation,Authored marine operating example; no customer operating record
+ALLOC-REF,REFUND-1,JOB-A,INVOICE-A,refund,5000,2026-10-20T15:31:00+13:00,Authored explicit receipt allocation,Authored marine operating example; no customer operating record

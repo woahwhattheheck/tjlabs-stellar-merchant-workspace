@@ -1,0 +1,5 @@
+event_id,submission_id,kind,occurred_at,observed_at,actor,evidence_reference,reference
+WA1,SUBMISSION-A1,approved,2026-10-20T12:18:00+13:00,2026-10-20T12:18:00+13:00,Authored yard reviewer,Authored week decision WA1,Authored marine operating example; no customer operating record
+WA2,SUBMISSION-A2,approved,2026-10-20T13:45:00+13:00,2026-10-20T13:45:00+13:00,Authored yard reviewer,Authored week decision WA2,Authored marine operating example; no customer operating record
+WB1,SUBMISSION-B1,rejected,2026-10-20T11:30:00+13:00,2026-10-20T11:31:00+13:00,Authored yard reviewer,Authored week decision WB1,Authored marine operating example; no customer operating record
+WB2,SUBMISSION-B1,approved,2026-10-20T11:45:00+13:00,2026-10-20T11:46:00+13:00,Authored yard reviewer,Authored week decision WB2,Authored marine operating example; no customer operating record

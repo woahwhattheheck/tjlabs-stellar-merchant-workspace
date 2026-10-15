@@ -1,0 +1,4 @@
+request_id,kind,subject_id,payload_sha256,submitted_at,observed_at,authorization,reference
+REQ-INVOICE,invoice,INVOICE-A,f3043bbba05e949c95828bb730d232c5abcea95cb0bfdf804ee52d5e4ef305b1,2026-10-20T14:00:00+13:00,2026-10-20T14:00:00+13:00,Authored explicit comparison request; no remote connection,sample/accounting/REQ-INVOICE.json
+REQ-WEEK-ORIGINAL,timesheet,SUBMISSION-A1,4cfc687c215f86816199ef1709273e2b9b68dd864fa39fa7deddface8cb8bf21,2026-10-20T12:19:00+13:00,2026-10-20T12:19:00+13:00,Authored explicit comparison request; no remote connection,sample/accounting/REQ-WEEK-ORIGINAL.json
+REQ-WEEK-CORRECTED,timesheet,SUBMISSION-A2,346dd6272dd260e017f0ab24a7b61c2da1a5a6a8226aee592c7173099b589a99,2026-10-20T13:46:00+13:00,2026-10-20T13:46:00+13:00,Authored explicit comparison request; no remote connection,sample/accounting/REQ-WEEK-CORRECTED.json
