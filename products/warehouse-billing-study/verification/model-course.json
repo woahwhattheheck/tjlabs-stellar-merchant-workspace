@@ -1,0 +1,89 @@
+{
+  "runtime": "Actual maintained source executed in V8",
+  "checks": [
+    {
+      "name": "Complete public 41-row import",
+      "passed": true
+    },
+    {
+      "name": "Exact 1152 pallet-days",
+      "passed": true
+    },
+    {
+      "name": "Flat monthly storage 844.80",
+      "passed": true
+    },
+    {
+      "name": "All activity subtotal 1075.40",
+      "passed": true
+    },
+    {
+      "name": "Exact dated split 883.60",
+      "passed": true
+    },
+    {
+      "name": "Replacement keeps old original but missing day suppresses complete total",
+      "passed": true
+    },
+    {
+      "name": "Derived minimum 24.60",
+      "passed": true
+    },
+    {
+      "name": "Repeated order references remain distinct events",
+      "passed": true
+    },
+    {
+      "name": "Exact context-bound waiver applies",
+      "passed": true
+    },
+    {
+      "name": "Changed input expires waiver",
+      "passed": true
+    },
+    {
+      "name": "Unit mismatch suppresses complete proposal",
+      "passed": true
+    },
+    {
+      "name": "Actual sent observation does not claim payment",
+      "passed": true
+    },
+    {
+      "name": "Issued period source replacement refused",
+      "passed": true
+    },
+    {
+      "name": "Whole phase coverage signed -12 person-minutes",
+      "passed": true
+    },
+    {
+      "name": "Full session preserves pending original and prior study",
+      "passed": true
+    },
+    {
+      "name": "Actual invoice binds charge identity and code",
+      "passed": true
+    },
+    {
+      "name": "Invoice currency independently binds comparison",
+      "passed": true
+    },
+    {
+      "name": "Accounting recording cannot precede observation",
+      "passed": true
+    },
+    {
+      "name": "Invalid calendar date is an unresolved value",
+      "passed": true
+    },
+    {
+      "name": "Signed next-period adjustment retains original service date",
+      "passed": true
+    },
+    {
+      "name": "Partial prior-row availability is retained and append requires explicit complete mapping",
+      "passed": true
+    }
+  ]
+}

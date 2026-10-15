@@ -1,0 +1,27 @@
+{
+  "schema": "stellar-forge.merchant-distribution-contribution.v1",
+  "id": "warehouse-billing-study",
+  "description": "Complete twenty-family warehouse activity and billing study with literal source imports, explicit source/month replacement, exact dated charges, supplied invoices and accounting observations, full effort and recoverable editing",
+  "components": [
+    "products/warehouse-billing-study"
+  ],
+  "commands": {
+    "billing-workspace": "products/warehouse-billing-study/installed-cli.mjs",
+    "billing-managed": "products/warehouse-billing-study/managed.mjs"
+  },
+  "commandDescriptions": {
+    "billing-workspace": "Create, receive and export complete Warehouse Activity and Billing Study sessions",
+    "billing-managed": "Open the complete warehouse billing study through Applications"
+  },
+  "exports": {
+    "./products/billing": "./source/products/warehouse-billing-study/runtime.mjs",
+    "./products/billing/client": "./source/products/warehouse-billing-study/host/client.mjs",
+    "./products/billing/server": "./source/products/warehouse-billing-study/host/server.mjs"
+  },
+  "applicationProviders": {
+    "warehouse-billing-study": "products/warehouse-billing-study/application-provider.mjs"
+  },
+  "merchantProviders": {
+    "warehouse-billing-study": "products/warehouse-billing-study/merchant-provider.mjs"
+  }
+}
