@@ -9,13 +9,13 @@
     },
     {
       "path": "resume-complete-course.cjs",
-      "bytes": 5544,
-      "sha256": "832354e5ca6a45da29bd153a7fc76e847c9c6398e230860fc072137c37d6655b"
+      "bytes": 5772,
+      "sha256": "469621a8bab9a0b1340777e73ec8f79076b7a566285bd7ba57f79dc8bd0d046d"
     },
     {
       "path": "README.md",
-      "bytes": 3797,
-      "sha256": "acde8db0e738719462f01c91616c2f3d59b61c3ddc0f1e5522d674c8ad606724"
+      "bytes": 3889,
+      "sha256": "f7cb6464c7bfb7a5ad3dbfcb04d89162466f70449fcc08d0ac5a28ec6b4f6288"
     },
     {
       "path": "focused-result.json",

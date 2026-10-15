@@ -20,7 +20,7 @@ The first run retains the exact 24-request/25-edition prefix. Subsequent checkpo
 
 - Each checkpoint and receipt has a content-addressed immutable name.
 - Files are fully written and fsynced before the final immutable hard link is created. Existing immutable output must match exactly.
-- The output directory is fsynced before publishing `LATEST.json`, which is itself replaced atomically from a fully synced temporary file.
+- Newly created output directory entries and their existing parent are synced before the run. The output directory is fsynced before publishing `LATEST.json`, which is itself replaced atomically from a fully synced temporary file.
 - `COMPLETE_RESULT.json` appears only after the course retained its complete final checkpoint. Its immutable content-addressed original is kept beside it.
 - A crash can leave an unreferenced `.pending-` file. It cannot promote that partial file to a completed checkpoint. Retain it for inspection or remove it after the original process has exited.
 - Progress is newline-delimited JSON on stdout. It contains the current operation and timing; source state stays in the checkpoint files.

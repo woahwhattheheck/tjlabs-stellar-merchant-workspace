@@ -5,7 +5,8 @@ const digest=bytes=>({bytes:Buffer.byteLength(bytes),sha256:crypto.createHash('s
 const load=source=>{const m={exports:{}};Function('module','exports',source)(m,m.exports);return m.exports;};
 async function run(){
  if(process.argv.length<4||process.argv.length>5||process.argv[4]&&process.argv[4]!=='--under-file-lock')throw Error('node resume-complete-course.cjs INPUT.json OUTPUT_DIRECTORY');
- const inputPath=path.resolve(process.argv[2]),out=path.resolve(process.argv[3]);await fs.mkdir(out,{recursive:true});
+ const inputPath=path.resolve(process.argv[2]),out=path.resolve(process.argv[3]),created=await fs.mkdir(out,{recursive:true});
+ if(created){const existingParent=path.dirname(created);for(let dir=out;;dir=path.dirname(dir)){const handle=await fs.open(dir,'r');try{await handle.sync();}finally{await handle.close();}if(dir===existingParent)break;}}
  // flock owns the kernel lease across the child lifetime and releases it on exit or interruption.
  if(process.argv[4]!=='--under-file-lock'){
   if(process.platform!=='linux')throw Error('This continuation uses the Linux flock utility for its single-writer lease');
