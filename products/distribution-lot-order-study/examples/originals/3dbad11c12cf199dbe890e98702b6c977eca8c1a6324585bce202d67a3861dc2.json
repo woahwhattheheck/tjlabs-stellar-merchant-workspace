@@ -1,0 +1,20 @@
+{
+  "data_class": "authored_course",
+  "family": "decision_inputs",
+  "record": {
+    "id": "DECISION-LATE-INPUT-088",
+    "record_key": "DECISION-LATE-INPUT-088",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T12:10:00Z",
+    "available_at": "2026-10-01T12:10:00Z",
+    "source_document_id": "SRC-DECISION-LATE-INPUT-088",
+    "source_ref": "Authored original decision_inputs/DECISION-LATE-INPUT-088",
+    "decision_input_id": "DECISION-LATE-INPUT-088",
+    "decision_case_record_id": "DECISION-LATE",
+    "family": "lot_state_inputs",
+    "record_id": "RELEASE-E-EAST-INPUT-1",
+    "row_sha256": "35225e4c7d11e902798413b12ecd695f143813b8ae975dce1242491d00e07f0a"
+  }
+}

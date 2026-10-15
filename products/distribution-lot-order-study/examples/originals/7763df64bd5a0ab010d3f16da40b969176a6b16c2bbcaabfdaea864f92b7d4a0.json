@@ -1,0 +1,20 @@
+{
+  "data_class": "authored_course",
+  "family": "decision_inputs",
+  "record": {
+    "id": "DECISION-EARLY-INPUT-043",
+    "record_key": "DECISION-EARLY-INPUT-043",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:00:00Z",
+    "available_at": "2026-10-01T10:00:00Z",
+    "source_document_id": "SRC-DECISION-EARLY-INPUT-043",
+    "source_ref": "Authored original decision_inputs/DECISION-EARLY-INPUT-043",
+    "decision_input_id": "DECISION-EARLY-INPUT-043",
+    "decision_case_record_id": "DECISION-EARLY",
+    "family": "customer_rules",
+    "record_id": "RULE-PACK",
+    "row_sha256": "712c3f3f7053e925b879c620df19982dda102c509bd1b3fe4cbebaf5af538f0d"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "data_class": "authored_course",
+  "family": "decision_inputs",
+  "record": {
+    "id": "DECISION-EAST-SAFE-INPUT-086",
+    "record_key": "DECISION-EAST-SAFE-INPUT-086",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:06:00Z",
+    "available_at": "2026-10-01T10:06:00Z",
+    "source_document_id": "SRC-DECISION-EAST-SAFE-INPUT-086",
+    "source_ref": "Authored original decision_inputs/DECISION-EAST-SAFE-INPUT-086",
+    "decision_input_id": "DECISION-EAST-SAFE-INPUT-086",
+    "decision_case_record_id": "DECISION-EAST-SAFE",
+    "family": "lot_state_inputs",
+    "record_id": "RELEASE-E-EAST-INPUT-2",
+    "row_sha256": "1e17669d8f1b41e61690b364bb7fe9c8cac2e07e624b24a9d350c5481cb8ded3"
+  }
+}

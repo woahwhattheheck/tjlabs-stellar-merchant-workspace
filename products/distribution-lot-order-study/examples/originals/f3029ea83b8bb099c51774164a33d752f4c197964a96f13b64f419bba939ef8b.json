@@ -1,0 +1,20 @@
+{
+  "data_class": "authored_course",
+  "family": "decision_inputs",
+  "record": {
+    "id": "DECISION-WEST-INPUT-007",
+    "record_key": "DECISION-WEST-INPUT-007",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:00:00Z",
+    "available_at": "2026-10-01T10:00:00Z",
+    "source_document_id": "SRC-DECISION-WEST-INPUT-007",
+    "source_ref": "Authored original decision_inputs/DECISION-WEST-INPUT-007",
+    "decision_input_id": "DECISION-WEST-INPUT-007",
+    "decision_case_record_id": "DECISION-WEST",
+    "family": "parties",
+    "record_id": "CUSTOMER-A",
+    "row_sha256": "23f01380a5d8d0b3ec64bff382a0c2f4ca379143d9b39dc7a6dbe84c5676669f"
+  }
+}

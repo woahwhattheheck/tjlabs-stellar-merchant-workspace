@@ -1,0 +1,20 @@
+{
+  "data_class": "authored_course",
+  "family": "decision_inputs",
+  "record": {
+    "id": "DECISION-EARLY-INPUT-076",
+    "record_key": "DECISION-EARLY-INPUT-076",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:00:00Z",
+    "available_at": "2026-10-01T10:00:00Z",
+    "source_document_id": "SRC-DECISION-EARLY-INPUT-076",
+    "source_ref": "Authored original decision_inputs/DECISION-EARLY-INPUT-076",
+    "decision_input_id": "DECISION-EARLY-INPUT-076",
+    "decision_case_record_id": "DECISION-EARLY",
+    "family": "lot_state_events",
+    "record_id": "RELEASE-E-WEST",
+    "row_sha256": "4b04759809ad4d455318c4201fc5782c8b557593e8b5545008597df216bb42fd"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "data_class": "authored_course",
+  "family": "decision_inputs",
+  "record": {
+    "id": "DECISION-LATE-INPUT-054",
+    "record_key": "DECISION-LATE-INPUT-054",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T12:10:00Z",
+    "available_at": "2026-10-01T12:10:00Z",
+    "source_document_id": "SRC-DECISION-LATE-INPUT-054",
+    "source_ref": "Authored original decision_inputs/DECISION-LATE-INPUT-054",
+    "decision_input_id": "DECISION-LATE-INPUT-054",
+    "decision_case_record_id": "DECISION-LATE",
+    "family": "opening_balances",
+    "record_id": "OPEN-LOT-A",
+    "row_sha256": "ac055bbe7c19b45108b75c06f0c482d68ba57bd691290dd02c35b24c51fc8161"
+  }
+}

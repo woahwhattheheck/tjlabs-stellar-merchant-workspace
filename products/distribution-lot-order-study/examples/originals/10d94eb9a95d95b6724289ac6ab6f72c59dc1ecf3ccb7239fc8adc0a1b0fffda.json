@@ -1,0 +1,20 @@
+{
+  "data_class": "authored_course",
+  "family": "decision_inputs",
+  "record": {
+    "id": "DECISION-EARLY-INPUT-071",
+    "record_key": "DECISION-EARLY-INPUT-071",
+    "revision": "1",
+    "supersedes_id": "",
+    "record_status": "active",
+    "recorded_at": "2026-10-01T10:00:00Z",
+    "available_at": "2026-10-01T10:00:00Z",
+    "source_document_id": "SRC-DECISION-EARLY-INPUT-071",
+    "source_ref": "Authored original decision_inputs/DECISION-EARLY-INPUT-071",
+    "decision_input_id": "DECISION-EARLY-INPUT-071",
+    "decision_case_record_id": "DECISION-EARLY",
+    "family": "certificate_reviews",
+    "record_id": "CR-E-EAST",
+    "row_sha256": "7bb42b060c0cef1f8f6eeb4a021935857ecff6c3e4285eb4c5264e4beafd4435"
+  }
+}
