@@ -1,0 +1,15 @@
+{
+  "schema": "commons.git-archive-publication-double-loss.v1",
+  "members": 4,
+  "parts": 16,
+  "bytes": 15756,
+  "sha256": "c2e824c7fa95550bb6a321b7e9e28e9be221d28dd7da33da979cff16697fb5af",
+  "intermediateWriteAndReadLossRetainsPendingCommit": true,
+  "finalWriteAndReadLossRetainsPendingCommit": true,
+  "completedRecoverySurvivesAnotherReadFailure": true,
+  "finalRecoveryReusesExactPublishedHead": true,
+  "newBlobsOnCompletedRetry": 0,
+  "newCommitsOnCompletedRetry": 0,
+  "ordinaryPublishedZIPAllMembersExact": true,
+  "sourceSha256": "251e0b0bd0108adf6db118adb70564cd529a9332a9fb3069a3992fc0edb7582f"
+}
