@@ -140,3 +140,22 @@ Stop saves one immutable `intents/<host>-<request>-closed.json` proof before mar
 Inactive `PENDING`, `QUEUED`, `INTERRUPTED`, `RECEIVED_HISTORY` and unavailable observations are not closure. The same saved owner and receiving lease remain held while the original operation is unresolved. On interruption, resume first reopens the exact saved close proof and restores its artifact descriptor; it does not replace that proof with a later observation. A saved host absent from the current immutable agent configuration does not block shutdown: the actual Applications receipt controls closure, and only currently configured connected aliases are disconnected. Concurrent close calls join the same pending close operation; diagnostic-save failures do not release unfinished owners.
 
 Use the coherent selected Merchant package, including its maintained shared command runner and application observer. The Installation profile records the exact receiving source and guide for this correction. Preserve existing completed results and their original source identities. An already-started receiving course continues through its existing source-selection or explicit source-adoption contract; do not overwrite its installed files, alter its saved selection, revive an owner-stopped operation or launch a second native programme to apply this maintenance.
+
+
+## Independent shutdown of the same retained owners
+
+When the receiving course closes, it starts cleanup for every retained owner independently. A delayed primary application, browser or native-edit owner does not postpone the other application's Stop or the agent manager's connection cleanup. Concurrent calls to close join the same shutdown. The original receiving lease remains held until all these owners have ended, every managed launch has its existing positive closure proof, and the ordered operation-journal writes have completed.
+
+Normal per-host Stop still disconnects its current connected alias. During whole-course shutdown the existing manager closes its own aliases independently, so a failing alias inspection or diagnostic output cannot prevent Applications Stop. Each application retains its exact application/review/request IDs, selected-versus-dispatched status and immutable saved closure receipt. A failed journal write remains retryable; later writes cannot overtake an earlier snapshot. Resume continues the same operation and reopens its saved proof.
+
+The current Applications core exposes a release only after its retained adoption has succeeded and the full selected runtime binding matches. The receiver uses that release as the Connect-to-Start boundary. The surrounding native business course, original results and explicit source-selection/adoption contract remain the same.
+
+The focused source course is available from the repository root:
+
+```sh
+node receiving/managed-owner-closure-course-cli.mjs
+```
+
+It executes all five complete receiver classes through explicit filesystem, Applications and held-owner adapters, including lost journal acknowledgements and immutable proof replay. Continue the original equipped receiving operation for actual process/browser closure and the exact rendered-product inspection already required above.
+
+After every owner closes, the receiver retries a final complete journal snapshot until it is durable. A rejected run-closed write followed by a rejected diagnostic write therefore keeps the same lease and completes once storage recovers, using the already saved original proof.

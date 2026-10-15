@@ -123,11 +123,11 @@
     },
     {
       "path": "products/hive-routing-workbench/receiving.mjs",
-      "blob": "53253bd7c2a80c3d5719c8a9ca2cd1f0c6c6d403"
+      "blob": "8bd4c55713e9dd382063fce4bf50dbddd3a5d52f"
     },
     {
       "path": "products/hive-routing-workbench/RECEIVING.md",
-      "blob": "63b65332ad4ec76c9912ee75602a2ab52afeea69"
+      "blob": "ee492d702fd6dd58942d9710ccf150a36bc4b00c"
     }
   ]
 }

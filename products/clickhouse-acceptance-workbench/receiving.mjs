@@ -228,7 +228,13 @@ class Course{
     this.apps=await openRuntimeWorkspace({directory:this.options.merchant.workspace});
     return this;
   }
-  async save(){this.lease.assert();await save(this.path,this.state);}
+  async save(){
+    this.lease.assert();
+    const snapshot=JSON.parse(JSON.stringify(this.state));
+    const previous=this.saveTail??Promise.resolve();
+    const pending=previous.catch(()=>{}).then(async()=>{this.lease.assert();return save(this.path,snapshot);});
+    this.saveTail=pending;return pending;
+  }
   async retain(path){const full=resolve(this.root,path),name=child(this.root,full),d={path:name,...await identity(full)};this.state.files[name]=d;await this.save();return d;}
   async record(name,value){const path=join(this.directory,'records',name+'.json');await save(path,value,{immutable:true});await this.retain(path);return value;}
   async phase(name,work){
@@ -656,7 +662,7 @@ class Course{
         (unentered||cancelled(proof.cancellation)&&proof.cancellation.operationId===run.requestId||
           proof.output?.operationId===run.requestId&&closed(proof.output)),
         'MERCHANT_APPLICATION_CLOSURE','Retain the positive closure proof for this exact original application and operation.');
-      if(this.manager){
+      if(this.manager&&!this.closing){
         const all=await this.call('status',{}),status=all.workspaces.find(row=>row.workspace===name);
         if(status?.state==='CONNECTED')await this.call('disconnect',{workspace:name,launchId:status.launchId});
       }
@@ -667,20 +673,36 @@ class Course{
   }
   close(){
     if(this.closing)return this.closing;
-    this.closing=(async()=>{
+    const report=value=>{try{process.stderr.write(JSON.stringify(value)+'\n');}catch{}};
+    const retry=async(label,action)=>{
+      for(;;)try{return await action();}catch(error){
+        this.state?.errors?.push({at:now(),name:label,error:err(error)});
+        try{await this.save();}catch{}
+        report({operationId:this.state?.id,state:label,error:err(error)});await delay(1000);
+      }
+    };
+    // Assign the shared close before independent actions begin. Each retained
+    // owner drains even while another awaits closure; the lease remains held.
+    this.closing=Promise.resolve().then(async()=>{
       if(!this.bound)return;
-      if(!this.apps&&Object.values(this.state?.hosts??{}).some(host=>host.starts.some(run=>!run.closed))){
-        for(;;){try{this.apps=await openRuntimeWorkspace({directory:this.options.merchant.workspace});break;}
-          catch(error){process.stderr.write(JSON.stringify({state:'APPLICATION_OBSERVER_CLOSE_PENDING',error:err(error)})+'\n');await delay(1000);}}
-      }
-      for(const name of Object.keys(this.state?.hosts??{})){
-        while(this.state.hosts[name].starts.some(x=>!x.closed)){
-          try{await this.stop(name);}catch(error){this.state.errors.push({at:now(),name:'close-'+name,error:err(error)});try{await this.save();}catch{}process.stderr.write(JSON.stringify({operationId:this.state.id,error:err(error),state:'OWNER_CLOSE_PENDING'})+'\n');await delay(1000);}
-        }
-      }
-      if(this.manager)for(;;){try{await this.manager.close();this.manager=null;break;}catch(error){process.stderr.write(JSON.stringify({error:err(error),state:'MCP_CLOSE_PENDING'})+'\n');await delay(1000);}}
-      await this.apps?.close();
-    })().finally(()=>{this.closing=null;});return this.closing;
+      await Promise.all([
+
+        retry('MCP_CLOSE_PENDING',async()=>{
+          const manager=this.manager;if(manager){await manager.close();if(this.manager===manager)this.manager=null;}
+        }),
+        (async()=>{
+          if(!this.apps&&Object.values(this.state?.hosts??{}).some(host=>host.starts.some(run=>!run.closed)))
+            await retry('APPLICATION_OBSERVER_CLOSE_PENDING',async()=>{this.apps=await openRuntimeWorkspace({directory:this.options.merchant.workspace});});
+          await Promise.all(Object.keys(this.state?.hosts??{}).map(name=>retry('OWNER_CLOSE_PENDING:'+name,async()=>{
+            while(this.state.hosts[name].starts.some(run=>!run.closed))await this.stop(name);
+          })));
+          await retry('APPLICATION_OBSERVER_CLOSE_PENDING',async()=>{
+            const apps=this.apps;if(apps){await apps.close();if(this.apps===apps)this.apps=null;}
+          });
+        })()
+      ]);
+      await retry('JOURNAL_CLOSE_PENDING',async()=>{await this.save();});
+    }).finally(()=>{this.closing=null;});return this.closing;
   }
   async run(){
     const savedCandidate=join(this.directory,'candidate.json'),savedResult=join(this.directory,'MERCHANT_RESULT.json');

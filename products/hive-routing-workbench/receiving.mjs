@@ -155,7 +155,13 @@ print(json.dumps({"schema":"stellar-forge.hive-reference-python.v1","executable"
 `;
 class Course{
   constructor(options,selection,preparation,lease){this.options=options;this.selection=selection;this.preparation=preparation;this.directory=options.directory;this.root=this.directory;this.lease=lease;this.path=join(this.directory,'operation.json');this.state=null;this.apps=null;this.selectedHere=new Set();this.bound=false;this.manager=null;this.exports=null;this.browserOwners=new Set();this.referenceChild=null;this.referenceEnded=null;this.closingTask=null;this.reference=null;}
-  async save(){need(this.lease,'HIVE_RECEIVING_OWNER','Keep the original integration lease.');await save(this.path,this.state);}
+  async save(){
+    need(this.lease,'HIVE_RECEIVING_OWNER','Keep the original integration lease.');
+    const snapshot=JSON.parse(JSON.stringify(this.state));
+    const previous=this.saveTail??Promise.resolve();
+    const pending=previous.catch(()=>{}).then(async()=>{need(this.lease,'HIVE_RECEIVING_OWNER','Keep the original integration lease.');return save(this.path,snapshot);});
+    this.saveTail=pending;return pending;
+  }
   async open(){if(await exists(this.path)){this.state=await json(this.path);need(this.state.schema===SCHEMA&&same(this.state.selection,this.selection),'HIVE_RECEIVING_SELECTION','Continue the original exact installed source and native request.');need(this.options.resume||this.state.status==='complete','HIVE_RECEIVING_RESUME','Continue this operation with --resume.');}
     else{this.state={schema:SCHEMA,id:'hive_merchant_'+randomUUID(),selection:this.selection,status:'prepared',createdAt:now(),phases:{},hosts:{},files:{},errors:[],attempts:[]};await this.save();}
     this.bound=true;
@@ -410,7 +416,7 @@ class Course{
         (unentered||cancelled(proof.cancellation)&&proof.cancellation.operationId===run.requestId||
           proof.output?.operationId===run.requestId&&closed(proof.output)),
         'MERCHANT_APPLICATION_CLOSURE','Retain the positive closure proof for this exact original application and operation.');
-      if(this.manager){
+      if(this.manager&&!this.closingTask){
         const all=await this.call('status',{}),status=all.workspaces.find(row=>row.workspace===name);
         if(status?.state==='CONNECTED')await this.call('disconnect',{workspace:name,launchId:status.connection.launchId});
       }
@@ -542,22 +548,41 @@ class Course{
       await this.retainedFiles(alias,alias+'-cold-complete-files');await this.stop(alias);return{opening:reopened,audit};
     });
   }
-  async close(){
+  close(){
     if(this.closingTask)return this.closingTask;
-    this.closingTask=(async()=>{
+    const report=value=>{try{process.stderr.write(JSON.stringify(value)+'\n');}catch{}};
+    const retry=async(label,action)=>{
+      for(;;)try{return await action();}catch(error){
+        this.state?.errors?.push({at:now(),name:label,error:err(error)});
+        try{await this.save();}catch{}
+        report({operationId:this.state?.id,state:label,error:err(error)});await delay(1000);
+      }
+    };
+    // Assign the shared close before independent actions begin. Each retained
+    // owner drains even while another awaits closure; the lease remains held.
+    this.closingTask=Promise.resolve().then(async()=>{
       if(!this.bound)return;
-      if(!this.apps&&Object.values(this.state?.hosts??{}).some(host=>host.starts.some(run=>!run.closed))){
-        for(;;){try{this.apps=await openRuntimeWorkspace({directory:this.options['merchant-workspace']});break;}
-          catch(error){process.stderr.write(JSON.stringify({state:'APPLICATION_OBSERVER_CLOSE_PENDING',error:err(error)})+'\n');await delay(1000);}}
-      }
-      if(this.referenceEnded)await this.referenceEnded;
-      for(const owner of [...this.browserOwners])for(;;){try{await owner.close();this.browserOwners.delete(owner);break;}catch(e){process.stderr.write(JSON.stringify({operationId:this.state?.id,state:'BROWSER_CLOSE_PENDING',error:err(e)})+'\n');await delay(1000);}}
-      for(const name of Object.keys(this.state?.hosts??{}))while(this.state.hosts[name].starts.some(x=>!x.closed)){
-        try{await this.stop(name);}catch(e){process.stderr.write(JSON.stringify({operationId:this.state.id,state:'APPLICATION_CLOSE_PENDING',name,error:err(e)})+'\n');this.state.errors.push({at:now(),name:'close-'+name,error:err(e)});try{await this.save();}catch{}await delay(1000);}
-      }
-      if(this.manager)for(;;){try{await this.manager.close();this.manager=null;break;}catch(e){process.stderr.write(JSON.stringify({operationId:this.state?.id,state:'MCP_CLOSE_PENDING',error:err(e)})+'\n');await delay(1000);}}
-      await this.apps?.close();
-    })();try{return await this.closingTask;}finally{this.closingTask=null;}
+      await Promise.all([
+        ...(this.referenceEnded?[this.referenceEnded]:[]),
+        ...[...this.browserOwners].map(owner=>retry('BROWSER_CLOSE_PENDING',async()=>{
+          await owner.close();this.browserOwners.delete(owner);
+        })),
+        retry('MCP_CLOSE_PENDING',async()=>{
+          const manager=this.manager;if(manager){await manager.close();if(this.manager===manager)this.manager=null;}
+        }),
+        (async()=>{
+          if(!this.apps&&Object.values(this.state?.hosts??{}).some(host=>host.starts.some(run=>!run.closed)))
+            await retry('APPLICATION_OBSERVER_CLOSE_PENDING',async()=>{this.apps=await openRuntimeWorkspace({directory:this.options['merchant-workspace']});});
+          await Promise.all(Object.keys(this.state?.hosts??{}).map(name=>retry('OWNER_CLOSE_PENDING:'+name,async()=>{
+            while(this.state.hosts[name].starts.some(run=>!run.closed))await this.stop(name);
+          })));
+          await retry('APPLICATION_OBSERVER_CLOSE_PENDING',async()=>{
+            const apps=this.apps;if(apps){await apps.close();if(this.apps===apps)this.apps=null;}
+          });
+        })()
+      ]);
+      await retry('JOURNAL_CLOSE_PENDING',async()=>{await this.save();});
+    }).finally(()=>{this.closingTask=null;});return this.closingTask;
   }
   async completeExisting(){
     const candidate=join(this.directory,'candidate.json'),resultPath=join(this.directory,'MERCHANT_RESULT.json');
