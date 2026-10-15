@@ -1,0 +1,11 @@
+{
+  "schema": "commons.git-archive-companion-binding.v1",
+  "sourceSha256": "a47832ed78736a7c34da8bcddb40be886ae6cf5e3997708b6c45fb0131feaff2",
+  "sourceBytes": 9111,
+  "parts": 7,
+  "companionCopyUnaffectedByCallerMutation": true,
+  "changedCompleteAndMissingCompleteOrPendingFinalIdentityRejected": 3,
+  "rejectedProviderWrites": 0,
+  "exactCompletedReplayReusesSameHead": true,
+  "legacyIncompleteAdoptsCurrentCompanions": true
+}
