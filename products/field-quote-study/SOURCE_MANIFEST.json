@@ -198,8 +198,8 @@
     },
     {
       "path": "host/export-core.mjs",
-      "bytes": 3613,
-      "sha256": "4bab73dea2f94f453834c8abb3f3b0d6b5990571774dc36a0de831c63272e36d"
+      "bytes": 4424,
+      "sha256": "332901acc5d46b96fb4ac51718bba8f977bd1c0fa82dbcc4d7e9cb5893dba258"
     },
     {
       "path": "host/export.mjs",
@@ -338,13 +338,13 @@
     },
     {
       "path": "src/build-installed.mjs",
-      "bytes": 8444,
-      "sha256": "615f5477638af82c1285ce64318f75e2f81fcfbff174997d2aa3219db7dce564"
+      "bytes": 8514,
+      "sha256": "b09bffce3b1c9889e96a6bf0a71a3a4b6970a46bef1527761d2abb780d128a66"
     },
     {
       "path": "src/connected_zip.cjs",
-      "bytes": 12090,
-      "sha256": "857c79f789e9cf4f6321bf22804e1c8d55af6758495ae1ba09d4fa72fd97bb26"
+      "bytes": 13178,
+      "sha256": "4903eb16215d3015388b62788670da9f23872d65e94422ff22cbf09863f9dd08"
     },
     {
       "path": "src/managed-storage.mjs",
@@ -460,6 +460,16 @@
       "path": "tools.mjs",
       "bytes": 4699,
       "sha256": "da0287b826dcf27151c353db6b34ed33cce1384cd7330a7eb3d089a86b844520"
+    },
+    {
+      "path": "vendor/PAKO_LICENSE.txt",
+      "bytes": 1104,
+      "sha256": "a04665b3b2de56c66730c1f720f528175739e4104f79073614aa611da1e85539"
+    },
+    {
+      "path": "vendor/pako.cjs",
+      "bytes": 238806,
+      "sha256": "e3c8f46f5a741598157ba051a9a0c043bcdc879c1867d3268e4058d4fae5fe3e"
     },
     {
       "path": "verification/browser-course.json",

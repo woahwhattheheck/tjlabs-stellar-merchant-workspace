@@ -1,4 +1,13 @@
 // MIT. Complete sources, original files, compact history, pending forms and native request lineage.
+// Cache the exact retained upstream source, not a network or environment dependency.
+const completeExportCodecs=new WeakMap();
+function completeExportDeflate(files){
+ const source=files['vendor/pako.cjs'];if(typeof source!=='string')throw Error('Complete export codec source is missing');
+ const prior=completeExportCodecs.get(files);if(prior?.source===source)return prior.codec;
+ const module={exports:{}};Function('module','exports',source)(module,module.exports);
+ if(typeof module.exports.deflateRaw!=='function')throw Error('Complete export codec cannot encode raw DEFLATE');
+ completeExportCodecs.set(files,{source,codec:module.exports});return module.exports;
+}
 export function buildFieldQuoteStudyExport(files,state,records=[],editions=[],{codec:C,core,originalSessions:M,sessions:S,buildDesk,zip}){
  const s=S.receive(JSON.stringify(state.carrier)),w=s.workspace,entries=[],names=new Set(),contentCache=new Map();let cacheBytes=0;
  const add=(name,value)=>{if(names.has(name))throw Error('Duplicate complete export path '+name);names.add(name);let prepared;
@@ -16,5 +25,5 @@ export function buildFieldQuoteStudyExport(files,state,records=[],editions=[],{c
  add('managed/RETAINED_HISTORY_INDEX.json',{schema:'stellar-forge.fieldquote-retained-history.v1',currentStateSha256:state.sha256,requests:records.map(r=>({sha256:r.id,requestId:r.value.request?.id,selection:state.receipts?.some(x=>x.recordSha256===r.id)?'COMMITTED':state.rejections?.some(x=>x.recordSha256===r.id)?'REJECTED_NOT_COMMITTED':'UNSELECTED_PREPARED_RECORD'})),editions:editions.map(r=>({sha256:r.id,sequence:r.value.sequence,selection:r.id===state.sha256?'CURRENT_EDITION':'RETAINED_EDITION'}))});
  for(const r of records)add('managed/requests/'+r.id+'.json',r.value);for(const e of editions)add('managed/editions/'+e.id+'.json',e.value);
  add('EXPORT_MANIFEST.json',{schema:'stellar-forge.fieldquote-export.v1',installationId:state.installationId,editionSha256:state.sha256,sessionSha256:state.carrier.sha256,sequence:state.sequence,files:entries.map(e=>({path:e.name,bytes:e.data.length,sha256:e.sha256}))});
- return zip.packStoredZip(entries,{timestamp:'2026-10-15T00:00:00Z',maxBytes:256*1024*1024,maxEntries:10000});
+ const codec=completeExportDeflate(files);return zip.packZip(entries,{timestamp:'2026-10-15T00:00:00Z',maxBytes:256*1024*1024,maxUncompressedBytes:256*1024*1024,maxEntries:10000,compression:'auto',deflateRaw:bytes=>codec.deflateRaw(bytes,{level:1})});
 }

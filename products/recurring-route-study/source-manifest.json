@@ -2,6 +2,71 @@
   "schema": "tjlabs.recurringroute-installed-source.v1",
   "files": [
     {
+      "path": "DELIVERY.md",
+      "bytes": 1409,
+      "sha256": "afa9292268675abc8ca7416fc5c5b1ca263ea82ea49c5cc27c56a680ecab0549"
+    },
+    {
+      "path": "DOMAIN_CONTRACT.md",
+      "bytes": 14305,
+      "sha256": "15699c9d5d9dfc56f00fb104ca3bde3eb2a086d9d8f59f37f11bc2d06b54ff49"
+    },
+    {
+      "path": "INSTALLED_OPERATION.md",
+      "bytes": 5221,
+      "sha256": "ae05edf50498a9526138fc947d2e65b27de6f3d35e9b6ec0c2d63075c4093b59"
+    },
+    {
+      "path": "INSTALLED_RECEIVING.md",
+      "bytes": 1582,
+      "sha256": "474e594b2461cabc60285d367e98ccc1e36a0a4f9285ae14eaa34c9ccd938b53"
+    },
+    {
+      "path": "MEASUREMENT.md",
+      "bytes": 5282,
+      "sha256": "2e6571874a72118fc4a2b0cc6f4986a9a8786e66d9b381505fca50aaecc4a734"
+    },
+    {
+      "path": "NATIVE.md",
+      "bytes": 3243,
+      "sha256": "324486d2eb7ac0ebfab8f960a762c01e9f6c422012c5f2ae206b45a0e261b2a4"
+    },
+    {
+      "path": "OPERATOR.md",
+      "bytes": 7422,
+      "sha256": "95e265867444df60259c1b2d7e1788f30e957731fad18b3c3d325168972078a4"
+    },
+    {
+      "path": "PRODUCT_CONTEXT.md",
+      "bytes": 1000,
+      "sha256": "33d41fc5ec120eb0a050e1bc0984173fa62dfcd53f1b19b8386fb2845760fc64"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2376,
+      "sha256": "62cf22f8dbb06ecf4762a6197f62adfd5496fb01ec98e27955d71aa1af4e7921"
+    },
+    {
+      "path": "RECEIVING.md",
+      "bytes": 2693,
+      "sha256": "8675d5c1fb8e0ddeb2929291752ef7bf4a8bf8157071a8a7ff50540035f29935"
+    },
+    {
+      "path": "Recurring_Route_Study_Desk.html",
+      "bytes": 1429607,
+      "sha256": "f4762d4717a552d21edab426b9ee1ea115616d980d7244396ec5b0b93ada53ff"
+    },
+    {
+      "path": "SOURCE_INTAKE.md",
+      "bytes": 6018,
+      "sha256": "076c3fd2c46688514e2f24c92d0d35c3456b3f825339ce10ba9380cbaab99091"
+    },
+    {
+      "path": "SOURCE_MANIFEST.json",
+      "bytes": 17053,
+      "sha256": "13bae676f96125c558eb6f6ae304c019dda520b5661c44a58a0b5247ec3160b6"
+    },
+    {
       "path": "application-provider.mjs",
       "bytes": 4021,
       "sha256": "1a757c6a1233ddb93a4f69b2bd154ad892a8fcc4c6339de25b3d0051726351c4"
@@ -22,14 +87,9 @@
       "sha256": "945ce2b5c97de19b8cfc912c24d9ebd76b20a06938fc45e4f3a18bed67842e8e"
     },
     {
-      "path": "DELIVERY.md",
-      "bytes": 1409,
-      "sha256": "afa9292268675abc8ca7416fc5c5b1ca263ea82ea49c5cc27c56a680ecab0549"
-    },
-    {
-      "path": "DOMAIN_CONTRACT.md",
-      "bytes": 14305,
-      "sha256": "15699c9d5d9dfc56f00fb104ca3bde3eb2a086d9d8f59f37f11bc2d06b54ff49"
+      "path": "examples/RESULT.md",
+      "bytes": 2733,
+      "sha256": "2222e8aca7defa82f55251ee7f86b4b9bfc49079c64c74bbeade8939ef147087"
     },
     {
       "path": "examples/build-course.cjs",
@@ -157,11 +217,6 @@
       "sha256": "6655bd282700c9e7b6ece0cb143252b39c66de0b581cae897bc96033fd1b35b3"
     },
     {
-      "path": "examples/RESULT.md",
-      "bytes": 2733,
-      "sha256": "2222e8aca7defa82f55251ee7f86b4b9bfc49079c64c74bbeade8939ef147087"
-    },
-    {
       "path": "host/client.mjs",
       "bytes": 4386,
       "sha256": "d465a9d7b641f33ab15a9df6d0345e36c6edb9cc7f2bcea0efe1d19318bd0795"
@@ -178,8 +233,8 @@
     },
     {
       "path": "host/export-core.mjs",
-      "bytes": 3637,
-      "sha256": "f37a99912e33ad01cb0e788b8fafc51901ecb2d85f9aa8ab440ab4d28dfd10ec"
+      "bytes": 4448,
+      "sha256": "c249fd110a43dc9b3bc9be5f259a899cd4ee312e675e47dbca7bc1d1691acc66"
     },
     {
       "path": "host/export.mjs",
@@ -207,16 +262,6 @@
       "sha256": "c51533ee55c7916770ae03b2aac82efea2e66144ac9b36092e1b48cff17f6afc"
     },
     {
-      "path": "INSTALLED_OPERATION.md",
-      "bytes": 5221,
-      "sha256": "ae05edf50498a9526138fc947d2e65b27de6f3d35e9b6ec0c2d63075c4093b59"
-    },
-    {
-      "path": "INSTALLED_RECEIVING.md",
-      "bytes": 1582,
-      "sha256": "474e594b2461cabc60285d367e98ccc1e36a0a4f9285ae14eaa34c9ccd938b53"
-    },
-    {
       "path": "installed-cli.mjs",
       "bytes": 4621,
       "sha256": "d560a6bb8ea7df141eaa5a4ceead2ba57bf472d0ed9304dbc5dd15dd2078bcba"
@@ -232,19 +277,9 @@
       "sha256": "282ce97a0b6b5be4881bc47bb145cac57a98f68445e3787a94206c5055fff5a6"
     },
     {
-      "path": "MEASUREMENT.md",
-      "bytes": 5282,
-      "sha256": "2e6571874a72118fc4a2b0cc6f4986a9a8786e66d9b381505fca50aaecc4a734"
-    },
-    {
       "path": "merchant-provider.mjs",
       "bytes": 2492,
       "sha256": "c46bd5dbe634b1c1bdae2ab8cdaff2e569a5bf3e9277ce96a2828b79387199bd"
-    },
-    {
-      "path": "NATIVE.md",
-      "bytes": 3243,
-      "sha256": "324486d2eb7ac0ebfab8f960a762c01e9f6c422012c5f2ae206b45a0e261b2a4"
     },
     {
       "path": "native/receive-installed.mjs",
@@ -255,11 +290,6 @@
       "path": "native/route-desk.cjs",
       "bytes": 8241,
       "sha256": "ce36d64839f0243af8b36fdae7a57f90f7529fbfe382ec6266bca69626821e02"
-    },
-    {
-      "path": "OPERATOR.md",
-      "bytes": 7422,
-      "sha256": "95e265867444df60259c1b2d7e1788f30e957731fad18b3c3d325168972078a4"
     },
     {
       "path": "operator/browser-course.cjs",
@@ -297,24 +327,9 @@
       "sha256": "7a9d93d0d27b40ddd0c4eedd8c2e839e0662da20e0728dbd352dfeb7209d6efc"
     },
     {
-      "path": "PRODUCT_CONTEXT.md",
-      "bytes": 1000,
-      "sha256": "33d41fc5ec120eb0a050e1bc0984173fa62dfcd53f1b19b8386fb2845760fc64"
-    },
-    {
       "path": "rational.cjs",
       "bytes": 1350,
       "sha256": "b2b38848a914a327cfecc271cf53ca0b52a6186b1d28bd38b3dc8677ca9974a2"
-    },
-    {
-      "path": "README.md",
-      "bytes": 2376,
-      "sha256": "62cf22f8dbb06ecf4762a6197f62adfd5496fb01ec98e27955d71aa1af4e7921"
-    },
-    {
-      "path": "RECEIVING.md",
-      "bytes": 2693,
-      "sha256": "8675d5c1fb8e0ddeb2929291752ef7bf4a8bf8157071a8a7ff50540035f29935"
     },
     {
       "path": "receiving/host-course.cjs",
@@ -325,11 +340,6 @@
       "path": "receiving/portable-course.cjs",
       "bytes": 11971,
       "sha256": "799acb96a3da9b688d37833b4aaae00d3bdf81fae02472e31a370059b670c0ef"
-    },
-    {
-      "path": "Recurring_Route_Study_Desk.html",
-      "bytes": 1177962,
-      "sha256": "23efa790920992bd26f5b97387233ac5d6df3c62882d43e1a6c4ad8374084b39"
     },
     {
       "path": "route.cjs",
@@ -357,29 +367,19 @@
       "sha256": "f37a1319db3aa8b9bd15ae2fea89cf0b79677e2a2eb295e63efa4d34f8308230"
     },
     {
-      "path": "SOURCE_INTAKE.md",
-      "bytes": 6018,
-      "sha256": "076c3fd2c46688514e2f24c92d0d35c3456b3f825339ce10ba9380cbaab99091"
-    },
-    {
-      "path": "SOURCE_MANIFEST.json",
-      "bytes": 16743,
-      "sha256": "61350568f673075ad7d39fd964b6234644b547fb998aa9491d09433e5fa3317f"
-    },
-    {
       "path": "src/archive.mjs",
       "bytes": 509,
       "sha256": "9536b1d60cb3c8ab0f8d32a7f8b1c034827f4bb854b0255c6b1e42feab666200"
     },
     {
       "path": "src/build-installed.mjs",
-      "bytes": 8587,
-      "sha256": "49288bb652c56d066ebb13f1447c8d71a1cb06237d404d1e593410d0e26d2be3"
+      "bytes": 8657,
+      "sha256": "eab67709ffe62fe321b64d79597da0e3d3e58ff1dab614a0adae032cfc9f052b"
     },
     {
       "path": "src/connected_zip.cjs",
-      "bytes": 12090,
-      "sha256": "857c79f789e9cf4f6321bf22804e1c8d55af6758495ae1ba09d4fa72fd97bb26"
+      "bytes": 13178,
+      "sha256": "4903eb16215d3015388b62788670da9f23872d65e94422ff22cbf09863f9dd08"
     },
     {
       "path": "src/managed-storage.mjs",
@@ -520,6 +520,16 @@
       "path": "tools.mjs",
       "bytes": 4831,
       "sha256": "8a8d30e25160d1520080a41e4b6895bb0bbeab1701e53a89950b5a824367d973"
+    },
+    {
+      "path": "vendor/PAKO_LICENSE.txt",
+      "bytes": 1104,
+      "sha256": "a04665b3b2de56c66730c1f720f528175739e4104f79073614aa611da1e85539"
+    },
+    {
+      "path": "vendor/pako.cjs",
+      "bytes": 238806,
+      "sha256": "e3c8f46f5a741598157ba051a9a0c043bcdc879c1867d3268e4058d4fae5fe3e"
     },
     {
       "path": "verification/browser-course.json",
