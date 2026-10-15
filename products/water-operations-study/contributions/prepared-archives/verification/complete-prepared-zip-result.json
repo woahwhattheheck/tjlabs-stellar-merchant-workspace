@@ -1,0 +1,43 @@
+{
+  "schema": "commons.complete-prepared-zip-course.v1",
+  "source_members": 886,
+  "archive_bytes": 2706802,
+  "statistics": {
+    "entries": 886,
+    "uncompressedBytes": 12606633,
+    "archiveBytes": 2706802,
+    "retainedPackedBytes": 2499964
+  },
+  "midpoint_entries": 443,
+  "midpoint_payloads": 443,
+  "checkpoint_bytes": 2735665,
+  "elapsed_ms": {
+    "original_pack": 7059,
+    "prepared_including_checkpoint": 7486,
+    "resumed_remaining": 3412
+  },
+  "whole_archive_sha256": "ee374e0a82da2bb781f299189505375f6d1a123a147256a65c14d55b6777e542",
+  "checks": [
+    "Complete ordinary source archive is byte-identical through early compression",
+    "Existing packZip API remains byte-identical",
+    "Serialized midpoint resumes the complete archive without repeating prior inputs",
+    "Every complete original is recovered from the archive",
+    "A changed mutable input and an owned alias preserve their respective bytes",
+    "Changed checkpoint original checksum is rejected",
+    "Missing checkpoint payload is rejected",
+    "Complete raw byte budget is enforced before compression",
+    "Case-folded path collision is rejected before output",
+    "Existing STORE-only output remains byte-identical"
+  ],
+  "exact_members": 886,
+  "checkpoint_alias_resume": {
+    "entries": 2,
+    "payloads": 1,
+    "bytes": 468,
+    "exact": true
+  },
+  "checkpoint_alias_metadata": {
+    "string_size_rejected": true,
+    "compressed_budget_checked_before_decode": true
+  }
+}
