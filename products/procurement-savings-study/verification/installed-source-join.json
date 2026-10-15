@@ -56,5 +56,6 @@
     "src/session-cache.cjs",
     "src/session.mjs",
     "tools.mjs"
-  ]
+  ],
+  "installed_digest_cache": "Existing exact immutable text strategy from Distribution; original SHA source unchanged, misses delegated, 16 MiB / 4,096 entry bound, fresh result records"
 }

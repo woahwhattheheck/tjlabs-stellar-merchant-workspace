@@ -17,7 +17,7 @@ export function applyDomain(workspace,operation){
  else if(operation.kind==='link-document')next=core.linkDocument(w,p);
  else if(operation.kind==='unlink-document')next=core.unlinkDocument(w,p);
  else if(operation.kind==='review')next=core.review(w,p);
- else if(operation.kind==='configure'){next=core.clone(w);next.config={...next.config,...p,selection:w.config.selection,distribution:w.config.procurement};core.validate(next);}
+ else if(operation.kind==='configure'){next=core.clone(w);next.config={...next.config,...p,selection:w.config.selection,procurement:w.config.procurement};core.validate(next);}
  else if(operation.kind==='edit-row'){if(p.study_id!==w.id||p.expected_extract_id!==(core.selected(w,p.kind,p.side)?.id||null))throw Error('Selected records changed after this correction began');next=core.editRow(w,p);}
  else if(operation.kind==='procurement-plan'){next=core.clone(w);next.config.procurement={...next.config.procurement,...p};core.validate(next);}
  else if(operation.kind==='notes'){next=core.clone(w);next.notes=p.text;core.validate(next);}

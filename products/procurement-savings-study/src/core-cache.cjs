@@ -1,6 +1,7 @@
 'use strict';
 // The unmodified core remains authoritative. Cache only successful analyses by the
 // complete serialized study, and return isolated copies on both misses and hits.
+require('./sha-cache.cjs');
 const Core=require('../core.cjs');
 const entries=new Map(),LIMIT=16*1024*1024,COUNT=8;let size=0;
 function analyze(study){

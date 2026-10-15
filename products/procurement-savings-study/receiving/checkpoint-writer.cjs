@@ -1,0 +1,2 @@
+'use strict';
+module.exports=function compact(value){const nodes=[],seen=new Map();function put(v){const n=v===null||typeof v!=="object"?["p",v]:Array.isArray(v)?["a",v.map(put)]:["o",Object.entries(v).map(([k,x])=>[k,put(x)])];const key=JSON.stringify(n),old=seen.get(key);if(old!==undefined)return old;const id=nodes.length;nodes.push(n);seen.set(key,id);return id;}const root=put(value);return{schema:"complete-json-checkpoint/v1",nodes,root};};
