@@ -68,7 +68,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
   const recoveryAction=node=>['download-working','recover-source','recover-save'].includes(node.dataset.forecastAction);
   function workbookOptions(){return {caseId:current.program.id,originCaseId:current.program.origin?.programId,
     planContentSha256:current.plan.contentSha256};}
-  function currentInputs(){if(request)return clone(request.data.inputs);return editing&&$('[data-forecast-form]')?readEditor():clone(inputState||selected?.inputs||defaults());}
+  function currentInputs(){if(request)return clone(request.data.inputs);return editing&&$('[data-forecast-form]')?readEditor():clone(selected?.inputs||inputState||defaults());}
   function rawKey(node){
     const form=$('[data-forecast-form]'),parts=[];
     for(const attr of ['data-forecast-commercial','data-forecast-package','data-forecast-invoice','data-forecast-grant',
@@ -115,7 +115,7 @@ export function mountForecast({container,current,api:transport,mutationId,record
     }
     return clone(value);
   }
-  function retentionInputs(){return request?clone(request.data.inputs):editing&&$('[data-forecast-form]')?readEditor({forRecovery:true}):clone(inputState||selected?.inputs||defaults());}
+  function retentionInputs(){return request?clone(request.data.inputs):editing&&$('[data-forecast-form]')?readEditor({forRecovery:true}):clone(selected?.inputs||inputState||defaults());}
   function snapshot(){
     return {schema:FORECAST_DRAFT_SCHEMA,caseId:current.program.id,originCaseId:current.program.origin?.programId||null,
       planContentSha256:current.plan.contentSha256,savedAt:new Date().toISOString(),editing,selectedId:selected?.id||null,
