@@ -1,0 +1,5 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,mapping_case_id,spend_record_id,initiative_record_id,supplier_id,term_record_id,item_id,decided_at,inputs_complete,expected_inputs,proposed_by
+MAP1,MAP1,1,,active,2026-10-05T09:00:00Z,2026-10-05T09:00:00Z,document-4be5c7cb78f10e78d8a9f3a593b0bd9e,authored/mapping_cases/MAP1,MAP1,SP1,I1,SUP,T1,ITEM1,2026-10-05T09:00:00Z,true,5,PROC
+MAP2,MAP2,1,,active,2026-10-05T09:00:00Z,2026-10-05T09:00:00Z,document-30a3da5d2a3f7e722b5c151dcfe451f1,authored/mapping_cases/MAP2,MAP2,SP2,I2,SUP,T2,ITEM2,2026-10-05T09:00:00Z,true,5,PROC
+MAP3,MAP3,1,,active,2026-10-05T09:00:00Z,2026-10-05T09:00:00Z,document-4526e825038f408565c8379e7022cb41,authored/mapping_cases/MAP3,MAP3,SP3,I3,SUP,T3,ITEM3,2026-10-05T09:00:00Z,true,5,PROC
+MAP4,MAP4,1,,active,2026-10-05T09:00:00Z,2026-10-05T09:00:00Z,document-7f1262e6a6e44f5a287a46f25a14be62,authored/mapping_cases/MAP4,MAP4,SP3,I4,SUP,T4,ITEM3,2026-10-05T09:00:00Z,true,5,PROC

@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "calculation_inputs",
+  "record_id": "CI2-92",
+  "observed_fields": {
+    "calculation_case_record_id": "CALC2",
+    "family": "costs",
+    "record_id": "COST-SETUP",
+    "row_sha256": "c31b4467e59fc319410fd85b2ed71313250d5b6db9ed88d5ac1f7b3199ff01d6"
+  }
+}

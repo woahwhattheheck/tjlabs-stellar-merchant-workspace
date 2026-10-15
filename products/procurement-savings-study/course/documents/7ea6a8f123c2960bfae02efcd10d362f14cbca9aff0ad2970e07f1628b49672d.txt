@@ -1,0 +1,14 @@
+{
+  "data_class": "authored_course",
+  "kind": "authorities",
+  "record_id": "AUTH-DATA-data",
+  "observed_fields": {
+    "person_id": "DATA",
+    "permission": "data",
+    "operator_id": "OP",
+    "site_id": "",
+    "granted_by": "FIN",
+    "granted_at": "2026-08-01T09:00:00Z",
+    "valid_from": "2026-08-01T09:00:00Z"
+  }
+}

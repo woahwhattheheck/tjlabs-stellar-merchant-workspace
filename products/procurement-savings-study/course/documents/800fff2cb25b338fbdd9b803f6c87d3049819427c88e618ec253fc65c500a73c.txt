@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "calculation_inputs",
+  "record_id": "CI2-89",
+  "observed_fields": {
+    "calculation_case_record_id": "CALC2",
+    "family": "assignments",
+    "record_id": "A4",
+    "row_sha256": "9cf78fd7e5b700a446a1b52f31413949cf4083afdf5806ed5fb902518fa83d4a"
+  }
+}

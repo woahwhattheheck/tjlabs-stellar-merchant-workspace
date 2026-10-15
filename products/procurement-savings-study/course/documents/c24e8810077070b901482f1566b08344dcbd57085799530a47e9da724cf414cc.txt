@@ -1,0 +1,15 @@
+{
+  "data_class": "authored_course",
+  "kind": "scope_adjustments",
+  "record_id": "SCOPE3",
+  "observed_fields": {
+    "baseline_record_id": "B3",
+    "term_record_id": "T3",
+    "amount_per_base_unit": "20",
+    "currency": "USD",
+    "basis_document_id": "document-d626b38552c030763285a414fcfedd8e",
+    "approved_at": "2026-09-05T09:00:00Z",
+    "approved_by": "FIN",
+    "reason": "Explicit removed service component"
+  }
+}

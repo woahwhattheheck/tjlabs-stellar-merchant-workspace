@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "mapping_inputs",
+  "record_id": "MI3-4",
+  "observed_fields": {
+    "mapping_case_record_id": "MAP3",
+    "family": "items",
+    "record_id": "ITEM3",
+    "row_sha256": "2c5c4eb44ae07a075c14c14ba9c603343c245b0269db30063c7a0c4a6a4dfd93"
+  }
+}

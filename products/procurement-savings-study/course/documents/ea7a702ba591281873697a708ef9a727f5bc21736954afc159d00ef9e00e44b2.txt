@@ -1,0 +1,21 @@
+{
+  "data_class": "authored_course",
+  "kind": "baselines",
+  "record_id": "B1",
+  "observed_fields": {
+    "initiative_record_id": "I1",
+    "item_id": "ITEM1",
+    "baseline_kind": "historical_paid",
+    "period_start": "2026-08-01T00:00:00Z",
+    "period_end": "2026-09-01T00:00:00Z",
+    "unit_price": "100",
+    "unit": "each",
+    "currency": "USD",
+    "specification": "spec-A",
+    "delivery_terms": "delivered",
+    "payment_terms": "net30",
+    "inputs_complete": "true",
+    "expected_inputs": "1",
+    "prepared_by": "PROC"
+  }
+}

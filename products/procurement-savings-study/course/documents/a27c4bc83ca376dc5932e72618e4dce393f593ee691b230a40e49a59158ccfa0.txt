@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "calculation_inputs",
+  "record_id": "CI2-19",
+  "observed_fields": {
+    "calculation_case_record_id": "CALC2",
+    "family": "currency_treatments",
+    "record_id": "FXT-AV2",
+    "row_sha256": "335b188b87fc35b35951b336d666ce2138ec37705450ed2667d4de2184bcbed7"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "baseline_inputs",
+  "record_id": "BI4",
+  "observed_fields": {
+    "baseline_record_id": "B4",
+    "family": "spend_lines",
+    "record_id": "BASE-AP4",
+    "row_sha256": "ae4c06ac2dd210b59ad70ac93cb2d3ffa7f93e71087006a19b7afc157ff8b185"
+  }
+}

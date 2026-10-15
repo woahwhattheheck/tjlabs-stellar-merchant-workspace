@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "calculation_inputs",
+  "record_id": "CI2-79",
+  "observed_fields": {
+    "calculation_case_record_id": "CALC2",
+    "family": "mapping_inputs",
+    "record_id": "MI4-2",
+    "row_sha256": "b053cb3f0c8dcef1870bce1b6279ebb471828b577b31037969c2a45cc16f1b5d"
+  }
+}

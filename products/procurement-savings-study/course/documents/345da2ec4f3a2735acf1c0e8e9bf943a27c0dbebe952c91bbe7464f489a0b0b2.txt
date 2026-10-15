@@ -1,0 +1,1 @@
+Authored Finance policy. Report realized price, new-price volume and interaction separately. Subtract actual one-time and recurring costs. Avoidance is not price realization or cash. Scope normalization and currency treatment need named evidence.

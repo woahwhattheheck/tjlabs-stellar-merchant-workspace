@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "calculation_inputs",
+  "record_id": "CI2-20",
+  "observed_fields": {
+    "calculation_case_record_id": "CALC2",
+    "family": "policies",
+    "record_id": "POL",
+    "row_sha256": "962178bbf59a34d10eb2767e841446052df9786afb268f295842a83c20378da2"
+  }
+}

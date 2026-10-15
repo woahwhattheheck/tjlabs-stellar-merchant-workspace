@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "calculation_inputs",
+  "record_id": "CI3-48",
+  "observed_fields": {
+    "calculation_case_record_id": "CALC3",
+    "family": "forecasts",
+    "record_id": "F4",
+    "row_sha256": "d963c6410ed37759ee31c725c43c0ec1168ca9c71a60a02aba9ce5e33d29006d"
+  }
+}

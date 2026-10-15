@@ -1,0 +1,17 @@
+{
+  "data_class": "authored_course",
+  "kind": "finance_reviews",
+  "record_id": "FIN2",
+  "observed_fields": {
+    "submission_record_id": "SUB2",
+    "submission_sha256": "4759c5cb7618147f4584dd194928e01aaa5ef21b32df33853c5814479a498733",
+    "reviewed_at": "2026-10-09T12:30:00Z",
+    "reviewed_by": "FIN",
+    "decision": "accepted",
+    "approved_price_amount": "-600",
+    "approved_net_amount": "-1600",
+    "approved_avoidance_amount": "600",
+    "currency": "USD",
+    "notes": "Named actual Finance acceptance"
+  }
+}

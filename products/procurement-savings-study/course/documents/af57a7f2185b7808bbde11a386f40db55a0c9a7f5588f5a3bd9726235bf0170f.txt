@@ -1,0 +1,17 @@
+{
+  "data_class": "authored_course",
+  "kind": "finance_reviews",
+  "record_id": "FIN3",
+  "observed_fields": {
+    "submission_record_id": "SUB3",
+    "submission_sha256": "44302517cfb5a6168a7fb5a56fb366730c8c3bec27381d5b1479f4143419290d",
+    "reviewed_at": "2026-10-09T12:30:00Z",
+    "reviewed_by": "FIN",
+    "decision": "rejected",
+    "approved_price_amount": "",
+    "approved_net_amount": "",
+    "approved_avoidance_amount": "",
+    "currency": "USD",
+    "notes": "Finance rejects claim recognition under supplied policy; arithmetic retained"
+  }
+}

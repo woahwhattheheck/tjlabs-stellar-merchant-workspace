@@ -1,0 +1,18 @@
+{
+  "data_class": "authored_course",
+  "kind": "effort",
+  "record_id": "E-16",
+  "observed_fields": {
+    "member_id": "MEM1",
+    "phase": "correction",
+    "method": "study_process",
+    "person_id": "PROC",
+    "started_at": "2026-10-10T10:20:00.000Z",
+    "ended_at": "2026-10-10T10:24:00.000Z",
+    "person_minutes": "4",
+    "work_key": "study_process-I1-correction",
+    "matched_group_id": "matched-I1-correction",
+    "population_complete": "true",
+    "phase_complete": "true"
+  }
+}

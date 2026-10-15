@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "people",
+  "record_id": "PROC",
+  "observed_fields": {
+    "person_id": "PROC",
+    "operator_id": "OP",
+    "name": "Pat Morgan",
+    "valid_from": "2026-08-01T09:00:00Z"
+  }
+}

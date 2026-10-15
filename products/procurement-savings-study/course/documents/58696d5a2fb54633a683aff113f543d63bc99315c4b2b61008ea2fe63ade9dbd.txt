@@ -1,0 +1,18 @@
+{
+  "data_class": "authored_course",
+  "kind": "effort",
+  "record_id": "E-20",
+  "observed_fields": {
+    "member_id": "MEM2",
+    "phase": "supplier_mapping",
+    "method": "study_process",
+    "person_id": "PROC",
+    "started_at": "2026-10-10T11:00:00.000Z",
+    "ended_at": "2026-10-10T11:06:00.000Z",
+    "person_minutes": "6",
+    "work_key": "study_process-I2-supplier_mapping",
+    "matched_group_id": "matched-I2-supplier_mapping",
+    "population_complete": "true",
+    "phase_complete": "true"
+  }
+}

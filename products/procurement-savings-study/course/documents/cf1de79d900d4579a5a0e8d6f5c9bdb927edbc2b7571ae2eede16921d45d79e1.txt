@@ -1,0 +1,16 @@
+{
+  "data_class": "authored_course",
+  "kind": "submissions",
+  "record_id": "SUB2",
+  "observed_fields": {
+    "calculation_case_record_id": "CALC2",
+    "calculation_basis_sha256": "a6cbd3567d1ab88b3b609ba8242c870be8955b1fd62537b8aa2f068de0af2f5e",
+    "submitted_at": "2026-10-09T12:10:00Z",
+    "submitted_by": "PROC",
+    "price_amount": "-600",
+    "net_amount": "-1600",
+    "avoidance_amount": "600",
+    "currency": "USD",
+    "notes": "Actual authored procurement submission; source amounts preserved"
+  }
+}

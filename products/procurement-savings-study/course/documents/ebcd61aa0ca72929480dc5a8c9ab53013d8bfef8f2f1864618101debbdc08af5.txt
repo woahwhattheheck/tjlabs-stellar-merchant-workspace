@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "mapping_inputs",
+  "record_id": "MI1-0",
+  "observed_fields": {
+    "mapping_case_record_id": "MAP1",
+    "family": "spend_lines",
+    "record_id": "SP1",
+    "row_sha256": "cecebad7b727bcab248e9d8dbfa35649c7d7f9ee6bf83e9487d8bc60cb28701d"
+  }
+}

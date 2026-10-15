@@ -1,0 +1,11 @@
+{
+  "data_class": "authored_course",
+  "kind": "calculation_inputs",
+  "record_id": "CI1-9",
+  "observed_fields": {
+    "calculation_case_record_id": "CALC1",
+    "family": "authorities",
+    "record_id": "AUTH-PROC-operations",
+    "row_sha256": "1b2011433f129d1b82eaab2ee2196de6e958c025639ff570fd9983fe74d3f245"
+  }
+}

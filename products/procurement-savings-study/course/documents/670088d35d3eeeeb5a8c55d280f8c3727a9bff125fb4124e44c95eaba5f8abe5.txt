@@ -1,0 +1,15 @@
+{
+  "data_class": "authored_course",
+  "kind": "currency_treatments",
+  "record_id": "FXT-AV2",
+  "observed_fields": {
+    "source_family": "avoidance_cases",
+    "source_record_id": "AV2",
+    "reporting_currency": "USD",
+    "actual_rate_record_id": "FX-A",
+    "constant_rate_record_id": "FX-C",
+    "approved_by": "FIN",
+    "approved_at": "2026-09-05T09:00:00Z",
+    "reason": "Explicit authored constant-versus-actual currency comparison"
+  }
+}
