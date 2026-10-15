@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,label_id,incident_id,asset_id,label,label_status,effective_at,labelled_by,labelled_at,outcome_source,supersedes_label_id
+LABEL1,LABEL1,1,,active,2026-10-12T11:05:00Z,2026-10-12T11:05:00Z,,Authored outcome_labels/LABEL1,LABEL1,I1,A1,Connector fault,confirmed,2026-10-12T09:00:00Z,ENG,2026-10-12T11:00:00Z,Authored completed work order,

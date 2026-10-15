@@ -1,0 +1,610 @@
+{
+  "schema": "tjlabs.fleet-installed-source.v1",
+  "files": [
+    {
+      "path": "application-provider.mjs",
+      "bytes": 3990,
+      "sha256": "1283ae3385c815a26bfdd4bc914b942dc128285b0ea060fc19a5eec2a7118f4d"
+    },
+    {
+      "path": "binary.cjs",
+      "bytes": 1021,
+      "sha256": "99479b36e6f6e2e08da08d9faf25f02ca0f344df41902b08e8df06a1c6acf291"
+    },
+    {
+      "path": "core.cjs",
+      "bytes": 34744,
+      "sha256": "674bd306813390587d76fc79610f995b861e0687d5ab6a417717a0a62a1d7c9a"
+    },
+    {
+      "path": "csv.cjs",
+      "bytes": 1550,
+      "sha256": "945ce2b5c97de19b8cfc912c24d9ebd76b20a06938fc45e4f3a18bed67842e8e"
+    },
+    {
+      "path": "DELIVERY.md",
+      "bytes": 1896,
+      "sha256": "d3f1ef9a61fe4a33dd29fe718ef2db0f1a7631c0cda645523fea3d5f7dc16368"
+    },
+    {
+      "path": "DOMAIN_CONTRACT.md",
+      "bytes": 13296,
+      "sha256": "c29ef1c3aa75c9f643f646ca4be5f98543cfdd050a5c03a0c3442511f6a30eea"
+    },
+    {
+      "path": "DOMAIN_HEADERS.json",
+      "bytes": 10397,
+      "sha256": "3ae898c8f428f9f651f0b00f2ea128d3886c6edab1e56573297f2dc3973f89ec"
+    },
+    {
+      "path": "examples/build-course.cjs",
+      "bytes": 22446,
+      "sha256": "e5a340fd295b302b5e1c746f66ff21fc8d4c7d64b2ae99fdfd1971c163c6d0b0"
+    },
+    {
+      "path": "examples/complete-report.md",
+      "bytes": 4501,
+      "sha256": "36f949d0d10743ecb7f90ae166d0f6bfd8f886b1bb88bfad8536d555e09cf861"
+    },
+    {
+      "path": "examples/complete.study.json",
+      "bytes": 188856,
+      "sha256": "671150daa6d8585e2238a649e92c413b35a8b961cfdc47cd9e3cfaa210dbf6d3"
+    },
+    {
+      "path": "examples/input/accounting_events.csv",
+      "bytes": 508,
+      "sha256": "a55daf9509ed9aeb763cd4a197d00b5674a8890edc8fce6588b66edf8bd23052"
+    },
+    {
+      "path": "examples/input/application_profiles.csv",
+      "bytes": 597,
+      "sha256": "d195c64c05b5b49fddc52cf62bb15b5981a62f4fcda45e6b8e55c755ac5164d7"
+    },
+    {
+      "path": "examples/input/assessments.csv",
+      "bytes": 282,
+      "sha256": "b999e89382a47c2a20709d9397258bb5ab1661baba07f4b101bf20480e7ffb05"
+    },
+    {
+      "path": "examples/input/assets.csv",
+      "bytes": 661,
+      "sha256": "26977c830be644bfddcc4ee45be4d87e3b809e668632ab1e60be02881cf12e8c"
+    },
+    {
+      "path": "examples/input/assignments.csv",
+      "bytes": 1067,
+      "sha256": "c4852cd58aab5eed1235b95c04ef377c02a30b493638a936c14e16a37b99290c"
+    },
+    {
+      "path": "examples/input/comparison_members.csv",
+      "bytes": 1286,
+      "sha256": "6ed93e83624bc678277f934cdef7d398d17bed5c998f4414922fd33da8fff036"
+    },
+    {
+      "path": "examples/input/configurations.csv",
+      "bytes": 909,
+      "sha256": "df23cb83ce62e4b8fc2a25bd7e4be35bd29f6ef2d109881570d223da19cefa09"
+    },
+    {
+      "path": "examples/input/cost_entries.csv",
+      "bytes": 1124,
+      "sha256": "bbd3de09461e12497872c94600b898c6166c4afcb5f4bdcbe7793b02e5dcc407"
+    },
+    {
+      "path": "examples/input/downtime_intervals.csv",
+      "bytes": 837,
+      "sha256": "13f2226b5390a325756e39c5fb81a9a441d4fa0107c9f070851e32332aac479a"
+    },
+    {
+      "path": "examples/input/effort.csv",
+      "bytes": 4310,
+      "sha256": "6e3b51af822d332502b5676105831089ca2e94edf0e3f01c52e5649d40fda763"
+    },
+    {
+      "path": "examples/input/identity_links.csv",
+      "bytes": 736,
+      "sha256": "138a068c191996bf33c8150120ec56ad467bffd080cce66bfd32451ff891e3ef"
+    },
+    {
+      "path": "examples/input/incidents.csv",
+      "bytes": 5482,
+      "sha256": "32854db91af16284f505eedf81245ee781dea66dedf924ac31918e073a894ae7"
+    },
+    {
+      "path": "examples/input/maintenance.csv",
+      "bytes": 802,
+      "sha256": "b29e9a1dde77b16a860ab39af4e1dfa0dfedd2b6a188ef8158900e8404102290"
+    },
+    {
+      "path": "examples/input/organisations.csv",
+      "bytes": 317,
+      "sha256": "569321b118a8f94f94b50366119d9d045814c29603871280c6003638ceede552"
+    },
+    {
+      "path": "examples/input/outcome_labels.csv",
+      "bytes": 443,
+      "sha256": "40e4dfc3601f5d20ecfab619b9652d33b52c4f95e2cef4774a206f9ed7a6a80b"
+    },
+    {
+      "path": "examples/input/output_records.csv",
+      "bytes": 972,
+      "sha256": "6bbaa022493d97fe5919113590da4370ffc9ff11385c6447fcb699e17a231a8d"
+    },
+    {
+      "path": "examples/input/people.csv",
+      "bytes": 557,
+      "sha256": "eec80ce80e4450e5ecfe0c1dff154d0054af0140310a5c5d7eff61a2ad84b553"
+    },
+    {
+      "path": "examples/input/report_inputs.csv",
+      "bytes": 6913,
+      "sha256": "706d78e5fe942992b2253532eccbc23edfe937fc3f9a638a040557331454aebf"
+    },
+    {
+      "path": "examples/input/reports.csv",
+      "bytes": 473,
+      "sha256": "92e211acd10e543128f6a762e2978dd8cb08a71ed535a4c59a54beb6e53f0f65"
+    },
+    {
+      "path": "examples/input/review_questions.csv",
+      "bytes": 2986,
+      "sha256": "31baae4fb6eb2a932c1156824f0d978daf5d1415dedd00df099be8e0dfa1d41e"
+    },
+    {
+      "path": "examples/input/source_clocks.csv",
+      "bytes": 391,
+      "sha256": "cd5ad1180c7033dc002edca40c52d818a1a025f33472afb945fb53e5df1d7cae"
+    },
+    {
+      "path": "examples/input/source_documents.csv",
+      "bytes": 483,
+      "sha256": "679095c9a66230c2f61210e4b630a76cf749d10121aa3a078e59b0fb93ae5d36"
+    },
+    {
+      "path": "examples/input/telemetry.csv",
+      "bytes": 530,
+      "sha256": "edd7c73978e095d4673ccd0fbdb3b4c049cc0ab0c3d8675c89b936dc3720548d"
+    },
+    {
+      "path": "examples/input/work_intervals.csv",
+      "bytes": 1675,
+      "sha256": "074eac6c872d1b78c0e2108d0a4b84b3e695f573684c1a0e20e960b96cdac224"
+    },
+    {
+      "path": "Fleet_Incident_Study_Desk.html",
+      "bytes": 1571508,
+      "sha256": "50afb6348d5f6a78909369b0efd40c6c22d593c5ada704630ac8f03b2c1ae2fd"
+    },
+    {
+      "path": "fleet-money.cjs",
+      "bytes": 7552,
+      "sha256": "92973e35ef158433fdb5f355b1393d8c45a1dc2cc038651f18567e558a5649c7"
+    },
+    {
+      "path": "fleet-time.cjs",
+      "bytes": 4519,
+      "sha256": "3ecb1dd72248c5510d111eb0dee0a0f446adf58c74cbcbefee7837f38667aad9"
+    },
+    {
+      "path": "fleet.cjs",
+      "bytes": 46398,
+      "sha256": "6c407274391e2130606d1de224e338d8f1248c5ac010e3dc45ada850262b6830"
+    },
+    {
+      "path": "host/client.mjs",
+      "bytes": 4222,
+      "sha256": "734f5061349fd03524173b09a7b33cd85cc07411bf16e3b46fb9b13732d2565c"
+    },
+    {
+      "path": "host/codec.mjs",
+      "bytes": 28418,
+      "sha256": "ab609271b0bcb6aac8b732db7b437edd69bb7865dcaea4fd5cf1ec162de15c45"
+    },
+    {
+      "path": "host/domain.mjs",
+      "bytes": 5091,
+      "sha256": "40e07560d96c37ce9db1e79ff913b7d5e7203ac5d2e854d2cc43ad8e559a275b"
+    },
+    {
+      "path": "host/export-core.mjs",
+      "bytes": 4426,
+      "sha256": "00f17f4b8d3883ce735f38b14999e2d691beb0484803dccc1b0a9bd53c749cc5"
+    },
+    {
+      "path": "host/export.mjs",
+      "bytes": 1582,
+      "sha256": "6de994ca4abb682f638a547451b4b679855a2e9d7da0eee284d299e5c22a1fc3"
+    },
+    {
+      "path": "host/io.mjs",
+      "bytes": 3104,
+      "sha256": "31f8be16daec4741503c9b3d20574c3166ace604783eb1b0f3fa6649a1a75cfb"
+    },
+    {
+      "path": "host/model.cjs",
+      "bytes": 4983,
+      "sha256": "db5bd5eea2d34896ded65865e052c0057cfede11a799da1b0fd15f013f47981e"
+    },
+    {
+      "path": "host/server.mjs",
+      "bytes": 6900,
+      "sha256": "0bb41fe3990b8a33c3dd3766ff33f2190cac07f8261290e72c7a3cae10a3ec43"
+    },
+    {
+      "path": "host/store.mjs",
+      "bytes": 5641,
+      "sha256": "4faf668af4267f730f37f4cb5feaa670eeb2b052d60bdfb417eeb6caa75e1a3e"
+    },
+    {
+      "path": "INSTALLED_OPERATION.md",
+      "bytes": 5516,
+      "sha256": "54fc77d2b3d0d911467983c0cc6159faf508655c178bf97aae989b79bb6b1271"
+    },
+    {
+      "path": "INSTALLED_RECEIVING.md",
+      "bytes": 1582,
+      "sha256": "a3050157e9487df3656c019069407fd61156c01f9944b37a0acb3b8e659f0131"
+    },
+    {
+      "path": "installed-cli.mjs",
+      "bytes": 4578,
+      "sha256": "69cdf7312d07e65d314d789c32f74b926912a40e68bb0969a44991ff117dc438"
+    },
+    {
+      "path": "managed.mjs",
+      "bytes": 2621,
+      "sha256": "20297f0da4a8869e1be031bdbb64a546e80d52e039f5e1227a39e644628b428a"
+    },
+    {
+      "path": "mcp.mjs",
+      "bytes": 8897,
+      "sha256": "7fba69ee12aa25c221940025b40caa094d1cdde418a39b8096027a5f6045e9ba"
+    },
+    {
+      "path": "MEASUREMENT.md",
+      "bytes": 5022,
+      "sha256": "b9ff56ca3fc89e58f65b7a08362b20d609daf7685aac10eddf31985fb4d638a3"
+    },
+    {
+      "path": "merchant-provider.mjs",
+      "bytes": 2551,
+      "sha256": "d94be7ce106fd694c2a96c7dcd9c94dc4833ff99ed7d11b5663266c58d0d9d69"
+    },
+    {
+      "path": "NATIVE.md",
+      "bytes": 4511,
+      "sha256": "4c33656e97b8df9d461f64201ab9999e0c32d62cf086a6d4aa8a70426dfd086b"
+    },
+    {
+      "path": "native/fleet-desk.cjs",
+      "bytes": 9627,
+      "sha256": "a4aa30c0d2f6ba044f4558ea505b8db1f9acce0e80338448b0edbac7e4a5b09b"
+    },
+    {
+      "path": "native/receive-installed.mjs",
+      "bytes": 4456,
+      "sha256": "78b36db723fcc2f4712d271053ae71fa1b4613a286a27928a81ede4aa8e5ef16"
+    },
+    {
+      "path": "OPERATOR.md",
+      "bytes": 6890,
+      "sha256": "67ccf861225be77b1b0fa8051c62500aa3d737a3122f6b91299c0fd3b5bf450c"
+    },
+    {
+      "path": "operator/browser-course.cjs",
+      "bytes": 10707,
+      "sha256": "c1b7cca402b2c7fb7471151dc71d293fceec8b6b3f43eedb53b86f55bbd296ef"
+    },
+    {
+      "path": "operator/desk.js",
+      "bytes": 64851,
+      "sha256": "65c1e24b2b1047f2bb09a4ea648b43bb0abb3c20bcba9d443f0fc750e5056485"
+    },
+    {
+      "path": "operator/installed-desk.js",
+      "bytes": 67665,
+      "sha256": "4ad0a107c30afda16cd1e742be35a21fd6a8acf74d9ab5c78a39e81041a57b5a"
+    },
+    {
+      "path": "operator/native-course.cjs",
+      "bytes": 9198,
+      "sha256": "fd8f5f396df57e98be89e771959293331da46893aff130b6a981e6fa5ce28b60"
+    },
+    {
+      "path": "operator/render-desk.cjs",
+      "bytes": 6117,
+      "sha256": "d6153f934e08f9d8f36b45ed83dfdfed8c7b5e86e727be44033936cb6d38d30e"
+    },
+    {
+      "path": "operator/run-course.cjs",
+      "bytes": 810,
+      "sha256": "5380af4d1478e209c3f5a87dc8248dbe8a985664416d52e2b9a1843441ea38f4"
+    },
+    {
+      "path": "package.json",
+      "bytes": 218,
+      "sha256": "86eca966fcf3c43e8dabbe6d59a4aabfb83d3a4c939082fe629a8a448a393800"
+    },
+    {
+      "path": "PRODUCT_CONTEXT.md",
+      "bytes": 507,
+      "sha256": "dc13c9388c731f40500f45e93db397546471a243b8d7ccfec8124267008402e6"
+    },
+    {
+      "path": "rational.cjs",
+      "bytes": 1350,
+      "sha256": "b2b38848a914a327cfecc271cf53ca0b52a6186b1d28bd38b3dc8677ca9974a2"
+    },
+    {
+      "path": "README.md",
+      "bytes": 2643,
+      "sha256": "04b1a1109bc42d86d6bfc3b2ed0d9182c18667acf65904a45469b9b73a5efbde"
+    },
+    {
+      "path": "RECEIVING.md",
+      "bytes": 2944,
+      "sha256": "395727089a047d32d6b2850c3454158b861c492e36c6c9023f2df9eff9529c5f"
+    },
+    {
+      "path": "receiving/EXPORT_COMPRESSION.md",
+      "bytes": 3814,
+      "sha256": "5da0e322ce2691d433599acef9d4f61a580c853383fdbc5224522cd42a863e41"
+    },
+    {
+      "path": "receiving/export-compression-comparison.json",
+      "bytes": 1251,
+      "sha256": "1b06115a3318d70075a215ebe9b2d28aad5b2ec753e5cd9bbf44ed593796d271"
+    },
+    {
+      "path": "receiving/export-compression-course.cjs",
+      "bytes": 3726,
+      "sha256": "5b824bb3d9dc979d3c086db6c383dc71a5956b216adcb8040c68a3a9b7292192"
+    },
+    {
+      "path": "receiving/host-course.cjs",
+      "bytes": 10191,
+      "sha256": "dc56c1787c6c03047b71072f97919cf13e9d0d05618cf2f84eaa758330ef60e1"
+    },
+    {
+      "path": "receiving/portable-course.cjs",
+      "bytes": 13583,
+      "sha256": "5c39fb98b8b5641b1b5ac3b13f38295e2e9093e936a24d88285949ba9928eacd"
+    },
+    {
+      "path": "runtime.mjs",
+      "bytes": 2419,
+      "sha256": "f09b96f0726452b8d16ed281ebe19b8b622e1c360da93400ba71c6d275cf9b45"
+    },
+    {
+      "path": "session.cjs",
+      "bytes": 8528,
+      "sha256": "9be85d3794f8314f048ad8b71e881a062940e801bff601c98fd13eaab71a5a34"
+    },
+    {
+      "path": "setup.mjs",
+      "bytes": 2632,
+      "sha256": "9c74576a7ba8b4f6fb3be4f925b22cf3afb6046f3bb1b2906f42afd842883b6d"
+    },
+    {
+      "path": "sha256.cjs",
+      "bytes": 19696,
+      "sha256": "f37a1319db3aa8b9bd15ae2fea89cf0b79677e2a2eb295e63efa4d34f8308230"
+    },
+    {
+      "path": "SOURCE_INTAKE.md",
+      "bytes": 6157,
+      "sha256": "9c837e3594988de39f6a2f6527891631e5d6182eac7c9ff0ac4a528164a446ea"
+    },
+    {
+      "path": "SOURCE_MANIFEST.json",
+      "bytes": 18851,
+      "sha256": "3a83a7af81f76003c4c7d5ff4492e3b110108fe075291cf659bc8c1b5cd04e25"
+    },
+    {
+      "path": "src/archive.mjs",
+      "bytes": 508,
+      "sha256": "c7ae6b97f23dabb579ed6a484a524353d49b37e5e28c7df5b47c731d5fbcce84"
+    },
+    {
+      "path": "src/build-installed.mjs",
+      "bytes": 8470,
+      "sha256": "bd3bf408e0b17bace2a68d3446ad534ddcbe947f2e978f033dc6872af04c7df3"
+    },
+    {
+      "path": "src/connected_zip.cjs",
+      "bytes": 13178,
+      "sha256": "4903eb16215d3015388b62788670da9f23872d65e94422ff22cbf09863f9dd08"
+    },
+    {
+      "path": "src/managed-storage.mjs",
+      "bytes": 7787,
+      "sha256": "6bf33683d286bb7894ddd2f970a0e2f9022fa45747b7dfe49b6bb224bf623d4a"
+    },
+    {
+      "path": "src/managed.js",
+      "bytes": 14265,
+      "sha256": "d7ef306d0c688e227383bc79c59275da7826e72490ee9542901ca608ddc8a624"
+    },
+    {
+      "path": "src/session-cache.cjs",
+      "bytes": 2425,
+      "sha256": "31918d561d7c4ccde1d849a7db2236e067d8b8971522c9b78ff88db4d50af966"
+    },
+    {
+      "path": "src/session.mjs",
+      "bytes": 3824,
+      "sha256": "a4db8030d65ba963cc49b2916ef0dbe1ec9b55e0437bfdc53cc0a2d5f0e7bcb3"
+    },
+    {
+      "path": "templates/accounting_events.csv",
+      "bytes": 304,
+      "sha256": "ee61be906c6d945a300466c839511a72acc2800104fb0c670c8630ccd5ae50a4"
+    },
+    {
+      "path": "templates/application_profiles.csv",
+      "bytes": 225,
+      "sha256": "494b7cd53ca60b24a02fb23f92d205259ffa5a736d7cd8c23912ab3b663c722d"
+    },
+    {
+      "path": "templates/assessments.csv",
+      "bytes": 282,
+      "sha256": "b999e89382a47c2a20709d9397258bb5ab1661baba07f4b101bf20480e7ffb05"
+    },
+    {
+      "path": "templates/assets.csv",
+      "bytes": 217,
+      "sha256": "a669ab6002e2922254216ba1c10ae07e76626ad83da1ca94d86fbd83d2117ded"
+    },
+    {
+      "path": "templates/assignments.csv",
+      "bytes": 302,
+      "sha256": "b0c37df445366712a0e2eef7cc0f5b7924a93e3532ffb1cb622b110e7870d7aa"
+    },
+    {
+      "path": "templates/comparison_members.csv",
+      "bytes": 422,
+      "sha256": "26d42ed18004170d2986a39e79c11c6572d417880e5d5961c434ad9ce4c5e261"
+    },
+    {
+      "path": "templates/configurations.csv",
+      "bytes": 237,
+      "sha256": "2c62e49e5ae3d22378f8acfdcba851eceb70b72b84494817d1f7ae5a6408143a"
+    },
+    {
+      "path": "templates/cost_entries.csv",
+      "bytes": 380,
+      "sha256": "9686b4a03fe660a935b368b671cfd55175c46df1da608b280dd131c0f51e8924"
+    },
+    {
+      "path": "templates/downtime_intervals.csv",
+      "bytes": 239,
+      "sha256": "064311890c095dc75893efe323021697bad525823c7c13728a4ee987b60784e1"
+    },
+    {
+      "path": "templates/effort.csv",
+      "bytes": 277,
+      "sha256": "7390d573d54e2b3bddd8de0a7434ba5c12a06368c1d9006b7b9694032826e719"
+    },
+    {
+      "path": "templates/identity_links.csv",
+      "bytes": 208,
+      "sha256": "7565e017cea2af28c0ebb49260a995e63143f352e713456ecba1e615d0e59028"
+    },
+    {
+      "path": "templates/incidents.csv",
+      "bytes": 280,
+      "sha256": "37250a20b5b10699e8d5967a5aeecec577fa9d001f7c5873221dfa32b0cb1a66"
+    },
+    {
+      "path": "templates/maintenance.csv",
+      "bytes": 296,
+      "sha256": "8c550d653beebda433d778ccf1a2919b854c821ace03c116208e035c9c637a82"
+    },
+    {
+      "path": "templates/organisations.csv",
+      "bytes": 177,
+      "sha256": "d6e37bd883851c97f98b6e4b36ff455f7dbabf913c893902083e0f72148615ad"
+    },
+    {
+      "path": "templates/outcome_labels.csv",
+      "bytes": 228,
+      "sha256": "c16de7b49cc9711e15eedd185739376258c86124a74cc46e6c2695e86856bcea"
+    },
+    {
+      "path": "templates/output_records.csv",
+      "bytes": 284,
+      "sha256": "04ac75cecf30cf9536ccab2ff69fa5dbce54aa9cbf67d4397de53c59c5710198"
+    },
+    {
+      "path": "templates/people.csv",
+      "bytes": 173,
+      "sha256": "9fe5ee734692f3439e6f47e481e63dcc3ec9d75fbc87a9b498f09e99efbc6659"
+    },
+    {
+      "path": "templates/report_inputs.csv",
+      "bytes": 212,
+      "sha256": "2477b6915fa94842ff0dcb52dabba8ac93db0140c823a9b666eec85e3148e6c8"
+    },
+    {
+      "path": "templates/reports.csv",
+      "bytes": 219,
+      "sha256": "c1049095690b714d9857442840906f54977ef7ac6ded93b0b1646fa5b29e3600"
+    },
+    {
+      "path": "templates/review_questions.csv",
+      "bytes": 302,
+      "sha256": "afc1ce9be96696513e9b1c1996c6d3cbb496816beb9a5d39ca73d740a1062e75"
+    },
+    {
+      "path": "templates/source_clocks.csv",
+      "bytes": 218,
+      "sha256": "673a0fa710a301a4f47145577bd939f77d02834ab65d99c5689c7b98b2aecfd0"
+    },
+    {
+      "path": "templates/source_documents.csv",
+      "bytes": 202,
+      "sha256": "8a93ddfdc411188af969db80ba597e8c03e4f23a70e81a886e32a10ca093e1a2"
+    },
+    {
+      "path": "templates/telemetry.csv",
+      "bytes": 311,
+      "sha256": "83cbfa9334d745dfd70aa2eb3d8df86a4f566928b8903ca56db7d6c535b9d4ba"
+    },
+    {
+      "path": "templates/work_intervals.csv",
+      "bytes": 298,
+      "sha256": "0842715d35e97a482d6d8f6c5b8ffe901493b0b13bccad15d9c63b7a06fa264e"
+    },
+    {
+      "path": "tools.mjs",
+      "bytes": 5292,
+      "sha256": "c00bcdf0f0d84fce55a8eb525ff4b459a012afae63b790555891856327ca22a5"
+    },
+    {
+      "path": "vendor/PAKO_LICENSE.txt",
+      "bytes": 1104,
+      "sha256": "a04665b3b2de56c66730c1f720f528175739e4104f79073614aa611da1e85539"
+    },
+    {
+      "path": "vendor/pako.cjs",
+      "bytes": 238792,
+      "sha256": "cf0bbe4187ec43bd75378b177d2c28c2dd27ebde7e738591162ff67b35de1908"
+    },
+    {
+      "path": "verification/browser-course.json",
+      "bytes": 1599,
+      "sha256": "90b742f275181362086ce24b7bc404779ed6afe78dd956a5ef06767335246cd7"
+    },
+    {
+      "path": "verification/complete-analysis.json",
+      "bytes": 77645,
+      "sha256": "3f2ea759736c19cc451f03d9fdcaa3c372a2ba33e173bccfec7b36ad7c6ecce2"
+    },
+    {
+      "path": "verification/installed-browser-course.json",
+      "bytes": 994,
+      "sha256": "6bacf13ee53fe2180f25a9362b2a23d372ca924d0d885aa17089cb482f79e8ab"
+    },
+    {
+      "path": "verification/installed-host-course.json",
+      "bytes": 1717,
+      "sha256": "0455387336bf1bb831e29c50b54aa08c8f31941e772159d2f60718e0b81a3c52"
+    },
+    {
+      "path": "verification/model-course.json",
+      "bytes": 2083,
+      "sha256": "b8db199fd1f0dd4a2eb1d8a905d55bf7770bd5a246c03bdd7a9eadbc54ea225f"
+    },
+    {
+      "path": "verification/native-course.json",
+      "bytes": 1507,
+      "sha256": "3b4a1919154c9728e6c1aac98b7465a9e013063a85cc3a03a3e6838d34ceea9f"
+    },
+    {
+      "path": "zip.cjs",
+      "bytes": 2008,
+      "sha256": "0db36ea7dfaa084be2da89e185576017d596f33b8a174ec61199ee17bc0ea1a9"
+    }
+  ]
+}

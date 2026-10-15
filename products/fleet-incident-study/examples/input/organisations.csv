@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,organisation_id,name,role,currency,currency_minor_units,rounding_mode
+ORG,ORG,1,,active,2026-10-01T09:00:00Z,2026-10-01T09:00:00Z,,Authored organisations/ORG,OP,Authored Regional Rental,operator,USD,2,half_up

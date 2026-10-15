@@ -1,0 +1,2 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,clock_id,source_system,timezone,offset_seconds,valid_from,valid_to,approved_by,approved_at,uncertainty_seconds
+CLOCK,CLOCK,1,,active,2026-10-01T09:00:00Z,2026-10-01T09:00:00Z,,Authored source_clocks/CLOCK,LOGGER,authored_logger,UTC,0,2026-10-01T09:00:00Z,,ENG,2026-10-01T09:00:00Z,0

@@ -1,0 +1,4 @@
+id,record_key,revision,supersedes_id,record_status,recorded_at,available_at,source_document_id,source_ref,person_id,organisation_id,name,role,authorised_from,authorised_to
+ENG,ENG,1,,active,2026-10-01T09:00:00Z,2026-10-01T09:00:00Z,,Authored people/ENG,ENG,OP,Authored ENG,ENG,2026-10-01T09:00:00Z,
+FIN,FIN,1,,active,2026-10-01T09:00:00Z,2026-10-01T09:00:00Z,,Authored people/FIN,FIN,OP,Authored FIN,FIN,2026-10-01T09:00:00Z,
+OP1,OP1,1,,active,2026-10-01T09:00:00Z,2026-10-01T09:00:00Z,,Authored people/OP1,OP1,OP,Authored OP1,OP1,2026-10-01T09:00:00Z,
