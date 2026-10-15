@@ -46,7 +46,11 @@ export class PaymentAutoCatalog {
     const entry = {
       resource: clone(paymentPayload.resource),
       accepts: [clone(accepted)],
-      extensions: { bazaar: clone(extension) },
+      // x402 v2 catalog entries echo the complete PaymentPayload extensions
+      // object. Unknown extension payloads remain opaque; the existing atomic
+      // trust boundary enforces JSON serialization, tree and document limits
+      // before the staged projection becomes visible.
+      extensions: clone(paymentPayload.extensions),
     };
     const provenance = {
       authority: 'settlement_hook',
