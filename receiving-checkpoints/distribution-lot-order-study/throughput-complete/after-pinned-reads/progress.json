@@ -43,6 +43,26 @@
       "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-007.jsonpart",
       "bytes": 650000,
       "sha256": "4d0284f3d163d650fee3eadac09c0d4af06ade478859fcf5739852b4f428e648"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-008.jsonpart",
+      "bytes": 650000,
+      "sha256": "282a8746385af744fa2cc86b997eaf53898f3a113ca3143eeaef253a50ff2b3d"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-009.jsonpart",
+      "bytes": 650000,
+      "sha256": "23834ff869c8d52b197f6ace80da9e6c25c96735985cbc80446710c7e161cc57"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-010.jsonpart",
+      "bytes": 650000,
+      "sha256": "3bf2c4c68f984a4476b41c579c4c1c9904c1abe374d67d21e11943265566e3c0"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-011.jsonpart",
+      "bytes": 650000,
+      "sha256": "b5ffe5df5369f5decabbcd69cd211ecd43a3712f6f12f521eeb91285e925f86c"
     }
   ]
 }
