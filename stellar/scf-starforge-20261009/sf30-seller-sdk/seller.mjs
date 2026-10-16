@@ -255,19 +255,28 @@ export function paymentRequiredResponse(offer) {
   };
 }
 
+// Public Bazaar lists use items; search and retained internal lists use resources.
+// Select one envelope rather than combining independently observed rows.
+function discoveryRows(body) {
+  const rows = body && hasOwn(body, 'items') ? body.items : body?.resources;
+  if (!Array.isArray(rows)) throw new TypeError('Invalid discovery response');
+  return rows;
+}
+const discoveryResourceURL = row => typeof row?.resource === 'string'
+  ? row.resource : row?.resource?.url;
+
 /**
  * Treat discovery as an untrusted visibility check, not proof of payment or
  * seller identity. Compares method, route, payment amount, asset and recipient.
  */
 export function auditCatalogVisibility(body, offer) {
-  const rows = body?.resources;
-  if (!Array.isArray(rows)) throw new TypeError('Invalid discovery response');
+  const rows = discoveryRows(body);
   const expected = offer?.accepts;
   const eInput = offer?.extensions?.bazaar?.info?.input;
   const eURL = offer?.resource?.url;
   if (!Array.isArray(expected) || !expected.length || !expected.every(plain) || !eInput || !eURL)
     throw new TypeError('Invalid seller offer');
-  const matches = rows.filter(r => r?.resource?.url === eURL &&
+  const matches = rows.filter(r => discoveryResourceURL(r) === eURL &&
     r?.extensions?.bazaar?.info?.input?.type === 'http' &&
     r?.extensions?.bazaar?.info?.input?.method === eInput.method);
   const sameTerms = (actual, wanted) => PAYMENT_FIELDS.every(key =>
@@ -304,11 +313,13 @@ export async function probeLocalVisibility(baseUrl, offer) {
     const r = await fetch(path, { redirect: 'error', signal: AbortSignal.timeout(5000) });
     if (!r.ok) throw new Error(`Catalog GET failed: HTTP ${r.status}`);
     const body = await r.json();
-    if (!Array.isArray(body.resources) || !plain(body.pagination)) throw new TypeError('Bad catalog response');
-    matches.push(...body.resources.filter(row => row?.resource?.url === offer.resource.url));
-    offset += body.resources.length;
-    if (offset >= body.pagination.total || body.resources.length === 0) break;
+    const rows = discoveryRows(body);
+    if (!plain(body.pagination)) throw new TypeError('Bad catalog response');
+    matches.push(...rows.filter(row => discoveryResourceURL(row) === offer.resource.url));
+    offset += rows.length;
+    if (offset >= body.pagination.total || rows.length === 0) break;
   }
   if (pages > 100) throw new RangeError('Catalog pagination safety limit');
   return { ...auditCatalogVisibility({ resources: matches }, offer), pages, url: path.origin + '/discovery/resources' };
 }
+

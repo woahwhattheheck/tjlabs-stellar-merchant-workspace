@@ -244,7 +244,7 @@ The output `schema` constrains the **shape of Bazaar `info`**, not API request-b
 
 ## Actual catalog readback after authentic settlement
 
-* `probeLocalVisibility('http://127.0.0.1:PORT/', offer)` makes genuine HTTP GET(s) only to an explicitly allowed loopback catalog; pagination follows the actual PR451 response shape, compares the original resource URL, method and network/scheme/asset/amount/payTo, and returns one of `NOT_INDEXED`, `TERMS_DRIFT`, or `VISIBLE_TERMS_MATCH_UNVERIFIED`.
+* `probeLocalVisibility('http://127.0.0.1:PORT/', offer)` makes genuine HTTP GET(s) only to an explicitly allowed loopback catalog. It follows the official Bazaar list `items` envelope and string `resource` URLs; retained internal `resources` pages and nested resource URLs remain supported. `auditCatalogVisibility()` also accepts public search results. Both compare the original resource URL, method and every exact payment option, including timeout and extra fields, and return one of `NOT_INDEXED`, `TERMS_DRIFT`, or `VISIBLE_TERMS_MATCH_UNVERIFIED`. All quoted options must occur together in one row. Discovery readiness failures remain HTTP failures; the probe does not ingest or settle anything.
 * Real deployment must call the existing SF-25 trusted ingestion **only following validated on-chain settlement**, then use `GET /discovery/resources` / search and the standard `EXTENSION-RESPONSES` sidechannel for acceptance. A plain listing is *not* proof of a seller's authority or payment. See SF-25/SF-46 integration owners.
 * No public untrusted POST-ingestion endpoint is introduced. MIME/form parameters, richer JSON Schema, automatic OpenAPI adapters, source-pinned MCP tool descriptors, and full Stellar end-to-end settlement are separate acceptance tasks. Preserve SF-26 MCP and SF-31 buyer SDK ownership.
 
@@ -270,4 +270,5 @@ The canonical x402 v2 \`PAYMENT-REQUIRED\` header is Base64-encoded JSON. This S
 The compiler treats query parameter names as untrusted metadata: `__proto__`, `prototype` and `constructor` are rejected, preventing ambiguous or prototype-affecting JSON Schema keys. Other valid names inherited by ordinary JavaScript objects, such as `toString` and `hasOwnProperty`, remain usable and must serialize as **own** query example/schema properties. This is seller-side metadata hygiene only, not request authentication or an x402 settlement guarantee.
 
 Focused regression: `node --test stellar/scf-starforge-20261009/sf30-seller-sdk/test/query-keys.test.mjs`.
+
 
