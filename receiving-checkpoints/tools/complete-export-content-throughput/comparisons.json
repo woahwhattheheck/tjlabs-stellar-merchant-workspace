@@ -1,9 +1,7 @@
 {
   "schema": "commons.complete-export-throughput-comparisons.v1",
-  "complete": false,
-  "pending": [
-    "distribution"
-  ],
+  "complete": true,
+  "pending": [],
   "comparisons": [
     {
       "product": "fleet",
@@ -292,6 +290,103 @@
           "compressed": {
             "bytes": 2149984,
             "sha256": "93698255a91f70c47e8204447c7d3b89515e0f138a7e24b18ce1d2fef83943ab"
+          }
+        }
+      }
+    },
+    {
+      "product": "distribution",
+      "complete": true,
+      "equivalent": true,
+      "sourceIdentity": {
+        "bytes": 15092776,
+        "sha256": "0f095cac5f76a9bf69ed4945c621ae4c0b0182a32a649c64837ab6b2ccfc90d2"
+      },
+      "inputIdentity": {
+        "bytes": 12705810,
+        "sha256": "721d2942f5162aad05b1543d73a02c1aac2b8799a3ca5472109f26ad9319394c"
+      },
+      "baselineExecutionIdentity": {
+        "bytes": 13953,
+        "sha256": "52674ae1066f925d514eacc2c4a7c343523089d4bff8b67631938d38a4614b28"
+      },
+      "candidateExecutionIdentity": {
+        "bytes": 15020,
+        "sha256": "c8bf42714d116dee912f67d193b3fe826da64d0748769ee10a986ec536fcc3dc"
+      },
+      "members": 43456,
+      "uncompressedBytes": 1843465892,
+      "archiveBytes": 607493921,
+      "memberIdentity": {
+        "bytes": 13525739,
+        "sha256": "81f93913a71efdbd34fc6f088c1606a3ecb98f7b3adde81fae07d87b064c8ec6"
+      },
+      "baseline": {
+        "executionMilliseconds": 3306434,
+        "profile": {
+          "adds": 37123,
+          "copies": 6333,
+          "compressedInputBytes": 1791930831,
+          "reusedInputBytes": 51535061,
+          "compressionMilliseconds": 959742,
+          "measurementHashMilliseconds": 467565
+        }
+      },
+      "candidate": {
+        "executionMilliseconds": 3090947,
+        "profile": {
+          "adds": 35357,
+          "copies": 8099,
+          "compressedInputBytes": 1743894076,
+          "reusedInputBytes": 99571816,
+          "compressionMilliseconds": 902613,
+          "measurementHashMilliseconds": 442613
+        },
+        "contentCache": {
+          "entries": 1,
+          "chargedBytes": 26143797,
+          "maxChargedBytes": 67108864,
+          "maxEntries": 4096,
+          "hits": 8099,
+          "misses": 1467,
+          "evictions": 1466,
+          "oversized": 0,
+          "reusedBytes": 99571816
+        }
+      },
+      "improvement": {
+        "avoidedCompressionBytes": 48036755,
+        "additionalCopies": 1766,
+        "observedMilliseconds": 215487,
+        "observedPercent": 6.517202520903185
+      },
+      "receipts": {
+        "baseline": {
+          "branch": "a74f/complete-export-comparison-distribution-20261016",
+          "commit": "7c5aea1417e4f242687fa6a487e8c2f38619c045",
+          "path": "receiving-checkpoints/tools/complete-export-content-throughput/results/distribution-baseline.json",
+          "blob": "5f0079696216def10521d3c1bcb496bac49603fd",
+          "original": {
+            "bytes": 13526801,
+            "sha256": "8653ec9bd9177962563032b7cd14c3097fbc3b52a2df070d25a95ea479aaf332"
+          },
+          "compressed": {
+            "bytes": 3827204,
+            "sha256": "0817c7acda05eefe4977c8068bd11fb72e6459bcdb94ba404f60d947e03b23d7"
+          }
+        },
+        "candidate": {
+          "branch": "a74f/complete-export-comparison-distribution-20261016",
+          "commit": "93a9fad16ab7103fcc0e06651fed91f7aee320fa",
+          "path": "receiving-checkpoints/tools/complete-export-content-throughput/results/distribution-candidate.json",
+          "blob": "0dd1fe632d7f61573704fe6c1c26f5878d77fb68",
+          "original": {
+            "bytes": 13526979,
+            "sha256": "1ebde936cd033f7fe34d46bfb40393c4f0f02482e2142b272f8ddb86c38ca5b0"
+          },
+          "compressed": {
+            "bytes": 3827313,
+            "sha256": "cf488aa2912e7837bc315e73f569a8d61efcb0ad99e28b229eee0e588f121847"
           }
         }
       }
