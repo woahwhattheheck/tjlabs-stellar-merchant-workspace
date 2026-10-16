@@ -1,8 +1,8 @@
 'use strict';
 const Z=require('./connected_zip.cjs'),H=require('./sha256.cjs'),P=require('./vendor/pako.cjs');
 const Storage=require('./checkpoint-storage.cjs');
-const {publishPreparedToGit}=require('./publish-prepared-git.cjs');
-module.exports=async function verifyGitOrdinaryPublication(sourceBank,workingHTML,progress=()=>{}){
+const {publishPreparedToGit,stateFromProgress}=require('./publish-prepared-git.cjs');
+module.exports=async function verifyGitOrdinaryPublication(sourceBank,workingHTML,progress=()=>{},nativeFinisherSource=null){
  const start=Date.now(),assert=(ok,message)=>{if(!ok)throw Error(message);};
  const limits={timestamp:'2026-10-15T00:00:00Z',maxBytes:512*1024*1024,maxUncompressedBytes:1024*1024*1024,maxEntries:65535,compression:'auto',deflateRaw:b=>P.deflateRaw(b,{level:1}),inflateRaw:b=>P.inflateRaw(b)};
  function prepare(items,wrongOriginal=false){
@@ -22,14 +22,14 @@ module.exports=async function verifyGitOrdinaryPublication(sourceBank,workingHTM
   const blobs=new Map(),trees=new Map(),commits=new Map(),events=[];
   const empty=id('tree',{});trees.set(empty,{});
   let head=id('commit',{tree:empty});commits.set(head,{tree:empty});
-  const faults={};
+  const faults={};let largestTreeRequestBytes=0;
   const api={
    async getHead(){events.push('getHead');if(faults.nextHeadRead){faults.nextHeadRead=false;throw Error('Injected reconciliation read loss');}return head;},
    async treeOf(commit){events.push('treeOf');return commits.get(commit).tree;},
    async createBlob(text){events.push('createBlob');const sha=id('blob',text);blobs.set(sha,text);return sha;},
    async readBlob(sha){events.push('readBlob');if(faults.read){faults.read=false;throw Error('Injected immutable read failure');}const text=blobs.get(sha);if(faults.corrupt)return (text[0]==='A'?'B':'A')+text.slice(1);return text;},
    async createTree(base,entries){
-    events.push('createTree');const tree={...trees.get(base)};
+    events.push('createTree');largestTreeRequestBytes=Math.max(largestTreeRequestBytes,H.sha256Utf8(JSON.stringify(entries)).bytes);assert(entries.every(e=>e.sha&&e.content===undefined),'Metadata leaked into inline tree request');if(faults.tree){faults.tree=false;throw Error('Injected tree response loss');}const tree={...trees.get(base)};
     for(const e of entries){if(e.content!==undefined){const sha=id('blob',e.content);blobs.set(sha,e.content);tree[e.path]=sha;}else tree[e.path]=e.sha;}
     const sha=id('tree',tree);trees.set(sha,tree);return sha;
    },
@@ -41,7 +41,7 @@ module.exports=async function verifyGitOrdinaryPublication(sourceBank,workingHTM
     return true;
    }
   };
-  return {api,faults,events,get head(){return head;},get final(){return Boolean(trees.get(commits.get(head).tree)['archive/manifest.json']);},
+  return {api,faults,events,corruptBlob(sha){blobs.set(sha,blobs.get(sha)+'changed');},get largestTreeRequestBytes(){return largestTreeRequestBytes;},get head(){return head;},get final(){return Boolean(trees.get(commits.get(head).tree)['archive/manifest.json']);},
    file(path){const tree=trees.get(commits.get(head).tree);return blobs.get(tree[path]);}};
  }
  const base=repo=>({head:repo.head,branch:'course',directory:'archive/',sourceIndex:'prepared/checkpoint.json',sourceIndexHead:'1'.repeat(40),partBytes:487499,commitParts:3,extraFiles:{'OPEN.txt':'Retained exact companion\n'}});
@@ -76,6 +76,9 @@ module.exports=async function verifyGitOrdinaryPublication(sourceBank,workingHTM
  const writes=ordinaryRepo.events.filter(x=>x.startsWith('create')||x==='updateRef').length;
  const replay=await run(durable,ordinaryRepo,{verification:'ordinary',resumeState:ordinary.state});
  assert(replay.head===ordinary.head&&ordinaryRepo.events.filter(x=>x.startsWith('create')||x==='updateRef').length===writes,'Complete replay created new writes');
+ const acknowledged=stateFromProgress(JSON.parse(ordinaryRepo.file('archive/progress.json')),{head:ordinary.head,branch:'course',directory:'archive/'});
+ const recovered=await run(durable,ordinaryRepo,{verification:'ordinary',head:acknowledged.head,resumeState:acknowledged});
+ assert(recovered.head===ordinary.head&&ordinaryRepo.events.filter(x=>x.startsWith('create')||x==='updateRef').length===writes,'Immutable progress recovery recreated acknowledged output');
  const small=prepare([{name:'original.txt',data:'Retained exact original'}]);
  const events=ordinaryRepo.events.length;
  await rejects('completed ordinary mode switch',()=>run(durable,ordinaryRepo,{verification:'full',resumeState:ordinary.state}),/verification mode changed/);
@@ -84,6 +87,17 @@ module.exports=async function verifyGitOrdinaryPublication(sourceBank,workingHTM
  const before=fullRepo.events.length;
  await rejects('legacy full state adopted by ordinary mode',()=>run(durable,fullRepo,{verification:'ordinary',resumeState:legacy}),/verification mode changed/);
  assert(fullRepo.events.length===before,'Legacy mode mismatch reached provider');
+ const treeRepo=repository();treeRepo.faults.tree=true;
+ const treeLost=await rejects('metadata publication tree response loss',()=>run(small,treeRepo,{verification:'ordinary'}),/tree response loss/);
+ assert(treeLost.publicationState.metadataBlobs.length===4,'Metadata ACK blobs were lost before tree publication');
+ const beforeBlobWrites=treeRepo.events.filter(x=>x==='createBlob').length;
+ const treeRecovered=await run(small,treeRepo,{verification:'ordinary',head:treeLost.publicationState.head,resumeState:treeLost.publicationState});
+ assert(treeRepo.events.filter(x=>x==='createBlob').length===beforeBlobWrites&&treeRecovered.state.complete,'Metadata replay recreated acknowledged blobs');
+ const changedRepo=repository();changedRepo.faults.tree=true;
+ const changed=await rejects('retain metadata for changed-body case',()=>run(small,changedRepo,{verification:'ordinary'}),/tree response loss/);
+ changedRepo.corruptBlob(changed.publicationState.metadataBlobs.find(p=>p.path==='OPEN.txt').gitBlob);
+ await rejects('changed actual metadata blob',()=>run(small,changedRepo,{verification:'ordinary',head:changed.publicationState.head,resumeState:changed.publicationState}),/metadata blob differs/);
+ assert(!changedRepo.final,'Changed metadata published final result');
  const bad=prepare([{name:'original.txt',data:'Retained exact original'}],true),badRepo=repository();
  await rejects('false raw SHA after packed emission',()=>run(bad,badRepo,{verification:'ordinary'}),/export manifest member differs/);
  assert(!badRepo.final,'False raw identity published final manifest');
@@ -105,9 +119,18 @@ module.exports=async function verifyGitOrdinaryPublication(sourceBank,workingHTM
  const commits=pendingRepo.events.filter(x=>x==='createCommit').length;
  const settled=await run(small,pendingRepo,{verification:'ordinary',head:saved.head,resumeState:saved});
  assert(settled.head===saved.pendingPublication.nextHead&&pendingRepo.events.filter(x=>x==='createCommit').length===commits,'Known final commit was not reused');
+ let nativeCapacities=null;
+ if(nativeFinisherSource){
+  const start=nativeFinisherSource.indexOf('const args='),end=nativeFinisherSource.indexOf('const input=');
+  assert(start>=0&&end>start,'Actual native capacity argument body unavailable');
+  const parse=Function('process',nativeFinisherSource.slice(start,end)+';return streamOptions;'),baseArgs=['node','finish-prepared.mjs','--checkpoint','checkpoint.json','--manifest-sha256','0'.repeat(64),'--output','archive.zip','--verification','ordinary'];
+  nativeCapacities=parse({argv:baseArgs.concat('--max-metadata-bytes','67108864','--max-manifest-bytes','33554432')});
+  assert(nativeCapacities.maxMetadataBytes===67108864&&nativeCapacities.maxManifestBytes===33554432,'Actual native capacities were not forwarded');
+  for(const v of ['0','-1','1.5','2147483648','NaN'])await rejects('native invalid capacity '+v,()=>parse({argv:baseArgs.concat('--max-metadata-bytes',v)}),/bounded integer/);
+ }
  return {schema:'commons.git-ordinary-publication-course.v1',sourceFiles:Object.keys(sourceBank).length,
   sourceAndWorkingMembers:durable.entries.length,archive:expected,fullVerification:full.receipt,
   ordinaryVerification:ordinary.receipt,providerReads:ordinaryRepo.events.filter(x=>x==='readBlob').length,
   completeReplay:'same head, zero new writes',pendingFinalRecovery:'same acknowledged commit after response and reconciliation-read loss',
-  rejected,elapsedMs:Date.now()-start};
+  rejected,metadataRecovery:'separate blobs; SHA-only trees; actual immutable metadata read before retry; zero duplicate blob writes',largestTreeRequestBytes:ordinaryRepo.largestTreeRequestBytes,nativeCapacities,elapsedMs:Date.now()-start};
 };
