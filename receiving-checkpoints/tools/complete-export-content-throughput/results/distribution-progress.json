@@ -1,0 +1,36 @@
+{
+  "product": "distribution",
+  "complete": true,
+  "baseline": {
+    "branch": "a74f/complete-export-comparison-distribution-20261016",
+    "commit": "7c5aea1417e4f242687fa6a487e8c2f38619c045",
+    "path": "receiving-checkpoints/tools/complete-export-content-throughput/results/distribution-baseline.json",
+    "blob": "5f0079696216def10521d3c1bcb496bac49603fd",
+    "original": {
+      "bytes": 13526801,
+      "sha256": "8653ec9bd9177962563032b7cd14c3097fbc3b52a2df070d25a95ea479aaf332"
+    },
+    "compressed": {
+      "bytes": 3827204,
+      "sha256": "0817c7acda05eefe4977c8068bd11fb72e6459bcdb94ba404f60d947e03b23d7"
+    }
+  },
+  "candidate": {
+    "branch": "a74f/complete-export-comparison-distribution-20261016",
+    "commit": "93a9fad16ab7103fcc0e06651fed91f7aee320fa",
+    "path": "receiving-checkpoints/tools/complete-export-content-throughput/results/distribution-candidate.json",
+    "blob": "0dd1fe632d7f61573704fe6c1c26f5878d77fb68",
+    "original": {
+      "bytes": 13526979,
+      "sha256": "1ebde936cd033f7fe34d46bfb40393c4f0f02482e2142b272f8ddb86c38ca5b0"
+    },
+    "compressed": {
+      "bytes": 3827313,
+      "sha256": "cf488aa2912e7837bc315e73f569a8d61efcb0ad99e28b229eee0e588f121847"
+    }
+  },
+  "orderedArchiveMemberIdentity": {
+    "bytes": 13525739,
+    "sha256": "81f93913a71efdbd34fc6f088c1606a3ecb98f7b3adde81fae07d87b064c8ec6"
+  }
+}

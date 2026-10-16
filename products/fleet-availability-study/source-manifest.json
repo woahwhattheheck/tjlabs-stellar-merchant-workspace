@@ -423,8 +423,8 @@
     },
     {
       "path": "host/export-core.mjs",
-      "bytes": 13904,
-      "sha256": "f15228258b541529a3c5baf43b7381b6bd28c9a4e4346023166890f8c4900bdc"
+      "bytes": 14971,
+      "sha256": "310300f652385ba50f9c1ae6231624fada1a47b96142fb7203adb2860b6c5aa6"
     },
     {
       "path": "host/export.mjs",
@@ -644,7 +644,7 @@
     {
       "path": "SOURCE_MANIFEST.json",
       "bytes": 32113,
-      "sha256": "dc2a3ca3b55f2c2dacf579f4b12eb000245dee7ae5c2869c1ba0575605496640"
+      "sha256": "ab069c9ef5d2bf9cf97596efe8db06873e76256db9ee4b0e064bc71ab177003b"
     },
     {
       "path": "source-view.cjs",

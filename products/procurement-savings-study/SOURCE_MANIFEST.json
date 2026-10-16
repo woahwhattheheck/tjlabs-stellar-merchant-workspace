@@ -2766,8 +2766,8 @@
     },
     {
       "path": "host/export-core.mjs",
-      "bytes": 13249,
-      "sha256": "e24f2e0062175fda001f15a15ec088e830039a1f80469bbac47120cd0cede5bd"
+      "bytes": 14316,
+      "sha256": "f9a536d135340a6c59149b0619593887c38d78787fffb2f2bb6d103732709fa6"
     },
     {
       "path": "host/export.mjs",

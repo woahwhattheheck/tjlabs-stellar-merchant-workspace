@@ -1,6 +1,19 @@
 // MIT. Exact complete source export, with resumable prepared compression.
 const completeExportCodecs=new WeakMap();
 function completeExportDeflate(files){const source=files['vendor/pako.cjs'];if(typeof source!=='string')throw Error('Complete export codec source is missing');const prior=completeExportCodecs.get(files);if(prior?.source===source)return prior.codec;const module={exports:{}};Function('module','exports',source)(module,module.exports);if(typeof module.exports.deflateRaw!=='function'||typeof module.exports.inflateRaw!=='function')throw Error('Complete export codec cannot process raw DEFLATE');completeExportCodecs.set(files,{source,codec:module.exports});return module.exports;}
+// Exact immutable serialized content, bounded by explicit accounting charge.
+// Packed bytes already belong to the archive; charging them here is conservative.
+function createCompleteExportContentCache(){
+ const maxChargedBytes=64*1024*1024,maxEntries=4096,values=new Map();
+ let chargedBytes=0,hits=0,misses=0,evictions=0,oversized=0,reusedBytes=0;
+ function get(text){const value=values.get(text);if(!value){misses++;return null;}values.delete(text);values.set(text,value);hits++;reusedBytes+=value.bytes;return value;}
+ function remember(text,meta,compressedBytes){const charge=text.length*2+compressedBytes+256;if(charge>maxChargedBytes){oversized++;return;}
+  while(values.size&&(chargedBytes+charge>maxChargedBytes||values.size>=maxEntries)){const oldest=values.keys().next().value;chargedBytes-=values.get(oldest).charge;values.delete(oldest);evictions++;}
+  const prior=values.get(text);if(prior){chargedBytes-=prior.charge;values.delete(text);}
+  const record=Object.freeze({name:meta.name,bytes:meta.bytes,sha256:meta.sha256,charge});values.set(text,record);chargedBytes+=charge;
+ }
+ return Object.freeze({get,remember,statistics:()=>Object.freeze({entries:values.size,chargedBytes,maxChargedBytes,maxEntries,hits,misses,evictions,oversized,reusedBytes})});
+}
 // Complete exports advance by whole source groups. Persist checkpoint() between run() calls.
 export function createPreparedExportJob(groupFactory,{zip,zipOptions,identity,checkpoint=null,manifest,observeEntry,checkpointMetadata}){
  if(typeof groupFactory!=='function'||!identity||typeof identity!=='string'||typeof manifest!=='function')throw TypeError('Complete export job requires its exact identity, group factory and manifest');
@@ -8,7 +21,7 @@ export function createPreparedExportJob(groupFactory,{zip,zipOptions,identity,ch
  if(checkpointMetadata!==undefined&&typeof checkpointMetadata!=='function')throw TypeError('Checkpoint metadata must be a function');
  if(checkpoint&&(checkpoint.schema!=='commons.complete-export-job.v1'||checkpoint.identity!==identity||!Array.isArray(checkpoint.groups)||!Array.isArray(checkpoint.entries)||typeof checkpoint.done!=='boolean'))throw Error('Complete export checkpoint belongs to another exact input or implementation');
  const archive=zip.createZipBuilder(zipOptions,checkpoint?.archive||null),entries=(checkpoint?.entries||[]).map(x=>({...x})),groups=(checkpoint?.groups||[]).map(x=>({...x})),names=new Set(),seenGroups=new Set(),priorGroups=groups.length;
- let cursor=0,done=checkpoint?.done||false,iterator=null,cacheBytes=0,contentCache=new Map(),inGroup=false,failed=false;
+ let cursor=0,done=checkpoint?.done||false,iterator=null,inGroup=false,failed=false;const contentCache=createCompleteExportContentCache();
  const prepared=archive.entries();
  if(prepared.length!==entries.length)throw Error('Complete export checkpoint manifest count differs');
  for(let i=0;i<entries.length;i++){const x=entries[i],p=prepared[i];if(typeof x.name!=='string'||names.has(x.name)||!Number.isSafeInteger(x.bytes)||x.bytes<0||!(/^[a-f0-9]{64}$/).test(x.sha256)||x.name!==p.name||x.bytes!==p.bytes)throw Error('Complete export checkpoint member metadata changed');names.add(x.name);}
@@ -19,7 +32,7 @@ export function createPreparedExportJob(groupFactory,{zip,zipOptions,identity,ch
   if(observeEntry)observeEntry({phase:'start',name,entries:entries.length});
   let meta,record;
   if(value instanceof Uint8Array){meta={bytes:value.length,sha256:zipOptions.codec.sha256Bytes(value)};record=archive.add({name,data:value});}
-  else {const text=typeof value==='string'?value:JSON.stringify(value,null,2)+'\n';meta=contentCache.get(text);if(meta)record=archive.copy(name,meta.name);else{const data=zipOptions.codec.utf8Encode(text);meta={name,bytes:data.length,sha256:zipOptions.codec.sha256Bytes(data)};record=archive.add({name,data});const cost=text.length*2+record.compressedBytes;if(cost<=16*1024*1024){while(contentCache.size&&(cacheBytes+cost>16*1024*1024||contentCache.size>=4096)){const key=contentCache.keys().next().value;cacheBytes-=contentCache.get(key).cost;contentCache.delete(key);}contentCache.set(text,{...meta,cost});cacheBytes+=cost;}}}
+  else {const text=typeof value==='string'?value:JSON.stringify(value,null,2)+'\n';meta=contentCache.get(text);if(meta)record=archive.copy(name,meta.name);else{const data=zipOptions.codec.utf8Encode(text);meta={name,bytes:data.length,sha256:zipOptions.codec.sha256Bytes(data)};record=archive.add({name,data});contentCache.remember(text,meta,record.compressedBytes);}}
   names.add(name);entries.push({name,bytes:meta.bytes,sha256:meta.sha256});if(observeEntry)observeEntry({phase:'done',name,bytes:meta.bytes,...archive.statistics()});
  }
  function run({maxGroups=1,maxMilliseconds=25000}={}){
@@ -36,7 +49,7 @@ export function createPreparedExportJob(groupFactory,{zip,zipOptions,identity,ch
   }}catch(error){failed=true;throw error;}
   return status();
  }
- function status(){return{done,completedGroups:groups.length,...archive.statistics()};}
+ function status(){return{done,completedGroups:groups.length,...archive.statistics(),contentCache:contentCache.statistics()};}
  function snapshot(){if(failed||inGroup)throw Error('Checkpoint only after successful complete export progress');return{schema:'commons.complete-export-job.v1',identity,done,groups:groups.map(x=>({...x})),entries:entries.map(x=>({...x})),archive:archive.snapshot(),...(checkpointMetadata?{metadata:JSON.parse(JSON.stringify(checkpointMetadata()))}:{})};}
  return Object.freeze({run,checkpoint:snapshot,statistics:status,finish(){if(failed||inGroup||!done)throw Error('Complete all source groups successfully before final ZIP');return archive.finish();}});
 }

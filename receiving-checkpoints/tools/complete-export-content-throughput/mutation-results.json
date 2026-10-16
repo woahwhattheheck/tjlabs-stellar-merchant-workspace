@@ -1,0 +1,165 @@
+{
+  "schema": "commons.complete-export-full-state-mutation-comparison.v1",
+  "products": {
+    "fleet": {
+      "baseline": {
+        "schema": "commons.complete-export-mutation-course.v1",
+        "members": 5,
+        "zipBytes": 5812779,
+        "zipSha256": "a1feb5cf34bd4979783f5d49158d6cb0b07c0da5f4a9e75e94612d129d9c1fe2",
+        "memberHashes": [
+          "3a22772eb359548a2efe40398a5125326b4df2e316f0df058147cdf4f42d77e1",
+          "3a22772eb359548a2efe40398a5125326b4df2e316f0df058147cdf4f42d77e1",
+          "a4f3d529627a5300c7d4e77af49f8a7a20f77decf8708cd2513948e95605826a",
+          "a4f3d529627a5300c7d4e77af49f8a7a20f77decf8708cd2513948e95605826a"
+        ],
+        "cache": null,
+        "milliseconds": 40746
+      },
+      "candidate": {
+        "schema": "commons.complete-export-mutation-course.v1",
+        "members": 5,
+        "zipBytes": 5812779,
+        "zipSha256": "a1feb5cf34bd4979783f5d49158d6cb0b07c0da5f4a9e75e94612d129d9c1fe2",
+        "memberHashes": [
+          "3a22772eb359548a2efe40398a5125326b4df2e316f0df058147cdf4f42d77e1",
+          "3a22772eb359548a2efe40398a5125326b4df2e316f0df058147cdf4f42d77e1",
+          "a4f3d529627a5300c7d4e77af49f8a7a20f77decf8708cd2513948e95605826a",
+          "a4f3d529627a5300c7d4e77af49f8a7a20f77decf8708cd2513948e95605826a"
+        ],
+        "cache": {
+          "entries": 3,
+          "chargedBytes": 18256301,
+          "maxChargedBytes": 67108864,
+          "maxEntries": 4096,
+          "hits": 2,
+          "misses": 3,
+          "evictions": 0,
+          "oversized": 0,
+          "reusedBytes": 7673988
+        },
+        "milliseconds": 33360
+      }
+    },
+    "water": {
+      "baseline": {
+        "schema": "commons.complete-export-mutation-course.v1",
+        "members": 5,
+        "zipBytes": 7697134,
+        "zipSha256": "49e3632dcbff56907b4afce361a687ec32074074cc6642458395da3dfa2121a9",
+        "memberHashes": [
+          "6c3ccd1f530b395bf9034ee939839b9979559769900213e41886f3ee2ffd9ce2",
+          "6c3ccd1f530b395bf9034ee939839b9979559769900213e41886f3ee2ffd9ce2",
+          "f5b0cb09330fdcd03d6a8009322b9cc2f0f501f636c7faac0e160640ca06cd14",
+          "f5b0cb09330fdcd03d6a8009322b9cc2f0f501f636c7faac0e160640ca06cd14"
+        ],
+        "cache": null,
+        "milliseconds": 53756
+      },
+      "candidate": {
+        "schema": "commons.complete-export-mutation-course.v1",
+        "members": 5,
+        "zipBytes": 7697134,
+        "zipSha256": "49e3632dcbff56907b4afce361a687ec32074074cc6642458395da3dfa2121a9",
+        "memberHashes": [
+          "6c3ccd1f530b395bf9034ee939839b9979559769900213e41886f3ee2ffd9ce2",
+          "6c3ccd1f530b395bf9034ee939839b9979559769900213e41886f3ee2ffd9ce2",
+          "f5b0cb09330fdcd03d6a8009322b9cc2f0f501f636c7faac0e160640ca06cd14",
+          "f5b0cb09330fdcd03d6a8009322b9cc2f0f501f636c7faac0e160640ca06cd14"
+        ],
+        "cache": {
+          "entries": 3,
+          "chargedBytes": 24906386,
+          "maxChargedBytes": 67108864,
+          "maxEntries": 4096,
+          "hits": 2,
+          "misses": 3,
+          "evictions": 0,
+          "oversized": 0,
+          "reusedBytes": 10528062
+        },
+        "milliseconds": 42532
+      }
+    },
+    "distribution": {
+      "baseline": {
+        "schema": "commons.complete-export-mutation-course.v1",
+        "members": 5,
+        "zipBytes": 27355662,
+        "zipSha256": "e2d64af090b53dd41e6773096f0c7579d3f0f6245a27182fb5f1719175aca1a3",
+        "memberHashes": [
+          "bc10d4920e96c070583f4c230e3f014486b2cb083aa762530edf7a940e37809a",
+          "bc10d4920e96c070583f4c230e3f014486b2cb083aa762530edf7a940e37809a",
+          "d1e698d88bb3df414480c739611b6459df5d8054d0c1f22c1949fbc6ea2ccd70",
+          "d1e698d88bb3df414480c739611b6459df5d8054d0c1f22c1949fbc6ea2ccd70"
+        ],
+        "cache": null,
+        "milliseconds": 241932
+      },
+      "candidate": {
+        "schema": "commons.complete-export-mutation-course.v1",
+        "members": 5,
+        "zipBytes": 27355662,
+        "zipSha256": "e2d64af090b53dd41e6773096f0c7579d3f0f6245a27182fb5f1719175aca1a3",
+        "memberHashes": [
+          "bc10d4920e96c070583f4c230e3f014486b2cb083aa762530edf7a940e37809a",
+          "bc10d4920e96c070583f4c230e3f014486b2cb083aa762530edf7a940e37809a",
+          "d1e698d88bb3df414480c739611b6459df5d8054d0c1f22c1949fbc6ea2ccd70",
+          "d1e698d88bb3df414480c739611b6459df5d8054d0c1f22c1949fbc6ea2ccd70"
+        ],
+        "cache": {
+          "entries": 2,
+          "chargedBytes": 43221733,
+          "maxChargedBytes": 67108864,
+          "maxEntries": 4096,
+          "hits": 2,
+          "misses": 3,
+          "evictions": 1,
+          "oversized": 0,
+          "reusedBytes": 36380920
+        },
+        "milliseconds": 188662
+      }
+    },
+    "procurement": {
+      "baseline": {
+        "schema": "commons.complete-export-mutation-course.v1",
+        "members": 5,
+        "zipBytes": 15124175,
+        "zipSha256": "b938720a2e7ca66af767b0823e0667d5f6bc305a156ecb9c56417808388ad4fe",
+        "memberHashes": [
+          "e47a86c75eb5a96b89a1212d496aa621d0a80aef088aca41ca5733117d414b4e",
+          "e47a86c75eb5a96b89a1212d496aa621d0a80aef088aca41ca5733117d414b4e",
+          "97e7d460fe8852ddb8b4eb3b959eb2556951406bf1ef4385e5bdeac79efec0b6",
+          "97e7d460fe8852ddb8b4eb3b959eb2556951406bf1ef4385e5bdeac79efec0b6"
+        ],
+        "cache": null,
+        "milliseconds": 130202
+      },
+      "candidate": {
+        "schema": "commons.complete-export-mutation-course.v1",
+        "members": 5,
+        "zipBytes": 15124175,
+        "zipSha256": "b938720a2e7ca66af767b0823e0667d5f6bc305a156ecb9c56417808388ad4fe",
+        "memberHashes": [
+          "e47a86c75eb5a96b89a1212d496aa621d0a80aef088aca41ca5733117d414b4e",
+          "e47a86c75eb5a96b89a1212d496aa621d0a80aef088aca41ca5733117d414b4e",
+          "97e7d460fe8852ddb8b4eb3b959eb2556951406bf1ef4385e5bdeac79efec0b6",
+          "97e7d460fe8852ddb8b4eb3b959eb2556951406bf1ef4385e5bdeac79efec0b6"
+        ],
+        "cache": {
+          "entries": 3,
+          "chargedBytes": 45890031,
+          "maxChargedBytes": 67108864,
+          "maxEntries": 4096,
+          "hits": 2,
+          "misses": 3,
+          "evictions": 0,
+          "oversized": 0,
+          "reusedBytes": 19163012
+        },
+        "milliseconds": 79868
+      }
+    }
+  }
+}
