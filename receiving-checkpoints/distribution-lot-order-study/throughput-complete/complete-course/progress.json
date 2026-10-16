@@ -1,0 +1,88 @@
+{
+  "schema": "commons.compact-checkpoint-publication/v1",
+  "phase": "complete-course",
+  "bytes": 12705810,
+  "sha256": "721d2942f5162aad05b1543d73a02c1aac2b8799a3ca5472109f26ad9319394c",
+  "parts": [
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-000.jsonpart",
+      "bytes": 650000,
+      "sha256": "c5715ce261e89359b4680163cb9b7eb2934f158a10e5e5111d7690baa636205c"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-001.jsonpart",
+      "bytes": 650000,
+      "sha256": "ab03232d9ced37673e3b30bed023b62f0605abeec0ef142f12b1b4cac300a520"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-002.jsonpart",
+      "bytes": 650000,
+      "sha256": "f8aa048b6a113a4871038f4c3b016e7a710fe00e6ed9bf478f515fc625b4517b"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-003.jsonpart",
+      "bytes": 650000,
+      "sha256": "e4c4a82c10b99d7d224413bee09be33319def58429a7112d807c1570077e05a6"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-004.jsonpart",
+      "bytes": 650000,
+      "sha256": "7912e111f2c04e8c4787439e65dd6bc75bcf70625363b99eb551916b1525fd23"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-005.jsonpart",
+      "bytes": 650000,
+      "sha256": "95d4cbf901386c4661ed7757fcb5e1024bd4dfefa2284ddce96bcd29860613a8"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-006.jsonpart",
+      "bytes": 650000,
+      "sha256": "e7322e9cdbf314dff1246d7d0923e2bb4ce2f7420b1f60e32261ce5bc8f28beb"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-007.jsonpart",
+      "bytes": 650000,
+      "sha256": "a7e7a1e70bf64a00b67ceb1c78202c89ad8003dbc10cdf7e59ad269325247b24"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-008.jsonpart",
+      "bytes": 650000,
+      "sha256": "901c880244221ed6cad0f2c6ba23ea41990d6b4c5d6f72d2dc9f83342568ed23"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-009.jsonpart",
+      "bytes": 650000,
+      "sha256": "5ae37751e4aece1f5cc97cb223dfcfc4e0158c9d0456d380baee8e71142f4569"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-010.jsonpart",
+      "bytes": 650000,
+      "sha256": "364c47a3da4bfaacfd0e8a4da847afc34e5039dd1dd1d4ea2d555483ecc0a88f"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-011.jsonpart",
+      "bytes": 650000,
+      "sha256": "c33fc616ca52f6064cb43ba2cde75a9e3b4dd74af87d31f382685bc49f61fcc1"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-012.jsonpart",
+      "bytes": 650000,
+      "sha256": "ae27ce9a7903f5cfb6b64a9d6af864a11fd280b18dc28f609c2ad829260ef5b0"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-013.jsonpart",
+      "bytes": 650000,
+      "sha256": "9b6980f689aa9457ea0c6b1f7f7af6ffef4ce06f5c1c3a28e4f5426fd4f95727"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-014.jsonpart",
+      "bytes": 650000,
+      "sha256": "d8fcc0807e00707535d08168665e7afa735ff93a6350db6271005bf29fe0bc48"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-015.jsonpart",
+      "bytes": 650000,
+      "sha256": "3fbfa8142de55f30c8abb689bc4ad308d451567e36174f11c0b42e1e27813808"
+    }
+  ]
+}

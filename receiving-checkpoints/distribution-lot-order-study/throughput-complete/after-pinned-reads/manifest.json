@@ -1,0 +1,165 @@
+{
+  "schema": "installed-complete-course-checkpoint/v1",
+  "phase": "after-pinned-reads",
+  "sourceHead": "02992a7d5ace80b536286039b6b930d1710805d3",
+  "sourceBank": {
+    "product": "distribution",
+    "files": 975,
+    "sourceBytes": 15092776,
+    "sourceSha256": "0f095cac5f76a9bf69ed4945c621ae4c0b0182a32a649c64837ab6b2ccfc90d2",
+    "htmlBytes": 4144023,
+    "htmlSha256": "ded7aec008c3b787d55f4ec653874a289ae51b01fb59ab0ff51a13ebe0a71297",
+    "upperMembers": 973,
+    "lowerMembers": 974
+  },
+  "executionSources": [
+    {
+      "phase": "imports-1-through-24",
+      "sourceHead": "710bfa6703031892daed620b1fd880aa6c124f81",
+      "checkpointSha256": "62ce806cffc7936bf770744b06da92456746ceb928d9d7157cd33bf1d83b584a"
+    },
+    {
+      "phase": "imports-25-through-before-pinned-reads",
+      "sourceHead": "9b2453fe855ce3ad9fa8d057a1649265809ce7ee"
+    },
+    {
+      "phase": "all-pinned-reads",
+      "sourceHead": "d186e709c537aa1891aacba5572a6ea4d835bb96",
+      "baseSource": {
+        "bytes": 15091163,
+        "sha256": "836eebef6d744abfb0441861e04b4fb0bf012ffce8f2c2622d109ac74ea00062",
+        "files": 975
+      },
+      "overlays": [
+        {
+          "path": "host/codec.mjs",
+          "bytes": 46966,
+          "sha256": "b144ccfaeaeaf25dc3cd3f660d0461a87a5de5758ed1390c2db22edaa79c0ea4"
+        },
+        {
+          "path": "src/session-cache.cjs",
+          "bytes": 3475,
+          "sha256": "6ccc7a2ace802adb43b7b74744bb75f133022487f52fd37a6310486b1d05bd87"
+        }
+      ],
+      "calls": 242,
+      "measurementPath": "receiving-checkpoints/tools/complete-state-read-throughput/measurement.json"
+    },
+    {
+      "phase": "final-edit-and-preview",
+      "sourceHead": "02992a7d5ace80b536286039b6b930d1710805d3",
+      "sourceBank": "0f095cac5f76a9bf69ed4945c621ae4c0b0182a32a649c64837ab6b2ccfc90d2"
+    }
+  ],
+  "bytes": 12448322,
+  "sha256": "1dd9b7a93e8627c6c3046ee82937001f06a4eef2c3cc59e2029c2c685c42027b",
+  "expandedBytes": 464608899,
+  "checks": 46,
+  "requests": 44,
+  "editions": 45,
+  "sequence": 43,
+  "stateSha256": "1dc7a01fb25e2563216699b8df43224c925162c010257b136191ef5382135f10",
+  "identity": "Every original value and property order is retained by the complete compact node bank",
+  "parts": [
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-000.jsonpart",
+      "bytes": 650000,
+      "sha256": "d3d33141bdfff914c1dc5e1606e5adf026d4e3470b3f3d541fbbbc5504a3ef2c"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-001.jsonpart",
+      "bytes": 650000,
+      "sha256": "370b91efc077535f7bcb962fabbd8f37e0d4ee0fdcd612810b6430b441d5bac8"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-002.jsonpart",
+      "bytes": 650000,
+      "sha256": "f58dc9868442e9d01bac64ebac5c7fa24b0d7357782c869a31a0c910b039cb58"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-003.jsonpart",
+      "bytes": 650000,
+      "sha256": "fff8e525f531c2581f7fd35440d58159306dd9f2c0579c68c0e06352c2295b34"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-004.jsonpart",
+      "bytes": 650000,
+      "sha256": "33036c91713db6df007fe949492d8da2cbab99ecc90b09ba566e08851b9abd3f"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-005.jsonpart",
+      "bytes": 650000,
+      "sha256": "aac81e8e8ad47eb09a810b9dfd8769c2f863d23c809a23a1657c9b73d350cade"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-006.jsonpart",
+      "bytes": 650000,
+      "sha256": "7ee447e815d766ad7305e531059d987e6f75a22a035c23a1a94fa33a99768982"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-007.jsonpart",
+      "bytes": 650000,
+      "sha256": "4d0284f3d163d650fee3eadac09c0d4af06ade478859fcf5739852b4f428e648"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-008.jsonpart",
+      "bytes": 650000,
+      "sha256": "282a8746385af744fa2cc86b997eaf53898f3a113ca3143eeaef253a50ff2b3d"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-009.jsonpart",
+      "bytes": 650000,
+      "sha256": "23834ff869c8d52b197f6ace80da9e6c25c96735985cbc80446710c7e161cc57"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-010.jsonpart",
+      "bytes": 650000,
+      "sha256": "3bf2c4c68f984a4476b41c579c4c1c9904c1abe374d67d21e11943265566e3c0"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-011.jsonpart",
+      "bytes": 650000,
+      "sha256": "b5ffe5df5369f5decabbcd69cd211ecd43a3712f6f12f521eeb91285e925f86c"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-012.jsonpart",
+      "bytes": 650000,
+      "sha256": "42f9c43e768e018643e2a3d3c6f005bf1357c4adb21ac56b4b7b665df2a780c7"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-013.jsonpart",
+      "bytes": 650000,
+      "sha256": "b563cc2aa8343d899388cc8211d8d5a575962714b0b23af7b548631e97e3e059"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-014.jsonpart",
+      "bytes": 650000,
+      "sha256": "ca5830dff0cb0fee6410ceb1b8d12c6065603823837700b6375436f0ff0e9bac"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-015.jsonpart",
+      "bytes": 650000,
+      "sha256": "9d9ef4e331dc7836693427b1ae03b8442d9f82c0c3d2c701e270a6f3527811da"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-016.jsonpart",
+      "bytes": 650000,
+      "sha256": "6520548209142605347540c68cf9fdcace92f3d06380d503698c187b938a69dd"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-017.jsonpart",
+      "bytes": 650000,
+      "sha256": "27ccdf6e13c90865ce5b5aec3a16712055039ff07bb837f98264c16917c667a0"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-018.jsonpart",
+      "bytes": 650000,
+      "sha256": "1df8ca75f7e36ee66a2ca7ab695d812bf2c26cb37214dfe32cfc6993d79645d6"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-019.jsonpart",
+      "bytes": 98322,
+      "sha256": "721c11fe4b1446299055a5ec79569d3f15b121b7e924dc88e8a7ff90aac1ff9e"
+    }
+  ]
+}
