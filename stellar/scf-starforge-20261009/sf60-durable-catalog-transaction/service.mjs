@@ -8,7 +8,7 @@ import { DurableCatalogTransaction } from './journal.mjs';
 
 const HOST = '127.0.0.1';
 const FILE = 'catalog-commits.json';
-const ROUTES = new Set(['/discovery/resources', '/discovery/search']);
+const ROUTES = new Set(['/discovery/resources', '/discovery/search', '/discovery/readiness']);
 const COMMON_HEADERS = Object.freeze({
   'cache-control': 'no-store',
   'x-content-type-options': 'nosniff',

@@ -101,6 +101,7 @@ export class AtomicCatalogIntegration {
   search(params = new URLSearchParams()) { return this.#live.search(params); }
   listDiscovery(params = new URLSearchParams()) { return this.#live.listDiscovery(params); }
   searchDiscovery(params = new URLSearchParams()) { return this.#live.searchDiscovery(params); }
+  discoveryReadiness() { return this.#live.discoveryReadiness(); }
   lifecycle(id, options) { return this.#lifecycle.get(id, options); }
   snapshot() {
     return clone({
