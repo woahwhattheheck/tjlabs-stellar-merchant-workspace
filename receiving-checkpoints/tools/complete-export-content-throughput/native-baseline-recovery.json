@@ -1,0 +1,28 @@
+{
+  "schema": "commons.complete-export-native-baseline-recovery.v1",
+  "members": 10835,
+  "baselineIdentity": {
+    "bytes": 3256615,
+    "sha256": "60c69e7bc7f87ca5853443e4c1cda9f501bb9e9e567f824eb5ec5f808116a5a6"
+  },
+  "results": [
+    {
+      "name": "actual-full-retained-baseline",
+      "accepted": true,
+      "error": null,
+      "pass": true
+    },
+    {
+      "name": "altered-member-crc",
+      "accepted": false,
+      "error": "Retained complete member list identity differs",
+      "pass": true
+    },
+    {
+      "name": "incomplete-status",
+      "accepted": false,
+      "error": "Retained baseline is not a complete comparison",
+      "pass": true
+    }
+  ]
+}

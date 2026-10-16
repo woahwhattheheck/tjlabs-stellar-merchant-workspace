@@ -19,9 +19,15 @@ async function checkpoint(){const path=resolve(args.checkpoint),packet=JSON.pars
  throw Error('Choose a retained complete compact checkpoint');}
 const files=args['source-html']?await htmlBank(args['source-html'],args.product):await bank(args.source),candidateSource=await readFile(resolve(args['candidate-export']),'utf8'),graph=await checkpoint(),progress=row=>process.stderr.write(JSON.stringify(row)+'\n');
 const sourceIdentity={bytes:Buffer.byteLength(JSON.stringify(files)),sha256:sha(JSON.stringify(files))},inputIdentity={bytes:Buffer.byteLength(JSON.stringify(graph)),sha256:sha(JSON.stringify(graph))};
+function validateBaseline(baseline,product,sourceIdentity,inputIdentity,executionSource){
+ if(baseline.schema!=='commons.complete-export-throughput-measurement.v1'||baseline.product!==product||baseline.sourceIdentity?.sha256!==sourceIdentity.sha256||baseline.sourceIdentity?.bytes!==sourceIdentity.bytes||baseline.inputIdentity?.sha256!==inputIdentity.sha256||baseline.inputIdentity?.bytes!==inputIdentity.bytes||baseline.executionIdentity?.sha256!==sha(executionSource)||baseline.executionIdentity?.bytes!==Buffer.byteLength(executionSource))throw Error('Retained baseline belongs to different source or complete input');
+ if(baseline.status?.done!==true||!Array.isArray(baseline.members)||baseline.status.entries!==baseline.members.length||!Number.isFinite(baseline.executionMilliseconds)||baseline.executionMilliseconds<0)throw Error('Retained baseline is not a complete comparison');
+ same(Buffer.from(JSON.stringify(baseline.members)),baseline.memberIdentity,'Retained complete member list');
+ return baseline;
+}
 const baselinePath=resolve(args.out)+'.baseline.json';
 let baseline;
-try{baseline=JSON.parse(await readFile(baselinePath,'utf8'));if(baseline.product!==args.product||baseline.sourceIdentity.sha256!==sourceIdentity.sha256||baseline.inputIdentity.sha256!==inputIdentity.sha256||baseline.executionIdentity.sha256!==sha(files['host/export-core.mjs']))throw Error('Retained baseline belongs to different source or complete input');}
+try{baseline=validateBaseline(JSON.parse(await readFile(baselinePath,'utf8')),args.product,sourceIdentity,inputIdentity,files['host/export-core.mjs']);}
 catch(error){if(error.code!=='ENOENT')throw error;baseline=await measure(args.product,files,graph,files['host/export-core.mjs'],progress);await writeFile(baselinePath,JSON.stringify(baseline,null,2)+'\n',{flag:'wx'});}
 const candidate=await measure(args.product,files,graph,candidateSource,progress);
 if(baseline.memberIdentity.sha256!==candidate.memberIdentity.sha256||baseline.members.length!==candidate.members.length)throw Error('Complete ordered archive metadata or actual compressed bytes differ');
