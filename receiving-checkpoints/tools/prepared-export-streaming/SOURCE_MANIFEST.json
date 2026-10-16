@@ -3,6 +3,11 @@
   "operation": "A74F-COMPLETE-EXPORT-STREAMING-20261015",
   "files": [
     {
+      "path": "checkpoint-source-order.cjs",
+      "bytes": 2938,
+      "sha256": "8e75d4b11caed1ce6ae5a4aa4f55da0fe28bd327e2865b020dae8f7a9189d0d6"
+    },
+    {
       "path": "checkpoint-storage.cjs",
       "bytes": 2493,
       "sha256": "effafda4907de3ab610f90427a04067e2e3e2cefbd4af2008fad3bdde07db78f"
@@ -16,6 +21,11 @@
       "path": "connected_zip.cjs",
       "bytes": 22223,
       "sha256": "751354cbfe55450be53689de23631900f3b1661063c7974e46f99fa2413cbc1f"
+    },
+    {
+      "path": "continue-retained-distribution.mjs",
+      "bytes": 7759,
+      "sha256": "0cb0a3fff180a8b67d61a9f7fe2d38800f476fc08b51d5c480eb35ea15b69c72"
     },
     {
       "path": "default-codec-result.json",
@@ -119,8 +129,18 @@
     },
     {
       "path": "README.md",
-      "bytes": 16034,
-      "sha256": "366292f5b874c088e1653c07c224de8ced6f86f9025cb6f4acbc17c99a48fa09"
+      "bytes": 16787,
+      "sha256": "2573fb8c1b92bd9b8beccc311edd6b932af83a236baa812e4e9bce09ac76939b"
+    },
+    {
+      "path": "RETAINED_NATIVE_CONTINUATION.md",
+      "bytes": 5119,
+      "sha256": "bca1c32ad7022a2aecae192a4ec8fe6ee0225e61458225f07257834a7f375f35"
+    },
+    {
+      "path": "retained-source-order-result.json",
+      "bytes": 1391,
+      "sha256": "ae04721338600eeb49fa0936604ae097ebf73bf66ec6eff5343c9a676227822e"
     },
     {
       "path": "sha256.cjs",
@@ -171,6 +191,11 @@
       "path": "verify-prepared-stream.cjs",
       "bytes": 6117,
       "sha256": "e65aa640cc815d71993bdb321a2f178e98a70f4d404292498360e676b86498d9"
+    },
+    {
+      "path": "verify-retained-source-order.cjs",
+      "bytes": 6706,
+      "sha256": "7453db79c50fd7416a76b9c2abc24769f8746f2886f52a70d3e21af21e2683ce"
     },
     {
       "path": "verify-source-addition.cjs",

@@ -1,0 +1,43 @@
+{
+  "schema": "commons.retained-native-source-continuation-course.v1",
+  "retainedCommit": "a7bc7e947b1ef7314ca7864854c25d2cc1503b8b",
+  "retainedCompletedGroups": 1206,
+  "sourceFiles": 975,
+  "sourceBank": {
+    "bytes": 15092776,
+    "sha256": "0f095cac5f76a9bf69ed4945c621ae4c0b0182a32a649c64837ab6b2ccfc90d2"
+  },
+  "originalIdentity": "202f25e907c6c85c8f63803b5a08dada032a21e52904083b351dd01465259b56",
+  "restoredIdentity": "202f25e907c6c85c8f63803b5a08dada032a21e52904083b351dd01465259b56",
+  "sortedIdentity": "ecd3ebbf7bea0aaaa37ce3b5944f7eb6e2d16bfacf0cca4d49990f1dbadc29d8",
+  "requests": 45,
+  "editions": 46,
+  "sourcePrefixGroups": 975,
+  "completeSourceZip": {
+    "bytes": 3185555,
+    "sha256": "4b888624d7676a42870dad3f57a675a7bf810df99abb55460d84db7487c7bbf5"
+  },
+  "payloadsBefore": 974,
+  "payloadsAfter": 973,
+  "continuedGroups": 976,
+  "continuedMembers": 986,
+  "continuedArchive": {
+    "bytes": 3258147,
+    "sha256": "62240239eec7dba782ac8ab522df5d113425e05f1572a568fde3aedbc8e1fb4f"
+  },
+  "ordinaryOriginalMembersChecked": 985,
+  "completedReplay": {
+    "done": true,
+    "completedGroups": 976,
+    "entries": 986,
+    "uncompressedBytes": 14404276,
+    "archiveBytes": 3258147,
+    "retainedPackedBytes": 2990683
+  },
+  "rejected": [
+    "changed native source",
+    "missing source",
+    "source group after non-source group"
+  ],
+  "elapsedMs": 123352
+}
