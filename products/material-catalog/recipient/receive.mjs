@@ -36,11 +36,11 @@ async function validateSuppliedHtml(supplied,originalBytes,originalName){
 }
 // The caller owns the browser/context. A supplied Page must be a fresh about:blank Page.
 // This API does not launch a browser, navigate an existing user tab, or close its caller's Page.
-export async function receiveRecipientBrowser({context:assignedContext,page:assignedPage=null,bundlePath,bundleSha256,directory:output,pageSource='file',suppliedHtml=null,operationId=DEFAULT_OPERATION,reviewReturn=false,resumeReviewReturn=false,renewalFollowing=null}){
+export async function receiveRecipientBrowser({context:assignedContext,page:assignedPage=null,bundlePath,bundleSha256,directory:output,pageSource='file',suppliedHtml=null,operationId=DEFAULT_OPERATION,reviewReturn=false,resumeReviewReturn=false,renewalFollowing=null,resumeBrowser=null}){
  if(typeof reviewReturn!=='boolean'||typeof resumeReviewReturn!=='boolean'||(reviewReturn&&resumeReviewReturn))throw Error('SELECT_ONE_ORIGINAL_REVIEW_PHASE');
  if(!['file','supplied-html'].includes(pageSource))throw new Error('SELECT_FILE_OR_SUPPLIED_HTML');
  if(typeof operationId!=='string'||!operationId.trim())throw new Error('KEEP_THE_ORIGINAL_RECEIVING_OPERATION');
- const context=assignedContext??assignedPage?.context();
+ let context=assignedContext??assignedPage?.context();
  if(!context||(assignedPage&&assignedPage.context()!==context))throw new Error('ASSIGNED_BROWSER_CONTEXT_MISSING_OR_DIFFERENT');
  if(assignedPage&&assignedPage.url()!=='about:blank')throw new Error('PRESERVE_EXISTING_PAGE_USE_A_FRESH_ABOUT_BLANK_PAGE');
  const input=resolve(bundlePath),directory=resolve(output),bytes=await readFile(input);
@@ -48,11 +48,12 @@ export async function receiveRecipientBrowser({context:assignedContext,page:assi
  const originalText=decode(bytes),bundle=openText(originalText,{name:input.split(/[\\/]/).at(-1)});
  const supplied=pageSource==='supplied-html'?await validateSuppliedHtml(suppliedHtml,bytes,bundle.name):null;
  if(pageSource==='file'&&suppliedHtml!==null)throw new Error('SUPPLIED_HTML_REQUIRES_ITS_EXPLICIT_PAGE_SOURCE');
- const resume=Boolean(resumeReviewReturn);
+ if(resumeBrowser!==null&&(!resumeBrowser||typeof resumeBrowser!=='object'||!['recordSha256','receiverPreimageSha256'].every(k=>/^[a-f0-9]{64}$/.test(resumeBrowser[k]??''))||reviewReturn||resumeReviewReturn||renewalFollowing))throw Error('SELECT_EXACT_ORIGINAL_BROWSER_CONTINUATION');
+ const resume=Boolean(resumeReviewReturn||resumeBrowser);
  if(renewalFollowing&&!reviewReturn&&!resume)throw Error('FOLLOWING_REVIEW_REQUIRES_THE_ORIGINAL_REVIEW_PHASE');
 const sourceNames=['sha256.mjs','core.mjs','review.mjs','renewal.mjs','renewal-panel.mjs','review-panel.mjs','workspace.mjs','reader.html','assemble.mjs','build.mjs','receive.mjs',
  ...(renewalFollowing?['receive-renewal.mjs']:[]),
- ...(reviewReturn||resume?['receive-review.mjs',
+ ...(reviewReturn||resumeReviewReturn?['receive-review.mjs',
  '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/workspace.mjs',
  '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/recipient-return.mjs',
  '../../../stellar/scf-starforge-20261009/sf30-seller-sdk/opensearch/catalog/cli.mjs',
@@ -67,15 +68,28 @@ if(reviewReturn||resume){
  if(held.status!==0){await reviewGuard.close();throw Object.assign(Error(held.status===75?'ORIGINAL_REVIEW_COURSE_ACTIVE':'REVIEW_COURSE_FLOCK_UNAVAILABLE'),{cause:held.error});}
 }
 try{
-const record=resume?JSON.parse(await readFile(join(directory,'RECEIVING.json'),'utf8')):{schema:'stellar-forge.material-recipient-browser-receiving.v1',status:'RUNNING',operation:operationId,pageSource,renderedHtml:[],startedAt:new Date().toISOString(),original:bundle.summary,downloads:[],screenshots:[],steps:[],browserErrors:[],pixelReview:{status:'PENDING',instructions:'Open and inspect all actual retained images before recording visual completion.'}};
+const priorRecordBytes=resume?await readFile(join(directory,'RECEIVING.json')):null;
+if(resumeBrowser&&sha(priorRecordBytes)!==resumeBrowser.recordSha256)throw Error('ORIGINAL_BROWSER_RECORD_CHANGED');
+const record=resume?JSON.parse(decode(priorRecordBytes)):{schema:'stellar-forge.material-recipient-browser-receiving.v1',status:'RUNNING',operation:operationId,pageSource,renderedHtml:[],startedAt:new Date().toISOString(),original:bundle.summary,downloads:[],screenshots:[],steps:[],browserErrors:[],pixelReview:{status:'PENDING',instructions:'Open and inspect all actual retained images before recording visual completion.'}};
 if(resume){
  if(record.schema!=='stellar-forge.material-recipient-browser-receiving.v1'||record.original.bundleSha256!==bundle.identity.sha256||record.original.bundleBytes!==bytes.length||record.inputBinding?.path!==input||record.inputBinding?.name!==bundle.name)throw Error('RECEIVING_ORIGINAL_INPUT_DIFFERS');
- if(JSON.stringify(record.sourceBinding)!==JSON.stringify(sourceBinding))throw Error('RECEIVING_SELECTED_SOURCE_DIFFERS');
- if(!record.steps.includes('incomplete-file-error-and-original-reopen'))throw Error('RECONCILE_ORIGINAL_BROWSER_PHASE_BEFORE_REVIEW_CONTINUATION');
+ if(resumeBrowser){
+  if(record.status!=='ERROR'||!record.steps.includes('material-selection-search-detail-and-complete-downloads')||record.steps.includes('every-original-table-and-contained-history-download'))throw Error('SELECT_THE_INTERRUPTED_ORIGINAL_TABLE_PHASE');
+  if(record.sourceBinding.length!==sourceBinding.length||record.sourceBinding.some((old,i)=>{const next=sourceBinding[i];return old.path!==next.path||(old.path==='receive.mjs'?old.sha256!==resumeBrowser.receiverPreimageSha256:old.bytes!==next.bytes||old.sha256!==next.sha256);}))throw Error('ORIGINAL_BROWSER_SOURCE_SUCCESSOR_DIFFERS');
+  for(const saved of [...record.downloads,...record.screenshots]){const path=resolve(saved.path);if(!path.startsWith(directory+'/'))throw Error('ORIGINAL_ACCEPTED_OUTPUT_OUTSIDE_DIRECTORY');const stat=await lstat(path),body=await readFile(path);if(!stat.isFile()||stat.isSymbolicLink()||body.length!==saved.bytes||sha(body)!==saved.sha256)throw Error('ORIGINAL_ACCEPTED_OUTPUT_CHANGED:'+path);}
+ }else{
+  if(JSON.stringify(record.sourceBinding)!==JSON.stringify(sourceBinding))throw Error('RECEIVING_SELECTED_SOURCE_DIFFERS');
+  if(!record.steps.includes('incomplete-file-error-and-original-reopen'))throw Error('RECONCILE_ORIGINAL_BROWSER_PHASE_BEFORE_REVIEW_CONTINUATION');
+ }
  if(record.operation!==operationId||record.pageSource!==pageSource)throw Error('RECEIVING_OPERATION_OR_TRANSPORT_DIFFERS');
  if(supplied&&JSON.stringify(record.suppliedHtml)!==JSON.stringify({blank:{path:supplied.blank.path,bytes:supplied.blank.bytes,sha256:supplied.blank.sha256},populated:{path:supplied.populated.path,bytes:supplied.populated.bytes,sha256:supplied.populated.sha256}}))throw Error('RECEIVING_SUPPLIED_HTML_DIFFERS');
  for(const built of record.built){const actual=await readFile(built.output);if(actual.length!==built.bytes||sha(actual)!==built.sha256)throw Error('RECEIVING_BUILT_SOURCE_DIFFERS');}
- record.continuations??=[];record.continuations.push({at:new Date().toISOString(),previousStatus:record.status});
+ if(resumeBrowser){
+  const preserved=join(directory,'RECEIVING.before-browser-'+resumeBrowser.recordSha256+'.json');
+  try{const handle=await open(preserved,'wx',0o600);try{await handle.writeFile(priorRecordBytes);await handle.sync();}finally{await handle.close();}}catch(error){if(error.code!=='EEXIST'||!(await readFile(preserved)).equals(priorRecordBytes))throw error;}
+  record.sourceSuccessors??=[];record.sourceSuccessors.push({kind:'original-browser-continuation',priorRecordSha256:resumeBrowser.recordSha256,before:record.sourceBinding,after:sourceBinding});record.sourceBinding=sourceBinding;
+ }
+ record.continuations??=[];record.continuations.push({at:new Date().toISOString(),previousStatus:record.status,kind:resumeBrowser?'original-browser':'original-review'});
  record.status='RUNNING';
 }else{record.sourceBinding=sourceBinding;record.inputBinding={path:input,name:bundle.name,bytes:bytes.length,sha256:sha(bytes)};}
 const save=async()=>{
@@ -86,8 +100,8 @@ const save=async()=>{
  }finally{await handle.close().catch(()=>{});await unlink(pending).catch(()=>{});}
 };
 await save();
-let page=assignedPage,reopened;
-const ownedPages=[],observers=[];
+let page=assignedPage,reopened;let captureResumeError=async()=>{};
+const ownedPages=[],observers=[],ownedReadContexts=[];let readDownloads=0;
 const previousViewport=assignedPage?.viewportSize();
 const newPage=async()=>{const next=await context.newPage();ownedPages.push(next);return next;};
 try{
@@ -110,6 +124,23 @@ try{
   record.renderedHtml.push({role,path:html.path,bytes:html.bytes,sha256:html.sha256,pageSource});
  };
  const observe=p=>{const handler=e=>record.browserErrors.push(e.message);p.on('pageerror',handler);observers.push([p,handler]);};
+ // Continue the original read-only outputs in ordinary small context groups.
+ // This preserves the caller's Context and changes no browser permissions/flags.
+ const cycleReadPage=async(force=false)=>{
+  if(!resumeBrowser||(!force&&readDownloads<6))return;
+  const tab=await page.locator('nav button[aria-current="page"]').innerText();
+  const selector=page.getByLabel('Original table',{exact:true}),table=await selector.count()?await selector.inputValue():null;
+  const browser=context.browser();if(!browser)throw Error('ORIGINAL_BROWSER_CONTEXT_FACTORY_UNAVAILABLE');
+  if(ownedPages.includes(page))await page.close();
+  if(ownedReadContexts.includes(context))await context.close();
+  context=await browser.newContext({acceptDownloads:true});ownedReadContexts.push(context);readDownloads=0;
+  page=await newPage();observe(page);await openHtml(page,populatedHtml,'original-remaining-read-only-context');
+  await requireVisible(page.getByRole('heading',{name:'Complete recipient workspace',exact:true}));
+  if(!await page.getByText(bundle.identity.sha256,{exact:true}).isVisible())throw Error('CONTINUED_CONTEXT_ORIGINAL_DIFFERS');
+  await page.getByRole('button',{name:tab,exact:true}).click();if(table)await page.getByLabel('Original table',{exact:true}).selectOption(table);
+  record.readOnlyContexts??=[];record.readOnlyContexts.push({at:new Date().toISOString(),bundleSha256:bundle.identity.sha256,maxDownloads:6,restoredTab:tab,restoredTable:table});await save();
+ };
+
  observe(page);
  const requireVisible=async locator=>{await locator.waitFor({state:'visible',timeout:30000});};
  const shot=async(name,width=1440,target=page)=>{
@@ -118,12 +149,17 @@ try{
   const overflow=await target.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth+1);
   if(overflow)throw new Error('PAGE_HORIZONTAL_OVERFLOW:'+name);
  };
+ captureResumeError=async()=>{if(page&&!page.isClosed())await shot('browser-continuation-error-narrow',390);};
  const download=async(label,name,expected,type='bytes')=>{
+  const saved=resumeBrowser?record.downloads.find(x=>x.name===name):null;
+  if(saved){const body=await readFile(saved.path),desired=type==='json'?Buffer.from(JSON.stringify(expected)):Buffer.from(expected);if(type==='json'?JSON.stringify(JSON.parse(body))!==JSON.stringify(expected):!body.equals(desired))throw Error('ACCEPTED_DOWNLOAD_CONTENT_DIFFERS:'+name);return saved.path;}
+  await cycleReadPage();
+  record.pendingDownload={label,name,selectedTable:await page.getByLabel('Original table',{exact:true}).count()?await page.getByLabel('Original table',{exact:true}).inputValue():null,enabled:await page.getByRole('button',{name:label,exact:true}).isEnabled()};await save();
   const event=page.waitForEvent('download');await page.getByRole('button',{name:label,exact:true}).click();
   const d=await event,path=join(directory,name);await d.saveAs(path);const body=await readFile(path);
   const desired=type==='json'?Buffer.from(JSON.stringify(expected)):Buffer.from(expected);
   if(type==='json'?JSON.stringify(JSON.parse(body))!==JSON.stringify(expected):!body.equals(desired))throw new Error('DOWNLOADED_CONTENT_DIFFERS:'+name);
-  record.downloads.push({name,path,bytes:body.length,sha256:sha(body)});return path;
+  record.downloads.push({name,path,bytes:body.length,sha256:sha(body)});delete record.pendingDownload;if(resumeBrowser)readDownloads++;await save();return path;
  };
  if(!resume){
  await openHtml(page,blank,'blank-reader');await requireVisible(page.getByRole('heading',{name:'Open a catalogue handover',exact:true}));
@@ -168,8 +204,12 @@ try{
  }
  await page.getByRole('button',{name:'Customer decisions',exact:true}).click();
  await download('Download every original decision revision','customer-decision-history.jsonl',tableJsonl(bundle,'catalog_decision_history'));
+ }
+ if(resumeBrowser){page=await newPage();observe(page);await openHtml(page,populatedHtml,'original-interrupted-table-continuation');await requireVisible(page.getByRole('heading',{name:'Complete recipient workspace',exact:true}));if(!await page.getByText(bundle.identity.sha256,{exact:true}).isVisible())throw Error('CONTINUED_ORIGINAL_BUNDLE_DIFFERS');}
+ if(!resume||resumeBrowser){
  await page.getByRole('button',{name:'All retained records',exact:true}).click();
  for(const table of Object.keys(TABLES)){
+  if(resumeBrowser&&record.downloads.some(x=>x.name===table+'.jsonl')){await download('Download complete original table',table+'.jsonl',tableJsonl(bundle,table));continue;}
   await page.getByLabel('Original table',{exact:true}).selectOption(table);
   await download('Download complete original table',table+'.jsonl',tableJsonl(bundle,table));
  }
@@ -177,17 +217,20 @@ try{
  await page.getByRole('button',{name:'Original sources',exact:true}).click();
  let sourceIndex=0;
  for(const [sourceId,source] of bundle.sources){
+  await cycleReadPage();
   const event=page.waitForEvent('download');await page.getByRole('button',{name:'Download original bytes',exact:true}).nth(sourceIndex++).click();
   const d=await event,path=join(directory,'source-'+sourceId+'.bin');await d.saveAs(path);const actual=await readFile(path);
   if(sha(actual)!==source.manifest.sha256||actual.length!==source.bytes.length)throw new Error('ORIGINAL_SOURCE_DOWNLOAD_DIFFERS');
-  record.downloads.push({name:'source-'+sourceId,path,bytes:actual.length,sha256:sha(actual)});
+  record.downloads.push({name:'source-'+sourceId,path,bytes:actual.length,sha256:sha(actual)});if(resumeBrowser){readDownloads++;await save();}
  }
  await page.getByRole('button',{name:'Overview',exact:true}).click();
  await download('Download unchanged original bundle','original-bundle.jsonl',bytes);
  await download('Download inspection manifest','inspection.json',bundle.summary,'json');
+ await cycleReadPage();
  const recipientEvent=page.waitForEvent('download');await page.getByRole('button',{name:'Download complete offline reader',exact:true}).click();
  const recipient=await recipientEvent,recipientPath=join(directory,'Downloaded_Complete_Recipient.html');await recipient.saveAs(recipientPath);
- const recipientBytes=await readFile(recipientPath);record.downloads.push({name:'Downloaded_Complete_Recipient.html',path:recipientPath,bytes:recipientBytes.length,sha256:sha(recipientBytes)});
+ const recipientBytes=await readFile(recipientPath);record.downloads.push({name:'Downloaded_Complete_Recipient.html',path:recipientPath,bytes:recipientBytes.length,sha256:sha(recipientBytes)});if(resumeBrowser){readDownloads++;await save();}
+ await cycleReadPage(true);
  reopened=await newPage();observe(reopened);
  await openHtml(reopened,{path:recipientPath,body:recipientBytes,text:decode(recipientBytes),...identity(recipientBytes)},'downloaded-complete-reader');
  await requireVisible(reopened.getByRole('heading',{name:'Complete recipient workspace',exact:true}));
@@ -198,7 +241,7 @@ try{
  const restoredDownload=reopened.waitForEvent('download');await reopened.getByRole('button',{name:'Download unchanged original bundle',exact:true}).click();
  const restored=await restoredDownload,restoredPath=join(directory,'cold-reopened-original.jsonl');await restored.saveAs(restoredPath);
  const restoredBytes=await readFile(restoredPath);
- record.downloads.push({name:'cold-reopened-original.jsonl',path:restoredPath,...identity(restoredBytes)});
+ record.downloads.push({name:'cold-reopened-original.jsonl',path:restoredPath,...identity(restoredBytes)});if(resumeBrowser)readDownloads++;
  if(!restoredBytes.equals(bytes))throw new Error('COLD_REOPEN_ORIGINAL_BYTES_DIFFER');
  record.steps.push('downloaded-complete-recipient-cold-open-and-original-byte-export');
  const invalid=join(directory,'incomplete-original.jsonl');await writeFile(invalid,bytes.subarray(0,bytes.length-1));
@@ -208,13 +251,13 @@ try{
  record.steps.push('incomplete-file-error-and-original-reopen');await save();
  }else{await openHtml(page,blank,'original-review-resume');await page.getByLabel('Open original catalogue bundle',{exact:true}).setInputFiles(input);await requireVisible(page.getByRole('heading',{name:'Complete recipient workspace',exact:true}));}
  record.reviewBlank={path:blank.path,bytes:blank.bytes,sha256:blank.sha256};
- if(reviewReturn||resume){const {receiveReviewReturn}=await import('./receive-review.mjs');await receiveReviewReturn({page,context,directory,input,bundle,record,save,openDocument:openHtml});}
+ if(reviewReturn||resumeReviewReturn){const {receiveReviewReturn}=await import('./receive-review.mjs');await receiveReviewReturn({page,context,directory,input,bundle,record,save,openDocument:openHtml});}
  if(renewalFollowing){const {receiveRecipientRenewal}=await import('./receive-renewal.mjs');await receiveRecipientRenewal({context,directory,record,save,openDocument:openHtml,following:renewalFollowing});}
  if(record.browserErrors.length)throw new Error('BROWSER_ERRORS_RECORDED');
- record.status='BROWSER_COURSE_COMPLETE';record.completedAt=new Date().toISOString();if(!resume)record.customerReader=join(directory,'Downloaded_Complete_Recipient.html');
+ record.status='BROWSER_COURSE_COMPLETE';record.completedAt=new Date().toISOString();if(!resume||resumeBrowser)record.customerReader=join(directory,'Downloaded_Complete_Recipient.html');
  await save();return record;
-}catch(error){record.status='ERROR';record.error=String(error.stack??error);record.failedAt=new Date().toISOString();await save();throw error;}
-finally{for(const [observed,handler] of observers)observed.off('pageerror',handler);for(const owned of ownedPages.reverse())await owned.close().catch(()=>{});if(assignedPage&&previousViewport&&!assignedPage.isClosed())await assignedPage.setViewportSize(previousViewport).catch(()=>{});}
+}catch(error){if(resumeBrowser)await captureResumeError().catch(()=>{});record.status='ERROR';record.error=String(error.stack??error);record.failedAt=new Date().toISOString();await save();throw error;}
+finally{for(const [observed,handler] of observers)observed.off('pageerror',handler);for(const owned of ownedPages.reverse())await owned.close().catch(()=>{});for(const owned of ownedReadContexts.reverse())await owned.close().catch(()=>{});if(assignedPage&&previousViewport&&!assignedPage.isClosed())await assignedPage.setViewportSize(previousViewport).catch(()=>{});}
 }finally{if(reviewGuard)await reviewGuard.close().catch(()=>{});}
 }
 async function cli(){
