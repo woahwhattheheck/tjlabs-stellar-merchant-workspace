@@ -105,7 +105,7 @@ Keep actual **failed** and **interrupted** runs. A later record can name `supers
 
 ## Requests, drafts and lost responses
 
-Every browser mutation is stored in the original IndexedDB operations store before sending. It retains complete arguments, original workspace/instance, operation ID and expected revision. Drafts use the existing draft store and a separate tab-specific registry key.
+Every browser mutation is stored in the original IndexedDB operations store before sending. It retains complete arguments, original workspace/instance, operation ID and expected revision. Drafts use the existing draft store and a distinct page-instance registry key. A reloaded or duplicated page may reopen its inherited saved copy, but writes a new record and retains the original. Reconnecting the same page selects its current copy first; the restored source key remains in its complete draft download.
 
 During file reads and requests the editor holds the selected state. Controls and the body's busy indicator remain disabled throughout that operation. A new workspace revision never silently rebases a draft. **Review current revision** checks the same profile head before explicitly updating the reviewed revision.
 
