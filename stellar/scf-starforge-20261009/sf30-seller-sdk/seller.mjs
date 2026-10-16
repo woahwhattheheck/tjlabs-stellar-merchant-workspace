@@ -108,7 +108,7 @@ function serviceMetadata(o) {
         !ASCII.test(t) || !t.trim() || t.length > 32) ||
         new Set(o.tags.map(x => x.toLowerCase())).size !== o.tags.length)
       throw new TypeError('tags must be <=5 unique printable ASCII strings (1–32)');
-    result.tags = [...o.tags];
+    if (o.tags.length) result.tags = [...o.tags];
   }
   return result;
 }
