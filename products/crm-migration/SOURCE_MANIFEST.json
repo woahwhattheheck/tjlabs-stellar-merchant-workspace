@@ -15,8 +15,8 @@
     },
     {
       "path": "browser/render-desk.cjs",
-      "bytes": 7252,
-      "sha256": "98599127986fb2de71724d8094341720b08df5ec850a9a03880b07a53283343b"
+      "bytes": 7335,
+      "sha256": "2235ef07c5ce49372a305123d7dde3a41ddbac5813a879e95862181e52a4ba57"
     },
     {
       "path": "cli.mjs",
@@ -25,8 +25,8 @@
     },
     {
       "path": "CRM_Migration_Desk.html",
-      "bytes": 280378,
-      "sha256": "760cd257740cd2c4519b5237a794fb1ed400a8e42abad8e5e4654903945c6455"
+      "bytes": 280461,
+      "sha256": "0533ffc5e11c8122bff68625f1f3163a615b800188388d676b4669947ea45f42"
     },
     {
       "path": "CUTOVER_API.md",
@@ -35,8 +35,8 @@
     },
     {
       "path": "Cutover_Desk.html",
-      "bytes": 433601,
-      "sha256": "1938b06ada495eba29d224fc9330f80e3ebb204bcf653117b3ab326396beabf9"
+      "bytes": 433844,
+      "sha256": "855425f6f43015073f4a5038c07639fcd211bc088d67e2dfae820f636d185356"
     },
     {
       "path": "cutover/core.cjs",
@@ -225,8 +225,8 @@
     },
     {
       "path": "cutover/render-desk.cjs",
-      "bytes": 4802,
-      "sha256": "e93a8153a6d740b4634be446d80414dbdcdcf594eaab38ba6fe0d335129fd969"
+      "bytes": 4882,
+      "sha256": "d4ccd91dfedbf269ca3505a833588a42a4a2056ff6914ffed9169099998eb0a0"
     },
     {
       "path": "cutover/runtime.cjs",
