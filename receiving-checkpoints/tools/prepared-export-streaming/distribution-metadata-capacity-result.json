@@ -1,0 +1,15 @@
+{
+  "schema": "commons.actual-distribution-metadata-capacity.v1",
+  "commit": "a7bc7e947b1ef7314ca7864854c25d2cc1503b8b",
+  "checkpoint": "receiving-checkpoints/distribution-lot-order-study/full-complete-archive-prepared/checkpoint.json",
+  "completedGroups": 1206,
+  "originalMetadata": 21500531,
+  "originalMetadataSha256": "dc3f3b039918bef637987ede11ceb8f1726f03adeb43fc83c432ffc59b097950",
+  "parts": 34,
+  "defaultLimit": 16777216,
+  "defaultRejectedBeforeReads": "Metadata exceeds selected streaming limit",
+  "selectedLimit": 67108864,
+  "actualFragmentsVerified": 34,
+  "nextValidation": "Completed export index differs",
+  "completeArchive": false
+}

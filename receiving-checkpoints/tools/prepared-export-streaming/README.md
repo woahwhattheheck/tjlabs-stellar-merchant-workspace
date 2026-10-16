@@ -63,3 +63,54 @@ This mode writes and syncs a provisional ZIP, reopens that actual file through e
 For this mode, supply `api.readBlob(gitBlob)` returning the exact original UTF-8 base64 text stored by `createBlob`. The reader keeps at most two decoded parts; it never allocates the whole ZIP. The resulting receipt includes the ordinary readback summary and the returned `ordinaryReadback` contains every member identity. Member callbacks run on actual ordinary reopening, while `emittedMembers` records prepared emission separately.
 
 The selected mode is pinned in publication state, progress and final manifest. Replay rejects a mode change before provider operations. Legacy states without a mode remain full-verification states. Recovery retains the existing pending commit, actual ref acknowledgment and exact companion-file binding; a complete replay rechecks the archive without issuing new writes.
+
+
+## Durable Git metadata and restart recovery
+
+The Git publisher writes `progress.json`, final manifest, receipt and named companions as separately acknowledged blobs. Tree requests contain only paths and immutable blob IDs. This keeps large structured metadata out of the tree request and the connector's returned representation. ZIP parts keep their original bytes, order and identities.
+
+An interrupted operation retains metadata blob identities alongside part identities in `error.publicationState`. On retry the publisher reads each reused metadata blob and compares its actual text to the exact regenerated body before referencing it. An adapter without `readBlob` recreates that content-addressed blob. The existing pending commit, expected parent, actual ref acknowledgement, companion hash and verification-mode bindings remain active.
+
+If the in-memory operation has disappeared, fetch `progress.json` at one immutable acknowledged commit, then recover:
+
+```js
+const {publishPreparedToGit,stateFromProgress} = require('./publish-prepared-git.cjs');
+const state = stateFromProgress(JSON.parse(progressText), {
+  head: pinnedProgressCommit,
+  branch: originalPublicationBranch,
+  directory: originalArchiveDirectory // ends in "/"
+});
+const result = await publishPreparedToGit(exactPreparedIndex, readPreparedObject, api, {
+  ...originalOptions,
+  head: state.head,
+  resumeState: state
+});
+```
+
+Use the original source index, pinned source-index commit, part size, final companions and verification mode. The publisher compares the actual branch ref and complete replayed part prefix before adding new output. The helper restores only the parts actually present in that committed progress file. Unpublished parts and member-verification counters are not inferred.
+
+For the current connector, `partBytes: 1950000, commitParts: 8` uses 2,600,000-character base64 part blobs and keeps the ordinary reader's two-part cache at 3,900,000 decoded bytes. A 607,493,921-byte Distribution ZIP uses 312 such parts. Part sizing is an explicit operation choice and must remain unchanged on replay.
+
+### Large retained metadata in the native finisher
+
+The original Distribution checkpoint at `a7bc7e947b1ef7314ca7864854c25d2cc1503b8b` already has 21,500,531 bytes of metadata after 1,206 groups. The default 16 MiB metadata ceiling therefore cannot open that workload. `finish-prepared.mjs` now accepts positive bounded integer `--max-metadata-bytes`, `--max-manifest-bytes` and `--max-part-bytes` options. Defaults remain 16 MiB, 16 MiB and 4 MiB. Archive/raw/member ceilings remain bound by the original prepared checkpoint itself.
+
+After the complete prepared index is produced, use the pinned input digest and the explicit required metadata allowance:
+
+```sh
+node finish-prepared.mjs \
+  --checkpoint /absolute/prepared/checkpoint.json \
+  --manifest-sha256 EXACT_COMPLETED_CHECKPOINT_SHA256 \
+  --output /absolute/output/Distribution_Complete.zip \
+  --verification ordinary \
+  --max-metadata-bytes 67108864 \
+  --max-manifest-bytes 33554432
+```
+
+The exact selected limits are recorded in the final native receipt. For Git publication use the matching `streamOptions: {maxMetadataBytes:67108864,maxManifestBytes:33554432}`. Both routes retain complete ordinary CRC/SHA/export-manifest validation before the final complete result. The native receiver continues the existing exact opening and actual desktop/narrow inspection operation described in repository `AGENTS.md`.
+
+### Executed recovery and capacity checks
+
+`git-metadata-recovery-result.json` records the actual complete 194-file Fleet source bank plus working HTML, binary, Unicode and empty members: 199 ZIP members, 8,829,163 expanded bytes and the same 2,130,259-byte archive in full and ordinary modes. The production ZIP builder, emitter and reader ran with a deterministic Git adapter. Interrupted metadata publication retries reused acknowledged blobs without additional writes after checking their actual text; changed metadata was rejected. Recovering completed progress preserved the same head and issued zero writes. All tree requests contained only SHA references (largest 795 bytes).
+
+`distribution-metadata-capacity-result.json` records the actual 34 metadata fragments fetched at the immutable Distribution checkpoint above. Their complete 21,500,531 bytes matched the original metadata SHA. The default limit rejected before any fragment read; 64 MiB passed metadata parsing and reached the correct incomplete-index check for that retained 1,206-group checkpoint. The remaining preparation and final native ZIP opening stay in the original receiving operation.

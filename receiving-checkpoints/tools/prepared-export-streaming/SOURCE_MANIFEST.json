@@ -33,14 +33,19 @@
       "sha256": "0525cee46bdf16580e2c6f4fd20365f7c07f82d4f30362426ae39903c67fedaf"
     },
     {
+      "path": "distribution-metadata-capacity-result.json",
+      "bytes": 659,
+      "sha256": "09fdc605c476bbc38ce07f7e0824c1e72144972b78d9ed3ac0dcf2bd94552580"
+    },
+    {
       "path": "fetch-and-assemble.mjs",
       "bytes": 11035,
       "sha256": "5f8029af4b58ea620b158c1864b3a5b08e726545783d77c98c589e72b8d2b8be"
     },
     {
       "path": "finish-prepared.mjs",
-      "bytes": 4670,
-      "sha256": "95f561294733f206a92b754fc5dc18c8daf04bf465017eb7457f0ba0ee52fc60"
+      "bytes": 5428,
+      "sha256": "14c56a0fcf1bd2519b8a79f3e34dbc20c4a9d3394169fd9956ca21c9b0d68e90"
     },
     {
       "path": "focused-fixes-result.json",
@@ -51,6 +56,11 @@
       "path": "full-source-result.json",
       "bytes": 3277,
       "sha256": "bb0ac53232978c576b7d9c63db99c5ee734d05b4e103c1df6f07507dbbf66538"
+    },
+    {
+      "path": "git-metadata-recovery-result.json",
+      "bytes": 3780,
+      "sha256": "80f2095ebbc5a7bec7eabf501995638e9e82d3888846469262c7382aa5b4772b"
     },
     {
       "path": "git-ordinary-publication-result.json",
@@ -99,8 +109,8 @@
     },
     {
       "path": "publish-prepared-git.cjs",
-      "bytes": 11675,
-      "sha256": "eaf96d22bfbddff8a891bb60e1f59fcea3dca5c91ec9c43f5532259059ff70c9"
+      "bytes": 15244,
+      "sha256": "bfb81d135a67f8e18fe2e69e713bb39a0abe3e86d9a48650044d6b61fae2db56"
     },
     {
       "path": "read-streamed-archive.mjs",
@@ -109,8 +119,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 11396,
-      "sha256": "2c75482776c3c4586d4ea4b664c58627a46cee1a86b509063e63b5ebbf15d448"
+      "bytes": 16034,
+      "sha256": "366292f5b874c088e1653c07c224de8ced6f86f9025cb6f4acbc17c99a48fa09"
     },
     {
       "path": "sha256.cjs",
@@ -144,8 +154,8 @@
     },
     {
       "path": "verify-git-ordinary-publication.cjs",
-      "bytes": 9941,
-      "sha256": "83d88760b61179da349a4905c8801d3509b79d0bde1ebf45d351f204cdc61cf5"
+      "bytes": 13308,
+      "sha256": "f47eb90da3d59c6c99ef0679911143e201076cf1ac3984522c70c4f54c7877b0"
     },
     {
       "path": "verify-ordinary-zip-range.cjs",
