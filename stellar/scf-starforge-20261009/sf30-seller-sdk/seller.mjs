@@ -93,12 +93,16 @@ function parameters(input, method) {
   if (BODY.has(method)) {
     const type = input.bodyType || 'json';
     if (!['json', 'form-data', 'text'].includes(type)) throw new TypeError('Invalid bodyType');
-    if (input.body === undefined || !plain(input.body) && typeof input.body !== 'string')
-      throw new TypeError('POST/PUT/PATCH requires example body');
+    // Bazaar HTTP body examples are object-root JSON for every advertised
+    // content family.  Keep the seller compiler inside the same boundary as
+    // the maintained catalog so a first-party offer cannot be emitted and
+    // then soft-dropped during trusted admission.
+    if (!plain(input.body))
+      throw new TypeError('POST/PUT/PATCH requires a keyed object example body');
     inputInfo.bodyType = type;
     inputInfo.body = copy(input.body);
     inputProps.bodyType = { type: 'string', enum: [type] };
-    inputProps.body = typeof input.body === 'string' ? { type: 'string' } : { type: 'object' };
+    inputProps.body = { type: 'object' };
     inputReq.push('bodyType', 'body');
   } else if (input.body !== undefined || input.bodyType !== undefined) {
     throw new TypeError('GET/HEAD/DELETE must not declare a body');
