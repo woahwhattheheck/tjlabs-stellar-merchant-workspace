@@ -58,8 +58,8 @@ The proposed ecosystem contribution is the complete operating path around that
 native payment: source authoring, explicit buyer spending, complete delivery,
 recurring customer use, two facilitator deployments and maintainable receiving
 installations. The proposed outcome is measured in useful purchases by independent
-customers and operating mainnet services. Section 6 fixes the cohort, periods and
-engineering needed to reach it.
+customers and operating mainnet services. Section 6 describes the proposed cohort,
+planning periods and remaining engineering needed to reach it.
 
 ### Select the actual payment behavior
 
