@@ -332,6 +332,7 @@ export class DurableCatalogTransaction {
   search(params) {this.#assert();return this.#state.catalog.search(params);}
   listDiscovery(params) {this.#assert();return this.#state.catalog.listDiscovery(params);}
   searchDiscovery(params) {this.#assert();return this.#state.catalog.searchDiscovery(params);}
+  discoveryReadiness() {this.#assert();return this.#state.catalog.discoveryReadiness();}
   history(id) {this.#assert();return this.#state.lifecycle.history(id);}
   lookupCatalogKey(key) {this.#assert();return clone(this.#state.byCatalog.get(key)??null);}
   inspectRevisions(input) {

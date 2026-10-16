@@ -162,7 +162,7 @@ export function makeFrontdoor({upstreams, inboundToken = null, allowLoopbackHttp
       try { return new URL(req.url,'http://localhost'); } catch { return null; }
     })();
     const discovery = req.method === 'GET' &&
-      ['/discovery/resources','/discovery/search'].includes(url?.pathname);
+      ['/discovery/resources','/discovery/search','/discovery/readiness'].includes(url?.pathname);
     const pathname = url && !url.hash && (!url.search || discovery) ? url.pathname : null;
     if (req.method === 'GET' && pathname === '/healthz') {
       json(res, 200, {status: 'configured', networks: NETWORKS}); return;
@@ -170,7 +170,7 @@ export function makeFrontdoor({upstreams, inboundToken = null, allowLoopbackHttp
     if (!authorized(req.headers.authorization, inboundToken)) {
       json(res, 401, {error: 'UNAUTHORIZED'}); return;
     }
-    if (!((req.method === 'GET' && ['/supported', '/readyz','/discovery/resources','/discovery/search'].includes(pathname)) ||
+    if (!((req.method === 'GET' && ['/supported', '/readyz','/discovery/resources','/discovery/search','/discovery/readiness'].includes(pathname)) ||
           (req.method === 'POST' && ['/verify', '/settle'].includes(pathname)))) {
       json(res, 404, {error: 'ROUTE_NOT_FOUND'}); return;
     }

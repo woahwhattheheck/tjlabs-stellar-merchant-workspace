@@ -102,6 +102,14 @@ preserved. Continue a search using its returned cursor and the same query
 parameters. Catalog updates can invalidate a cursor; start that query again
 when the original API reports a stale cursor.
 
+`GET /discovery/readiness` reads aggregate wire readiness from that same open
+journal. It returns HTTP 200 only when every retained row has the trusted
+observation required by the public wire; otherwise it returns HTTP 503. Resource
+URLs and payment terms are omitted. Both list and search enforce this same gate
+before returning rows. The native endpoint applies its existing network filter
+rules to readiness as well. This is catalog projection readiness, separate from
+the native payment/RPC `/readyz` observation.
+
 For dual-network operation, run an independently configured pubnet backend and
 start the existing gateway. Select its upstream deadline for the actual native
 RPC settlement and catalog commit time, and configure the ingress deadline to

@@ -89,6 +89,10 @@ function discoveryRow(entry, lastUpdated) {
 export class BazaarCatalog {
   #entries = new Map(); #version = 0;
   #lastUpdated = new Map();
+  // Entries are detached at admission and never exposed by reference. Keep the
+  // projection result with that owned revision, so a one-row public page does
+  // not repeatedly project and deep-clone every retained catalog row.
+  #unready = new Set();
   #queries = new CatalogQueryIndex(this.#entries);
   // Call only from a trusted post-verification facilitator hook AFTER checking the
   // settlement, seller/recipient binding, and JSON Schema Draft 2020-12. NEVER
@@ -97,9 +101,13 @@ export class BazaarCatalog {
     const { id, entry: sanitized } = validateCatalogEntry(entry);
     const previous = this.#entries.get(id);
     const timestamp = lastUpdated === undefined ? this.#lastUpdated.get(id) : discoveryTimestamp(lastUpdated);
+    let ready = false;
+    try { discoveryRow(sanitized, timestamp); ready = true; } catch {}
     this.#entries.set(id, sanitized); this.#version++;
     if (timestamp === undefined) this.#lastUpdated.delete(id);
     else this.#lastUpdated.set(id, timestamp);
+    if (ready) this.#unready.delete(id);
+    else this.#unready.add(id);
     this.#queries.changed(id, previous, sanitized);
     return id;
   }
@@ -108,7 +116,7 @@ export class BazaarCatalog {
     if (typeof id !== 'string') throw new TypeError('Catalog key required');
     const previous = this.#entries.get(id);
     const removed = this.#entries.delete(id);
-    if (removed) { this.#lastUpdated.delete(id); this.#version++; this.#queries.changed(id, previous, undefined); }
+    if (removed) { this.#lastUpdated.delete(id); this.#unready.delete(id); this.#version++; this.#queries.changed(id, previous, undefined); }
     return removed;
   }
   /** Stage an isolated transaction while preserving the cursor generation. */
@@ -116,6 +124,7 @@ export class BazaarCatalog {
     const copy = new BazaarCatalog();
     copy.#entries = new Map([...this.#entries].map(([key, value]) => [key, structuredClone(value)]));
     copy.#lastUpdated = new Map(this.#lastUpdated);
+    copy.#unready = new Set(this.#unready);
     copy.#version = this.#version;
     copy.#queries = new CatalogQueryIndex(copy.#entries);
     return copy;
@@ -171,16 +180,8 @@ export class BazaarCatalog {
    * lack the trusted observation time required by the public x402 v2 wire.
    */
   discoveryReadiness() {
-    let observedResources = 0;
-    let unreadyResources = 0;
-    for (const [id, entry] of this.#entries) {
-      try {
-        discoveryRow(entry, this.#lastUpdated.get(id));
-        observedResources++;
-      } catch {
-        unreadyResources++;
-      }
-    }
+    const unreadyResources = this.#unready.size;
+    const observedResources = this.#entries.size - unreadyResources;
     return {
       ready: unreadyResources === 0,
       x402Version: 2,
@@ -234,7 +235,7 @@ export function createDiscoveryServer(catalog) {
       if (req.method !== 'GET') {res.writeHead(405,{'content-type':'application/json'});res.end(JSON.stringify({error:'METHOD_NOT_ALLOWED',reason:'GET only'}));return;}
       let status = 200;
       const publicDiscovery = u.pathname === '/discovery/resources' || u.pathname === '/discovery/search';
-      const readiness = publicDiscovery ? catalog.discoveryReadiness() : null;
+      const readiness = publicDiscovery ? catalog.discoveryReadiness(u.searchParams) : null;
       // Readiness is enforced at the public wire boundary, not merely exposed
       // as an advisory endpoint. Page filters must never hide an unprojectable
       // row and make an incomplete catalog appear protocol-ready.
@@ -243,7 +244,7 @@ export function createDiscoveryServer(catalog) {
         : u.pathname === '/discovery/resources' ? catalog.listDiscovery(u.searchParams)
         : u.pathname === '/discovery/search' ? catalog.searchDiscovery(u.searchParams)
         : u.pathname === '/discovery/pricing' ? catalog.pricing(u.searchParams)
-        : u.pathname === '/discovery/readiness' ? catalog.discoveryReadiness() : null;
+        : u.pathname === '/discovery/readiness' ? catalog.discoveryReadiness(u.searchParams) : null;
       if (!data) {res.writeHead(404,{'content-type':'application/json'});res.end(JSON.stringify({error:'NOT_FOUND',reason:'Unknown endpoint'}));return;}
       if ((u.pathname === '/discovery/readiness' && !data.ready) ||
           (publicDiscovery && !readiness.ready)) status = 503;

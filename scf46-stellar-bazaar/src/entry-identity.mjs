@@ -38,6 +38,8 @@ export function sanitizeResourceSearchMetadata(resource) {
       seen.add(t.toLowerCase());
       return seen.size <= 5;
     }).slice(0, 5);
+    // Official Bazaar omits tags when no valid entry survives sanitation.
+    if (result.tags.length === 0) delete result.tags;
   }
   if (!isValidIconUrl(result.iconUrl)) delete result.iconUrl;
   return result;
@@ -124,4 +126,3 @@ export function projectCatalogSearchEntry(entry) {
   else projected.extensions.bazaar.routeTemplate = routeTemplate;
   return { id, entry: projected };
 }
-

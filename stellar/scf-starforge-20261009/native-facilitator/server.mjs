@@ -57,7 +57,7 @@ export async function startFacilitatorServer({facilitator, port = 4020} = {}) {
         return json(res,observation.ready && facilitator.status().state === 'ACCEPTING' ? 200 : 503,observation);
       }
       if (req.method === 'GET' && discovery && typeof req.url === 'string' && req.url.length <= 4096 &&
-          /^\/discovery\/(resources|search)(\?|$)/.test(req.url)) {
+          /^\/discovery\/(resources|search|readiness)(\?|$)/.test(req.url)) {
         if (req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0'))
           throw new FacilitatorError('DISCOVERY_BODY_NOT_ACCEPTED');
         res.setHeader('x-content-type-options','nosniff');
@@ -111,4 +111,3 @@ export async function startFacilitatorServer({facilitator, port = 4020} = {}) {
   })();
   return {url:`http://127.0.0.1:${server.address().port}`,server,close};
 }
-

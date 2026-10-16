@@ -78,6 +78,13 @@ Public reads clone returned pages. The HTTP JSON and pagination envelopes retain
 their existing `no-store` header, error handling and stale-cursor rejection.
 The index operates within the current catalog revision.
 
+Public discovery readiness uses a private set of unprojectable row keys. The
+catalog evaluates the unchanged wire projection once for each admitted row
+revision, updates that set on replacement or retirement, and copies it into an
+isolated staged clone. Readiness reads return detached aggregate counts without
+traversing or cloning retained rows. Public list/search still fail closed for the
+whole catalog when any row is unready, including a row excluded by page filters.
+
 Caches share an LRU limit of 64 results and 200,000 row references. Oversize results
 are computed without retention. Query keys include the exact filters and query text.
 Cached values reference already-owned rows; field tokens and postings retain only
@@ -123,4 +130,3 @@ the catalog metadata and the queries people use.
 
 See [distribution and operation](DISTRIBUTION.md) for the existing package entry
 points and serving workflow.
-
