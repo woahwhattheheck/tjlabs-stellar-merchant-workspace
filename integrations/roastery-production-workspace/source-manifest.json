@@ -18,13 +18,13 @@
     },
     {
       "path": "Roastery_Production_Desk.html",
-      "bytes": 52501,
-      "sha256": "2504a9fca14096ae1395011ebc46e4af00730c034364390c4e99854d520a7979"
+      "bytes": 52594,
+      "sha256": "33bc16f3c9acc6c42d9e68e65f19b0f58e319aa427039e19ce9d65dc1e644502"
     },
     {
       "path": "Roastery_Worked_Example.html",
-      "bytes": 63693,
-      "sha256": "2393ee437a92dec54aad9dad1a9d714d6ccfa9c9e5b15397d56f2ebfaed23120"
+      "bytes": 63786,
+      "sha256": "444862dbcb1b157589c7c3e440cc7d7797de2c8c9551bdd4d8a679801e5f495e"
     },
     {
       "path": "application-provider.mjs",
@@ -248,13 +248,13 @@
     },
     {
       "path": "src/roastery-core.js",
-      "bytes": 25804,
-      "sha256": "284dc629243a8d2cfa3478927c138eb04f28ad2a62af0d856fe788c8ac4395df"
+      "bytes": 25897,
+      "sha256": "14bfd22d850f189c896d9ce4123fc816b1a5ae94fb147336b98af7baf3fd6941"
     },
     {
       "path": "src/roastery-core.mjs",
-      "bytes": 25835,
-      "sha256": "d536d9a487e0ab40a5e41aa99ca28782a9f1ee29e23ef73f18cacb01b711aca7"
+      "bytes": 25928,
+      "sha256": "761ab9e98c76b77daf120835dd59ab5049db5e64d0319a96e03855d58203d026"
     },
     {
       "path": "src/session.mjs",

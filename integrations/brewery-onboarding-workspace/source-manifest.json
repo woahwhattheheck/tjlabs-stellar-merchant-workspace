@@ -19,13 +19,13 @@
     },
     {
       "path": "Brewery_Onboarding_Desk.html",
-      "bytes": 69843,
-      "sha256": "e751f1818d0491af5b1932d9bacc9485744f89fdc13edde4f2dea4a5dd056e84"
+      "bytes": 70085,
+      "sha256": "6483e8854fd9a3df5fecf4cbbaa04809c6e95f8a8e043ec1264ec6348d7fc37f"
     },
     {
       "path": "Brewery_Worked_Example.html",
-      "bytes": 86801,
-      "sha256": "e23ea3e8f491bb4fa37160eac8c76f3f14f50b38c42a0031c74646486f72bdae"
+      "bytes": 87043,
+      "sha256": "d1c78c5b7b932bf2f9cb88213cc98b1d1c89864e3c599cd4ae7aae8e0e508c70"
     },
     {
       "path": "cli.mjs",
@@ -94,13 +94,13 @@
     },
     {
       "path": "examples/corrected-reconciliation.html",
-      "bytes": 52015,
-      "sha256": "e8f29c9b909345f72880f770aa8317453143479cf6c85a02bcd7ce9668e2d784"
+      "bytes": 52449,
+      "sha256": "51ba6309c33ed67d8e114768c1a00c4435fb42f85c5e5fcd7545e3af6b46cd7a"
     },
     {
       "path": "examples/initial-reconciliation.html",
-      "bytes": 73830,
-      "sha256": "da34825610fee8508867afe007d7a1d464f88d26853fd8a248f12ed16af4b559"
+      "bytes": 74264,
+      "sha256": "5e241ea7dfb5f52f9094c64a33f51d538d2eb0caf2da914ab01ade5b8e08f8e4"
     },
     {
       "path": "examples/intake-request.json",
@@ -359,13 +359,13 @@
     },
     {
       "path": "src/brewery-core.js",
-      "bytes": 35858,
-      "sha256": "0603568b1780551dda5d13833317c27100dbf4d43bb20fcd9843166b5754e76f"
+      "bytes": 36100,
+      "sha256": "c9aca5801e6a8e4a6f667e73b701bd8aa9e95643fa6bc86524a1ff594c5b92ec"
     },
     {
       "path": "src/brewery-core.mjs",
-      "bytes": 35886,
-      "sha256": "5043bd888bc08c5ba334c2e98387fa66f993918f04cc9a15a773adf7a8c17b72"
+      "bytes": 36128,
+      "sha256": "07f3ac152177562e96caa51a73000826091d7026982461244446e9de4ee5bd8d"
     },
     {
       "path": "src/build-installed.mjs",
