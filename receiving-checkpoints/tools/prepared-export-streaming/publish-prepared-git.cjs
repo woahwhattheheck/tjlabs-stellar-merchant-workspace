@@ -44,7 +44,7 @@ async function publishPreparedToGit(index,readObject,api,options={}) {
      !Number.isSafeInteger(commitParts)||commitParts<1||commitParts>1000)
     throw Error('Choose bounded archive parts and publication batches');
   let head=gitSha(options.head,'Initial publication head'),committedParts=0,verifiedMembers=0,emittedMembers=0,pendingPublication=null,alreadyComplete=false;
-  const prior=options.resumeState??null,retained=[],parts=[];
+  const prior=options.resumeState??null,retained=[],parts=[],metadataBlobs=new Map(),trustedMetadata=new Set();
   if(prior){
     if((prior.verification??'full')!==verification)throw Error('Publication verification mode changed from the retained publication');
     if(prior.schema!=='commons.git-archive-publisher-state.v1'||prior.head!==head||
@@ -75,9 +75,30 @@ async function publishPreparedToGit(index,readObject,api,options={}) {
     if(prior.extraFilesSha256===undefined&&(prior.complete===true||prior.pendingPublication?.complete===true))
       throw Error('Complete publication replay requires its original companion identity');
   }
+  const allowedMetadata=new Set(['progress.json','manifest.json','receipt.json',...Object.keys(extra)]);
+  if(prior?.metadataBlobs!==undefined){
+    if(!Array.isArray(prior.metadataBlobs))throw Error('Invalid retained metadata blobs');
+    for(const p of prior.metadataBlobs){
+      if(!p||!allowedMetadata.has(p.path)||metadataBlobs.has(p.path)||!HEX.test(p.sha256)||!GIT.test(p.gitBlob)||!Number.isSafeInteger(p.bytes)||p.bytes<0)throw Error('Invalid retained metadata blob');
+      metadataBlobs.set(p.path,{path:p.path,bytes:p.bytes,sha256:p.sha256,gitBlob:p.gitBlob});
+    }
+  }
+  async function metadataBlob(path,content){
+    const identity=H.sha256Utf8(content),old=metadataBlobs.get(path),same=old&&old.bytes===identity.bytes&&old.sha256===identity.sha256;
+    if(same){
+      if(trustedMetadata.has(path))return old.gitBlob;
+      if(typeof api.readBlob==='function'){
+        const actual=await api.readBlob(old.gitBlob);
+        if(typeof actual!=='string'||actual!==content)throw Error('Retained metadata blob differs from exact publication body');
+        trustedMetadata.add(path);return old.gitBlob;
+      }
+    }
+    const gitBlob=gitSha(await api.createBlob(content),'Publication metadata blob');
+    metadataBlobs.set(path,{path,...identity,gitBlob});trustedMetadata.add(path);return gitBlob;
+  }
   const snapshot=()=>({schema:'commons.git-archive-publisher-state.v1',branch,directory,head,
     sourceIndex,sourceIndexHead,identity:index.identity,extraFilesSha256,verification,partBytes,committedParts,emittedMembers,verifiedMembers,complete:alreadyComplete,pendingPublication:pendingPublication?{...pendingPublication}:null,
-    parts:[...parts,...retained.slice(parts.length)].map(copyPart)});
+    parts:[...parts,...retained.slice(parts.length)].map(copyPart),metadataBlobs:[...metadataBlobs.values()].sort((a,b)=>a.path.localeCompare(b.path)).map(p=>({...p}))});
   let writing=false;
   async function settlePending(){
     if(!pendingPublication)return;
@@ -102,9 +123,9 @@ async function publishPreparedToGit(index,readObject,api,options={}) {
     const entries=parts.slice(committedParts).map(p=>({path:directory+p.path,mode:'100644',type:'blob',sha:p.gitBlob}));
     const progress={schema:'commons.streaming-archive-publication.v1',sourceIndex,sourceIndexHead,
       identity:index.identity,extraFilesSha256,verification,partBytes,parts:parts.map(copyPart),complete};
-    entries.push({path:directory+'progress.json',mode:'100644',type:'blob',content:JSON.stringify(progress,null,2)+'\n'});
+    entries.push({path:directory+'progress.json',mode:'100644',type:'blob',sha:await metadataBlob('progress.json',JSON.stringify(progress,null,2)+'\n')});
     for(const [path,content]of Object.entries(files))
-      entries.push({path:directory+path,mode:'100644',type:'blob',content});
+      entries.push({path:directory+path,mode:'100644',type:'blob',sha:await metadataBlob(path,content)});
     const baseTree=gitSha(await api.treeOf(head),'Parent tree');
     const tree=gitSha(await api.createTree(baseTree,entries),'Publication tree');
     const next=gitSha(await api.createCommit(head,tree,'Retain '+parts.length+' complete archive parts'+(complete?' and final ZIP receipt':'')),'Publication commit');
@@ -185,4 +206,31 @@ async function publishPreparedToGit(index,readObject,api,options={}) {
     throw error;
   }
 }
-module.exports={publishPreparedToGit};
+/**
+ * Recover only provider-acknowledged parts from progress.json fetched at one
+ * immutable commit. The caller pins that exact read in head; no mutable branch
+ * lookup or inference happens here. publishPreparedToGit checks the actual ref,
+ * source identity, companions and verification mode again before replay.
+ */
+function stateFromProgress(progress,{head,branch,directory}={}){
+  gitSha(head,'Pinned progress commit');
+  if(!progress||progress.schema!=='commons.streaming-archive-publication.v1'||
+     typeof branch!=='string'||!branch||typeof directory!=='string'||!directory.endsWith('/')||
+     directory.startsWith('/')||directory.includes('\\')||directory.split('/').slice(0,-1).some(x=>!x||x==='.'||x==='..')||
+     typeof progress.sourceIndex!=='string'||!progress.sourceIndex||!GIT.test(progress.sourceIndexHead)||
+     !HEX.test(progress.identity)||typeof progress.complete!=='boolean'||
+     !Number.isSafeInteger(progress.partBytes)||progress.partBytes<1||progress.partBytes>16*1024*1024||
+     !Array.isArray(progress.parts))throw Error('Invalid acknowledged publication progress');
+  const verification=progress.verification??'full';
+  if(!['full','ordinary'].includes(verification))throw Error('Invalid acknowledged verification mode');
+  if(progress.extraFilesSha256!==undefined&&!HEX.test(progress.extraFilesSha256)||
+     progress.complete&&progress.extraFilesSha256===undefined)throw Error('Acknowledged final publication requires original companion identity');
+  for(const p of progress.parts)validPart(p,progress.partBytes);
+  return{schema:'commons.git-archive-publisher-state.v1',branch,directory,head,
+    sourceIndex:progress.sourceIndex,sourceIndexHead:progress.sourceIndexHead,
+    identity:progress.identity,extraFilesSha256:progress.extraFilesSha256,verification,
+    partBytes:progress.partBytes,committedParts:progress.parts.length,
+    emittedMembers:0,verifiedMembers:0,complete:progress.complete,pendingPublication:null,
+    parts:progress.parts.map(copyPart),metadataBlobs:[]};
+}
+module.exports={publishPreparedToGit,stateFromProgress};
