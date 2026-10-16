@@ -2753,8 +2753,8 @@
     },
     {
       "path": "host/codec.mjs",
-      "bytes": 46264,
-      "sha256": "f31117119ae2e58de8bf0776d3eae44a45b55a26559c6172dde1fd51ae59d05d"
+      "bytes": 46966,
+      "sha256": "b144ccfaeaeaf25dc3cd3f660d0461a87a5de5758ed1390c2db22edaa79c0ea4"
     },
     {
       "path": "host/domain.mjs",
@@ -2984,7 +2984,7 @@
     {
       "path": "SOURCE_MANIFEST.json",
       "bytes": 134740,
-      "sha256": "31b19bdf3337e6437419da2c5200b55a8a9e8e597ad4f241ab2ff994416893c9"
+      "sha256": "f6fb8ac3d0f6468f78952fc3043e801a6e83e415d0bdd01c4988755e6189f212"
     },
     {
       "path": "source-view.cjs",
@@ -3028,8 +3028,8 @@
     },
     {
       "path": "src/session-cache.cjs",
-      "bytes": 2587,
-      "sha256": "086500791db65b50dd6c53631bf02881575f150a61c425c090f88d691ac4844b"
+      "bytes": 3475,
+      "sha256": "6ccc7a2ace802adb43b7b74744bb75f133022487f52fd37a6310486b1d05bd87"
     },
     {
       "path": "src/session.mjs",
