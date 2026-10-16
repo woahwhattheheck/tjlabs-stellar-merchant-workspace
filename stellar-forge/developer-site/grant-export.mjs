@@ -4,8 +4,8 @@ import {inflateRawSync} from 'node:zlib';
 import {receiveIssuerContext} from './grant-issuer-context.mjs';
 import {selectedIssuerContext,MAX_ISSUER_BYTES} from './dist/grant-issuer-core.mjs';
 import {selectIssuerProgramme,reopenIssuerProgramme,issuerContextSection} from './dist/grant-issuer-source.mjs';
-import {readFile, stat, mkdir, writeFile} from 'node:fs/promises';
-import {resolve, dirname, join, basename} from 'node:path';
+import {readFile, stat} from 'node:fs/promises';
+import {resolve, join, basename} from 'node:path';
 import {createHash, randomUUID} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 import {parseArgs} from 'node:util';
@@ -13,6 +13,8 @@ import {ENVELOPE, MAX_BYTES, validateDraft, makeSource, createDraft, importFormM
 import {emptyHandover} from './dist/grant-handover-core.mjs';
 import {openDraftEnvelope, createDraftEnvelope, verifyHandover, createSourceBundle, retainSourceBundle, prepareSubmission,
   fileBytes,MAX_SOURCE_PACKAGE_BYTES,openReviewerSourcePackage,receiveReviewerSource,reviewerSourceFromDraft,createReviewerSourcePackage} from './dist/grant-handover-source.mjs';
+import {publishNewExportDirectory} from './grant-export-directory.mjs';
+export {publishNewExportDirectory} from './grant-export-directory.mjs';
 
 // MIT. Command-line receiving for the original SCF submission model.
 const EXPORT_SCHEMA = 'stellar-forge.grant-cli-export.v1';
@@ -149,10 +151,10 @@ async function writeFormWorkbookReview(options,received){
   files.set('form-workbook-review.json',JSON.stringify(review,null,2)+'\n');
   files.set('form-workbook-decisions.json',JSON.stringify(Object.fromEntries(review.changes.map(change=>[change.key,
     Object.prototype.hasOwnProperty.call(decisions,change.key)?decisions[change.key]:change.status==='conflict'?'':review.decisions[change.key]])),null,2)+'\n');
-  const directory=resolve(options.out);await mkdir(dirname(directory),{recursive:true,mode:0o700});await mkdir(directory,{mode:0o700});
+  const directory=resolve(options.out);
   const manifest={schema:'stellar-forge.grant-form-workbook-review-files.v1',draftId:draft.id,reviewSha256:review.reviewSha256,baselineSha256:review.baselineSha256,files:[]};
-  for(const [name,text]of files){const bytes=Buffer.from(text,'utf8');await writeFile(join(directory,name),bytes,{flag:'wx',mode:0o600});manifest.files.push({path:name,bytes:bytes.length,sha256:sha256(bytes)});}
-  await writeFile(join(directory,'manifest.json'),JSON.stringify(manifest,null,2)+'\n',{flag:'wx',mode:0o600});
+  for(const [name,text]of files){const bytes=Buffer.from(text,'utf8');manifest.files.push({path:name,bytes:bytes.length,sha256:sha256(bytes)});}
+  await publishNewExportDirectory(directory,files,manifest);
   return{directory,draftId:draft.id,reviewOnly:true,reviewSha256:review.reviewSha256,changes:review.counts.changes,conflicts:review.counts.conflicts,unresolved:review.unresolved.length,files:files.size+1};
 }
 
@@ -223,19 +225,15 @@ export async function writeGrantExport(options) {
   if(options['offline-editor'])files.set('edit.html',await createNativeOfflineEditor({envelope:files.get('draft.json'),planningOptions:nativePlanningOptions,exportedAt:prepared.generatedAt}));
   for (const field of prepared.fields) requireValue(Buffer.from(field.value,'utf8').toString('utf8') === field.value, 'Correct invalid Unicode text in field ' + field.id + '.');
   const directory = resolve(options.out);
-  await mkdir(dirname(directory),{recursive:true,mode:0o700});
-  await mkdir(directory,{mode:0o700});
-  await mkdir(join(directory,'fields'),{mode:0o700});
   const manifest = {schema:EXPORT_SCHEMA,generatedAt:prepared.generatedAt,draftId:draft.id,currentSource:draft.currentSource,editionId:prepared.editionId,
     selection:prepared.selection,format:prepared.format,fields:prepared.fields.length,overLimit:prepared.overLimit,needsFieldReview:prepared.needsFieldReview,
     issuerProgramme:prepared.issuerProgramme,
     sources:draft.sources.map(source=>({sha256:source.sha256,gitBlob:source.gitBlob,bytes:source.bytes,url:source.url,receivedAt:source.receivedAt})),files:[]};
   for (const [name,text] of files) {
     const bytes = typeof text==='string'?Buffer.from(text,'utf8'):Buffer.from(text);
-    await writeFile(join(directory,name),bytes,{flag:'wx',mode:0o600});
     manifest.files.push({path:name,bytes:bytes.length,sha256:sha256(bytes)});
   }
-  await writeFile(join(directory,'manifest.json'),JSON.stringify(manifest,null,2)+'\n',{flag:'wx',mode:0o600});
+  await publishNewExportDirectory(directory,files,manifest);
   return {directory,draftId:draft.id,editionId:prepared.editionId,selection:prepared.selection,fields:prepared.fields.length,files:files.size+1,overLimit:prepared.overLimit,needsFieldReview:prepared.needsFieldReview};
 }
 
