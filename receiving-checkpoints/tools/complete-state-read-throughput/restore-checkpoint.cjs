@@ -1,0 +1,2 @@
+'use strict';
+module.exports=function restoreCompactCheckpoint(doc){if(doc.schema!=="complete-json-checkpoint/v1")throw Error("checkpoint schema");const memo=new Map();function get(id){if(memo.has(id))return memo.get(id);const [kind,value]=doc.nodes[id];let out;if(kind==="p")out=value;else if(kind==="a")out=value.map(get);else if(kind==="o")out=Object.fromEntries(value.map(([key,node])=>[key,get(node)]));else throw Error("Unknown checkpoint node "+kind);memo.set(id,out);return out;}return get(doc.root);};
