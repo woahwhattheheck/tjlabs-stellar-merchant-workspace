@@ -1,0 +1,28 @@
+{
+  "schema": "commons.compact-checkpoint-publication/v1",
+  "phase": "after-pinned-reads",
+  "bytes": 12448322,
+  "sha256": "1dd9b7a93e8627c6c3046ee82937001f06a4eef2c3cc59e2029c2c685c42027b",
+  "parts": [
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-000.jsonpart",
+      "bytes": 650000,
+      "sha256": "d3d33141bdfff914c1dc5e1606e5adf026d4e3470b3f3d541fbbbc5504a3ef2c"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-001.jsonpart",
+      "bytes": 650000,
+      "sha256": "370b91efc077535f7bcb962fabbd8f37e0d4ee0fdcd612810b6430b441d5bac8"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-002.jsonpart",
+      "bytes": 650000,
+      "sha256": "f58dc9868442e9d01bac64ebac5c7fa24b0d7357782c869a31a0c910b039cb58"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/after-pinned-reads/part-003.jsonpart",
+      "bytes": 650000,
+      "sha256": "fff8e525f531c2581f7fd35440d58159306dd9f2c0579c68c0e06352c2295b34"
+    }
+  ]
+}
