@@ -182,11 +182,11 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button");i
  if(act==="report-html"){saveFile(runId+".html",report.html(ws,runId),"text/html;charset=utf-8");return;}
  draftDirty=true;render();
  }catch(err){status(err.message,true);}});
-document.addEventListener("submit",async e=>{const f=e.target;e.preventDefault();try{const d=new FormData(f),v=Object.fromEntries(d);if(f.id==='hubspot-start'){if(busy)throw Error('An operation is already running.');otherDirty=false;const c=await hostCall('/api/hubspot',{action:'start',args:{id:v.id,connection:v.connection}});await captureRefresh();await captureRun(c.id);return;}if(f.id==="ingest"){const file=d.get("file");if(!file||!file.size)throw Error("Choose a nonempty CSV file");await command("ingest",{id:v.id,filename:file.name,content:await file.text(),role:v.role,edition:v.edition,origin:v.origin,delimiter:","});sourceId=v.id;}
- else if(f.id==="configure"){await command("configure",{id:v.id,title:v.title,contract:clone(draft)});draftDirty=false;}
- else if(f.id==="compare"){await command("compare",v);runId=v.id;}
+document.addEventListener("submit",async e=>{const f=e.target,formId=f.getAttribute("id");e.preventDefault();try{const d=new FormData(f),v=Object.fromEntries(d);if(formId==='hubspot-start'){if(busy)throw Error('An operation is already running.');otherDirty=false;const c=await hostCall('/api/hubspot',{action:'start',args:{id:v.id,connection:v.connection}});await captureRefresh();await captureRun(c.id);return;}if(formId==="ingest"){const file=d.get("file");if(!file||!file.size)throw Error("Choose a nonempty CSV file");await command("ingest",{id:v.id,filename:file.name,content:await file.text(),role:v.role,edition:v.edition,origin:v.origin,delimiter:","});sourceId=v.id;}
+ else if(formId==="configure"){await command("configure",{id:v.id,title:v.title,contract:clone(draft)});draftDirty=false;}
+ else if(formId==="compare"){await command("compare",v);runId=v.id;}
  else if(f.classList.contains("review")){await command("review",{run_id:runId,finding_id:f.dataset.finding,...v});delete reviewDrafts[runId+"|"+f.dataset.finding];otherDirty=Object.keys(reviewDrafts).length>0;}
- else if(f.id==="decide"){await command("decide",{run_id:runId,...v});}render();}catch(err){status(err.message,true);}});
+ else if(formId==="decide"){await command("decide",{run_id:runId,...v});}render();}catch(err){status(err.message,true);}});
 $("#workspace-file").addEventListener("change",async e=>{try{const file=e.target.files[0];if(file)await replace(model.restore(JSON.parse(await file.text())));}catch(err){status("Import failed: "+err.message,true);}finally{e.target.value="";}});
 addEventListener("beforeunload",e=>{if(draftDirty||otherDirty||!persisted||busy||hasPending){e.preventDefault();e.returnValue="";}});
 (async()=>{document.querySelector('[data-tab="hubspot"]').hidden=!managed;render();if(managed){persisted=true;expected=cmp.digest(ws);
