@@ -8,6 +8,7 @@ const MAX_INFO_DOCUMENT_BYTES = 65_536;
 const SOROBAN_I128_MAX = (1n << 127n) - 1n;
 export const MAX_PAYMENT_OPTIONS = 16;
 const PAYMENT_FIELDS = ['scheme', 'network', 'amount', 'asset', 'payTo', 'maxTimeoutSeconds', 'extra'];
+const REQUIRED_PAYMENT_FIELDS = PAYMENT_FIELDS.slice(0, -1);
 const METHODS = new Set(['GET', 'HEAD', 'DELETE', 'POST', 'PUT', 'PATCH']);
 const BODY = new Set(['POST', 'PUT', 'PATCH']);
 const TYPES = new Set(['string', 'integer', 'number', 'boolean']);
@@ -334,8 +335,11 @@ export function auditCatalogVisibility(body, offer) {
   const expected = offer?.accepts;
   const eInput = offer?.extensions?.bazaar?.info?.input;
   const eURL = offer?.resource?.url;
+  const supportedPaymentShape = option => plain(option) &&
+    REQUIRED_PAYMENT_FIELDS.every(key => hasOwn(option, key)) &&
+    Reflect.ownKeys(option).every(key => typeof key === 'string' && PAYMENT_FIELDS.includes(key));
   if (offer?.x402Version !== 2 || !Array.isArray(expected) || !expected.length ||
-      !expected.every(plain) || !eInput || !eURL)
+      !expected.every(supportedPaymentShape) || !eInput || !eURL)
     throw new TypeError('Invalid seller offer');
   // A matching nested contract is not the same offer when the discovery row
   // advertises another protocol version or resource type.
@@ -343,8 +347,10 @@ export function auditCatalogVisibility(body, offer) {
     discoveryResourceURL(r) === eURL &&
     r?.extensions?.bazaar?.info?.input?.type === 'http' &&
     r?.extensions?.bazaar?.info?.input?.method === eInput.method);
-  const sameTerms = (actual, wanted) => PAYMENT_FIELDS.every(key =>
-    isDeepStrictEqual(actual?.[key], wanted[key]));
+  const sameTerms = (actual, wanted) => supportedPaymentShape(actual) &&
+    Reflect.ownKeys(actual).length === Reflect.ownKeys(wanted).length &&
+    Reflect.ownKeys(actual).every(key => hasOwn(wanted, key)) &&
+    PAYMENT_FIELDS.every(key => isDeepStrictEqual(actual[key], wanted[key]));
   const rowTermsMatch = row => Array.isArray(row?.accepts) &&
     row.accepts.length === expected.length && expected.every(wanted =>
       row.accepts.filter(actual => sameTerms(actual, wanted)).length === 1);
