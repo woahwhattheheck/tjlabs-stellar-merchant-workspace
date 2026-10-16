@@ -42,5 +42,6 @@ GitHub Actions remains disabled. The original equipped receiving operation handl
 |---|---:|---:|---:|---:|---:|---:|
 | fleet | 10835 | 312821215 | 106979782 | 582260 | 575713 | 1190889 |
 | water | 21636 | 507737934 | 167485621 | 1062301 | 1045065 | 3883334 |
+| procurement | 25391 | 898158673 | 306563493 | 1593306 | 1557292 | 32472127 |
 
-Both completed comparisons have identical complete ordered member identities, including each actual packed payload SHA256. The measured elapsed improvements are 1.1% for Fleet and 1.6% for Water in this runtime. Most historical payloads are distinct, so the full archive improvement is modest even though exact repeated content is reused more often. Procurement and Distribution remain running; their completed phases are independently durable on their result branches. All four full-state ordinary ZIP mutation/reopen courses passed (`mutation-results.json`).
+All three completed comparisons have identical complete ordered member identities, including each actual packed payload SHA256. The measured elapsed improvements are 1.1% for Fleet and 1.6% for Water and 2.3% for Procurement in this runtime. Most historical payloads are distinct, so the full archive improvement is modest even though exact repeated content is reused more often. Distribution remains running; its completed phases are independently durable on its result branch. All four full-state ordinary ZIP mutation/reopen courses passed (`mutation-results.json`).
