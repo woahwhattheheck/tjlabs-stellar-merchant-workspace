@@ -101,7 +101,9 @@ try{
    git('init','-q');git('add','--all');git('-c','user.name=Source receiving','-c','user.email=source-receiving@example.invalid','commit','-q','-m',OP+' complete source snapshot');
   }
   const {buildDistribution}=await import(pathToFileURL(join(REPO,DIST+'build.mjs')));
-  const build=await retained('build.json',()=>buildDistribution({repository:REPO,ref:git('rev-parse','HEAD'),output:join(ROOT,'distribution'),selection:'invoice-settlement-customer',offline:true,resume:true,python:process.env.CODEX_PRIMARY_RUNTIME_PYTHON??'python3'}));
+  const output=join(ROOT,'distribution');
+  const resume=await fs.lstat(output).then(()=>true,error=>{if(error.code==='ENOENT')return false;throw error;});
+  const build=await retained('build.json',()=>buildDistribution({repository:REPO,ref:git('rev-parse','HEAD'),output,selection:'invoice-settlement-customer',offline:true,resume,python:process.env.CODEX_PRIMARY_RUNTIME_PYTHON??'python3'}));
   await put('build.json',build);
   const {prepareRuntimeInstall,installRuntime,inspectRuntimeInstall}=await import(pathToFileURL(join(REPO,DIST+'runtime-install.mjs')));
   const directory=join(ROOT,'installed');try{await fs.access(join(directory,'runtime-install.json'));}catch{await prepareRuntimeInstall({directory,archive:build.archive,sha256:build.sha256,python:process.env.CODEX_PRIMARY_RUNTIME_PYTHON??'python3'});}

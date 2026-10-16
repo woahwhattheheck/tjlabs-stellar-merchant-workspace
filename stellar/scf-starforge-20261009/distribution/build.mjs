@@ -256,10 +256,15 @@ export async function buildDistribution({ repository = fileURLToPath(new URL('..
   // it; it does not add unrelated support files to the selected archive.
   const declaredRuntime = new Set(base.supportFiles ?? []);
   const originalInputs = new Set([...specificationPaths, product.readme]);
+  // A receiving operator may carry another exact source-selection recipe as
+  // runtime source. Retain only explicitly declared recipes; they do not
+  // activate their contributions or include other product declarations.
+  const requiredSelections = new Set(spec.supportFiles.filter(path =>
+    path.startsWith(sourceSelectionDirectory + '/')));
   const browserInputs = new Set();
   const selectionIncludes = path => !recipe || !(
     path.startsWith(contributionDirectory + '/') || path.startsWith(sourceSelectionDirectory + '/')) ||
-    originalInputs.has(path) || browserInputs.has(path);
+    originalInputs.has(path) || requiredSelections.has(path) || browserInputs.has(path);
   // A selected archive carries only its original declarations, even when its
   // complete distribution component contains other product contribution files.
   // Exact support/data files may retain original hidden/test/fixture paths and
