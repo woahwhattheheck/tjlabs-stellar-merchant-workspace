@@ -334,9 +334,13 @@ export function auditCatalogVisibility(body, offer) {
   const expected = offer?.accepts;
   const eInput = offer?.extensions?.bazaar?.info?.input;
   const eURL = offer?.resource?.url;
-  if (!Array.isArray(expected) || !expected.length || !expected.every(plain) || !eInput || !eURL)
+  if (offer?.x402Version !== 2 || !Array.isArray(expected) || !expected.length ||
+      !expected.every(plain) || !eInput || !eURL)
     throw new TypeError('Invalid seller offer');
-  const matches = rows.filter(r => discoveryResourceURL(r) === eURL &&
+  // A matching nested contract is not the same offer when the discovery row
+  // advertises another protocol version or resource type.
+  const matches = rows.filter(r => r?.x402Version === 2 && r?.type === 'http' &&
+    discoveryResourceURL(r) === eURL &&
     r?.extensions?.bazaar?.info?.input?.type === 'http' &&
     r?.extensions?.bazaar?.info?.input?.method === eInput.method);
   const sameTerms = (actual, wanted) => PAYMENT_FIELDS.every(key =>
@@ -396,4 +400,5 @@ export async function probeLocalVisibility(baseUrl, offer) {
   if (pages > 100) throw new RangeError('Catalog pagination safety limit');
   return { ...auditCatalogVisibility({ resources: matches }, offer), pages, url: path.origin + '/discovery/resources' };
 }
+
 
