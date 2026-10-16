@@ -1,0 +1,28 @@
+{
+  "schema": "commons.compact-checkpoint-publication/v1",
+  "phase": "complete-course",
+  "bytes": 12705810,
+  "sha256": "721d2942f5162aad05b1543d73a02c1aac2b8799a3ca5472109f26ad9319394c",
+  "parts": [
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-000.jsonpart",
+      "bytes": 650000,
+      "sha256": "c5715ce261e89359b4680163cb9b7eb2934f158a10e5e5111d7690baa636205c"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-001.jsonpart",
+      "bytes": 650000,
+      "sha256": "ab03232d9ced37673e3b30bed023b62f0605abeec0ef142f12b1b4cac300a520"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-002.jsonpart",
+      "bytes": 650000,
+      "sha256": "f8aa048b6a113a4871038f4c3b016e7a710fe00e6ed9bf478f515fc625b4517b"
+    },
+    {
+      "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/part-003.jsonpart",
+      "bytes": 650000,
+      "sha256": "e4c4a82c10b99d7d224413bee09be33319def58429a7112d807c1570077e05a6"
+    }
+  ]
+}
