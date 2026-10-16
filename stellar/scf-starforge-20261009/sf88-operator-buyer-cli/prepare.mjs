@@ -93,7 +93,7 @@ export function prepareReview(raw, selection) {
       Object.keys(asset).every(key => ['schema','sha256','bytes','contentType','downloadName'].includes(key)) &&
       method === 'GET' && bodyFile === undefined && requested.href === advertised.href &&
       typeof asset.downloadName === 'string' && asset.downloadName.length > 0 &&
-      typeof asset.contentType === 'string' && asset.contentType === row.resource?.mimeType,
+      typeof asset.contentType === 'string' && asset.contentType === (typeof row.resource === 'string' ? row.mimeType : row.resource?.mimeType),
       'INVALID_ASSET_PRODUCT');
     need(selection.responseOut !== undefined, 'ASSET_RESPONSE_DESTINATION_REQUIRED');
     need(typeof asset.sha256 === 'string' && typeof asset.bytes === 'number', 'INVALID_ASSET_PRODUCT');

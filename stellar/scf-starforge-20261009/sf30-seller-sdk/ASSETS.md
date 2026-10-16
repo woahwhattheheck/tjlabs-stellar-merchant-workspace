@@ -202,7 +202,10 @@ The resource URL, row, accepted payment option, stable intent and local output
 path are explicit selections. For a file product, preparation requires the exact
 advertised URL and an explicit output; it never turns the merchant's filename
 into a local path. The prepared config pins `expectedSha256`, `expectedBytes`
-and `expectedContentType` in its original `responseFile` section. The review
+and `expectedContentType` in its original `responseFile` section. Preparation
+accepts both the retained nested resource metadata and official public Bazaar
+rows with a string `resource` and top-level `mimeType`; in each shape, the asset
+MIME must match the advertised MIME exactly. The review
 shows those pins and the original payment terms. A catalog is unverified seller
 information, not seller authentication or payment authorization.
 
