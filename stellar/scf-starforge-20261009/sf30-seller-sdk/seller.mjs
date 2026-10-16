@@ -4,6 +4,7 @@ import { isDeepStrictEqual } from 'node:util';
 // This prepares a PaymentRequired offer; only the canonical facilitator may
 // authenticate payment, verify finality and promote a listing to a trusted catalog.
 const DRAFT = 'https://json-schema.org/draft/2020-12/schema';
+const MAX_INFO_DOCUMENT_BYTES = 65_536;
 const SOROBAN_I128_MAX = (1n << 127n) - 1n;
 export const MAX_PAYMENT_OPTIONS = 16;
 const PAYMENT_FIELDS = ['scheme', 'network', 'amount', 'asset', 'payTo', 'maxTimeoutSeconds', 'extra'];
@@ -17,6 +18,59 @@ const hasOwn = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 const plain = o => !!o && typeof o === 'object' && !Array.isArray(o);
 const obj = o => { if (!plain(o)) throw new TypeError('Expected plain object'); return o; };
 const copy = x => structuredClone(x);
+
+function copyOutputExample(value) {
+  const active = new Set();
+  const stack = [{ value, exit: false }];
+  try {
+    while (stack.length) {
+      const frame = stack.pop();
+      const item = frame.value;
+      if (frame.exit) { active.delete(item); continue; }
+      if (item === null || typeof item === 'string' || typeof item === 'boolean' ||
+          typeof item === 'number' && Number.isFinite(item)) continue;
+      if (typeof item !== 'object' || active.has(item))
+        throw new TypeError('not JSON');
+      const array = Array.isArray(item);
+      const prototype = Object.getPrototypeOf(item);
+      if (prototype !== (array ? Array.prototype : Object.prototype) &&
+          !(prototype === null && !array)) throw new TypeError('not a JSON container');
+      const keys = Reflect.ownKeys(item);
+      if (array && (keys.length !== item.length + 1 ||
+          keys.some(key => key !== 'length' && (typeof key !== 'string' ||
+            !/^(0|[1-9][0-9]*)$/.test(key) || Number(key) >= item.length))))
+        throw new TypeError('not a dense JSON array');
+      active.add(item);
+      stack.push({ value: item, exit: true });
+      for (let index = keys.length - 1; index >= 0; index--) {
+        const key = keys[index];
+        if (array && key === 'length') continue;
+        const descriptor = Object.getOwnPropertyDescriptor(item, key);
+        if (typeof key !== 'string' || !descriptor?.enumerable || !hasOwn(descriptor, 'value'))
+          throw new TypeError('not an enumerable JSON value');
+        stack.push({ value: descriptor.value, exit: false });
+      }
+    }
+    return copy(value);
+  } catch {
+    throw new TypeError('outputExample must contain only finite JSON values');
+  }
+}
+
+function infoDocumentBytes(value) {
+  try {
+    const document = JSON.stringify(value, (_key, item) => {
+      if (item === undefined || typeof item === 'bigint' || typeof item === 'function' ||
+          typeof item === 'symbol' || typeof item === 'number' && !Number.isFinite(item))
+        throw new TypeError('not JSON');
+      return item;
+    });
+    if (document === undefined) throw new TypeError('not JSON');
+    return Buffer.byteLength(document, 'utf8');
+  } catch {
+    throw new TypeError('Bazaar info must contain only finite JSON values');
+  }
+}
 function requiredString(x, name, limit = 512) {
   if (typeof x !== 'string' || !x.trim() || x.length > limit || /[\x00-\x1f\x7f]/.test(x))
     throw new TypeError(`${name} must be nonempty printable text (max ${limit})`);
@@ -218,7 +272,7 @@ export function compileHttpSellerOffer(input, { allowLocalhost = false } = {}) {
       throw new TypeError('Unsafe routeTemplate');
   }
   const output = { type: 'json' };
-  if (input.outputExample !== undefined) output.example = copy(input.outputExample);
+  if (input.outputExample !== undefined) output.example = copyOutputExample(input.outputExample);
   const schema = {
     $schema: DRAFT, type: 'object',
     properties: {
@@ -230,6 +284,8 @@ export function compileHttpSellerOffer(input, { allowLocalhost = false } = {}) {
     }, required: ['input'], additionalProperties: false,
   };
   const extension = { info: { input: inputInfo, output }, schema };
+  if (infoDocumentBytes(extension.info) > MAX_INFO_DOCUMENT_BYTES)
+    throw new RangeError(`Bazaar info exceeds ${MAX_INFO_DOCUMENT_BYTES} bytes`);
   if (input.routeTemplate) extension.routeTemplate = input.routeTemplate;
   const offer = {
     x402Version: 2, error: 'Payment required',
