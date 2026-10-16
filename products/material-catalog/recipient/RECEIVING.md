@@ -74,6 +74,16 @@ The default `file` mode retains direct local-file opening. The supplied mode fir
 
 A host with only Python Playwright can operate these same exact HTML files with `page.set_content(html, wait_until="load")`, the existing file inputs, buttons, and downloads. It must retain the complete original bytes and the same receiving outcomes below; this JavaScript module does not install Node or claim that a Python API accepts a JavaScript Page. Keep the current equipped owner and original operation when selecting the installed-language driver.
 
+## Continue an interrupted original table-download phase
+
+The importing API accepts `resumeBrowser: {recordSha256, receiverPreimageSha256}` for an original browser-only course that stopped after material selection and before completing every original table. Use the same operation, output directory, input basename/bytes, page-source mode and exact supplied HTML. Pin the full current failed `RECEIVING.json` bytes and its original receiver source hash before continuing. Keep every other selected source file identical. This option is separate from review-return and renewal; those optional phases remain unselected.
+
+The continuation holds the existing receiving-directory lock, checks each accepted output and screenshot against its retained bytes/hash, and preserves the prior record in an exclusive `RECEIVING.before-browser-<recordSha256>.json` file. It records the exact receiver source transition and reuses accepted table downloads instead of replaying them. A completed or different phase, input, operation, HTML or source is refused. Preserve an uncertain attempt and reconcile its original owner before continuing; this API is not a general restart or an override for another writer.
+
+For the remaining read-only downloads it opens ordinary fresh contexts on the same browser, with at most six new downloads per context. It restores the original populated reader and current tab/table, verifies the original bundle identity, and closes only its own pages and contexts. The caller's context stays open. No browser permission, policy or launch flag is changed. The final downloaded complete reader is independently cold-opened and its unchanged original bundle exported. `pendingDownload` and each accepted download are saved as progress. Historical failure fields remain in the record; use the current status, immutable prior record and continuation receipts to distinguish the attempts.
+
+Keep the same original receiving directory and retained source/input/output custody. Do not invoke the completed one-shot caller again, rerun accepted controls, or infer completion of the separate supplier/native and author-adoption phases from this read-only suffix. Open every actual outgoing file and LOOK at the new captures before recording delivery completion.
+
 ## Inspect the actual rendered delivery
 
 Open the retained desktop and 390-pixel screenshots. Look at the complete page, tabs, details, tables, labels, error text and download controls. Check both populated and empty/error states. Confirm that long identities wrap or scroll inside their intended area, the page itself stays usable on narrow screens, controls remain reachable and selected data is understandable.
