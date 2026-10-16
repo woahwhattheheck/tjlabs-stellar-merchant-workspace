@@ -3,6 +3,16 @@
 const INTERNAL_URL = /^https?:\/\/(?:[^/]+\.)?(?:slack\.com|notion\.so|notion\.site|notion\.com)\/|^https?:\/\/chatgpt\.com\/(?:space|canvas|api\/library)\//i;
 const MAIL_URL = /^https?:\/\/mail\.google\.com\/mail\//i;
 const restricted = value => typeof value === 'string' && (INTERNAL_URL.test(value) || MAIL_URL.test(value));
+const PRIVATE_REFERENCE = '[private workspace reference]';
+
+function redactRestrictedUrl(value) {
+  let url = value, trailing = '';
+  while (/[),.;:!?]$/.test(url)) {
+    trailing = url.at(-1) + trailing;
+    url = url.slice(0, -1);
+  }
+  return restricted(url) ? PRIVATE_REFERENCE + trailing : value;
+}
 
 /** Keep substantive labels while removing private workspace navigation. */
 export function projectPublicGrantMarkdown(markdown) {
@@ -10,6 +20,9 @@ export function projectPublicGrantMarkdown(markdown) {
   return markdown
     .replace(/\[([^\]\n]+)\]\((https?:\/\/[^)\s]+)\)/gi,
       (original, label, url) => restricted(url) ? label : original)
+    .replace(/<(https?:\/\/[^>\s]+)>/gi,
+      (original, url) => restricted(url) ? PRIVATE_REFERENCE : original)
+    .replace(/https?:\/\/[^\s<>"'`]+/gi, url => redactRestrictedUrl(url))
     .replace(/\bmessage(?:\s+(?:id|identifier))?\s+`[a-f0-9]{16}`/gi, 'the original sent message')
     .replace(/\bthread(?:\s+(?:id|identifier))?\s+`[a-f0-9]{16}`/gi, 'the original conversation');
 }
