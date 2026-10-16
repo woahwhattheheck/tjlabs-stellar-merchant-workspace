@@ -15,6 +15,8 @@ const TYPES = new Set(['string', 'integer', 'number', 'boolean']);
 // Avoid JavaScript prototype keys in metadata later consumed as JSON dictionaries.
 const RESERVED_QUERY_NAMES = new Set(['__proto__', 'prototype', 'constructor']);
 const ASCII = /^[\x20-\x7e]+$/;
+const ICON_CONTROL = /[\x00-\x1f\x7f-\x9f]/;
+const ICON_LOOPBACK_NAMES = new Set(['localhost', 'localhost.localdomain', 'ip6-localhost', 'ip6-loopback']);
 const hasOwn = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 const plain = o => !!o && typeof o === 'object' && !Array.isArray(o);
 const obj = o => { if (!plain(o)) throw new TypeError('Expected plain object'); return o; };
@@ -109,6 +111,22 @@ function serviceMetadata(o) {
         new Set(o.tags.map(x => x.toLowerCase())).size !== o.tags.length)
       throw new TypeError('tags must be <=5 unique printable ASCII strings (1–32)');
     if (o.tags.length) result.tags = [...o.tags];
+  }
+  if (o.iconUrl !== undefined) {
+    if (typeof o.iconUrl !== 'string' || !o.iconUrl.length || o.iconUrl.length > 2048 ||
+        ICON_CONTROL.test(o.iconUrl))
+      throw new TypeError('iconUrl must be a safe public HTTP or HTTPS URL');
+    let icon;
+    try { icon = new URL(o.iconUrl); }
+    catch { throw new TypeError('iconUrl must be a safe public HTTP or HTTPS URL'); }
+    let host;
+    try { host = decodeURIComponent(icon.hostname).toLowerCase().replace(/\.$/, ''); }
+    catch { throw new TypeError('iconUrl must be a safe public HTTP or HTTPS URL'); }
+    if (!['http:', 'https:'].includes(icon.protocol) || icon.username || icon.password ||
+        !host || ICON_LOOPBACK_NAMES.has(host) || /^\d+$/.test(host) || /^0x[0-9a-f]+$/i.test(host) ||
+        /^\[.*\]$/.test(host) || /^\d{1,3}(?:\.\d{1,3}){3}$/.test(host))
+      throw new TypeError('iconUrl must be a safe public HTTP or HTTPS URL');
+    result.iconUrl = o.iconUrl;
   }
   return result;
 }
