@@ -1,0 +1,77 @@
+{
+  "schema": "commons.ordinary-readback-text-parts.v1",
+  "encoding": "utf8-text-fragments",
+  "whole": {
+    "path": "ordinary-readback.json",
+    "gitBlob": "4b622d22430989252356934d9a62f3603218da36",
+    "bytes": 7875882,
+    "sha256": "c50c33cbd6c54c2b59a7d4d0a7828649f14e034afef8ce4f3d25afbccfa456a3"
+  },
+  "fragments": [
+    {
+      "path": "ordinary-readback-parts/part-0001.json.part",
+      "bytes": 650000,
+      "sha256": "9152cfa43dfe19829558198c0d51e4d1405b6adaefa6d48a1d08249ca4efae11"
+    },
+    {
+      "path": "ordinary-readback-parts/part-0002.json.part",
+      "bytes": 650000,
+      "sha256": "b3d9e20e371bf1e5dcd77e584b473752fd50fb5f4f4fb4b9409e70c2fc5ab635"
+    },
+    {
+      "path": "ordinary-readback-parts/part-0003.json.part",
+      "bytes": 650000,
+      "sha256": "5f76bf14d84a0ad8894f7e8eca894e4e7373a534dc12bf0df6def8521616c28e"
+    },
+    {
+      "path": "ordinary-readback-parts/part-0004.json.part",
+      "bytes": 650000,
+      "sha256": "7ca4c479849dcedeeccd9a525dfe5b0a9573b2792ef9ac60d70231e3f136a7a2"
+    },
+    {
+      "path": "ordinary-readback-parts/part-0005.json.part",
+      "bytes": 650000,
+      "sha256": "0b715aa643789050244eebf77915f058b8f5bfef87c6cc5757d580620c0bdbe1"
+    },
+    {
+      "path": "ordinary-readback-parts/part-0006.json.part",
+      "bytes": 650000,
+      "sha256": "1f5f453309a35fc3941bea10916d6f336157977d1828c310668ce0ecc721868c"
+    },
+    {
+      "path": "ordinary-readback-parts/part-0007.json.part",
+      "bytes": 650000,
+      "sha256": "315c95c5fc7dcefc976c3c034f33ccaaa384a2b12c7cd5a551777420dfc5d473"
+    },
+    {
+      "path": "ordinary-readback-parts/part-0008.json.part",
+      "bytes": 650000,
+      "sha256": "5058f4a6ab95b00530f9d54e7203a7385d5a0100715c7e271b6f201af6c70d6d"
+    },
+    {
+      "path": "ordinary-readback-parts/part-0009.json.part",
+      "bytes": 650000,
+      "sha256": "22ec9356a567a517440b40ba32ba9d8d6f8b28ad3206278a71bad6eaa00e31b1"
+    },
+    {
+      "path": "ordinary-readback-parts/part-0010.json.part",
+      "bytes": 650000,
+      "sha256": "b9b1bf5e67eb380e56b73b4c7f1629d0eb47c6486ab822ff79c420ef9f75d3f8"
+    },
+    {
+      "path": "ordinary-readback-parts/part-0011.json.part",
+      "bytes": 650000,
+      "sha256": "42434ef6d7068f9ae3cfdbd68d390c0201726c9a70fea6a208067417681bbef4"
+    },
+    {
+      "path": "ordinary-readback-parts/part-0012.json.part",
+      "bytes": 650000,
+      "sha256": "bab2fc560ded5c1af3a50261036d42f9cb1cea758ee8a6ed8e93583c9265749a"
+    },
+    {
+      "path": "ordinary-readback-parts/part-0013.json.part",
+      "bytes": 75882,
+      "sha256": "e0df7199adb7d98302c5c51ae7703679ff0802033a7ebc52bbc0bc8fb7556641"
+    }
+  ]
+}

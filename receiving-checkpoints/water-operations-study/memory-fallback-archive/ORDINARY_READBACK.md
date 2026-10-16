@@ -28,3 +28,5 @@ node fetch-and-assemble.mjs \
 The command verifies the pinned manifest and every immutable Git blob, retains verified local parts for interrupted-download recovery, and verifies the complete ZIP before publishing the output. Repeating the same command resumes from its local cache or reuses an already complete matching output. Existing files with different contents are preserved. The source command is the exact maintained 11,035-byte file from merged PR2196 (ce1810d1a7c62a72034751f662f2b9fa39b82bb3), SHA-256 5f8029af4b58ea620b158c1864b3a5b08e726545783d77c98c589e72b8d2b8be.
 
 The neighboring README.md and assemble-archive.mjs also support assembly from a local checkout. The original receiving operation has the exact standalone populated HTML attachment and its inspection instructions. Current working HTML: {"bytes":9186606,"sha256":"72c77a0952c2707703201cef9255d268b71bd59db3c2b6683515e5b3d4165236"}.
+
+The same complete member record is also retained as ordered bounded text fragments under ordinary-readback-parts/, with whole and individual byte/SHA identities in ordinary-readback-parts.json.
