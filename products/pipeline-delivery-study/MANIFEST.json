@@ -13,8 +13,8 @@
     },
     {
       "path": "src/delivery-core.mjs",
-      "bytes": 21159,
-      "sha256": "87bc2c1371acbc8131e5860404789b7042fec3cc17ed93b0e90f122293df1deb"
+      "bytes": 21307,
+      "sha256": "912b58b6f2a462e14ee2c778719382647d436a9ea66e11c376e9580fce91fe3c"
     },
     {
       "path": "examples/authored-working.json",
@@ -23,8 +23,8 @@
     },
     {
       "path": "examples/authored-report.html",
-      "bytes": 3733,
-      "sha256": "e838d44ffd4acf0058f8484fcb026025d255702d68f93ef29b73ea31f3211fd1"
+      "bytes": 3881,
+      "sha256": "12fb7991f30221662a73a44e3dc0d487dce16214327d45910ed2fd5314b699ce"
     },
     {
       "path": "native/receiver.mjs",
@@ -43,8 +43,8 @@
     },
     {
       "path": "src/shell.html",
-      "bytes": 6930,
-      "sha256": "5211f34d7c01841a2aefcdbce599d4642b9c7fe7dccc8e1d81e106a979b40359"
+      "bytes": 6968,
+      "sha256": "6ba72c3ce057cc3071403fc0a385688e05f46b1a9b95794fb8addf1a8708bd0d"
     },
     {
       "path": "build.mjs",
@@ -53,8 +53,8 @@
     },
     {
       "path": "pipeline-desk.html",
-      "bytes": 206339,
-      "sha256": "0188d7b17e84cdd270b0c5d0b420a753c693bc9563c2a17e637fa01eaf3b73f9"
+      "bytes": 206719,
+      "sha256": "b704eed2bb29e631960122ecf972e5a221a663394881e8eadc63a535f251eb78"
     },
     {
       "path": "examples/prepare-aloha-coffee-test.json",
@@ -93,8 +93,8 @@
     },
     {
       "path": "blank-desk.html",
-      "bytes": 192665,
-      "sha256": "54074534c82ebc91a0e65ee10af9ee9f72d91dc94a4ce1984635909543221336"
+      "bytes": 193045,
+      "sha256": "39e4085a0f4a9d79a629ee5ac18a1d3ed785a45dea31d54fa1fd305a2db4277f"
     },
     {
       "path": "README.md",
