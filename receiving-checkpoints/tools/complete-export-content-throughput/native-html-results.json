@@ -1,0 +1,110 @@
+{
+  "schema": "commons.complete-export-native-embedded-source-course.v1",
+  "execution": "Actual native HTML extraction and full inventory validation body in V8 with filesystem/Buffer/gzip adapters",
+  "checks": [
+    {
+      "product": "fleet",
+      "edition": "baseline",
+      "files": 194,
+      "source": {
+        "bytes": 4354749,
+        "sha256": "7731560baf2f1a6d848740c9f85a721103d4ccf0b4103c8604e2aa4f309191c2"
+      },
+      "html": {
+        "bytes": 4706669,
+        "sha256": "5dba1bfe9d090926075e842f22437002555142391794ed7361ed228cb0149843"
+      }
+    },
+    {
+      "product": "fleet",
+      "edition": "candidate",
+      "files": 194,
+      "source": {
+        "bytes": 4355829,
+        "sha256": "4400c21a13449fa5bcf83f2ca30395a91c91d4e81d668d417d04e7f31e1e9020"
+      },
+      "html": {
+        "bytes": 4708811,
+        "sha256": "95d53dcec7c44db4cb605337800124fa356747420e0bc4e13a4f43f9d918dc2f"
+      }
+    },
+    {
+      "product": "water",
+      "edition": "baseline",
+      "files": 236,
+      "source": {
+        "bytes": 4542571,
+        "sha256": "35ed5b5d8e9cd5c7d9dedaf4f6c149396dc13e0480e655e530980e026855534b"
+      },
+      "html": {
+        "bytes": 4921172,
+        "sha256": "ba2ea03dcefda7fd742937ebea3c58724d87bd490591277b536cc9e4a8de19c9"
+      }
+    },
+    {
+      "product": "water",
+      "edition": "candidate",
+      "files": 236,
+      "source": {
+        "bytes": 4543651,
+        "sha256": "8e3f750b2994c1c57973e6a9e0a93d089e40b0acc07185a11efcaddbd61d4f26"
+      },
+      "html": {
+        "bytes": 4923314,
+        "sha256": "ac1b9039123babe244518315d3d7187c94bd30e5dabcd4eed21f8df476b7376c"
+      }
+    },
+    {
+      "product": "distribution",
+      "edition": "baseline",
+      "files": 975,
+      "source": {
+        "bytes": 15092776,
+        "sha256": "0f095cac5f76a9bf69ed4945c621ae4c0b0182a32a649c64837ab6b2ccfc90d2"
+      },
+      "html": {
+        "bytes": 4144023,
+        "sha256": "ded7aec008c3b787d55f4ec653874a289ae51b01fb59ab0ff51a13ebe0a71297"
+      }
+    },
+    {
+      "product": "distribution",
+      "edition": "candidate",
+      "files": 975,
+      "source": {
+        "bytes": 15093856,
+        "sha256": "64ae963beac6a8d396cf603db29f99f079518b53114f45d929c51a8aaaec1be6"
+      },
+      "html": {
+        "bytes": 4145602,
+        "sha256": "35e64257b3f40d3bbc76f4b76c2b23abe3615f68d15c40249c5e1dcd3ec2b2e1"
+      }
+    },
+    {
+      "product": "procurement",
+      "edition": "baseline",
+      "files": 664,
+      "source": {
+        "bytes": 10271280,
+        "sha256": "e9278c7e92376759794623b22a7ed460cb740a2e549796735971da9b394f9131"
+      },
+      "html": {
+        "bytes": 3004094,
+        "sha256": "2972197410cc953bea5640aee1989acd03b79538a306a3e269d51ad1b1172b4e"
+      }
+    },
+    {
+      "product": "procurement",
+      "edition": "candidate",
+      "files": 664,
+      "source": {
+        "bytes": 10272360,
+        "sha256": "ee40401db80db5147a0d2f9fd239d37b1b8b8289e49198285500ff2a5b003b68"
+      },
+      "html": {
+        "bytes": 3005833,
+        "sha256": "8d46d76617c1b4894c39d9a116748120469dd456c6d0ff0d10a731356c345340"
+      }
+    }
+  ]
+}

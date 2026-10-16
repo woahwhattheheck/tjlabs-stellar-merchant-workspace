@@ -1,0 +1,228 @@
+{
+  "schema": "commons.complete-export-throughput-inputs.v1",
+  "repository": "woahwhattheheck/tjlabs-stellar-merchant-workspace",
+  "baselineSourceHead": "abfc6ff4f51444be2141ced3dc017b2fb33401ac",
+  "candidateSourceHead": "913ad9540d42563f613fa0de05ac3bc2f0afde6f",
+  "products": {
+    "fleet": {
+      "sourceHtml": "products/fleet-availability-study/Fleet_Availability_Study_Desk.html",
+      "candidateExport": "products/fleet-availability-study/host/export-core.mjs",
+      "sourceIdentity": {
+        "bytes": 4354749,
+        "sha256": "7731560baf2f1a6d848740c9f85a721103d4ccf0b4103c8604e2aa4f309191c2"
+      },
+      "checkpoint": {
+        "manifest": {
+          "schema": "installed-complete-course-checkpoint/v1",
+          "sourceHead": "93ae8ec38279cf0286d00bdeb5b276cc88e43ac5",
+          "phase": "complete-course",
+          "bytes": 2605874,
+          "sha256": "78634cfceee97cb904ceca33ba4775989d4e2094264b4a2ee8a181deef9bbfb7",
+          "expandedBytes": 78110176,
+          "expandedSha256": "4eb281da75cce9b9f30e3f29b23abba22f06f61cb27d84f19b3d02d3e8eea367",
+          "checks": 38,
+          "requests": 35,
+          "editions": 36,
+          "ms": 60252,
+          "execution": "Actual Merchant dispatch, exact declared reads and complete production model in V8; filesystem/listener injected",
+          "course": {
+            "schema": "fleet-availability.installed-host-course/v1",
+            "surface": "Actual Merchant dispatch, exact declared reads and complete production model in V8; filesystem/listener injected",
+            "checks": [
+              "Declared complete operators input",
+              "Declared complete depots input",
+              "Declared complete vehicles input",
+              "Declared complete people input",
+              "Declared complete suppliers input",
+              "Declared complete authorities input",
+              "Declared complete fleet_assignments input",
+              "Declared complete availability_events input",
+              "Declared complete faults input",
+              "Declared complete fault_events input",
+              "Declared complete work_orders input",
+              "Declared complete work_events input",
+              "Declared complete part_requests input",
+              "Declared complete part_receipts input",
+              "Declared complete part_installations input",
+              "Declared complete supplier_jobs input",
+              "Declared complete supplier_events input",
+              "Declared complete safety_cases input",
+              "Declared complete safety_events input",
+              "Declared complete release_cases input",
+              "Declared complete release_requirements input",
+              "Declared complete release_inputs input",
+              "Declared complete release_reviews input",
+              "Declared complete duty_requirements input",
+              "Declared complete duty_assignments input",
+              "Declared complete duty_events input",
+              "Declared complete cost_entries input",
+              "Declared complete population_members input",
+              "Declared complete effort input",
+              "Declared exact binary original",
+              "fleet-plan",
+              "review",
+              "Complete incoming carrier and original editor actor retained with separate receiving attribution",
+              "Original exact request recovers after later work",
+              "Stale complete request retained without replacing selected work",
+              "Pinned fleet readiness, parts, release and duty observations, all twenty-nine raw families and exact bounded original bytes",
+              "Exact fleet release-input revision preserves original row, unfinished source and incoming actor",
+              "Production preview preserves the post-cutoff release-input revision and its explicit incomplete historical assessment"
+            ],
+            "timings": [
+              {
+                "tool": "merchant_fleetavailabilitystudy_connect",
+                "collection": null,
+                "kind": null,
+                "ms": 2213
+              },
+              {
+                "tool": "merchant_fleetavailabilitystudy_action",
+                "collection": null,
+                "kind": "edit-row",
+                "ms": 13122
+              },
+              {
+                "tool": "merchant_fleetavailabilitystudy_preview",
+                "collection": null,
+                "kind": "assessment",
+                "ms": 3979
+              }
+            ],
+            "sourceHead": "93ae8ec38279cf0286d00bdeb5b276cc88e43ac5",
+            "originalRun": {
+              "checksCompleted": 37,
+              "elapsedMs": 536822,
+              "finalAssertion": "Expected complete_source_population after a source revision dated beyond the historical cutoff; corrected to exact current analysis plus EXTRACT_UNAVAILABLE."
+            },
+            "tail": {
+              "checks": 2,
+              "requests": 35,
+              "editions": 36
+            },
+            "retainedPredecessor": {
+              "commit": "122bdd54a20e9e88807f9bd01d60dba41e7a6899",
+              "path": "receiving-checkpoints/fleet-availability-study/before-pinned-reads/manifest.json",
+              "schema": "installed-complete-course-checkpoint/v1",
+              "sourceHead": "93ae8ec38279cf0286d00bdeb5b276cc88e43ac5",
+              "phase": "before-pinned-reads",
+              "checks": 35,
+              "requests": 34,
+              "editions": 35,
+              "bytes": 2535750,
+              "sha256": "ae728a972115e90bfa1f7924ecc6e75b71eb75e6ab8784457a45261ecd250eb2",
+              "expandedBytes": 74973650,
+              "expandedSha256": "9c74f8b92809da4bbb1d874641e4b749a630c548ae6be2595a7fa54044692c28",
+              "parts": [
+                {
+                  "path": "receiving-checkpoints/fleet-availability-study/before-pinned-reads/part-000.jsonpart",
+                  "blob": "894d81d648a0a8aad48ca1cb6d3c9567e63a5459"
+                },
+                {
+                  "path": "receiving-checkpoints/fleet-availability-study/before-pinned-reads/part-001.jsonpart",
+                  "blob": "3d3957112a682b62c6e7e6477b6c4c86e3f76d54"
+                },
+                {
+                  "path": "receiving-checkpoints/fleet-availability-study/before-pinned-reads/part-002.jsonpart",
+                  "blob": "9d7120e0bff666125973520ee6269607ef532dea"
+                },
+                {
+                  "path": "receiving-checkpoints/fleet-availability-study/before-pinned-reads/part-003.jsonpart",
+                  "blob": "5b52920100fb4ecba501d3275defa69ab178d48c"
+                }
+              ]
+            }
+          },
+          "parts": [
+            {
+              "path": "receiving-checkpoints/fleet-availability-study/complete-course/part-000.jsonpart",
+              "blob": "5f871b5d541c125af146426ad193baf6aa4d3642",
+              "bytes": 650000,
+              "sha256": "bcada1cd91b2ecc0dec3c89d4b8afe80ed5a0fe5cad2121f73e42cea970cd16b"
+            },
+            {
+              "path": "receiving-checkpoints/fleet-availability-study/complete-course/part-001.jsonpart",
+              "blob": "2b00f5b9f99875c8e4e1ce96b6cecbbbf235950f",
+              "bytes": 650000,
+              "sha256": "f533540e2de86e8197783d83ade90e834cb6616b4aee114cfc9c791422550172"
+            },
+            {
+              "path": "receiving-checkpoints/fleet-availability-study/complete-course/part-002.jsonpart",
+              "blob": "826a14ad0a2234f2b9e45692715d9b4a6183a766",
+              "bytes": 650000,
+              "sha256": "65a0130c6bf0e7bb92bec0f952594ae27856c9aa37b28fcedb7fe8bc55dbe781"
+            },
+            {
+              "path": "receiving-checkpoints/fleet-availability-study/complete-course/part-003.jsonpart",
+              "blob": "65da5fce0da936c0721df664d1169c4b63a3ff24",
+              "bytes": 650000,
+              "sha256": "951be42935c7cfa62027f2ad8578d4ab4fdd23d64bb4c343ab2f2130002dc2f7"
+            },
+            {
+              "path": "receiving-checkpoints/fleet-availability-study/complete-course/part-004.jsonpart",
+              "blob": "02eb19397c8a235e4532f841f9019234cc3eb174",
+              "bytes": 5874,
+              "sha256": "644f0b12c584e01b2947aba4c586e33f219e1a2e29925430fef77d02ff76ed7e"
+            }
+          ]
+        },
+        "fetchBy": "Each original part is pinned by its Git blob ID"
+      }
+    },
+    "water": {
+      "sourceHtml": "products/water-operations-study/Water_Operations_Study_Desk.html",
+      "candidateExport": "products/water-operations-study/host/export-core.mjs",
+      "sourceIdentity": {
+        "bytes": 4542571,
+        "sha256": "35ed5b5d8e9cd5c7d9dedaf4f6c149396dc13e0480e655e530980e026855534b"
+      },
+      "checkpoint": {
+        "head": "6d26583d10cd4e8abe06b25be5692be53c60572e",
+        "path": "receiving-checkpoints/water-operations-study/full45-compact/manifest.json",
+        "bytes": 3495599,
+        "sha256": "e34088ed7acfcf98080549920a358936becfd0db8e9c836fe7538ce5d84dacac"
+      }
+    },
+    "distribution": {
+      "sourceHtml": "products/distribution-lot-order-study/Distribution_Lot_Order_Study_Desk.html",
+      "candidateExport": "products/distribution-lot-order-study/host/export-core.mjs",
+      "sourceIdentity": {
+        "bytes": 15092776,
+        "sha256": "0f095cac5f76a9bf69ed4945c621ae4c0b0182a32a649c64837ab6b2ccfc90d2"
+      },
+      "checkpoint": {
+        "head": "4e4ccd3865ca3cb8a66d3c6abf10ac76068853fd",
+        "path": "receiving-checkpoints/distribution-lot-order-study/throughput-complete/complete-course/manifest.json",
+        "bytes": 12705810,
+        "sha256": "721d2942f5162aad05b1543d73a02c1aac2b8799a3ca5472109f26ad9319394c",
+        "checks": 48,
+        "requests": 45,
+        "editions": 46
+      }
+    },
+    "procurement": {
+      "sourceHtml": "products/procurement-savings-study/Procurement_Savings_Reconciliation_Study_Desk.html",
+      "candidateExport": "products/procurement-savings-study/host/export-core.mjs",
+      "sourceIdentity": {
+        "bytes": 10271280,
+        "sha256": "e9278c7e92376759794623b22a7ed460cb740a2e549796735971da9b394f9131"
+      },
+      "checkpoint": {
+        "commit": "02a3cfdb82c99de2c6b4170a0b65440e98d2c6d7",
+        "path": "receiving-checkpoints/procurement-savings-study/host-course-complete.json",
+        "schema": "commons.complete-course-checkpoint.v1",
+        "operation": "procurement-savings-installed-20261015",
+        "phase": "host-course-complete",
+        "nextStep": 41,
+        "logical": {
+          "bytes": 210233684,
+          "identity": "Every original value and property order is retained by the pinned complete compact node bank"
+        },
+        "compact": {
+          "bytes": 6762092,
+          "sha256": "7b02fcf45b06739fc03e64193671059a318a0bcf97895349e49bbaa05b5126f6"
+        },
+        "encoding": "gzip+base64"
+      }
+    }
+  }
+}
