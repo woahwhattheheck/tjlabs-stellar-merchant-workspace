@@ -1,0 +1,14 @@
+{
+  "schema": "commons.exact-text-gzip-carrier.v1",
+  "path": "ordinary-complete-readback.json.gz.b64",
+  "encoding": "base64-gzip-utf8",
+  "original": {
+    "path": "ordinary-complete-readback.json",
+    "bytes": 9357381,
+    "sha256": "92a6593c34c4a0e7f40f1bfeb0d940b9dcfa9fd84d6b4fe17870329427f6a461"
+  },
+  "carrier": {
+    "bytes": 1763073,
+    "sha256": "e0c45fdd30f8a195fa74321c210b73346d6c714663ce84d6e39aa9a08186ae1b"
+  }
+}

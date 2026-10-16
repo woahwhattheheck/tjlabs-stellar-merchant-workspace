@@ -1,0 +1,32 @@
+{
+  "schema": "tjlabs.procurement-complete-ordinary-git-readback.v1",
+  "head": "5aaad09e13600cefe2001ca6f74dc36b8f2e18f3",
+  "sourceIndex": "receiving-checkpoints/procurement-savings-study/complete-archive/checkpoint.json",
+  "sourceIndexHead": "5c280826a4ae205d6667d20fbc878d11cad73653",
+  "identity": "7d4e44528cf9228215dcfeadd468fa56921fc2b3dff9d348ae4312ef3377acda",
+  "bytes": 306562089,
+  "sha256": "7da555edfe951e5b91735460f49e46282956404e9fa62560f48e2220ecc44003",
+  "members": 25391,
+  "uncompressedBytes": 898155245,
+  "parts": 158,
+  "counts": {
+    "source": 664,
+    "requests": 39,
+    "editions": 40,
+    "prior": 37,
+    "distinctStudies": 38
+  },
+  "verification": "ordinary-zip-crc32-sha256-and-export-manifest",
+  "sourceStats": {
+    "fetchedParts": 160,
+    "textBytes": 411898904,
+    "decodedBytes": 308924178,
+    "cachedParts": 2,
+    "declaredParts": 158
+  },
+  "allOriginalMetadataExact": true,
+  "manifest": {
+    "bytes": 67961,
+    "sha256": "2c36be68cd318f4d45ca94d479894836ea057dde84893d2dad2291529a1ad9bf"
+  }
+}
