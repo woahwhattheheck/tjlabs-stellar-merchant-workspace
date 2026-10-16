@@ -1,0 +1,204 @@
+{
+  "schema": "commons.complete-export-throughput-comparisons.v1",
+  "complete": false,
+  "pending": [
+    "procurement",
+    "distribution"
+  ],
+  "comparisons": [
+    {
+      "product": "fleet",
+      "complete": true,
+      "equivalent": true,
+      "sourceIdentity": {
+        "bytes": 4354749,
+        "sha256": "7731560baf2f1a6d848740c9f85a721103d4ccf0b4103c8604e2aa4f309191c2"
+      },
+      "inputIdentity": {
+        "bytes": 2605874,
+        "sha256": "78634cfceee97cb904ceca33ba4775989d4e2094264b4a2ee8a181deef9bbfb7"
+      },
+      "baselineExecutionIdentity": {
+        "bytes": 13904,
+        "sha256": "f15228258b541529a3c5baf43b7381b6bd28c9a4e4346023166890f8c4900bdc"
+      },
+      "candidateExecutionIdentity": {
+        "bytes": 14971,
+        "sha256": "310300f652385ba50f9c1ae6231624fada1a47b96142fb7203adb2860b6c5aa6"
+      },
+      "members": 10835,
+      "uncompressedBytes": 312821215,
+      "archiveBytes": 106979782,
+      "memberIdentity": {
+        "bytes": 3256615,
+        "sha256": "60c69e7bc7f87ca5853443e4c1cda9f501bb9e9e567f824eb5ec5f808116a5a6"
+      },
+      "baseline": {
+        "executionMilliseconds": 582260,
+        "profile": {
+          "adds": 6308,
+          "copies": 4527,
+          "compressedInputBytes": 295913566,
+          "reusedInputBytes": 16907649,
+          "compressionMilliseconds": 162098,
+          "measurementHashMilliseconds": 80783
+        }
+      },
+      "candidate": {
+        "executionMilliseconds": 575713,
+        "profile": {
+          "adds": 6082,
+          "copies": 4753,
+          "compressedInputBytes": 294722677,
+          "reusedInputBytes": 18098538,
+          "compressionMilliseconds": 158785,
+          "measurementHashMilliseconds": 79452
+        },
+        "contentCache": {
+          "entries": 7,
+          "chargedBytes": 59399537,
+          "maxChargedBytes": 67108864,
+          "maxEntries": 4096,
+          "hits": 4753,
+          "misses": 547,
+          "evictions": 540,
+          "oversized": 0,
+          "reusedBytes": 18098538
+        }
+      },
+      "improvement": {
+        "avoidedCompressionBytes": 1190889,
+        "additionalCopies": 226,
+        "observedMilliseconds": 6547,
+        "observedPercent": 1.1244117748085047
+      },
+      "receipts": {
+        "baseline": {
+          "branch": "a74f/complete-export-comparison-fleet-20261016",
+          "commit": "99bff9646ef5cf882102847cc94ef351c59a3e96",
+          "path": "receiving-checkpoints/tools/complete-export-content-throughput/results/fleet-baseline.json",
+          "blob": "f55d61cbe2d12c9eb7431946f67a2dad0942cd2c",
+          "original": {
+            "bytes": 3257659,
+            "sha256": "7bbe86a864b78e0e801ca84b883407c12ee96f3236b57f70eb8bc85615d781fc"
+          },
+          "compressed": {
+            "bytes": 781822,
+            "sha256": "90e64b70069591da14259344c9662373d3050e4f4be09f3c843679bee350bca9"
+          }
+        },
+        "candidate": {
+          "branch": "a74f/complete-export-comparison-fleet-20261016",
+          "commit": "1efd7a450d36a602eb15c68c805d72d445937d9d",
+          "path": "receiving-checkpoints/tools/complete-export-content-throughput/results/fleet-candidate.json",
+          "blob": "38ffca6c95cafc3aaac2971ab6afdc6bfd7a6159",
+          "original": {
+            "bytes": 3257835,
+            "sha256": "23d1914c9be87d5d07d026ccbc80f96e1bb29b6e0047f256fe1ead7690c96689"
+          },
+          "compressed": {
+            "bytes": 781917,
+            "sha256": "ea7f77fe7e9cbdf87dab224d476cb95ce8356adb7d037c622749c2fae6d92f3b"
+          }
+        }
+      }
+    },
+    {
+      "product": "water",
+      "complete": true,
+      "equivalent": true,
+      "sourceIdentity": {
+        "bytes": 4542571,
+        "sha256": "35ed5b5d8e9cd5c7d9dedaf4f6c149396dc13e0480e655e530980e026855534b"
+      },
+      "inputIdentity": {
+        "bytes": 3495598,
+        "sha256": "94a52661d0bd28f9d17b5ee5065c2c323c9b0222d3bd794aeed4ca2c1c6553bf"
+      },
+      "baselineExecutionIdentity": {
+        "bytes": 13884,
+        "sha256": "57fb7eb3ef09591129912f8a9b2114adf1084aaa4fff1626adb2a05ad18135a6"
+      },
+      "candidateExecutionIdentity": {
+        "bytes": 14951,
+        "sha256": "80e73507a241c2cfc6226ad6d855ffd10da55913ce1f4e44a0a3adf3e26cd8a8"
+      },
+      "members": 21636,
+      "uncompressedBytes": 507737934,
+      "archiveBytes": 167485621,
+      "memberIdentity": {
+        "bytes": 6573282,
+        "sha256": "8fea624076ee3b627c63d73a85e2297cc7c01edc4ea0312b42b36754983123bc"
+      },
+      "baseline": {
+        "executionMilliseconds": 1062301,
+        "profile": {
+          "adds": 13366,
+          "copies": 8270,
+          "compressedInputBytes": 465328745,
+          "reusedInputBytes": 42409189,
+          "compressionMilliseconds": 247258,
+          "measurementHashMilliseconds": 120608
+        }
+      },
+      "candidate": {
+        "executionMilliseconds": 1045065,
+        "profile": {
+          "adds": 12881,
+          "copies": 8755,
+          "compressedInputBytes": 461445411,
+          "reusedInputBytes": 46292523,
+          "compressionMilliseconds": 245420,
+          "measurementHashMilliseconds": 120346
+        },
+        "contentCache": {
+          "entries": 5,
+          "chargedBytes": 61794632,
+          "maxChargedBytes": 67108864,
+          "maxEntries": 4096,
+          "hits": 8755,
+          "misses": 654,
+          "evictions": 649,
+          "oversized": 0,
+          "reusedBytes": 46292523
+        }
+      },
+      "improvement": {
+        "avoidedCompressionBytes": 3883334,
+        "additionalCopies": 485,
+        "observedMilliseconds": 17236,
+        "observedPercent": 1.6225156523433566
+      },
+      "receipts": {
+        "baseline": {
+          "branch": "a74f/complete-export-comparison-water-20261016",
+          "commit": "065cb724834b734c021d67d68113a6433d10e9c0",
+          "path": "receiving-checkpoints/tools/complete-export-content-throughput/results/water-baseline.json",
+          "blob": "2dcdd548a6cb0fc3c39a92d6668822d34acc9aac",
+          "original": {
+            "bytes": 6574331,
+            "sha256": "9cb1fba20f3064ea58f4063a026599229d6c7b598f10df71e0f9b04fe2349ca3"
+          },
+          "compressed": {
+            "bytes": 1629418,
+            "sha256": "59c67faae9c166c4e82ef1b8cca7404549cd9686f1e91cf7ea77c1c98c567a1f"
+          }
+        },
+        "candidate": {
+          "branch": "a74f/complete-export-comparison-water-20261016",
+          "commit": "383ddb0f6e36e20a241984ee0f85464d37c78df3",
+          "path": "receiving-checkpoints/tools/complete-export-content-throughput/results/water-candidate.json",
+          "blob": "a04260b0081d8fcf4dee7452685eff5a0d8f85d1",
+          "original": {
+            "bytes": 6574507,
+            "sha256": "9576b7cbf9bea4f8bfa2cdf57fb56f7a66d471cfb827005ffe6b9bc80006f42f"
+          },
+          "compressed": {
+            "bytes": 1629541,
+            "sha256": "1aef8230bf861a7189df1b548d08acc5959315fda048a36211e5ad256c11b418"
+          }
+        }
+      }
+    }
+  ]
+}

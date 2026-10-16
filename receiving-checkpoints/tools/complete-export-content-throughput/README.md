@@ -19,12 +19,12 @@ The measurement subtracts only the independently measured packed-byte observatio
 Use the pinned baseline HTML and candidate export source identified in `inputs.json`, plus the complete original compact checkpoint and all of its parts. A maintained checkout only needs the runner and its existing complete-state runtime helpers:
 
 ```sh
-node receiving-checkpoints/tools/complete-export-content-throughput/run.mjs \\
-  --source-html /absolute/original/Distribution_Lot_Order_Study_Desk.html \\
-  --candidate-export /absolute/successor/host/export-core.mjs \\
-  --checkpoint /absolute/retained/complete-course/manifest.json \\
-  --checkpoint-root /absolute/retained \\
-  --product distribution \\
+node receiving-checkpoints/tools/complete-export-content-throughput/run.mjs \
+  --source-html /absolute/original/Distribution_Lot_Order_Study_Desk.html \
+  --candidate-export /absolute/successor/host/export-core.mjs \
+  --checkpoint /absolute/retained/complete-course/manifest.json \
+  --checkpoint-root /absolute/retained \
+  --product distribution \
   --out /absolute/results/distribution-export-comparison.json
 ```
 
@@ -35,3 +35,12 @@ The native runner preserves a completed baseline beside the requested output as 
 Completed cloud measurement phases are preserved immediately as lossless gzip/base64 result packets on `a74f/complete-export-comparison-<product>-20261016`, under this directory's `results/` path. Each packet carries both complete uncompressed and compressed SHA256/byte counts. Final complete comparisons are joined into this maintained delivery when finished.
 
 GitHub Actions remains disabled. The original equipped receiving operation handles native opening and the exact generated application's rendered controls.
+
+## Completed comparisons
+
+| Complete retained product | Members | Expanded bytes | ZIP bytes | Baseline ms | Candidate ms | Avoided compression bytes |
+|---|---:|---:|---:|---:|---:|---:|
+| fleet | 10835 | 312821215 | 106979782 | 582260 | 575713 | 1190889 |
+| water | 21636 | 507737934 | 167485621 | 1062301 | 1045065 | 3883334 |
+
+Both completed comparisons have identical complete ordered member identities, including each actual packed payload SHA256. The measured elapsed improvements are 1.1% for Fleet and 1.6% for Water in this runtime. Most historical payloads are distinct, so the full archive improvement is modest even though exact repeated content is reused more often. Procurement and Distribution remain running; their completed phases are independently durable on their result branches. All four full-state ordinary ZIP mutation/reopen courses passed (`mutation-results.json`).
