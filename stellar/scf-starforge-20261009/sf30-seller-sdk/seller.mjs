@@ -341,18 +341,32 @@ export function auditCatalogVisibility(body, offer) {
     r?.extensions?.bazaar?.info?.input?.method === eInput.method);
   const sameTerms = (actual, wanted) => PAYMENT_FIELDS.every(key =>
     isDeepStrictEqual(actual?.[key], wanted[key]));
-  // All options must occur in one actual resource row. Do not combine halves
-  // of independently observed offers into a payment quote the seller never made.
-  const verified = matches.some(r => Array.isArray(r.accepts) &&
-    r.accepts.length === expected.length && expected.every(wanted =>
-      r.accepts.filter(actual => sameTerms(actual, wanted)).length === 1));
+  const rowTermsMatch = row => Array.isArray(row?.accepts) &&
+    row.accepts.length === expected.length && expected.every(wanted =>
+      row.accepts.filter(actual => sameTerms(actual, wanted)).length === 1);
+  // URL, method and payment terms alone do not prove that buyers see the
+  // seller's advertised invocation contract. Keep the exact Bazaar extension
+  // and complete option set together in one discovered row.
+  const contractMatches = matches.filter(row =>
+    isDeepStrictEqual(row?.extensions?.bazaar, offer.extensions.bazaar));
+  const termMatches = matches.filter(rowTermsMatch);
+  const verified = contractMatches.some(rowTermsMatch);
   const paymentOptions = expected.map((wanted, index) => ({
     index, ...copy(wanted),
-    visible: matches.some(r => Array.isArray(r.accepts) && r.accepts.some(actual => sameTerms(actual, wanted))),
+    visible: matches.some(r => Array.isArray(r.accepts) &&
+      r.accepts.some(actual => sameTerms(actual, wanted))),
+    contractVisible: contractMatches.some(r => Array.isArray(r.accepts) &&
+      r.accepts.some(actual => sameTerms(actual, wanted))),
   }));
-  return { visible: matches.length > 0, termsMatch: verified,
-    decision: !matches.length ? 'NOT_INDEXED' : verified ? 'VISIBLE_TERMS_MATCH_UNVERIFIED' : 'TERMS_DRIFT',
-    matchingRows: matches.length, paymentOptions, settlementAuthenticated: false };
+  const decision = !matches.length ? 'NOT_INDEXED'
+    : verified ? 'VISIBLE_TERMS_MATCH_UNVERIFIED'
+    : contractMatches.length ? 'TERMS_DRIFT'
+    : termMatches.length ? 'CONTRACT_DRIFT'
+    : 'CONTRACT_AND_TERMS_DRIFT';
+  return { visible: matches.length > 0, contractMatch: contractMatches.length > 0,
+    termsMatch: verified, decision, matchingRows: matches.length,
+    matchingContracts: contractMatches.length, matchingTermSets: termMatches.length,
+    paymentOptions, settlementAuthenticated: false };
 }
 
 /** Probe an explicitly supplied loopback baseURL, never an arbitrary URL. */
