@@ -42,9 +42,12 @@ export function receiveDirectoryGrantChapter(manuscript,chapter,{expectedSha256}
 export async function runDirectoryGrantReceiving(argv=process.argv.slice(2)){
   const options={};for(let i=0;i<argv.length;i+=2){need(['--manuscript','--chapter','--expected-directory-sha256','--out','--receipt'].includes(argv[i])&&argv[i+1]&&!Object.hasOwn(options,argv[i]),'Supply each complete source receiving argument once.');options[argv[i]]=argv[i+1];}
   for(const key of ['--manuscript','--chapter','--expected-directory-sha256','--out','--receipt'])need(options[key],'Supply '+key+'.');
-  const result=receiveDirectoryGrantChapter(await readFile(resolve(options['--manuscript']),'utf8'),await readFile(resolve(options['--chapter']),'utf8'),{expectedSha256:options['--expected-directory-sha256']});
-  await writeFile(resolve(options['--out']),result.markdown,{flag:'wx',mode:0o600});
-  await writeFile(resolve(options['--receipt']),JSON.stringify(result.receipt,null,2)+'\n',{flag:'wx',mode:0o600});
+  const manuscriptPath=resolve(options['--manuscript']),chapterPath=resolve(options['--chapter']);
+  const outPath=resolve(options['--out']),receiptPath=resolve(options['--receipt']);
+  need(outPath!==receiptPath,'Write the received manuscript and receipt to distinct paths.');
+  const result=receiveDirectoryGrantChapter(await readFile(manuscriptPath,'utf8'),await readFile(chapterPath,'utf8'),{expectedSha256:options['--expected-directory-sha256']});
+  await writeFile(outPath,result.markdown,{flag:'wx',mode:0o600});
+  await writeFile(receiptPath,JSON.stringify(result.receipt,null,2)+'\n',{flag:'wx',mode:0o600});
   return result.receipt;
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
