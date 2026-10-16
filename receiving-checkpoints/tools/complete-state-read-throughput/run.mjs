@@ -7,6 +7,7 @@ import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url),probe=require('./probe.cjs'),mutations=require('./mutation-course.cjs');
 const args={};for(let i=2;i<process.argv.length;i+=2){if(!process.argv[i].startsWith('--')||process.argv[i+1]===undefined)throw Error('Use --name value arguments');args[process.argv[i].slice(2)]=process.argv[i+1];}
 for(const k of ['before','after','checkpoint','product','out'])if(!args[k])throw Error('Required --'+k);
+if(!['fleet','water','distribution','procurement'].includes(args.product))throw Error('Choose fleet, water, distribution or procurement');
 const sha=b=>createHash('sha256').update(b).digest('hex'),same=(bytes,meta,label)=>{if(bytes.length!==meta.bytes||sha(bytes)!==meta.sha256)throw Error(label+' identity differs');};
 function safe(root,path){if(typeof path!=='string'||isAbsolute(path)||path.includes('\\')||path.split('/').some(p=>!p||p==='.'||p==='..'))throw Error('Unsafe original path');return join(root,path);}
 async function bank(root){root=resolve(root);const raw=await readFile(join(root,'source-manifest.json'),'utf8'),m=JSON.parse(raw),out={};for(const e of m.files){let p=root;for(const part of e.path.split('/')){p=safe(p,part);if((await lstat(p)).isSymbolicLink())throw Error('Source link is not an original file');}const b=await readFile(p);same(b,e,e.path);const t=b.toString('utf8');if(!Buffer.from(t).equals(b))throw Error('Source UTF-8 differs');out[e.path]=t;}out['source-manifest.json']=raw;return out;}
