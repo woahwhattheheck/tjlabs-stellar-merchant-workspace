@@ -1,0 +1,96 @@
+{
+  "schema": "commons.git-archive-publication-source.v1",
+  "publisherMerge": "f95eb896058b91da7e6083f4d4b548f586020fe7",
+  "publisherSource": "f33bfb1602549cc6edcbc58604b75d086de6bddc",
+  "verification": "ordinary",
+  "productSourceMerge": "cfc0ade43456f3ad18d9878ce3a1cdec4bc13139",
+  "preparedIndex": "receiving-checkpoints/water-operations-study/resumable-complete-export/checkpoint.json",
+  "preparedHead": "0e965e4a33c34fe14250fa3400e974e9f77ba0fa",
+  "derivation": {
+    "schema": "commons.source-successor-derivation.v1",
+    "parentIdentity": "b1a17c3eff22efed6eefb1b547458c467ed4ce926e1c930fb324b1ebc4c935f4",
+    "parentIndexSha256": "0efdf5f17c28c1a2331c17deecb661f05839d42d0c4e7f0f6e53918217379d34",
+    "sourceVersion": "woahwhattheheck/tjlabs-stellar-merchant-workspace@60899daece7381a81749945c4a09ee57eae18f51:products/water-operations-study",
+    "compression": {
+      "engine": "pako",
+      "level": 1
+    },
+    "changes": [
+      {
+        "name": "source/operator/installed-desk.js",
+        "before": {
+          "bytes": 67824,
+          "sha256": "9601fb5c692fe53feccabc4a707e4e53e714d500e4e89eab755638b68f0b74e9"
+        },
+        "after": {
+          "bytes": 68283,
+          "sha256": "30e1e0b5154a749f8492c67eae3b1ac15636b6c995c10f2b5517bdc79f43ccc1"
+        }
+      },
+      {
+        "name": "source/receiving/portable-course.cjs",
+        "before": {
+          "bytes": 13086,
+          "sha256": "90ad4830eacff7f1c9c2c551ee7d0672ce8782de6b4f77b5533a3f6d89123da8"
+        },
+        "after": {
+          "bytes": 13106,
+          "sha256": "864f18087392a7070e6e83e9ec3dfcca9207e1f8029cf441f253539010dd82c2"
+        }
+      },
+      {
+        "name": "source/SOURCE_MANIFEST.json",
+        "before": {
+          "bytes": 39017,
+          "sha256": "711e4195a31bdbe322f4976223eb41118a9d0bf8f3ed96a5c6702c5b3c37f908"
+        },
+        "after": {
+          "bytes": 39017,
+          "sha256": "ff026e5b8a9a9af7f525110c22f59c27ac4e15d363e2946dfb003376b7b2bf69"
+        }
+      },
+      {
+        "name": "source/source-manifest.json",
+        "before": {
+          "bytes": 39188,
+          "sha256": "0f8702b65be3fcb007001f138453e67875bf877f9058330dd9f2d68689cdaf0e"
+        },
+        "after": {
+          "bytes": 39188,
+          "sha256": "7afcaa0a431b32478397ef2cbca016bccf3951991e4748f86ce5c9de50b4562c"
+        }
+      },
+      {
+        "name": "working/Water_Operations_Study_Editable.html",
+        "before": {
+          "bytes": 9185661,
+          "sha256": "a979e64715f32cbc4fca59fc9868d447630ba40519dd3fd42264e4c38580359c"
+        },
+        "after": {
+          "bytes": 9186606,
+          "sha256": "72c77a0952c2707703201cef9255d268b71bd59db3c2b6683515e5b3d4165236"
+        }
+      },
+      {
+        "name": "EXPORT_MANIFEST.json",
+        "before": {
+          "bytes": 5828070,
+          "sha256": "3eb2633e86551b02bdcecc2cabab846707baad91319b2c01dc428154c1f4bf94"
+        },
+        "after": {
+          "bytes": 5828070,
+          "sha256": "72acdcb3053d1d32bad7a90b5c3f9dae8bdc41ab15be499009fd8ca5367b7fd8"
+        }
+      }
+    ]
+  },
+  "workingHTML": {
+    "bytes": 9186606,
+    "sha256": "72c77a0952c2707703201cef9255d268b71bd59db3c2b6683515e5b3d4165236"
+  },
+  "originalComparison": {
+    "originalPreparedHead": "6d26583d10cd4e8abe06b25be5692be53c60572e",
+    "independentDirectMembers": 324,
+    "expectedMembers": 21635
+  }
+}
