@@ -1,0 +1,128 @@
+{
+  "schema": "commons.streamed-complete-export.v1",
+  "identity": "7d4e44528cf9228215dcfeadd468fa56921fc2b3dff9d348ae4312ef3377acda",
+  "bytes": 306562089,
+  "sha256": "7da555edfe951e5b91735460f49e46282956404e9fa62560f48e2220ecc44003",
+  "members": 25391,
+  "uncompressedBytes": 898155245,
+  "metadataBytes": 12491871,
+  "maxInputFragmentBytes": 650000,
+  "maxOutputChunkBytes": 487500,
+  "receivingSource": {
+    "sourceBank": {
+      "bytes": 9982266,
+      "sha256": "e0264d15818218e5e84de2155ca887efd7e2e35086f419feedcbf81643f3f99b"
+    },
+    "completeInput": {
+      "bytes": 6762092,
+      "sha256": "7b02fcf45b06739fc03e64193671059a318a0bcf97895349e49bbaa05b5126f6"
+    },
+    "sourceCommit": "b0f685288239c353f9903ccb95cda53707ef1571",
+    "completeCourseCommit": "02a3cfdb82c99de2c6b4170a0b65440e98d2c6d7"
+  },
+  "derivation": {
+    "schema": "commons.source-successor-derivation.v1",
+    "parentIdentity": "5b7ee06f472cee9474f8928d303fa39e9c0ad0eb146c3c24313be54cface2ea3",
+    "parentIndexSha256": "203c757c2babe5ee2dc441af73f029fb8c1d1ee92218aa7096984579b989007b",
+    "sourceVersion": "980bf6bbd6948e535544b3adcd9ea72a03fc2759",
+    "compression": {
+      "engine": "pako",
+      "level": 1
+    },
+    "changes": [
+      {
+        "name": "source/operator/installed-desk.js",
+        "before": {
+          "bytes": 69929,
+          "sha256": "87c16a8c17c227d5db554fd18cf2a4a7ade770fde01b6182061de893fa88eb72"
+        },
+        "after": {
+          "bytes": 70388,
+          "sha256": "c079dd441cb08ad0d5563ae8592b23194642a590c2adae8bb1721b8dacc8508f"
+        }
+      },
+      {
+        "name": "source/receiving/portable-course.cjs",
+        "before": {
+          "bytes": 11696,
+          "sha256": "0196fa6b3712bc0cde164faf6221ee80ca03045a9d1410de4f7c026272849ecd"
+        },
+        "after": {
+          "bytes": 11716,
+          "sha256": "b2514405dd69bbeb6c994956130e4f2b8b27bd3083f9538a2d6cd7b881735ae8"
+        }
+      },
+      {
+        "name": "source/SOURCE_MANIFEST.json",
+        "before": {
+          "bytes": 134740,
+          "sha256": "eaabb2a5796c683c8cc417f808025c4402f4ab7c928f70a6c66362499d1ed6ad"
+        },
+        "after": {
+          "bytes": 134740,
+          "sha256": "31b19bdf3337e6437419da2c5200b55a8a9e8e597ad4f241ab2ff994416893c9"
+        }
+      },
+      {
+        "name": "source/source-manifest.json",
+        "before": {
+          "bytes": 134759,
+          "sha256": "7c96b5ee190ae89d18c1f43adbedbf34b3eb5af1548ea89f4d101ca55e75f3f2"
+        },
+        "after": {
+          "bytes": 134759,
+          "sha256": "a1ce188b0a8030eaa7a553d27ea9e5b3ead79cb9db5d0f1cfce45bb9af87a467"
+        }
+      },
+      {
+        "name": "working/Procurement_Savings_Reconciliation_Study_Editable.html",
+        "before": {
+          "bytes": 10738072,
+          "sha256": "dd89d2b560805b7d1d86c0216f097325f4ee4e0c5b13e2a1476ae9abc5d586c0"
+        },
+        "after": {
+          "bytes": 10738739,
+          "sha256": "9ee9f1890eabecd96c31779c9af21614212739d3c5f96674cafd25f733289ba9"
+        }
+      },
+      {
+        "name": "EXPORT_MANIFEST.json",
+        "before": {
+          "bytes": 6949646,
+          "sha256": "985f25c2a6e1f2412a09f6ddb37855d37162f95c32612fc6e631238b5cbe1985"
+        },
+        "after": {
+          "bytes": 6949646,
+          "sha256": "fb5f4000206e7f1b953ddc3677b00050696b758bd2f3e423af242ee12628fffe"
+        }
+      }
+    ]
+  },
+  "memberVerification": "ordinary-zip-crc32-sha256-and-export-manifest",
+  "requiresOrdinaryReadback": false,
+  "emissionMemberVerification": "prepared-payload-identities",
+  "ordinaryReadback": {
+    "schema": "commons.ordinary-zip-range-receipt.v1",
+    "bytes": 306562089,
+    "sha256": "7da555edfe951e5b91735460f49e46282956404e9fa62560f48e2220ecc44003",
+    "uncompressedBytes": 898155245,
+    "directoryBytes": 4709999,
+    "transportBytes": 306562089,
+    "rangeRequests": 55036,
+    "maxCapturedBytes": 6949646,
+    "maxInflatedChunkBytes": 65536,
+    "exportManifest": {
+      "bytes": 6949646,
+      "sha256": "fb5f4000206e7f1b953ddc3677b00050696b758bd2f3e423af242ee12628fffe",
+      "members": 25390
+    },
+    "members": 25391,
+    "sourceStats": {
+      "fetchedParts": 160,
+      "textBytes": 411898904,
+      "decodedBytes": 308924178,
+      "cachedParts": 2,
+      "declaredParts": 158
+    }
+  }
+}
