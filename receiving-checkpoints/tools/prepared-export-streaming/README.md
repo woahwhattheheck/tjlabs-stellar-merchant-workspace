@@ -108,3 +108,9 @@ node finish-prepared.mjs \
 ```
 
 The exact selected limits are recorded in the final native receipt. For Git publication use the matching `streamOptions: {maxMetadataBytes:67108864,maxManifestBytes:33554432}`. Both routes retain complete ordinary CRC/SHA/export-manifest validation before the final complete result. The native receiver continues the existing exact opening and actual desktop/narrow inspection operation described in repository `AGENTS.md`.
+
+### Executed recovery and capacity checks
+
+`git-metadata-recovery-result.json` records the actual complete 194-file Fleet source bank plus working HTML, binary, Unicode and empty members: 199 ZIP members, 8,829,163 expanded bytes and the same 2,130,259-byte archive in full and ordinary modes. The production ZIP builder, emitter and reader ran with a deterministic Git adapter. Interrupted metadata publication retries reused acknowledged blobs without additional writes after checking their actual text; changed metadata was rejected. Recovering completed progress preserved the same head and issued zero writes. All tree requests contained only SHA references (largest 795 bytes).
+
+`distribution-metadata-capacity-result.json` records the actual 34 metadata fragments fetched at the immutable Distribution checkpoint above. Their complete 21,500,531 bytes matched the original metadata SHA. The default limit rejected before any fragment read; 64 MiB passed metadata parsing and reached the correct incomplete-index check for that retained 1,206-group checkpoint. The remaining preparation and final native ZIP opening stay in the original receiving operation.
