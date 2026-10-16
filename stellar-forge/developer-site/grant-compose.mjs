@@ -9,7 +9,8 @@ import { attachGrantSubmission } from './grant-submission.mjs';
 import { attachGrantReviewRounds } from './grant-review-round.mjs';
 import { attachSavedProjects } from './saved-projects.mjs';
 import { attachGrantCompanion } from './grant-companion.mjs';
-import { projectPublicGrantMarkdown, projectPublicGrantHtml, projectPublicGrantSourceIndex } from './grant-publication-source.mjs';
+import { projectPublicGrantMarkdown, projectPublicGrantHtml } from './grant-publication-source.mjs';
+import { projectCompletePublicGrantSourceIndex } from './grant-source-index-publication.mjs';
 import { attachCustomerClosingSources, attachCustomerClosingOpening } from './grant-customer-closing.mjs';
 import { receiveFinancialApplication, attachFinancialSources } from './grant-financial-operations.mjs';
 import { projectGrantHtml, projectGrantMarkdown, receiveGrantCustomerSections, grantCustomerSourceManuscript, projectGrantSourceIndex, receiveGrantCustomerSources } from './grant-customers.mjs';
@@ -305,7 +306,7 @@ export function composeGrantApplication({
   const reviewRound = attachGrantReviewRounds(submission);
   const companionReader = attachGrantCompanion(reviewRound);
   html = projectPublicGrantHtml(attachSavedProjects(projectGrantHtml(companionReader.templateHtml)));
-  index = projectPublicGrantSourceIndex(companionReader.sourceIndex);
+  index = projectCompletePublicGrantSourceIndex(companionReader.sourceIndex);
   const indexText = JSON.stringify(index, null, 2) + '\n';
   const files = {
     'grant.html': html,
