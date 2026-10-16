@@ -925,7 +925,21 @@ function encodeNativeSourceDocuments(source, options = {}) {
 
 export {SOURCE_LIMIT_BYTES, fromBase64, toBase64, utf8Encode, utf8Decode, sha256Bytes, inflateGzip, gzipBytes, encodeApplicationCarrier, decodeNativeSourceDocuments, encodeNativeSourceDocuments};
 
-// Complete-text digest cache; keys retain all bytes of the original UTF-8 input.
-const TEXT_HASH_CACHE=new Map();let TEXT_HASH_BYTES=0;
-function hashText(text){if(typeof text!=='string')throw Error('Complete hash input must be text');const old=TEXT_HASH_CACHE.get(text);if(old){TEXT_HASH_CACHE.delete(text);TEXT_HASH_CACHE.set(text,old);return old.sha256;}const bytes=utf8Encode(text),sha256=sha256Bytes(bytes),cost=text.length*2;if(cost<=16*1024*1024){while(TEXT_HASH_CACHE.size&&(TEXT_HASH_BYTES+cost>16*1024*1024||TEXT_HASH_CACHE.size>=128)){const key=TEXT_HASH_CACHE.keys().next().value;TEXT_HASH_BYTES-=TEXT_HASH_CACHE.get(key).cost;TEXT_HASH_CACHE.delete(key);}TEXT_HASH_CACHE.set(text,{sha256,cost});TEXT_HASH_BYTES+=cost;}return sha256;}
+// Complete-text digest cache. Exact serialized inputs remain the cache keys.
+// A whole supported 14.7M-character managed edition needs roughly 28 MiB by
+// conservative UTF-16 accounting;64MiB admits both the state and carrier session.
+const TEXT_HASH_LIMIT=64*1024*1024,TEXT_HASH_COUNT=128;
+const TEXT_HASH_CACHE=new Map();let TEXT_HASH_BYTES=0,TEXT_HASH_HITS=0,TEXT_HASH_MISSES=0,TEXT_HASH_EVICTIONS=0,TEXT_HASH_OVERSIZED=0;
+function hashText(text){
+ if(typeof text!=='string')throw Error('Complete hash input must be text');
+ const old=TEXT_HASH_CACHE.get(text);
+ if(old){TEXT_HASH_HITS++;TEXT_HASH_CACHE.delete(text);TEXT_HASH_CACHE.set(text,old);return old.sha256;}
+ TEXT_HASH_MISSES++;const bytes=utf8Encode(text),sha256=sha256Bytes(bytes),cost=text.length*2+128;
+ if(cost<=TEXT_HASH_LIMIT){
+  while(TEXT_HASH_CACHE.size&&(TEXT_HASH_BYTES+cost>TEXT_HASH_LIMIT||TEXT_HASH_CACHE.size>=TEXT_HASH_COUNT)){const key=TEXT_HASH_CACHE.keys().next().value;TEXT_HASH_BYTES-=TEXT_HASH_CACHE.get(key).cost;TEXT_HASH_CACHE.delete(key);TEXT_HASH_EVICTIONS++;}
+  TEXT_HASH_CACHE.set(text,{sha256,cost});TEXT_HASH_BYTES+=cost;
+ }else TEXT_HASH_OVERSIZED++;
+ return sha256;
+}
+hashText.cacheStats=()=>Object.freeze({entries:TEXT_HASH_CACHE.size,retainedBytes:TEXT_HASH_BYTES,maxBytes:TEXT_HASH_LIMIT,maxEntries:TEXT_HASH_COUNT,hits:TEXT_HASH_HITS,misses:TEXT_HASH_MISSES,evictions:TEXT_HASH_EVICTIONS,oversized:TEXT_HASH_OVERSIZED,identity:'complete-text'});
 export {hashText};
