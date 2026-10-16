@@ -9,12 +9,12 @@ and transfer to another operator.
 
 This chapter gives the developer and receiving engineer a complete route from
 customer task to installed service. The [operating guide](OPERATING.md) supplies
-the detailed commands for each workflow. The SCF46 Open Track proposal develops
-two independent merchant installations using the existing product, with the
-fixed funding scope in section 6. The existing implementation and completed
-runs form the delivered foundation. The grant packages fund the remaining
-customer-specific Stellar integration, deployment, incident response and
-technical handover.
+the detailed commands for each workflow. Section 6 contains the current
+conditional customer-deployment estimate and the dated earlier grant plan.
+The existing implementation and completed runs form the delivered foundation.
+Remaining implementation work connects selected customers' sources, Stellar
+payment deployments, receiving applications, incident response and technical
+handover. The current preparation status is dated 16 October 2026.
 
 The development examples below retain their October 12, 2026 source and result
 identities. The earlier architecture baseline was inspected at standalone
@@ -57,7 +57,7 @@ through the same installed workflow.
 The proposed ecosystem contribution is the complete operating path around that
 native payment: source authoring, explicit buyer spending, complete delivery,
 recurring customer use, two facilitator deployments and maintainable receiving
-installations. The funded outcome is measured in useful purchases by independent
+installations. The proposed outcome is measured in useful purchases by independent
 customers and operating mainnet services. Section 6 fixes the cohort, periods and
 engineering needed to reach it.
 
@@ -659,9 +659,74 @@ It contains no solver or buyer-payment dispatcher. The
 [Grant Operations guide](../grant-operations/OPERATING.md#frozen-groundwater-report-receiving)
 explains the selected-case receiving boundary.
 
-## 6. Fixed SCF46 delivery scope
+## 6. Current customer-deployment estimate and SCF preparation
 
-The selected Open Track proposal requests **$38,000 equivalent in XLM for 400 future
+### Preparation status, 16 October 2026
+
+The 14 October interest-form decision declined the project. The earlier Open
+Track selection and $38,000 / 400-hour plan remain historical records. The
+current conditional customer-deployment estimate covers **26 remaining tasks,
+194 base hours at $95/hour ($18,430)**, with a **136–304-hour range
+($12,920–$28,880)**.
+
+Existing generic seller, buyer, catalog, Runtime, Support and recovery modules
+supply the delivered baseline. Remaining work selects and adapts two supported
+customer services, connects their receiving applications and independent
+operators, reconciles the actual deployments, and completes their maintenance
+handover. Customer selection, source rights, contributor commitments and the
+applicable future submission route determine the final scope.
+
+The estimate assumes two customer sources using existing supported adapters,
+two merchant installations, two independent buyers and two facilitator
+deployments. Its six packages retain the useful customer outcomes in the
+earlier plan while costing the remaining installation work against the current
+product. The day ranges below are planning windows measured from an eventual
+agreed start; actual payment and customer dates belong to the selected
+implementation.
+
+| Remaining package | Planning window | Base hours | Base cost | Implementation outcome |
+| --- | --- | ---: | ---: | --- |
+| Merchant-resource integration | Days 1–30 | 36 | $3,420 | Map two selected sources, service inputs, payment terms and complete outputs to the customers' actual receiving applications. |
+| Authority and handover | Days 1–30 | 24 | $2,280 | Configure actual operator ownership, customer source/terms changes and independently continued receiving. |
+| Provider and ledger deployment | Days 31–90 | 32 | $3,040 | Join the actual facilitator, account, buyer and accounting records for the same useful operation. |
+| Deployed threat response | Days 31–90 | 28 | $2,660 | Configure deployment response, interruption handling, delivery recovery and material installation fixes. |
+| Mainnet rollout | Days 91–150 | 40 | $3,800 | Integrate the two production configurations, recurring customer tasks, controlled rollout and rollback. |
+| Production recovery and handover | Days 91–150 | 34 | $3,230 | Complete installation-specific retention, receiving-host restoration, reconciliation and maintainer handover. |
+| **Total** | **Conditional 150-day plan** | **194** | **$18,430** | **Two independently maintainable customer services using the delivered product.** |
+
+The current planning windows cost $5,700 / $5,700 / $7,030. At this estimate,
+the published SCF payment proportions correspond to $1,843 / $3,686 / $5,529 /
+$7,372 in USD-equivalent planning amounts. Actual award terms and XLM valuation
+determine disbursement. Each deliverable submission's deadline follows the
+previous actual payment as described in the [issuer guidance][scf-budget].
+
+Assign each adaptation once to a grant package or a commissioned customer
+workshare. Preserve the original task, source, contributor, agreement and
+completion in that customer's implementation case. Work already completed
+supplies the baseline for the next estimate.
+
+A dedicated discovery/protocol RFP response needs its own current-round
+requirements and cost map. The current estimate describes customer deployment.
+The [SCF #45 recap][scf45-recap] lists funded x402/Bazaar programmes at Rail402,
+AgentSmith x402 and Rumble Fish; integration and customer delivery around
+existing ecosystem capabilities are practical directions for this product.
+The current [RFP page][scf-rfp] still carries a Q3/#45 banner, so its published
+technical scope and a future submission's applicable round must be read
+together.
+
+The full current application, customer correspondence and dated finance model
+remain in the original private grant-preparation workspace. The public guide
+contains the engineering scope and preparation status needed to understand
+this product.
+
+### Historical proposal: 400-hour plan retained from 14 October
+
+The following plan is retained for comparison with the revised estimate above.
+Its original [complete public guide][development-history] and
+[costed scenario][budget] preserve the earlier source. Its Open Track choice,
+requested amount and planned schedule describe that earlier proposal.
+
+The earlier Open Track proposal requested **$38,000 equivalent in XLM for 400 future
 delivery hours over 150 days from actual award acceptance**, using the $95/hour
 planning assumption. It has six packages in three delivery windows.
 The [original costed scenario][budget] retains the underlying package selection.
@@ -745,7 +810,7 @@ the actual purchase-to-commitment and commitment-to-collection lineage, exact
 amounts and complete outputs; do not duplicate a collection transaction once
 per response. Apply the original selected grant cohort definition to its
 qualifying records. A product's additional Channel work history does not
-change the fixed package acceptance or the existing purchase baseline.
+change the selected package acceptance or the existing purchase baseline.
 
 A returning buyer completes another distinct useful task on another day. Record
 the later period, fresh source query or order that made the purchase useful. The
@@ -758,9 +823,9 @@ corrections and receiving effort. Compare the same source, input/output selectio
 and period. This gives the customer an understandable account of the work the
 service takes off their plate.
 
-### Assign the remaining funded implementation
+### Assign the remaining customer implementation
 
-The existing product supplies the foundation. Each funded customer deployment
+The existing product supplies the foundation. Each selected customer deployment
 selects the actual source, merchant host, buyer host, facilitator, receiving
 application and integration work required by its six-package roadmap.
 
@@ -810,7 +875,7 @@ workflows. The performed commissioning and receiving work makes the selected
 installation maintainable by its next operator.
 
 This chapter connects architecture, developer entry points, interfaces, existing
-results and the fixed Stellar rollout plan in the project's unified development
+results and the current Stellar deployment plan in the project's unified development
 documentation. Continue updating the same guide as the product and customer
 installations advance. Each selected archive retains the version delivered to
 that customer.
@@ -836,3 +901,7 @@ that customer.
 [mpp-channel]: ../../stellar/scf-starforge-20261009/mpp-channel/README.md
 [mpp-receiving]: ../mpp-workspace/RECEIVING.md#6-receive-a-complete-operating-channel
 [mpp-python]: ../../stellar/scf-starforge-20261009/mpp-channel/python/README.md
+
+[scf45-recap]: https://medium.com/stellar-community/scf-45-round-recap-1ecf281821ab
+[scf-rfp]: https://stellar.gitbook.io/scf-handbook/scf-awards/build-award/rfp-track
+[development-history]: https://github.com/woahwhattheheck/tjlabs-stellar-merchant-workspace/blob/3b999fce2f77db5298a93fe43af896e526ac1200/products/merchant-workspace/DEVELOPMENT.md
