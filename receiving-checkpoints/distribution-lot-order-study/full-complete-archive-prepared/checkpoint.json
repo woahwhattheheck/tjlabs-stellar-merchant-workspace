@@ -2,21 +2,21 @@
   "schema": "commons.complete-export-checkpoint-storage.v1",
   "identity": "202f25e907c6c85c8f63803b5a08dada032a21e52904083b351dd01465259b56",
   "done": false,
-  "completedGroups": 991,
+  "completedGroups": 1000,
   "entries": 1943,
   "metadata": {
-    "bytes": 832540,
-    "sha256": "e9512e00d6e245d1dba5dd9227acc2c810c9441f152a9f9c0360b6bb5b91cfca",
+    "bytes": 836257,
+    "sha256": "7d4bac564ab8edc26595be7d5d6bf2f2e63a599794381ff69a1afc1835a4f83a",
     "parts": [
       {
-        "path": "objects/cac83e2298d138b8af86c8b03234e582e056567f569939b060266ef0a0e3008a.part",
+        "path": "objects/75451ec0dc1844be7e283b6e268392ac2a11257852840963a467d962d5f40a64.part",
         "bytes": 650000,
-        "sha256": "cac83e2298d138b8af86c8b03234e582e056567f569939b060266ef0a0e3008a"
+        "sha256": "75451ec0dc1844be7e283b6e268392ac2a11257852840963a467d962d5f40a64"
       },
       {
-        "path": "objects/eef571cda315ae1c37e6283c0275f76d85c918dcd090899b7c0ac4407071af5f.part",
-        "bytes": 182540,
-        "sha256": "eef571cda315ae1c37e6283c0275f76d85c918dcd090899b7c0ac4407071af5f"
+        "path": "objects/d6fbff580f355eac0ffe3c69ddd5fb15131132437d176506e9bd074464e9b3cb.part",
+        "bytes": 186257,
+        "sha256": "d6fbff580f355eac0ffe3c69ddd5fb15131132437d176506e9bd074464e9b3cb"
       }
     ]
   },
